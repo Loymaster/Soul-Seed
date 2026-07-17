@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <style>doc-page:not(:defined){visibility:hidden}</style>
+</helmet>
+<x-import component-from-global-scope="doc-page" from="./doc-page.js" size="a4" orientation="portrait" margin="0.9in" hint-size="100%,100%">
+
+  <div style="font-family:Georgia,serif">
+
+    <div style="text-align:center;margin-bottom:36px">
+      <div style="font-size:13px;letter-spacing:3px;text-transform:uppercase;color:#8a7a63">Soul Seed — Forgotten Echoes</div>
+      <h1 style="font-size:34px;margin:8px 0 4px">Fonctionnalités de la v0.2 (en cours)</h1>
+      <div style="font-size:14px;color:#666">Note de sortie — 16 juillet 2026</div>
+    </div>
+
+    <p style="font-size:15px;line-height:1.6;color:#333">
+      Récapitulatif des ajustements et ajouts réalisés depuis la sortie de la v0.1.
+    </p>
+
+    <h2 style="font-size:20px;border-bottom:2px solid #2c2c2c;padding-bottom:6px;margin-top:32px">🌱 Évolution & lignées</h2>
+    <ul style="font-size:14.5px;line-height:1.7">
+      <li>Passage de 6 à 3 échos fragmentés possibles (un par processus surinvesti), en cas d'évolution ratée</li>
+      <li>Spécificités en caractéristiques et remplissage de besoins propres aux lignées Dark (à venir)</li>
+    </ul>
+
+    <h2 style="font-size:20px;border-bottom:2px solid #2c2c2c;padding-bottom:6px;margin-top:28px">🎭 Tempérament</h2>
+    <ul style="font-size:14.5px;line-height:1.7">
+      <li>Boutons +/- du tempérament désormais réservés au Mode Debug (plus modifiable manuellement en mode normal)</li>
+    </ul>
+
+    <h2 style="font-size:20px;border-bottom:2px solid #2c2c2c;padding-bottom:6px;margin-top:28px">💼 Métiers</h2>
+    <ul style="font-size:14.5px;line-height:1.7">
+      <li>Correction : le message de fin de métier évoque désormais le nom du joueur (c'est lui qui travaille) et non celui de l'écho</li>
+      <li>Mini-jeu "Assistant boutiquier" : les ronds jaunes sont remplacés par des visuels d'échos aléatoires, entourés d'un halo de lumière doux (même esprit que le halo des événements aléatoires)</li>
+      <li>Compte à rebours "3, 2, 1" (1s chacun) avant le début du mini-jeu, pendant lequel tous les visuels d'échos sont préchargés hors-champ (z-index) pour éviter tout lag d'affichage à l'apparition</li>
+    </ul>
+
+    <h2 style="font-size:20px;border-bottom:2px solid #2c2c2c;padding-bottom:6px;margin-top:28px">🩹 Blessures & soins</h2>
+    <ul style="font-size:14.5px;line-height:1.7">
+      <li>Confirmation : Laver ne soigne pas la blessure (seul le pansement referme la blessure ; guérison spontanée possible chaque heure selon la phase de développement)</li>
+      <li>Boutique : étiquette "Objet de soin" renommée "Soin de combat" pour plus de clarté</li>
+    </ul>
+
+    <h2 style="font-size:20px;border-bottom:2px solid #2c2c2c;padding-bottom:6px;margin-top:28px">🏠 Prologue</h2>
+    <ul style="font-size:14.5px;line-height:1.7">
+      <li>La Gardienne précise désormais si l'écho qui vient de naître est un mâle ou une femelle</li>
+    </ul>
+
+    <h2 style="font-size:20px;border-bottom:2px solid #2c2c2c;padding-bottom:6px;margin-top:28px">🎲 Événements aléatoires</h2>
+    <ul style="font-size:14.5px;line-height:1.7">
+      <li>Chance d'événement aléatoire doublée : +1/h au lieu de +0,5/h</li>
+    </ul>
+
+    <h2 style="font-size:20px;border-bottom:2px solid #2c2c2c;padding-bottom:6px;margin-top:28px">⏱️ Temps réel</h2>
+    <ul style="font-size:14.5px;line-height:1.7">
+      <li>Nouvelle horloge temps réel : les minutes affichées en haut d'écran avancent d'1 par seconde IRL, indépendamment des passages d'heure déclenchés par les actions</li>
+      <li>Au passage de 59 à 60 minutes, le compteur repasse à 0 et fait avancer le temps du jeu d'1 heure, donnant l'illusion d'un temps qui s'écoule en continu</li>
+      <li>Horloge suspendue pendant l'intro/sélection de seed, en combat, corvées, travail, entraînement, ou via le nouveau bouton "PAUSE" (à gauche de Village dans le panneau inférieur), qui assombrit l'écran avec une fenêtre "PAUSE" fermable par une croix</li>
+    </ul>
+
+    <h2 style="font-size:20px;border-bottom:2px solid #2c2c2c;padding-bottom:6px;margin-top:28px">🌱 Évolution Adolescent (2e évolution)</h2>
+    <ul style="font-size:14.5px;line-height:1.7">
+      <li>Déclenchement à 6 jours (12h-18h), même mise en scène que l'évolution Bébé→Enfant, reset des besoins/états et boost de caractéristiques (+20 à 40%, taille +20%)</li>
+      <li>Détermination de la lignée : fragmentation prioritaire si un processus de développement (Cognitif/Socio-affectif/Psychomoteur) dépasse 80%, sinon maintien de la lignée si le processus émotionnel dominant correspond au tempérament de base, sinon bascule vers l'une des 6 branches partagées (Sorrow/Dark Fear, Joy/Dark Disgust, Fear/Dark Wrath, Wrath/Dark Joy, Disgust/Dark Sorrow, Neutre/Dark Neutre)</li>
+      <li>Sprites intégrés : les 10 lignées (primaire + Dark) complètes, Neutre, Dark Neutre, les 6 branches partagées et les 3 fragments (Cognitif+/Psychomoteur+/Socio-affectif+) — toutes les évolutions Adolescent ont désormais leur visuel définitif</li>
+      <li>Correction : la bascule Neutre/Dark Neutre ne regarde que le processus le plus développé (plus de faux déclenchement par un processus secondaire)</li>
+      <li>Logs et textes d'évolution : noms de lignées en clair (plus de codes bruts type "S-DF")</li>
+      <li>Onglet Mémoire &gt; Échos : arbre repensé selon le schéma de référence — lignes pleines bleues (lignée primaire) et bleu marine (lignée Dark), branches partagées en pointillés orange décalées vers la gauche (devant les lignées simples) dans la colonne Adolescent, zone Neutre/Dark Neutre encadrée en pointillés (bébé, "non spécifique"), et les 3 échos fragmentés regroupés dans une zone pointillée de la colonne Adolescent avec contour rouge</li>
+      <li>Boutons debug "Évoluer vers Adolescent", "Choix du bébé" (changer la lignée/genre affichés par menu déroulant) et "Débloquer la mémoire des échos" (révèle tout l'arbre) ajoutés</li>
+    </ul>
+
+    <h2 style="font-size:20px;border-bottom:2px solid #2c2c2c;padding-bottom:6px;margin-top:28px">🐾 Corvées, métiers &amp; combat</h2>
+    <ul style="font-size:14.5px;line-height:1.7">
+      <li>Objets de départ de la corvée "Ranger le ranch" repositionnés sur le côté, au-dessus des bacs, pour une meilleure visibilité, avec un fond blanc translucide derrière leur zone de départ</li>
+      <li>Corvée "Réparer la barrière" : dimensions des 8 morceaux recalculées sur le ratio natif de chaque sprite pour un rendu de barrière assemblée plus net (fini les marges mortes)</li>
+      <li>Féliciter une corvée réussie (Bon/Parfait) ou gronder une corvée ratée (Mauvais/Horrible) augmente désormais l'expérience de cette corvée</li>
+      <li>Message "métier indisponible" (hors horaires) : corrigé pour s'afficher au-dessus du menu Métiers au lieu de derrière</li>
+      <li>Le déblocage d'un métier (et son expérience) ne se réinitialise plus à la mort de l'écho</li>
+      <li>Combat : ATB légèrement accéléré ; caractéristiques de combat influencées par l'humeur, les émotions (colère/peur), l'attachement et l'affection au joueur</li>
+      <li>Entraînement : gains influencés par l'humeur (±15%)</li>
+    </ul>
+
+    <h2 style="font-size:20px;border-bottom:2px solid #2c2c2c;padding-bottom:6px;margin-top:28px">🤕 Maladie &amp; affection</h2>
+    <ul style="font-size:14.5px;line-height:1.7">
+      <li>Phases de perte de santé rallongées (12h à 0,25/h, 12h à 0,5/h, puis 1/h)</li>
+      <li>L'affection du joueur augmente la chance de guérison spontanée (jusqu'à +50%)</li>
+      <li>La montée du besoin d'affection est désormais amortie par l'affection déjà acquise</li>
+    </ul>
+
+    <h2 style="font-size:20px;border-bottom:2px solid #2c2c2c;padding-bottom:6px;margin-top:28px">💀 Mort — réinitialisation corrigée</h2>
+    <ul style="font-size:14.5px;line-height:1.7">
+      <li>Après la mort, les échos sauvages rencontrés, les processus éducatifs, l'expérience des corvées et les sujets de dialogue (Jumpy, interactions) sont maintenant bien réinitialisés (ne l'étaient pas tous avant)</li>
+      <li>À l'inverse, le déblocage des métiers et leur expérience persistent désormais correctement (c'était un bug)</li>
+    </ul>
+
+    <h2 style="font-size:20px;border-bottom:2px solid #2c2c2c;padding-bottom:6px;margin-top:28px">😤 Éducation &amp; comportement</h2>
+    <ul style="font-size:14.5px;line-height:1.7">
+      <li>Deux nouvelles variables d'éducation : "Tendance aux bêtises" et "Volonté de faire mieux" (départ 50/100)</li>
+      <li>Sur une bêtise : Gronder diminue la Tendance aux bêtises (-0,5), Féliciter l'augmente (+0,5). Sur une réussite (corvée ou comportement aléatoire) : Gronder diminue la Volonté de faire mieux (-0,5), Féliciter l'augmente (+0,5) — même logique côté comportements aléatoires</li>
+      <li>Ces deux variables influencent désormais, avec une incidence moyenne (±50%), la probabilité de tirer un comportement aléatoire de type "bêtise" ou "réussite"</li>
+      <li>Bougon et Aigri déplacés dans la section États créature du panneau Variables cachées (à côté des autres états, plutôt que dans Affects &gt; Sentiments)</li>
+      <li>Manque d'affection désormais arrondi à la 2e décimale dans le panneau debug</li>
+    </ul>
+
+    <h2 style="font-size:20px;border-bottom:2px solid #2c2c2c;padding-bottom:6px;margin-top:28px">💛 Goûts</h2>
+    <ul style="font-size:14.5px;line-height:1.7">
+      <li>Nouvelle sous-catégorie "Préférences sociales" : une "Préférence d'interaction" (Affective / Discussion / Jeu / Partage) est tirée au sort à l'éclosion</li>
+      <li>Cette préférence donne un très léger boost positif (humeur et affection) lorsqu'on choisit une interaction de la catégorie correspondante</li>
+    </ul>
+
+    <h2 style="font-size:20px;border-bottom:2px solid #2c2c2c;padding-bottom:6px;margin-top:28px">🗺️ Exploration (prototype à venir)</h2>
+    <ul style="font-size:14.5px;line-height:1.7">
+      <li>Nouvel onglet "Exploration" ajouté entre Village et Carte, dans le panneau inférieur (placeholder en attendant le prototype de déplacement au clic)</li>
+    </ul>
+
+    <div style="margin-top:36px;padding:16px 20px;background:#f4f1ea;border-radius:4px;font-size:13.5px;color:#555;font-style:italic">
+      Cette note sera complétée au fil des prochains ajouts de la v0.2 — voir la Roadmap pour la suite prévue.
+    </div>
+
+  </div>
+
+</x-import>
+</x-dc>
+</body>
+</html>
