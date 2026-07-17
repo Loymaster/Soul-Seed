@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <style>doc-page:not(:defined){visibility:hidden}</style>
+</helmet>
+<x-import component-from-global-scope="doc-page" from="./doc-page.js" size="a4" orientation="portrait" margin="0.9in" hint-size="100%,100%">
+
+  <div style="font-family:Georgia,serif">
+
+    <div style="text-align:center;margin-bottom:36px">
+      <div style="font-size:13px;letter-spacing:3px;text-transform:uppercase;color:#8a7a63">Soul Seed — Forgotten Echoes</div>
+      <h1 style="font-size:34px;margin:8px 0 4px">Fonctionnalités de la v0.1</h1>
+      <div style="font-size:14px;color:#666">Note de sortie — 14 juillet 2026</div>
+    </div>
+
+    <p style="font-size:15px;line-height:1.6;color:#333">
+      Récapitulatif de tout ce qui est jouable dans cette version : élevez votre écho, explorez ses interactions,
+      gérez la boutique, combattez, et suivez son évolution.
+    </p>
+
+    <h2 style="font-size:20px;border-bottom:2px solid #2c2c2c;padding-bottom:6px;margin-top:32px">🥚 Création du personnage</h2>
+    <ul style="font-size:14.5px;line-height:1.7">
+      <li>Choix d'une Soul Seed parmi 5 graines, chacune avec baseline émotionnelle et tempérament associé</li>
+      <li>Animation d'œuf, tirage caché de lignée (60% primaire / 25% Dark / 10% Neutre / 5% Dark Neutre), 4 variantes par lignée : primaire / sombre / neutre / sombre-neutre, sprite et infos dédiés</li>
+      <li>Éclosion avec genre (Mâle/Femelle) et nom éditable (aléatoire pré-rempli cohérent avec le genre, obligatoire pour démarrer)</li>
+      <li>Fonds mystiques pour choix/éclosion de seed (couleurs pâles par seed, textes/boutons assortis)</li>
+      <li>Génération de la personnalité (Big Five) et du tempérament de départ</li>
+      <li>Arbre généalogique construit dynamiquement à partir des graines et lignées</li>
+    </ul>
+
+    <h2 style="font-size:20px;border-bottom:2px solid #2c2c2c;padding-bottom:6px;margin-top:28px">🎭 Personnalité, tempérament & caractéristiques</h2>
+    <ul style="font-size:14.5px;line-height:1.7">
+      <li>5 traits de personnalité (Big Five), traits dominants (5/5) ou faibles (1-2) générant des commentaires uniques ; névrosisme inversé (part de 5, baisse jusqu'à 1 = calme)</li>
+      <li>Tempérament propre à la lignée (radar 5 résonances), tiré à l'éclosion, affichable dans un panneau dédié</li>
+      <li>Caractéristiques (Force/Agilité/Endurance/Robustesse/Intelligence/Perception, 0-999, tirées + bonus de lignée), panneau dédié</li>
+      <li>Autonomie/Discipline/Authenticité (0-100) désormais connectées : évoluent via Féliciter/Gronder, en particulier lors des refus de nourriture</li>
+      <li>Valeurs de personnalité annexes : Altruisme/Égoïsme, Sentiment de justice — influencées par les actions et l'attitude face aux bêtises/réussites</li>
+      <li>Bloc Éducation (Cognitif/Socio-affectif/Psycho-moteur + Joy/Fear/Sorrow/Wrath/Disgust), structure phase/total/% ; câliner/féliciter/gronder reliés à l'éducation socio-affective</li>
+    </ul>
+
+    <h2 style="font-size:20px;border-bottom:2px solid #2c2c2c;padding-bottom:6px;margin-top:28px">🏋️ Entraînement</h2>
+    <ul style="font-size:14.5px;line-height:1.7">
+      <li>6 exercices d'entraînement, chacun lié à une caractéristique, un processus d'éducation et une émotion</li>
+      <li>Animation de séance (fenêtre 5s skippable) + popup de gains de stats avec multiplicateur aléatoire</li>
+      <li>Coût en énergie (-5) et en poids (-0,25) par séance</li>
+      <li>Alimente le déblocage des techniques via les seuils d'intelligence</li>
+    </ul>
+
+    <h2 style="font-size:20px;border-bottom:2px solid #2c2c2c;padding-bottom:6px;margin-top:28px">😊 États & besoins de la créature</h2>
+    <ul style="font-size:14.5px;line-height:1.7">
+      <li>Émotions (Joie/Colère/Tristesse/Dégoût/Peur/Surprise) avec décroissance horaire, routées via tempérament/traits</li>
+      <li>Faim (0-100, -2/h), Santé (0-20 par phase), Humeur (0-100), Énergie (cycle repos/rythme bio Matinal/Diurne/Soirée/Nocturne avec bonus si respecté)</li>
+      <li>Propreté (départ 60, -0,5/h), Besoin (probabilité de déjection/h), Risque maladie (suivi, sans effet actif), Blessure (1/5 chance en combattant, guérison spontanée selon phase)</li>
+      <li>États dérivés : Affamé, Bougon/Aigri, Sale/Dégoûtant, Bonne santé, Digestion, Bêtise/Réussite</li>
+      <li>Poids & Taille tirés à l'éclosion, échelle visuelle ajustée, poids variant selon repas/déjections/entraînement/temps</li>
+      <li>Bêtise/Réussite et Expression personnelle : marquent une fenêtre où féliciter/gronder a un effet renforcé sur autonomie/discipline/authenticité/sentiment de justice</li>
+      <li>Déplacement autonome de la créature (aléatoire, profondeur, effet miroir selon direction), filtre de lumière jour/nuit</li>
+      <li>Panneau Statistiques cachées organisé par catégories (Besoins/États/Statistiques/Ranch/Éducation)</li>
+    </ul>
+
+    <h2 style="font-size:20px;border-bottom:2px solid #2c2c2c;padding-bottom:6px;margin-top:28px">🐾 Actions & animations</h2>
+    <ul style="font-size:14.5px;line-height:1.7">
+      <li>Actions : Nourrir, Se battre, Repos, Laver, Jouer, Gronder, Féliciter, Soigner, Câliner — journalisées dans un encart Événements + historique Logs</li>
+      <li>Fenêtres d'animation (5s, skippable) avec fond paysage flouté + fond gros-plan dédié par action</li>
+      <li>GIFs transparents intégrés : sommeil, repas, lavage, fierté, gronde, course</li>
+      <li>Se bagarrer → +Colère (Wrath), Jouer → +Joie (socio-affectif)</li>
+      <li>Clic droit sur la créature → menu Câliner ; clic gauche libre pour cliquer les déjections</li>
+    </ul>
+
+    <h2 style="font-size:20px;border-bottom:2px solid #2c2c2c;padding-bottom:6px;margin-top:28px">🏡 Ranch, temps & événements</h2>
+    <ul style="font-size:14.5px;line-height:1.7">
+      <li>Cycle jour/nuit avec périodes (matin/soirée/nuit...), icônes dédiées, avancement du temps à la demande, mode nuit auto/toujours nuit/toujours jour avec vraie palette de couleurs</li>
+      <li>Décors Matin/Journée/Soirée/Nuit en fondu, fond de plaine flouté derrière l'écran principal</li>
+      <li>Déjections visuelles avec profondeur, propreté du ranch (jusqu'à 20, message si plein)</li>
+      <li>Variables "Événement aléatoire" (0→100, +0,5/h sauf sommeil) et "Présence Echo"</li>
+      <li>2 événements : Bruit étrange, Invité surprise (bébé écho visiteur cliquable, 4h, filtre jour/nuit) + événement "Visite d'un écho" réutilisant un écho déjà rencontré</li>
+      <li>Âge de l'écho affiché (jour/genre/stade) ; day/hour ne se réinitialisent plus à la mort (seul birthDay redémarre l'âge affiché)</li>
+    </ul>
+
+    <h2 style="font-size:20px;border-bottom:2px solid #2c2c2c;padding-bottom:6px;margin-top:28px">🎒 Inventaire, économie & vie quotidienne</h2>
+    <ul style="font-size:14.5px;line-height:1.7">
+      <li>Inventaire à 12 emplacements (glisser-déposer, fusion de piles, dépôt sur créature = utiliser, dépôt hors cadre = jeter avec confirmation, clic droit = Utiliser/Scinder/Jeter), pansements empilables (max 5)</li>
+      <li>Goûts de l'écho : saveur préférée, régime (carnivore/végétarien/omnivore), catégorie préférée, plat préféré et détesté, tirés à l'éclosion</li>
+      <li>Frustration alimentaire : peut refuser un repas détesté/hors-régime une fois repu ; "Forcer la nourriture" débloque le repas au prix d'une baisse d'humeur</li>
+      <li>Catalogue de nourriture élargi (fruits classiques/exotiques, légumes, légumineuses, céréales, plats raffinés, fast-food, sucreries, poisson, viande, simili-carne, produits animaliers, champignons, déchets) avec masse recalibrée proportionnellement à la satiété ; icônes remplacées par les visuels fournis</li>
+      <li>Or (50 au départ), Boutique (icônes ouverte/fermée, horaires 9h-19h), achats (aliment aléatoire 5 or, pansement 10 or)</li>
+      <li>17 métiers listés (verrouillés) dans l'onglet "Travaux"/"Métiers", variables Expérience associées</li>
+      <li>Onglet Relations : habitants du ranch (dont Jumpy) et échos sauvages rencontrés (image, description, jauges d'affection mutuelles, compatibilité à révéler), score de compatibilité par écho</li>
+      <li>Génération d'échos sauvages : tempérament/personnalité/carac tirés à la naissance, âge 1-3j, genre+nom cohérents, plafond 10 échos, vieillissement quotidien, personnalité par points aléatoires (12-16)</li>
+      <li>Système de sauvegarde/chargement multi-emplacements, réinitialisation complète</li>
+      <li>Panneau de debug (Mode Debug/Normal masquant les panneaux debug, déclenchement manuel des événements, "Mettre fin au cycle"/"+1 jour")</li>
+    </ul>
+
+    <h2 style="font-size:20px;border-bottom:2px solid #2c2c2c;padding-bottom:6px;margin-top:32px">🌱 L'écho et son évolution</h2>
+    <ul style="font-size:14.5px;line-height:1.7">
+      <li>Interactions avec l'écho sauvage : suivi des affects, vérification de compatibilité, action "Passer du temps ensemble"</li>
+      <li>Formules de résultat (succès/échec) avec animations et changements de statistiques</li>
+      <li>Évolution du stade enfant : déclenchée à 3 ans, animation de métamorphose, reset des stats, boosts de caractéristiques (×1.2 à ×1.4), taille +20%</li>
+      <li>Système de dialogue avec votre propre écho : 6 catégories d'interaction quotidienne, 3 choix chacune, effets sur humeur/affects/valeurs, fait avancer le temps d'1h</li>
+    </ul>
+
+    <h2 style="font-size:20px;border-bottom:2px solid #2c2c2c;padding-bottom:6px;margin-top:28px">🛒 Boutique</h2>
+    <ul style="font-size:14.5px;line-height:1.7">
+      <li>Jumpy en tant que vendeur, stock quotidien aléatoire (5 emplacements : végétarien / carnivore / omnivore / random / bandage+médicament)</li>
+      <li>Offre spéciale "Deux pour un"</li>
+      <li>20 nourritures + médicaments, avec véritables icônes</li>
+      <li>Musique de boutique dédiée</li>
+      <li>Dialogue de Jumpy : discussion + révélations sur les échos, tirées d'un pool de 10 répliques</li>
+    </ul>
+
+    <h2 style="font-size:20px;border-bottom:2px solid #2c2c2c;padding-bottom:6px;margin-top:28px">⚔️ Combat</h2>
+    <ul style="font-size:14.5px;line-height:1.7">
+      <li>Moteur de combat ATB (temps réel) complet</li>
+      <li>Formules de dégâts basées sur force / endurance / perception (critique, esquive, blocage)</li>
+      <li>Déplacement et évitement des bords, étourdissement avec immunité anti-lock</li>
+      <li>4 ordres disponibles : Encourager / Attaquer / Fuir / Protéger</li>
+      <li>Rééquilibrage complet pour éviter les one-shots et les combats sans fin, testé et fonctionnel contre le dresseur Jumpy</li>
+    </ul>
+
+    <h2 style="font-size:20px;border-bottom:2px solid #2c2c2c;padding-bottom:6px;margin-top:28px">📑 Onglets & panneaux du menu principal</h2>
+    <ul style="font-size:14.5px;line-height:1.7">
+      <li><strong>Caractéristiques</strong> : Force/Agilité/Endurance/Robustesse/Intelligence/Perception, avec barres de progression</li>
+      <li><strong>Techniques</strong> : 8 catégories, débloquées à 150/250/350/450 d'intelligence, avec popups</li>
+      <li><strong>Notes</strong> : pages éditables</li>
+      <li><strong>Village</strong> et <strong>Carte</strong> : entrées présentes dans le menu (contenu "en développement")</li>
+      <li><strong>Mémoire</strong> : arbre généalogique à découverte progressive (révélé via des "?")</li>
+      <li><strong>Sauvegardes</strong> : emplacements multiples (dont un slot auto), sauvegarder/charger/effacer par emplacement</li>
+      <li><strong>Système</strong> : export/import des sauvegardes (fichier JSON), réinitialisation complète de la partie</li>
+      <li><strong>Relations</strong> : sous-onglets Habitants / Échos sauvages, fiche détaillée par sélection (tempérament, personnalité, caractéristiques)</li>
+      <li>Panneaux Debug (visibles en Mode Debug) : <strong>Statistiques</strong> (variables cachées), <strong>Affects</strong>, <strong>Personnalité</strong>, <strong>Goûts</strong>, <strong>Education</strong>, <strong>Métiers</strong>, <strong>Actions Debug</strong> (déclenchement d'événements, combat, don d'or, avance du temps, réglage manuel de la personnalité)</li>
+    </ul>
+
+    <h2 style="font-size:20px;border-bottom:2px solid #2c2c2c;padding-bottom:6px;margin-top:28px">🔢 Variables suivies (statistiques cachées)</h2>
+    <ul style="font-size:14.5px;line-height:1.7">
+      <li><strong>Besoins</strong> : Faim, Humeur, Énergie, Propreté, Besoin (probabilité de déjection)</li>
+      <li><strong>États</strong> : Affamé, Bonne santé, Repus, Digestion, Rythme respecté, Sale, Dégoûtant, Blessé, Refus nourriture, Forcer nourriture</li>
+      <li><strong>Statistiques</strong> : Santé, Poids, Taille, Phase de développement, Rythme bio, Risque maladie, Anxiété, Angoisse</li>
+      <li><strong>Ranch</strong> : Saleté du ranch, Événement aléatoire, Présence Echo</li>
+      <li><strong>Émotions</strong> : Joie, Colère, Tristesse, Dégoût, Surprise, Peur</li>
+      <li><strong>Traits comportementaux dérivés</strong> : Optimisme, Impulsivité, Planification, Résilience, Prudence</li>
+      <li><strong>Sentiments</strong> : Bougon, Aigri</li>
+      <li><strong>Relations</strong> : Attachement, Affection Joueur</li>
+      <li><strong>Goûts</strong> : Saveur préférée, Préférence de régime, Nourriture préférée, Plat préféré, Plat détesté</li>
+      <li><strong>Apprentissage</strong> : Autonomie, Discipline, Authenticité, Bêtise, Réussite, Sentiment de justice, Expression personnelle, Frustration alimentaire</li>
+      <li><strong>Valeurs</strong> : Altruisme, Égoïsme</li>
+      <li><strong>Développement par processus</strong> : 8 lignes (phase / total / % pour chaque processus d'éducation)</li>
+      <li><strong>Personnalité (Big Five)</strong> : 5 traits sur une échelle 1-5</li>
+      <li><strong>Caractéristiques</strong> : Force, Agilité, Endurance, Robustesse, Intelligence, Perception (0-999)</li>
+      <li><strong>Métiers</strong> : 17 compteurs d'expérience, un par métier</li>
+    </ul>
+
+    <h2 style="font-size:20px;border-bottom:2px solid #2c2c2c;padding-bottom:6px;margin-top:28px">⚖️ Équilibrage</h2>
+    <ul style="font-size:14.5px;line-height:1.7">
+      <li>Dégâts rééquilibrés (plancher d'attaque à 15%, plafond de réduction force à 50%) pour raccourcir les combats</li>
+      <li>PV liés à la Robustesse ×7</li>
+      <li>Système d'étourdissement retravaillé pour éviter le verrouillage</li>
+      <li>Filets de sécurité (timeouts) pour les cas limites</li>
+    </ul>
+
+    <h2 style="font-size:20px;border-bottom:2px solid #2c2c2c;padding-bottom:6px;margin-top:32px">🏠 Accueil & Prologue</h2>
+    <ul style="font-size:14.5px;line-height:1.7">
+      <li>Écran d'accueil au lancement : Nouvelle partie / Nouvelle partie (sans intro) / Charger une partie / Système / Patch note (sans spoil) / Patch note détaillé / Roadmap, barre de musique avec incitation à l'activer</li>
+      <li>Prologue joué en 2 scènes : voix mystérieuse (choix du nom, du genre, de la priorité qui détermine la graine) puis la Gardienne au sanctuaire, arrivée de Jumpy et présentation de Garry</li>
+      <li>Éclosion simulée en direct dans le prologue (fenêtre translucide, même animation que l'écran d'éclosion), sans changer d'écran</li>
+      <li>Portraits multiples (Gardienne neutre/inquiète/compassion, Jumpy), mise en scène avec glissades d'entrée/sortie, fondus, fond flouté</li>
+      <li>Nom et genre choisis dans le prologue connectés au personnage du Ranch (nom sous l'écho, avatar joueur)</li>
+    </ul>
+
+    <h2 style="font-size:20px;border-bottom:2px solid #2c2c2c;padding-bottom:6px;margin-top:28px">💝 Affection & comportements aléatoires</h2>
+    <ul style="font-size:14.5px;line-height:1.7">
+      <li>Manque d'affection (0-100, +5/h moduleé par le névrosisme), fait grimper l'angoisse au-delà de 50, déclenche l'état "Besoin d'affection" (icône gravitante) au-delà de 70</li>
+      <li>Toute interaction qui affecte l'affection joueur fait reculer le manque d'affection ; gronder pendant l'état le fait replonger à 0 avec des conséquences (autonomie/discipline +, authenticité -)</li>
+      <li>Attachement au joueur : +1 automatique par jour</li>
+      <li>Comportements aléatoires de l'écho basés sur le tempérament (Curiosité/Résolution/Discernement/Observation/Anticipation), tirés en Boétise / Réussite / Neutre / Amplification, avec scènes de dialogue dédiées et point d'exclamation à résoudre (4h de délai)</li>
+      <li>Tests d'autonomie sur les besoins de base (faim, blessure, fatigue, saleté, bougon, angoisse, propreté du ranch, besoin d'affection) : l'écho peut se débrouiller seul selon son score d'autonomie</li>
+      <li>Interactions "Passer du temps ensemble" avec les échos sauvages : scène à deux portraits, résultats selon compatibilité, chance d'amélioration progressive de la compatibilité</li>
+    </ul>
+
+    <h2 style="font-size:20px;border-bottom:2px solid #2c2c2c;padding-bottom:6px;margin-top:28px">🧹 Corvées & métiers</h2>
+    <ul style="font-size:14.5px;line-height:1.7">
+      <li>Mini-jeux de corvées automatisés, accessibles 1 fois/jour, sans récompense en or mais avec boosts de stats (Intelligence + stat liée à la tâche) selon la réussite (Parfait/Bon/Mauvais/Horrible)</li>
+      <li>"Ranger le ranch" (Discernement/Perception) et "Réparer la barrière" (Résolution/Force), avec courbe d'expérience propre à chaque corvée (plafond +50% à ~25 sessions)</li>
+      <li>Réussite globale/échec global d'une corvée déclenche un flag "Réussite"/"Bêtise" jusqu'à la prochaine interaction</li>
+      <li>Métier "Assistant boutiquier" débloqué via une nouvelle option de dialogue chez Jumpy ("Gagner de l'argent") ; mini-jeu de rapidité (10 clients à servir en 10s), 1 fois/jour, disponible 8h-14h, 6h gelées pendant le travail, gains d'or croissants avec l'expérience</li>
+      <li>Menu Métiers n'affiche plus que les métiers débloqués</li>
+    </ul>
+
+    <h2 style="font-size:20px;border-bottom:2px solid #2c2c2c;padding-bottom:6px;margin-top:28px">⚔️ Combat (compléments)</h2>
+    <ul style="font-size:14.5px;line-height:1.7">
+      <li>Démarrage de l'ATB calibré sur l'agilité (formule agilité/2000 + aléatoire)</li>
+      <li>Confirmation ("Êtes-vous sûr ?") avant tout combat proposé : Jumpy, échos sauvages ("Proposer un affrontement"), et bouton dédié "Affronter Garry"</li>
+      <li>Combat de fin de v0.1 contre Garry : scène dédiée (image + dialogue + "Lancer le combat" obligatoire), stats fixes, taille +40% (Adolescent), musique dédiée, messages de victoire/défaite propres, 1 chance sur 2 de blessure en cas de défaite</li>
+      <li>Défaite en arène (hors Garry) déclenche un risque de blessure (1 chance sur 3)</li>
+      <li>Déblocage des techniques temporairement désactivé (pas encore configuré)</li>
+      <li>Barre de soins en combat (sous les ordres) : 5 objets de soin achétés en boutique, quantité affichée, grisé + info-bulle si absent, cooldown partagé de 30s</li>
+    </ul>
+
+    <h2 style="font-size:20px;border-bottom:2px solid #2c2c2c;padding-bottom:6px;margin-top:32px">🤕 Maladie</h2>
+    <ul style="font-size:14.5px;line-height:1.7">
+      <li>"Risque maladie" (0-100) fait office de probabilité de contracter la maladie chaque heure ; contamination impossible tant qu'on est déjà malade ou immunisé</li>
+      <li>État "Malade" (ON/OFF) avec icône gravitante dédiée ; perte de santé progressive (0,25/h les 6 premières heures, 0,5/h les 6 suivantes, 1/h ensuite) jusqu'à guérison ou santé à 0</li>
+      <li>Test de guérison spontanée chaque heure, basé sur le stade de développement et la Robustesse</li>
+      <li>Un écho malade refuse de manger une fois sur deux, ne peut plus s'entraîner/faire de corvées/travailler, reste immobile sur le terrain, et voit ses stats de combat divisées par 3</li>
+      <li>Chance de vomir (1 sur 3 par heure), réutilisant le système des déjections (saleté du ranch, message dédié si le terrain est plein)</li>
+      <li>Médicament utilisable uniquement sur un écho malade : guérit instantanément et offre 36h d'immunité</li>
+      <li>+3 d'anxiété par heure tant que malade</li>
+    </ul>
+
+    <h2 style="font-size:20px;border-bottom:2px solid #2c2c2c;padding-bottom:6px;margin-top:28px">💀 Mort & héritage</h2>
+    <ul style="font-size:14.5px;line-height:1.7">
+      <li>Mort de vieillesse calibrée (à 14 jours, à midi), en plus de la mort par santé à 0</li>
+      <li>Cinématique de mort dédiée : message "Il se passe quelque chose..." (musique coupée), paysage et musique de mort, secousses saccadées puis continues avec flashs, transition lumineuse (halo) vers l'âme sur 10s, puis dialogue en plusieurs étapes avant de rejoindre l'écran de choix de seed</li>
+      <li>Mécanique d'héritage : 7 à 12% de chaque caractéristique du défunt s'ajoutent aux caractéristiques de base du prochain écho</li>
+    </ul>
+
+    <h2 style="font-size:20px;border-bottom:2px solid #2c2c2c;padding-bottom:6px;margin-top:28px">🎵 Musique</h2>
+    <ul style="font-size:14.5px;line-height:1.7">
+      <li>Piste dédiée au menu principal et une autre au prologue (jusqu'à l'arrivée au Ranch), en plus des pistes jour/nuit/combat/boutique/mort déjà en place</li>
+      <li>Barre de musique visible en permanence pendant le prologue</li>
+    </ul>
+
+    <div style="margin-top:36px;padding:16px 20px;background:#f4f1ea;border-radius:4px;font-size:13.5px;color:#555;font-style:italic">
+      Prochaines étapes (v0.2) : suite de l'histoire, corvées supplémentaires, stade Ado, météo/saisons,
+      amélioration du Ranch, et bien plus — voir la Roadmap.
+    </div>
+
+  </div>
+
+</x-import>
+</x-dc>
+</body>
+</html>
