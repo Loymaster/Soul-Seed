@@ -2574,7 +2574,7 @@ Cliquez sur "Page suivante" pour créer une nouvelle page et commencer à écrir
     </sc-if>
 
     <sc-if value="{{ showTravauxMenu }}" hint-placeholder-val="{{ false }}">
-      <div style="position:fixed;inset:0;z-index:30;background:rgba(20,15,10,.6);display:flex;align-items:center;justify-content:center">
+      <div style="position:fixed;inset:0;z-index:60;background:rgba(20,15,10,.6);display:flex;align-items:center;justify-content:center">
         <div style="width:min(92vw,620px);background:var(--c-panel);border:1px solid var(--c-border);border-radius:16px;padding:20px;display:flex;flex-direction:column;gap:14px;box-shadow:0 16px 40px rgba(43,35,24,.4)">
           <div style="display:flex;align-items:center;justify-content:space-between">
             <div style="font-family:system-ui;font-weight:700;font-size:16px;color:var(--c-text)">Métiers</div>
@@ -12318,6 +12318,7 @@ class Component extends DCLogic {
       onToggleEducation: () => this.toggleEducation(),
       showMetiers: this.state.showMetiers,
       onToggleMetiers: () => this.toggleMetiers(),
+      showTravauxMenu: this.state.showTravauxMenu,
       showRanchDebug: this.state.showRanchDebug,
       onToggleRanchDebug: () => this.toggleRanchDebug(),
       showAffects: this.state.showAffects,
