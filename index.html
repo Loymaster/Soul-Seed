@@ -491,25 +491,25 @@
             <sc-if value="{{ hoveredExplorationAction_peche }}" hint-placeholder-val="{{ false }}">
               <div style="position:absolute;bottom:calc(100% + 6px);left:50%;transform:translateX(-50%);white-space:nowrap;background:rgba(20,15,10,.85);color:#f4ecd8;padding:5px 10px;border-radius:6px;font-family:system-ui;font-size:13px;font-weight:700;pointer-events:none">Pêcher</div>
             </sc-if>
-            <button onClick="{{ onOpenFishing }}" style="width:104px;height:104px;border-radius:10px;border:none;background:none;opacity:{{ fishBtnOpacity }};cursor:pointer;padding:11px"><img src="./assets/action-pecher.png" alt="Pêcher" style="width:100%;height:100%;object-fit:contain;filter:{{ fishBtnFilter }}"></button>
+            <button onClick="{{ onOpenFishing }}" style="width:clamp(56px,9.4vw,104px);height:clamp(56px,9.4vw,104px);border-radius:10px;border:none;background:none;opacity:{{ fishBtnOpacity }};cursor:pointer;padding:11px"><img src="./assets/action-pecher.png" alt="Pêcher" style="width:100%;height:100%;object-fit:contain;filter:{{ fishBtnFilter }}"></button>
           </div>
           <div style="position:relative;margin-right:-14px" onMouseEnter="{{ onHoverActionFouiller }}" onMouseLeave="{{ onHoverActionLeave }}">
             <sc-if value="{{ hoveredExplorationAction_fouille }}" hint-placeholder-val="{{ false }}">
               <div style="position:absolute;bottom:calc(100% + 6px);left:50%;transform:translateX(-50%);white-space:nowrap;background:rgba(20,15,10,.85);color:#f4ecd8;padding:5px 10px;border-radius:6px;font-family:system-ui;font-size:13px;font-weight:700;pointer-events:none">Fouiller</div>
             </sc-if>
-            <button onClick="{{ onOpenFouille }}" style="width:104px;height:104px;border-radius:10px;border:none;background:none;opacity:{{ fouilleBtnOpacity }};cursor:pointer;padding:11px"><img src="./assets/action-fouiller.png" alt="Fouiller" style="width:100%;height:100%;object-fit:contain;filter:{{ fouilleBtnFilter }}"></button>
+            <button onClick="{{ onOpenFouille }}" style="width:clamp(56px,9.4vw,104px);height:clamp(56px,9.4vw,104px);border-radius:10px;border:none;background:none;opacity:{{ fouilleBtnOpacity }};cursor:pointer;padding:11px"><img src="./assets/action-fouiller.png" alt="Fouiller" style="width:100%;height:100%;object-fit:contain;filter:{{ fouilleBtnFilter }}"></button>
           </div>
           <div style="position:relative;margin-right:-14px" onMouseEnter="{{ onHoverActionChercher }}" onMouseLeave="{{ onHoverActionLeave }}">
             <sc-if value="{{ hoveredExplorationAction_envoyer }}" hint-placeholder-val="{{ false }}">
               <div style="position:absolute;bottom:calc(100% + 6px);left:50%;transform:translateX(-50%);white-space:nowrap;background:rgba(20,15,10,.85);color:#f4ecd8;padding:5px 10px;border-radius:6px;font-family:system-ui;font-size:13px;font-weight:700;pointer-events:none">Chercher</div>
             </sc-if>
-            <button onClick="{{ onOpenSendEcho }}" style="width:104px;height:104px;border-radius:10px;border:none;background:none;opacity:{{ sendEchoBtnOpacity }};cursor:pointer;padding:11px"><img src="./assets/action-envoyer-echo.png" alt="Envoyer l'écho" style="width:100%;height:100%;object-fit:contain;filter:{{ sendEchoBtnFilter }}"></button>
+            <button onClick="{{ onOpenSendEcho }}" style="width:clamp(56px,9.4vw,104px);height:clamp(56px,9.4vw,104px);border-radius:10px;border:none;background:none;opacity:{{ sendEchoBtnOpacity }};cursor:pointer;padding:11px"><img src="./assets/action-envoyer-echo.png" alt="Envoyer l'écho" style="width:100%;height:100%;object-fit:contain;filter:{{ sendEchoBtnFilter }}"></button>
           </div>
           <div style="position:relative" onMouseEnter="{{ onHoverActionCamper }}" onMouseLeave="{{ onHoverActionLeave }}">
             <sc-if value="{{ hoveredExplorationAction_camper }}" hint-placeholder-val="{{ false }}">
               <div style="position:absolute;bottom:calc(100% + 6px);left:50%;transform:translateX(-50%);white-space:nowrap;background:rgba(20,15,10,.85);color:#f4ecd8;padding:5px 10px;border-radius:6px;font-family:system-ui;font-size:13px;font-weight:700;pointer-events:none">Camper</div>
             </sc-if>
-            <button onClick="{{ onOpenCampement }}" style="width:104px;height:104px;border-radius:10px;border:none;background:none;opacity:.5;cursor:not-allowed;padding:11px"><img src="./assets/action-campement.png" alt="Camper" style="width:100%;height:100%;object-fit:contain;filter:grayscale(1)"></button>
+            <button onClick="{{ onOpenCampement }}" style="width:clamp(56px,9.4vw,104px);height:clamp(56px,9.4vw,104px);border-radius:10px;border:none;background:none;opacity:.5;cursor:not-allowed;padding:11px"><img src="./assets/action-campement.png" alt="Camper" style="width:100%;height:100%;object-fit:contain;filter:grayscale(1)"></button>
           </div>
         </div>
         <sc-if value="{{ explorationTransitionMsg }}" hint-placeholder-val="{{ false }}">
@@ -2942,8 +2942,8 @@ function healItemById(id) { return HEAL_ITEMS.find(h => h.id === id) || null; }
 const NON_FOOD_ITEMS = [
   { id: 'bandage', name: 'Pansement', price: 10, icon: './assets/item-pansement.png' },
   { id: 'medicament', name: 'Médicament', price: 25, icon: './assets/item-medicament.png' },
-  { id: 'canne_peche', name: 'Canne à pêche', price: 60, icon: './assets/item-canne-peche.png' },
-  { id: 'marteau_ash', name: 'Marteau d\u2019Ash', price: 0, icon: './assets/item-marteau-ash.png' }
+  { id: 'canne_peche', name: 'Canne à pêche', price: 60, icon: './assets/item-canne-peche.png', noShop: true },
+  { id: 'marteau_ash', name: 'Marteau d\u2019Ash', price: 0, icon: './assets/item-marteau-ash.png', noShop: true }
 ];
 // Poissons crus obtenus par la pêche : moins nourrissants qu'un plat cuisiné, jamais en vente en boutique.
 // Poids = rareté (somme des poids d'un plan d'eau = 100, sert de probabilité directe).
@@ -4678,7 +4678,7 @@ class Component extends DCLogic {
       }
 
       let illnessRisk = isDirty
-        ? Math.min(illnessRiskMaxFor(s.devPhase), s.illnessRisk + 0.5 * dirtMultiplier)
+        ? Math.min(illnessRiskMaxFor(s.devPhase), s.illnessRisk + 0.25 * dirtMultiplier)
         : s.illnessRisk;
       if (isInjured) illnessRisk = Math.min(illnessRiskMaxFor(s.devPhase), illnessRisk + 0.5);
 
@@ -4724,8 +4724,8 @@ class Component extends DCLogic {
 
       let anxiete = s.anxiete;
       let isAngoisse = anxiete > 90;
-      if (anxiete > 50) {
-        const anxietyRisk = (anxiete - 50) * 0.02 * (isAngoisse ? 2 : 1);
+      if (isAngoisse) {
+        const anxietyRisk = (anxiete - 50) * 0.02 * 2;
         illnessRisk = Math.min(illnessRiskMaxFor(s.devPhase), illnessRisk + anxietyRisk);
       }
 
@@ -4907,6 +4907,7 @@ class Component extends DCLogic {
         if (Math.random() < cureChance) {
           isMalade = false;
           illnessHours = 0;
+          illnessRisk = 0;
           illnessMessage = this.creatureRefCap() + ' a combattu la maladie ' + this.agr('tout seul', 'toute seule') + ' et est ' + this.agr('guéri', 'guérie') + ' !';
         } else if (Math.random() < 1 / 3) {
           if (ranchDirt >= 20) {
@@ -5519,7 +5520,7 @@ class Component extends DCLogic {
       const curHp = s.creatureHp == null ? hpMax : s.creatureHp;
       const patch = { comfortUsedDay: s.day, health: Math.min(20, s.health + 2), creatureHp: Math.min(hpMax, curHp + hpMax * 0.5) };
       if (wasAngoisse) {
-        patch.isMalade = false; patch.illnessHours = 0; patch.isInjured = false;
+        patch.isMalade = false; patch.illnessHours = 0; patch.illnessRisk = 0; patch.isInjured = false;
         patch.anxiete = Math.max(0, s.anxiete - 100); patch.isAngoisse = false;
       } else {
         patch.anxiete = Math.max(0, s.anxiete - 50);
@@ -5946,7 +5947,7 @@ class Component extends DCLogic {
       { kind: 'food', label: 'Carnivore', food: pick(carni.length ? carni : eligible), qty: randQty() },
       { kind: 'food', label: 'Omnivore', food: pick(omni), qty: randQty() },
       { kind: 'food', label: "Deux pour le prix d'un !", food: pick(eligible), qty: 1, twoForOne: true },
-      { kind: 'item', label: 'Non-comestible', item: NON_FOOD_ITEMS[Math.floor(Math.random() * NON_FOOD_ITEMS.length)], qty: randQty() },
+      { kind: 'item', label: 'Non-comestible', item: (() => { const pool = NON_FOOD_ITEMS.filter(n => !n.noShop); return pool[Math.floor(Math.random() * pool.length)]; })(), qty: randQty() },
       { kind: 'item', label: 'Objets utiles et combat', item: HEAL_ITEMS[Math.floor(Math.random() * HEAL_ITEMS.length)], qty: randQty() }
     ];
     this.setState({ shopStock: slots, shopDay: this.state.day });
@@ -9887,7 +9888,6 @@ class Component extends DCLogic {
 
   ashClick(e) {
     if (!this.ashVisible()) return;
-    if (e && e.target !== e.currentTarget) return;
     if (e && e.currentTarget) {
       const rect = e.currentTarget.getBoundingClientRect();
       const nx = rect.width ? (e.clientX - rect.left) / rect.width : 0.5;
@@ -10001,7 +10001,6 @@ class Component extends DCLogic {
 
   philHibertClick(e) {
     if (!this.philHibertVisible()) return;
-    if (e && e.target !== e.currentTarget) return;
     if (e && e.currentTarget) {
       const rect = e.currentTarget.getBoundingClientRect();
       const nx = rect.width ? (e.clientX - rect.left) / rect.width : 0.5;
@@ -10124,7 +10123,6 @@ class Component extends DCLogic {
 
   bourbellaClick(e) {
     if (!this.bourbellaVisible()) return;
-    if (e && e.target !== e.currentTarget) return;
     if (e && e.currentTarget) {
       const rect = e.currentTarget.getBoundingClientRect();
       const nx = rect.width ? (e.clientX - rect.left) / rect.width : 0.5;
@@ -10377,7 +10375,6 @@ class Component extends DCLogic {
 
   tourbyClick(e) {
     if (!this.tourbyVisible()) return;
-    if (e && e.target !== e.currentTarget) return;
     if (e && e.currentTarget) {
       const rect = e.currentTarget.getBoundingClientRect();
       const nx = rect.width ? (e.clientX - rect.left) / rect.width : 0.5;
@@ -10484,7 +10481,6 @@ class Component extends DCLogic {
 
   morthenClick(e) {
     if (!this.morthenVisible()) return;
-    if (e && e.target !== e.currentTarget) return;
     if (e && e.currentTarget) {
       const rect = e.currentTarget.getBoundingClientRect();
       const nx = rect.width ? (e.clientX - rect.left) / rect.width : 0.5;
@@ -10525,7 +10521,6 @@ class Component extends DCLogic {
   }
 
   hevannClick(e) {
-    if (e && e.target !== e.currentTarget) return;
     if (e && e.currentTarget) {
       const rect = e.currentTarget.getBoundingClientRect();
       const nx = rect.width ? (e.clientX - rect.left) / rect.width : 0.5;
@@ -12968,7 +12963,7 @@ class Component extends DCLogic {
         onMouseEnter: () => this.setState({ hoveredActivity: i }),
         onMouseLeave: () => this.setState({ hoveredActivity: null }),
         onClick: a.label === 'Entraînement' ? (() => this.openTrainingMenu())
-          : a.label === 'Métiers' ? (() => (this.state.unlockedJobs.assistant_boutiquier ? this.openTravauxMenu() : this.showActionInfo('Vous n\u2019avez débloqué aucun métier ! Mais peut-être que quelqu\u2019un aurait besoin de vous quelque part ?')))
+          : a.label === 'Métiers' ? (() => (this.state.unlockedJobs.assistant_boutiquier ? this.toggleMetiers() : this.showActionInfo('Vous n\u2019avez débloqué aucun métier ! Mais peut-être que quelqu\u2019un aurait besoin de vous quelque part ?')))
           : a.label === 'Corvées' ? (() => this.hasAnyChoreUnlocked() ? this.openCorveesMenu() : this.showActionInfo('Aucune corvée n’a encore été débloquée'))
           : a.label === 'Relations' ? (() => this.toggleRelations())
           : a.label === 'Cuisine' ? (() => this.showActionInfo("Il n'y a personne pour faire la cuisine... pour l'instant !"))
