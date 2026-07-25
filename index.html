@@ -460,7 +460,7 @@
           <img src="./assets/morthen-assis.png" alt="Morthen" style="position:absolute;inset:0;width:100%;height:100%;object-fit:fill;pointer-events:none;z-index:1">
         </sc-if>
         <sc-if value="{{ tourbyVisible }}" hint-placeholder-val="{{ false }}">
-          <img src="./assets/tourby-riviere.png" alt="Tourby" style="position:absolute;inset:0;width:100%;height:100%;object-fit:fill;pointer-events:none;z-index:1">
+          <img src="./assets/tourby-riviere.png" alt="Tourby" style="position:absolute;inset:0;width:100%;height:100%;object-fit:contain;pointer-events:none;z-index:1">
         </sc-if>
         <sc-if value="{{ bourbellaVisible }}" hint-placeholder-val="{{ false }}">
           <img src="./assets/bourbella-cabane.png" alt="Bourbella" style="position:absolute;inset:0;width:100%;height:100%;object-fit:fill;pointer-events:none;z-index:1">
@@ -4679,7 +4679,7 @@ class Component extends DCLogic {
 
       let illnessRisk = isDirty
         ? Math.min(illnessRiskMaxFor(s.devPhase), s.illnessRisk + 0.25 * dirtMultiplier)
-        : s.illnessRisk;
+        : Math.max(0, s.illnessRisk - 0.5);
       if (isInjured) illnessRisk = Math.min(illnessRiskMaxFor(s.devPhase), illnessRisk + 0.5);
 
       // Cumul quotidien des humeurs (1h à minuit) ; au passage au jour suivant, un total > 1200 fait progresser le trait lié (Curiosité/Résolution/Discernement/Observation/Anticipation).
@@ -12963,7 +12963,7 @@ class Component extends DCLogic {
         onMouseEnter: () => this.setState({ hoveredActivity: i }),
         onMouseLeave: () => this.setState({ hoveredActivity: null }),
         onClick: a.label === 'Entraînement' ? (() => this.openTrainingMenu())
-          : a.label === 'Métiers' ? (() => (this.state.unlockedJobs.assistant_boutiquier ? this.toggleMetiers() : this.showActionInfo('Vous n\u2019avez débloqué aucun métier ! Mais peut-être que quelqu\u2019un aurait besoin de vous quelque part ?')))
+          : a.label === 'Métiers' ? (() => (this.state.unlockedJobs.assistant_boutiquier ? this.openTravauxMenu() : this.showActionInfo('Vous n\u2019avez débloqué aucun métier ! Mais peut-être que quelqu\u2019un aurait besoin de vous quelque part ?')))
           : a.label === 'Corvées' ? (() => this.hasAnyChoreUnlocked() ? this.openCorveesMenu() : this.showActionInfo('Aucune corvée n’a encore été débloquée'))
           : a.label === 'Relations' ? (() => this.toggleRelations())
           : a.label === 'Cuisine' ? (() => this.showActionInfo("Il n'y a personne pour faire la cuisine... pour l'instant !"))
