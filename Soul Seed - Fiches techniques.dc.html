@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  body { margin: 0; background: #f4ecd8; }
+  a { color: #7a5a2e; }
+  a:hover { color: #5b4321; }
+</style>
+</helmet>
+<div style="min-height:100vh;background:#f4ecd8;font-family:Inter,system-ui,sans-serif;color:#2b2318;padding:32px 24px 60px;box-sizing:border-box">
+  <div style="max-width:1080px;margin:0 auto;display:flex;flex-direction:column;gap:20px">
+    <div>
+      <div style="font-family:Cinzel,serif;font-weight:700;font-size:28px;color:#3a2e1c">Fiches techniques des échos</div>
+      <div style="font-size:13px;color:#7a6b52;margin-top:2px">Soul Seed — Forgotten Echoes · document de référence interne</div>
+    </div>
+
+    <div style="display:flex;gap:8px;border-bottom:2px solid #d8c9a0">
+      <button onClick="{{ onTabPlayable }}" style="padding:10px 20px;border:none;border-bottom:3px solid {{ tabPlayableBorder }};background:transparent;color:{{ tabPlayableColor }};font-weight:700;font-size:14px;font-family:Inter,sans-serif;cursor:pointer">Échos jouables</button>
+      <button onClick="{{ onTabHabitants }}" style="padding:10px 20px;border:none;border-bottom:3px solid {{ tabHabitantsBorder }};background:transparent;color:{{ tabHabitantsColor }};font-weight:700;font-size:14px;font-family:Inter,sans-serif;cursor:pointer">Habitants</button>
+      <button onClick="{{ onTabTechniques }}" style="padding:10px 20px;border:none;border-bottom:3px solid {{ tabTechniquesBorder }};background:transparent;color:{{ tabTechniquesColor }};font-weight:700;font-size:14px;font-family:Inter,sans-serif;cursor:pointer">Techniques</button>
+      <button onClick="{{ onTabObjets }}" style="padding:10px 20px;border:none;border-bottom:3px solid {{ tabObjetsBorder }};background:transparent;color:{{ tabObjetsColor }};font-weight:700;font-size:14px;font-family:Inter,sans-serif;cursor:pointer">Objets</button>
+    </div>
+
+    <sc-if value="{{ showPlayable }}" hint-placeholder-val="{{ true }}">
+      <div style="display:flex;flex-direction:column;gap:24px">
+        <div style="background:#fffaf0;border:1px solid #d8c9a0;border-radius:12px;padding:18px 20px">
+          <div style="font-weight:700;font-size:15px;margin-bottom:8px">Système d'évolution</div>
+          <div style="font-size:13.5px;line-height:1.6;color:#4a3e2c">Chaque écho naît Bébé d'une graine (ou d'un choix Neutre), en variante <strong>Primaire</strong> ou <strong>Dark</strong>. Il évolue automatiquement Bébé → Enfant → Adolescent selon l'éducation reçue ; au stade Adolescent, deux lignées Enfant peuvent aussi fusionner en une <strong>branche partagée</strong> plutôt que suivre leur évolution directe. Techniques débloquées par palier d'Intelligence : 150 / 350 / 550 / 750 — 3 équipables au maximum simultanément.</div>
+        </div>
+
+        <sc-for list="{{ stageGroups }}" as="stage" hint-placeholder-count="3">
+          <div style="display:flex;flex-direction:column;gap:10px">
+            <div style="font-family:Cinzel,serif;font-weight:700;font-size:18px;color:#3a2e1c;border-bottom:2px solid #d8c9a0;padding-bottom:6px">{{ stage.label }}</div>
+            <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:14px">
+              <sc-for list="{{ stage.forms }}" as="f" hint-placeholder-count="6">
+                <div style="background:#fffaf0;border:1px solid {{ f.borderColor }};border-radius:12px;padding:14px 16px;display:flex;flex-direction:column;gap:6px">
+                  <div style="display:flex;align-items:center;gap:10px">
+                    <img src="{{ f.img }}" alt="{{ f.name }}" style="width:44px;height:56px;object-fit:contain">
+                    <div style="font-weight:700;font-size:14.5px;color:{{ f.color }}">{{ f.name }}</div>
+                  </div>
+                  <div style="font-size:12px;line-height:1.5;color:#4a3e2c"><strong>Prévolution :</strong> {{ f.prevolution }}</div>
+                  <div style="font-size:12px;line-height:1.5;color:#4a3e2c"><strong>Évolution :</strong> {{ f.evolution }}</div>
+                  <div style="font-size:11.5px;line-height:1.5;color:#4a3e2c;margin-top:2px"><strong>Techniques :</strong> {{ f.techniques }}</div>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+        </sc-for>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ showHabitants }}" hint-placeholder-val="{{ false }}">
+      <div style="display:flex;flex-direction:column;gap:16px">
+        <sc-for list="{{ habitants }}" as="h" hint-placeholder-count="6">
+          <div style="background:#fffaf0;border:1px solid #d8c9a0;border-radius:14px;padding:18px 20px;display:flex;gap:16px">
+            <div style="display:flex;flex-shrink:0">
+              <img src="{{ h.img }}" alt="{{ h.name }}" style="width:80px;height:80px;object-fit:contain">
+              <sc-if value="{{ h.img2 }}" hint-placeholder-val="{{ false }}">
+                <img src="{{ h.img2 }}" alt="{{ h.name }}" style="width:80px;height:80px;object-fit:contain;margin-left:-14px">
+              </sc-if>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:6px;flex:1">
+              <div style="display:flex;align-items:baseline;gap:10px">
+                <div style="font-weight:700;font-size:16px">{{ h.name }}</div>
+                <div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:#a8871f">{{ h.role }}</div>
+              </div>
+              <div style="font-size:13px;line-height:1.55;color:#4a3e2c">{{ h.desc }}</div>
+              <sc-if value="{{ h.hasStats }}" hint-placeholder-val="{{ false }}">
+                <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:4px">
+                  <sc-for list="{{ h.stats }}" as="s" hint-placeholder-count="6">
+                    <div style="background:#f4ecd8;border-radius:6px;padding:4px 10px;font-size:11.5px;font-weight:700">{{ s.label }} : {{ s.value }}</div>
+                  </sc-for>
+                </div>
+              </sc-if>
+            </div>
+          </div>
+        </sc-for>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ showTechniques }}" hint-placeholder-val="{{ false }}">
+      <div style="display:flex;flex-direction:column;gap:22px">
+        <div style="background:#fffaf0;border:1px solid #d8c9a0;border-radius:12px;padding:18px 20px">
+          <div style="font-weight:700;font-size:15px;margin-bottom:8px">32 techniques, 8 éléments</div>
+          <div style="font-size:13.5px;line-height:1.6;color:#4a3e2c">4 techniques par élément. Débloquées au hasard dans le pool de l’écho (selon lignée et stade) à chaque palier d’Intelligence franchi : 150 / 350 / 550 / 750. Une technique apprise reste acquise définitivement ; jusqu’à 3 équipables simultanément (équipement débloqué à 500 d’Intelligence).</div>
+        </div>
+        <sc-for list="{{ techniqueGroups }}" as="grp" hint-placeholder-count="8">
+          <div style="display:flex;flex-direction:column;gap:10px">
+            <div style="display:flex;align-items:center;gap:10px;border-bottom:2px solid #d8c9a0;padding-bottom:6px">
+              <img src="{{ grp.icon }}" alt="{{ grp.label }}" style="width:28px;height:28px;object-fit:contain">
+              <div style="font-family:Cinzel,serif;font-weight:700;font-size:17px;color:{{ grp.color }}">{{ grp.label }}</div>
+            </div>
+            <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px">
+              <sc-for list="{{ grp.techniques }}" as="t" hint-placeholder-count="4">
+                <div style="background:#fffaf0;border:1px solid {{ grp.color }};border-radius:10px;padding:12px 14px;display:flex;flex-direction:column;gap:5px">
+                  <div style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+                    <div style="font-weight:700;font-size:13.5px">{{ t.name }}</div>
+                    <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.03em;color:#a8871f">{{ t.role }}</div>
+                  </div>
+                  <div style="font-size:12px;line-height:1.5;color:#4a3e2c">{{ t.desc }}</div>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+        </sc-for>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ showObjets }}" hint-placeholder-val="{{ false }}">
+      <div style="display:flex;flex-direction:column;gap:24px">
+        <sc-for list="{{ objetGroups }}" as="grp" hint-placeholder-count="6">
+          <div style="display:flex;flex-direction:column;gap:10px">
+            <div style="font-family:Cinzel,serif;font-weight:700;font-size:17px;color:#3a2e1c;border-bottom:2px solid #d8c9a0;padding-bottom:6px">{{ grp.label }}</div>
+            <div style="display:flex;flex-direction:column;gap:10px">
+              <sc-for list="{{ grp.items }}" as="obj" hint-placeholder-count="6">
+                <div style="background:#fffaf0;border:1px solid #d8c9a0;border-radius:12px;padding:16px 18px;display:flex;gap:14px">
+                  <img src="{{ obj.icon }}" alt="{{ obj.name }}" style="width:56px;height:56px;object-fit:contain;flex-shrink:0">
+                  <div style="display:flex;flex-direction:column;gap:4px;flex:1">
+                    <div style="font-weight:700;font-size:14px">{{ obj.name }}</div>
+                    <div style="font-size:12px;line-height:1.5;color:#4a3e2c">{{ obj.desc }}</div>
+                    <sc-if value="{{ obj.price }}" hint-placeholder-val="{{ false }}">
+                      <div style="font-size:11.5px;color:#7a6b52;margin-top:2px"><strong>Prix :</strong> {{ obj.price }} pièces</div>
+                    </sc-if>
+                  </div>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+        </sc-for>
+      </div>
+    </sc-if>
+  </div>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  state = { tab: 'playable' };
+
+  renderVals() {
+    const stageGroups = this.buildStageGroups();
+    const habitants = [
+      { name: 'Jumpy', role: 'Marchand', img: './assets/boutique-vendeur.png', desc: 'Tient la boutique du ranch : nourriture, soins et objets divers, stock renouvelé chaque jour. Propose aussi de l\u2019entraînement au combat et des petits boulots contre de l\u2019argent.', hasStats: false },
+      { name: 'Myhra', role: 'Gardienne du sanctuaire', img: './assets/gardienne-neutre.png', desc: 'Veille sur le sanctuaire du village. Renseigne sur la prospérité du village, le monde, et prodigue des conseils pour rassurer ou éduquer son écho.', hasStats: false },
+      { name: 'Lady Roger', role: 'Boss vaincue → marchande de curiosités', img: './assets/lady-roger.png', desc: 'Rencontrée dans le village en ruines, hostile au premier abord. Vaincue en combat, elle rejoint le village puis ouvre 12h plus tard un stand rachetant les curiosités trouvées en exploration.', hasStats: true, stats: [{ label: 'Force', value: 45 }, { label: 'Agilité', value: 60 }, { label: 'Endurance', value: 60 }, { label: 'Robustesse', value: 50 }, { label: 'Intelligence', value: 100 }, { label: 'Perception', value: 100 }] },
+      { name: 'Garry', role: 'Boss de la forêt détruite', img: './assets/garry-combat.png', desc: 'Affronté à l\u2019entrée de la zone 17 (Forêt détruite). Une fois vaincu, il rejoint le village.', hasStats: true, stats: [{ label: 'Taille', value: '1.15' }, { label: 'Force', value: 415 }, { label: 'Agilité', value: 295 }, { label: 'Endurance', value: 305 }, { label: 'Robustesse', value: 350 }, { label: 'Intelligence', value: 220 }, { label: 'Perception', value: 200 }, { label: 'Techniques', value: 'Coup brutal, Onde de choc, Boule de feu' }] },
+      { name: 'Hevann', role: 'Boss du chemin de forêt → entraîneur', img: './assets/hevann.png', desc: 'Bloque le passage en zone 16 (Chemin de forêt) tant qu\u2019il n\u2019est pas vaincu. Vaincu, il rejoint le village puis s\u2019installe au sanctuaire : propose « Améliorer l\u2019entraînement » (nécessite un Dojo, pas encore constructible) et « Motiver l\u2019écho » (boost x1,75 des gains d\u2019entraînement pendant 6h, une fois toutes les 48h).', hasStats: true, stats: [{ label: 'Taille', value: '1.1' }, { label: 'Force', value: 315 }, { label: 'Agilité', value: 250 }, { label: 'Endurance', value: 280 }, { label: 'Robustesse', value: 290 }, { label: 'Intelligence', value: 240 }, { label: 'Perception', value: 200 }, { label: 'Technique', value: 'Pong incandescent' }] },
+      { name: 'Tourby', role: 'Acteur reconverti en jardinier', img: './assets/tourby.png', desc: 'Rencontré en train de faire semblant de se noyer dans la rivière (zone 7). Une fois « sauvé » et son numéro démasqué, il rejoint le village et débloque le Jardin 12h plus tard : récolte journalière de nodules nutritifs (2/jour). « Nodules nutritifs ? » et « Aménager le potager » en développement.', hasStats: false },
+      { name: 'Bourbella', role: 'Créature visqueuse, maîtresse des anguilles', img: './assets/bourbella.png', desc: 'Postée devant la cabane de la forêt (zone 5), tous les jours de 4h à 14h. Obsédée par les anguilles « poisseuses et gluantes » : offre une canne à pêche contre la promesse de lui en ramener une, ou peut être combattue (chemin de réconciliation équivalent après combat). Rapporter une anguille la fait rejoindre le village. Une fois recrutée : « Discuter » (en développement) et « Améliorer la pêche » (contre une anguille donnée, une fois par jour, booste temporairement de 24h le taux de réussite de pêche du joueur).', hasStats: true, stats: [{ label: 'Taille', value: '1.05' }, { label: 'Force', value: 85 }, { label: 'Agilité', value: 100 }, { label: 'Endurance', value: 120 }, { label: 'Robustesse', value: 130 }, { label: 'Intelligence', value: 95 }, { label: 'Perception', value: 90 }] },
+      { name: 'Ash', role: 'PNJ volé \u2192 bâtisseur du village', img: './assets/ash.png', desc: 'Rencontré au passage devant la caverne (zone 11), tous les jours de 8h à 20h. Se plaint de deux voleurs qui lui ont pris son marteau. Une fois ce dialogue passé, Phil et Hibert apparaissent la nuit (22h-7h) dans la cabane (zone 6) ; un bouton « Inspecter la cabane » le jour permet de les repérer, leur parler mène à un combat 1 vs 2 pour récupérer le marteau. Le rendre à Ash le fait rejoindre le village (+2 Prospérité). Une fois au village : dialogue d\u2019introduction, puis menu « Discuter » (en développement) / « Réaliser des travaux » ouvrant une fenêtre de construction (onglets Village en développement / Ranch) ; la colonne Corvées du Ranch débloque, une à la fois, chacune des 6 corvées contre 20 or et 6h de travaux.', hasStats: false },
+      { name: 'Karla', role: 'PNJ méfiant (entrée de la forêt)', img: './assets/karla.png', desc: 'Dark Joy présente à l\u2019entrée de la forêt à partir du jour 3 (absente entre 20h et 4h). Se méfie ouvertement du joueur ; dialogue uniquement, pas de combat.', hasStats: false },
+      { name: 'Maïko', role: 'PNJ marchand ambulant', img: './assets/maiko.png', desc: 'Rencontré dans la forêt (zone 2). Propose de l\u2019aide : dépôt/récupération d\u2019objets et échange de nourriture selon les préférences alimentaires de l\u2019écho.', hasStats: false },
+      { name: 'Phil et Hibert', role: 'Duo de voleurs (mini-boss)', img: './assets/phil.png', img2: './assets/hibert.png', desc: 'Débloqués une fois le premier dialogue d\u2019Ash passé ; apparaissent dans la cabane (zone 6) la nuit (22h-7h). Un bouton « Inspecter la cabane » le jour permet de les repérer ; leur parler mène à un combat 1 vs 2 pour récupérer le marteau qu’ils ont volé à Ash. Vaincus, ils disparaissent (le marteau reste au sol si l\u2019inventaire est plein).', hasStats: true, stats: [{ label: 'Phil (Bébé DN)', value: 'Taille 1.1 · Force 135 · Agilité 145 · Endurance 100 · Robustesse 80 · Intelligence 90 · Perception 120' }, { label: 'Hibert (Bébé N)', value: 'Taille 1 · Force 85 · Agilité 140 · Endurance 135 · Robustesse 145 · Intelligence 60 · Perception 50' }] }
+    ];
+    const objets = this.buildObjetList();
+
+    return {
+      showPlayable: this.state.tab === 'playable',
+      showHabitants: this.state.tab === 'habitants',
+      showTechniques: this.state.tab === 'techniques',
+      showObjets: this.state.tab === 'objets',
+      onTabPlayable: () => this.setState({ tab: 'playable' }),
+      onTabHabitants: () => this.setState({ tab: 'habitants' }),
+      onTabTechniques: () => this.setState({ tab: 'techniques' }),
+      onTabObjets: () => this.setState({ tab: 'objets' }),
+      tabPlayableColor: this.state.tab === 'playable' ? '#3a2e1c' : '#a89572',
+      tabPlayableBorder: this.state.tab === 'playable' ? '#c9a86a' : 'transparent',
+      tabHabitantsColor: this.state.tab === 'habitants' ? '#3a2e1c' : '#a89572',
+      tabHabitantsBorder: this.state.tab === 'habitants' ? '#c9a86a' : 'transparent',
+      tabTechniquesColor: this.state.tab === 'techniques' ? '#3a2e1c' : '#a89572',
+      tabTechniquesBorder: this.state.tab === 'techniques' ? '#c9a86a' : 'transparent',
+      tabObjetsColor: this.state.tab === 'objets' ? '#3a2e1c' : '#a89572',
+      tabObjetsBorder: this.state.tab === 'objets' ? '#c9a86a' : 'transparent',
+      stageGroups,
+      habitants,
+      techniqueGroups: this.buildTechniqueGroups(),
+      objetGroups: this.buildObjetGroups(),
+      objets: this.buildObjetList()
+    };
+  }
+
+  buildObjetGroups() {
+    const all = this.buildObjetList();
+    const byName = (name) => all.find(o => o.name === name);
+    const names = (list) => list.map(byName).filter(Boolean);
+    return [
+      { label: 'Soins & santé', items: names(['Pansement', 'Médicament', 'Graine de vie', 'Feuille de vie', 'Rosée Astrale', 'Cristal vital', 'Éclat d\u2019âme']) },
+      { label: 'Objets utiles et combat', items: names(['Pierre incantatoire', 'Appât à écho', 'Repousse']) },
+      { label: 'Outils', items: names(['Canne à pêche']) },
+      { label: 'Nourriture préparée (boutique)', items: names(['Pomme', 'Mangue', 'Poire', 'Pêche', 'Bananes', 'Ananas', 'Carotte', 'Concombre', 'Brocoli', 'Laitue', 'Lentilles', 'Riz', 'Pain', 'Salade composée', 'Pâtes au pesto', 'Risotto à la truffe', 'Steak de bœuf', 'Cuisse de poulet', 'Côtelettes', 'Gigot d’agneau', 'Steak végétal', 'Burger', 'Filet de saumon', 'Filet de thon', 'Sardines', 'Anchois', 'Fromage', 'Bonbons', 'Chocolat noir', 'Riz-Dinde au curry', 'Épluchures', 'Restes']) },
+      { label: 'Forage & exploration (nourriture)', items: names(['Navet', 'Panais', 'Racine amère', 'Fraises des bois', 'Mûres', 'Groseilles sauvages', 'Baies rouges', 'Noisettes', 'Châtaignes', 'Glands', 'Graines sauvages', 'Champignons bruns', 'Champignons blancs', 'Truffe', 'Œuf d’oiseau', 'Miel sauvage', 'Cannelle', 'Herbes aromatiques']) },
+      { label: 'Nodules nutritifs (jardin de Tourby)', items: names(['Nodule nutritif', 'Grand nodule nutritif', 'Nodule nutritif géant']) },
+      { label: 'Poissons cru (pêche)', items: names(['Vairon', 'Chabot', 'Ablette', 'Chevesne', 'Vandoise', 'Barbeau', 'Lamproie', 'Écrevisse', 'Perche', 'Gardon', 'Goujon', 'Carpe', 'Anguille', 'Brochet', 'Truite', 'Esturgeon']) },
+      { label: 'Créatures vivantes (envoi de l’écho)', items: names(['Faisan', 'Perdrix', 'Grenouille', 'Grillon', 'Lézard', 'Lapin', 'Écureuil']) },
+      { label: 'Curiosités (revendables)', items: names(['Morceau de quartz', 'Mue de serpent', 'Pierre gravée', 'Fossile', 'Morceau de statue', 'Anneau rouillé', 'Belle plume', 'Racine tordue', 'Pomme de pin', 'Galet poli']) },
+      { label: 'Objets de quête', items: names(['Marteau d’Ash']) }
+    ].filter(g => g.items.length);
+  }
+
+  buildObjetList() {
+    const items = [];
+    // Soins
+    items.push({ name: 'Pansement', icon: './assets/item-pansement.png', desc: 'Soin léger : referme une blessure. Requis au moins une fois par partie pour continuer après blessure grave.', price: 10 });
+    items.push({ name: 'Médicament', icon: './assets/item-medicament.png', desc: 'Soin complet : élimine blessure, maladie et risque d\u2019infection immédiatement.', price: 25 });
+    items.push({ name: 'Graine de vie', icon: './assets/item-graine-vie.png', desc: 'Bonus de santé : +10% max HP définitif. Cumule avec les autres.', price: 15 });
+    items.push({ name: 'Feuille de vie', icon: './assets/item-feuille-vie.png', desc: 'Bonus de santé renforcé : +30% max HP définitif. Très puissant.', price: 40 });
+    items.push({ name: 'Rosée Astrale', icon: './assets/item-rosee-astrale.png', desc: 'Élixir : +50% max HP, régénère 100% PV, immunité 10000ms. Très rare.', price: 75 });
+    items.push({ name: 'Cristal vital', icon: './assets/item-cristal-vital.png', desc: 'Artefact : +100% max HP définitif, effet permanent. Le plus puissant.', price: 180 });
+    items.push({ name: 'Éclat d\u2019âme', icon: './assets/item-eclat-ame.png', desc: 'Soin rare : +50% max HP et régénération lente sur 10s.', price: 90 });
+    items.push({ name: 'Pierre incantatoire', icon: './assets/item-pierre-incantatoire.png', desc: 'Annule en combat tous les effets négatifs actifs sur son écho (Brûlure, Étourdissement, Empoisonnement, etc.). Utilisable uniquement en combat.', price: 35 });
+    items.push({ name: 'Appât à écho', icon: './assets/item-appat-echo.png', desc: 'Un écho sauvage vous rend visite au ranch : un écho déjà connu (probabilité selon l\u2019affect positif/négatif accumulé avec lui) ou un tout nouvel écho.', price: 45 });
+    items.push({ name: 'Repousse', icon: './assets/item-repousse.png', desc: 'Réduit de 50% la probabilité de tomber sur un écho lors des fouilles et recherches en exploration, pendant 12h après utilisation.', price: 30 });
+    items.push({ name: 'Canne à pêche', icon: './assets/item-canne-peche.png', desc: 'Outil pour la pêche : accès aux étendues d\u2019eau avec poissons variés.', price: 60 });
+    // Fruits et légumes
+    items.push({ name: 'Pomme', icon: './assets/food-pomme.png', desc: 'Fruit classique sucré-acide. Réduit la faim de 12pt.', price: 2 });
+    items.push({ name: 'Mangue', icon: './assets/food-mangue.png', desc: 'Fruit exotique sucré. Réduit la faim de 14pt.', price: 4 });
+    items.push({ name: 'Poire', icon: './assets/food-poire.png', desc: 'Fruit doux et fondant. Réduit la faim de 11pt.', price: 2 });
+    items.push({ name: 'Pêche', icon: './assets/food-peche.png', desc: 'Fruit juteux légèrement acidulé. Réduit la faim de 12pt.', price: 3 });
+    items.push({ name: 'Bananes', icon: './assets/food-bananes.png', desc: 'Fruit exotique sucré et énergisant. Réduit la faim de 14pt.', price: 3 });
+    items.push({ name: 'Ananas', icon: './assets/food-ananas.png', desc: 'Fruit exotique sucré-acidulé. Réduit la faim de 14pt.', price: 4 });
+    items.push({ name: 'Carotte', icon: './assets/food-carotte.png', desc: 'Légume simple et sain. Réduit la faim de 10pt.', price: 2 });
+    items.push({ name: 'Concombre', icon: './assets/food-concombre.png', desc: 'Légume frais et croquant, très hydratant. Réduit la faim de 8pt.', price: 1 });
+    items.push({ name: 'Brocoli', icon: './assets/food-brocoli.png', desc: 'Légume vert légèrement amer. Réduit la faim de 10pt.', price: 2 });
+    items.push({ name: 'Laitue', icon: './assets/food-laitue.png', desc: 'Feuille croquante et légère. Réduit la faim de 6pt.', price: 1 });
+    items.push({ name: 'Navet', icon: './assets/food-navet.png', desc: 'Légume simple amer. Réduit la faim de 9pt.', price: 2 });
+    items.push({ name: 'Panais', icon: './assets/food-panais.png', desc: 'Légume sucré et racine. Réduit la faim de 9pt.', price: 2 });
+    items.push({ name: 'Racine amère', icon: './assets/food-racine-amere.png', desc: 'Légume sauvage au goût amer. Réduit la faim de 7pt.', price: 2 });
+    // Fruits des bois
+    items.push({ name: 'Fraises des bois', icon: './assets/food-fraises-bois.png', desc: 'Petits fruits sucrés trouvés en exploration. Réduit la faim de 6pt.', price: 3 });
+    items.push({ name: 'Mûres', icon: './assets/food-mures.png', desc: 'Fruits sucré-acidulé des ronces. Réduit la faim de 6pt.', price: 3 });
+    items.push({ name: 'Groseilles sauvages', icon: './assets/food-groseilles-sauvages.png', desc: 'Petites baies acidulées trouvées en forêt. Réduit la faim de 5pt.', price: 3 });
+    items.push({ name: 'Baies rouges', icon: './assets/food-baies-rouges.png', desc: 'Baies sucrées sauvages. Réduit la faim de 5pt.', price: 3 });
+    // Légumineuses
+    items.push({ name: 'Noisettes', icon: './assets/food-noisettes.png', desc: 'Légumineuse croquante trouvée en exploration. Réduit la faim de 9pt.', price: 3 });
+    items.push({ name: 'Châtaignes', icon: './assets/food-chataignes.png', desc: 'Légumineuse sucrée d\u2019automne. Réduit la faim de 10pt.', price: 3 });
+    items.push({ name: 'Glands', icon: './assets/food-glands.png', desc: 'Légumineuse amère peu nourrissante. Réduit la faim de 6pt.', price: 1 });
+    items.push({ name: 'Lentilles', icon: './assets/food-lentilles.png', desc: 'Légumineuse roborative et riche. Réduit la faim de 22pt.', price: 5 });
+    items.push({ name: 'Graines sauvages', icon: './assets/food-graines-sauvages.png', desc: 'Légumineuse mineure, très commune en exploration. Réduit la faim de 4pt.', price: 1 });
+    // Champignons
+    items.push({ name: 'Champignons bruns', icon: './assets/food-champignons-bruns.png', desc: 'Champignon umami trouvé en forêt. Réduit la faim de 8pt.', price: 3 });
+    items.push({ name: 'Champignons blancs', icon: './assets/food-champignons-blancs.png', desc: 'Champignon umami cultivé. Réduit la faim de 8pt.', price: 3 });
+    items.push({ name: 'Truffe', icon: './assets/food-truffe.png', desc: 'Champignon précieux et rare umami. Réduit la faim de 12pt.', price: 20 });
+    // Céréales
+    items.push({ name: 'Riz', icon: './assets/food-riz.png', desc: 'Céréale simple et polyvalente. Réduit la faim de 16pt.', price: 2 });
+    items.push({ name: 'Pain', icon: './assets/food-pain.png', desc: 'Aliment céréalier réconfortant. Réduit la faim de 18pt.', price: 3 });
+    // Plats raffinés
+    items.push({ name: 'Salade composée', icon: './assets/food-salade-composee.png', desc: 'Mélange de légumes frais assaisonné. Réduit la faim de 20pt.', price: 5 });
+    items.push({ name: 'Pâtes au pesto', icon: './assets/food-pates-pesto.png', desc: 'Pâtes nappées de pesto au basilic. Réduit la faim de 26pt.', price: 7 });
+    items.push({ name: 'Risotto à la truffe', icon: './assets/food-risotto.png', desc: 'Plat raffiné à la truffe, généreux. Réduit la faim de 30pt.', price: 12 });
+    // Viandes
+    items.push({ name: 'Steak de bœuf', icon: './assets/food-steak.png', desc: 'Viande généreuse et nourrissante. Réduit la faim de 30pt.', price: 8 });
+    items.push({ name: 'Cuisse de poulet', icon: './assets/food-cuisse-poulet.png', desc: 'Viande simple et efficace. Réduit la faim de 26pt.', price: 6 });
+    items.push({ name: 'Côtelettes', icon: './assets/food-cotelettes.png', desc: 'Côtelettes grillées salées. Réduit la faim de 28pt.', price: 8 });
+    items.push({ name: 'Gigot d\u2019agneau', icon: './assets/food-gigot-agneau.png', desc: 'Viande généreuse et savoureuse. Réduit la faim de 32pt.', price: 10 });
+    // Simili-carne
+    items.push({ name: 'Steak végétal', icon: './assets/food-steakvegetal.png', desc: 'Simili-carne à base de végétaux. Réduit la faim de 24pt.', price: 6 });
+    // Fast-food
+    items.push({ name: 'Burger', icon: './assets/food-burger.png', desc: 'Classique du fast-food, riche en viande. Réduit la faim de 28pt.', price: 6 });
+    // Poissons cuits
+    items.push({ name: 'Filet de saumon', icon: './assets/food-saumon.png', desc: 'Filet de poisson délicat. Réduit la faim de 24pt.', price: 7 });
+    items.push({ name: 'Filet de thon', icon: './assets/food-thon.png', desc: 'Filet riche en umami. Réduit la faim de 24pt.', price: 7 });
+    items.push({ name: 'Sardines', icon: './assets/food-sardines.png', desc: 'Petits poissons salés. Réduit la faim de 16pt.', price: 3 });
+    items.push({ name: 'Anchois', icon: './assets/food-anchois.png', desc: 'Minuscules poissons très salés. Réduit la faim de 10pt.', price: 2 });
+    // Poissons crus (pêche)
+    items.push({ name: 'Vairon', icon: './assets/fish-vairon.png', desc: 'Petit poisson de rivière cru. Réduit la faim de 8pt.', price: 0 });
+    items.push({ name: 'Chabot', icon: './assets/fish-chabot.png', desc: 'Petit poisson de rivière cru. Réduit la faim de 8pt.', price: 0 });
+    items.push({ name: 'Ablette', icon: './assets/fish-ablette.png', desc: 'Petit poisson de rivière cru. Réduit la faim de 9pt.', price: 0 });
+    items.push({ name: 'Chevesne', icon: './assets/fish-chevesne.png', desc: 'Poisson de rivière cru umami. Réduit la faim de 10pt.', price: 0 });
+    items.push({ name: 'Vandoise', icon: './assets/fish-vandoise.png', desc: 'Poisson de rivière cru umami. Réduit la faim de 10pt.', price: 0 });
+    items.push({ name: 'Barbeau', icon: './assets/fish-barbeau.png', desc: 'Poisson de rivière cru umami. Réduit la faim de 11pt.', price: 0 });
+    items.push({ name: 'Lamproie', icon: './assets/fish-lamproie.png', desc: 'Poisson de rivière cru riche. Réduit la faim de 13pt.', price: 0 });
+    items.push({ name: 'Écrevisse', icon: './assets/fish-ecrevisse.png', desc: 'Crustacé de rivière cru umami. Réduit la faim de 13pt.', price: 0 });
+    items.push({ name: 'Perche', icon: './assets/fish-perche.png', desc: 'Poisson de lac cru umami. Réduit la faim de 10pt.', price: 0 });
+    items.push({ name: 'Gardon', icon: './assets/fish-gardon.png', desc: 'Poisson de lac cru salé. Réduit la faim de 9pt.', price: 0 });
+    items.push({ name: 'Goujon', icon: './assets/fish-goujon.png', desc: 'Petit poisson de lac cru. Réduit la faim de 8pt.', price: 0 });
+    items.push({ name: 'Carpe', icon: './assets/fish-carpe.png', desc: 'Poisson de lac cru umami. Réduit la faim de 14pt.', price: 0 });
+    items.push({ name: 'Anguille', icon: './assets/fish-anguille.png', desc: 'Poisson de lac cru riche. Réduit la faim de 15pt.', price: 0 });
+    items.push({ name: 'Brochet', icon: './assets/fish-brochet.png', desc: 'Poisson de lac cru nourrissant. Réduit la faim de 17pt.', price: 0 });
+    items.push({ name: 'Truite', icon: './assets/fish-truite.png', desc: 'Poisson de lac cru riche. Réduit la faim de 16pt.', price: 0 });
+    items.push({ name: 'Esturgeon', icon: './assets/fish-esturgeon.png', desc: 'Poisson de lac cru exceptionnel. Réduit la faim de 22pt.', price: 0 });
+    // Produits animaliers
+    items.push({ name: 'Fromage', icon: './assets/food-fromage.png', desc: 'Produit animalier affiné et riche. Réduit la faim de 14pt.', price: 4 });
+    items.push({ name: 'Œuf d\u2019oiseau', icon: './assets/food-oeuf-oiseau.png', desc: 'Protéine trouvée en exploration. Réduit la faim de 10pt.', price: 4 });
+    items.push({ name: 'Miel sauvage', icon: './assets/food-miel-sauvage.png', desc: 'Miel naturel sucré. Réduit la faim de 12pt.', price: 6 });
+    // Sucreries
+    items.push({ name: 'Bonbons', icon: './assets/food-bonbon.png', desc: 'Sucrerie sans intérêt nutritif. Réduit la faim de 6pt.', price: 3 });
+    items.push({ name: 'Chocolat noir', icon: './assets/food-chocolat-noir.png', desc: 'Friandise amère-sucrée. Réduit la faim de 10pt.', price: 4 });
+    // Épices
+    items.push({ name: 'Cannelle', icon: './assets/food-cannelle.png', desc: 'Épice parfumée et piquante. Réduit la faim de 2pt.', price: 2 });
+    items.push({ name: 'Herbes aromatiques', icon: './assets/food-herbes-aromatiques.png', desc: 'Herbes pour relever les plats. Réduit la faim de 2pt.', price: 2 });
+    // Riz-dinde curry
+    items.push({ name: 'Riz-Dinde au curry', icon: './assets/food-riz-dinde-curry.png', desc: 'Plat copieux et épicé. Réduit la faim de 30pt.', price: 9 });
+    // Déchets
+    items.push({ name: 'Épluchures', icon: './assets/food-epluchures.png', desc: 'Déchets alimentaires peu appétissants. Réduit la faim de 4pt.', price: 1 });
+    items.push({ name: 'Restes', icon: './assets/food-restes.png', desc: 'Restes de repas pas très appétissants. Réduit la faim de 6pt.', price: 1 });
+    // Créatures vivantes
+    items.push({ name: 'Faisan', icon: './assets/creature-faisan.png', desc: 'Créature vivante trouvée en exploration. Non mangée directement.', price: 6 });
+    items.push({ name: 'Perdrix', icon: './assets/creature-perdrix.png', desc: 'Créature vivante trouvée en exploration. Non mangée directement.', price: 5 });
+    items.push({ name: 'Grenouille', icon: './assets/creature-grenouille.png', desc: 'Créature vivante trouvée en exploration. Non mangée directement.', price: 2 });
+    items.push({ name: 'Grillon', icon: './assets/creature-grillon.png', desc: 'Créature vivante trouvée en exploration. Non mangée directement.', price: 1 });
+    items.push({ name: 'Lézard', icon: './assets/creature-lezard.png', desc: 'Créature vivante trouvée en exploration. Non mangée directement.', price: 2 });
+    items.push({ name: 'Lapin', icon: './assets/creature-lapin.png', desc: 'Créature vivante trouvée en exploration. Non mangée directement.', price: 5 });
+    items.push({ name: 'Écureuil', icon: './assets/creature-ecureuil.png', desc: 'Créature vivante trouvée en exploration. Non mangée directement.', price: 3 });
+    // Curiosités
+    items.push({ name: 'Morceau de quartz', icon: './assets/curio-quartz.png', desc: 'Minéral cristallin trouvé en exploration. Revendable.', price: 8 });
+    items.push({ name: 'Mue de serpent', icon: './assets/curio-mue-serpent.png', desc: 'Peau de serpent shed trouvée en exploration. Revendable.', price: 5 });
+    items.push({ name: 'Pierre gravée', icon: './assets/curio-pierre-gravee.png', desc: 'Artefact ancien trouvé en exploration. Revendable.', price: 12 });
+    items.push({ name: 'Fossile', icon: './assets/curio-fossile.png', desc: 'Reste de créature ancienne trouvé en exploration. Revendable.', price: 15 });
+    items.push({ name: 'Morceau de statue', icon: './assets/curio-morceau-statue.png', desc: 'Fragment de sculpture ancienne trouvé en exploration. Revendable.', price: 14 });
+    items.push({ name: 'Anneau rouillé', icon: './assets/curio-anneau-rouille.png', desc: 'Objet ancien rouillé trouvé en exploration. Revendable.', price: 10 });
+    items.push({ name: 'Belle plume', icon: './assets/curio-belle-plume.png', desc: 'Plume d\u2019oiseau remarquable trouvée en exploration. Revendable.', price: 6 });
+    items.push({ name: 'Racine tordue', icon: './assets/curio-racine-tordue.png', desc: 'Racine curieusement nouée trouvée en exploration. Revendable.', price: 4 });
+    items.push({ name: 'Pomme de pin', icon: './assets/curio-pomme-pin.png', desc: 'Pomme de pin trouvée en forêt. Revendable.', price: 2 });
+    items.push({ name: 'Galet poli', icon: './assets/curio-galet-poli.png', desc: 'Galet lissé par l\u2019eau trouvé en exploration. Revendable.', price: 3 });
+    items.push({ name: 'Marteau d\u2019Ash', icon: './assets/item-marteau-ash.png', desc: 'Objet de quête lié à Ash : volé par Phil et Hibert, à récupérer en les combattant dans la cabane, puis à rendre à Ash pour qu\u2019il rejoigne le village.', price: 0 });
+    // Nodules nutritifs (jardin de Tourby)
+    items.push({ name: 'Nodule nutritif', icon: './assets/food-nodule-nutritif.png', desc: 'Ni aimé ni détesté, aucune saveur, compatible avec tous les régimes. Réduit la faim de 20pt.', price: 0 });
+    items.push({ name: 'Grand nodule nutritif', icon: './assets/food-grand-nodule-nutritif.png', desc: 'Version plus riche du nodule nutritif. Réduit la faim de 40pt.', price: 0 });
+    items.push({ name: 'Nodule nutritif géant', icon: './assets/food-nodule-nutritif-geant.png', desc: 'Version la plus riche du nodule nutritif. Réduit la faim de 60pt.', price: 0 });
+    return items.sort((a, b) => a.name.localeCompare(b.name));
+  }
+
+  buildStageGroups() {
+    const seeds = [
+      { key: 'joy', baseLine: 'Joy', color: '#b3671a' },
+      { key: 'wrath', baseLine: 'Wrath', color: '#7a2e2e' },
+      { key: 'disgust', baseLine: 'Disgust', color: '#566b3a' },
+      { key: 'sorrow', baseLine: 'Sorrow', color: '#2f5a7a' },
+      { key: 'fear', baseLine: 'Fear', color: '#4a3a6b' }
+    ];
+    const primCode = { joy: 'J', wrath: 'W', disgust: 'D', sorrow: 'S', fear: 'F' };
+    const darkCode = { joy: 'DJ', wrath: 'DW', disgust: 'DD', sorrow: 'DS', fear: 'DF' };
+    const BABY_POOL = {
+      J: ['Second souffle', 'Rayon sacré'], W: ['Poing incandescent', 'Coup brutal'],
+      S: ['Vague apaisante', "Jet haute pression"], F: ['Sphère spectrale', 'Voile fantomatique'],
+      D: ['Spore toxique', 'Peau corrosive'], N: ['Résonance arcanique', 'Barrière magique'],
+      DJ: ['Déchirure', 'Regard funeste'], DW: ['Coup brutal', 'Onde de choc'],
+      DS: ['Absorption vitale', 'Brume engouffrante'], DF: ['Étreinte sombre', 'Abîme'],
+      DD: ['Peau corrosive', 'Absorption vitale'], DN: ['Déchirure', 'Regard funeste']
+    };
+    const ADO_POOL = {
+      J: ['Second souffle', 'Rayon sacré', "Lame de l'aube", 'Onde de choc'],
+      W: ['Poing incandescent', 'Coup brutal', 'Vague solaire', 'Onde de choc'],
+      S: ['Vague apaisante', "Jet haute pression", 'Barrière magique', 'Tourbillon'],
+      F: ['Sphère spectrale', 'Voile fantomatique', 'Résonance arcanique', 'Vague apaisante'],
+      D: ['Spore toxique', 'Peau corrosive', 'Brume engouffrante', 'Orbe de mana'],
+      N: ['Résonance arcanique', 'Barrière magique', "Lame de l'aube", 'Poing incandescent'],
+      DJ: ['Déchirure', 'Regard funeste', 'Morsure venimeuse', 'Cri des âmes'],
+      DW: ['Coup brutal', 'Onde de choc', 'Poing incandescent', 'Abîme'],
+      DS: ['Absorption vitale', 'Brume engouffrante', 'Peau corrosive', 'Anticorps'],
+      DF: ['Étreinte sombre', 'Abîme', 'Malédiction', 'Absorption vitale'],
+      DD: ['Peau corrosive', 'Absorption vitale', 'Étreinte sombre', 'Regard funeste'],
+      DN: ['Déchirure', 'Regard funeste', 'Absorption vitale', 'Résonance arcanique']
+    };
+    const BRANCH_POOL = {
+      'J-DD': ["Lame de l'aube", 'Peau corrosive', 'Étreinte sombre', 'Coup brutal', 'Résonance arcanique'],
+      'W-DJ': ['Coup brutal', 'Déchirure', 'Morsure venimeuse', 'Souffle enflammé', 'Regard funeste'],
+      'F-DW': ['Sphère spectrale', 'Protection impénétrable', 'Éclat éthéré', 'Tourbillon', 'Vague solaire'],
+      'S-DF': ['Voile fantomatique', 'Orbe de mana', 'Brume engouffrante', 'Absorption vitale', "Jet haute pression"],
+      'D-DS': ['Morsure venimeuse', 'Coup brutal', 'Abîme', 'Éclat éthéré', 'Peau corrosive'],
+      'N-DN': ['Déchirure', 'Morsure venimeuse', "Lame de l'aube", 'Souffle enflammé', 'Absorption vitale']
+    };
+    const branches = [
+      { code: 'S-DF', primaryOf: 'sorrow', darkOf: 'fear' },
+      { code: 'J-DD', primaryOf: 'joy', darkOf: 'disgust' },
+      { code: 'F-DW', primaryOf: 'fear', darkOf: 'wrath' },
+      { code: 'W-DJ', primaryOf: 'wrath', darkOf: 'joy' },
+      { code: 'D-DS', primaryOf: 'disgust', darkOf: 'sorrow' },
+      { code: 'N-DN', primaryOf: 'neutral', darkOf: 'neutral' }
+    ];
+    const branchForCode = (code) => branches.find(b => primCode[b.primaryOf] === code || darkCode[b.darkOf] === code || (code === 'N' && b.code === 'N-DN') || (code === 'DN' && b.code === 'N-DN'));
+
+    // Lignes : {code, name, key, color, dark(bool)}
+    const lines = [];
+    seeds.forEach(s => {
+      lines.push({ code: primCode[s.key], name: s.baseLine, key: s.key, color: s.color, dark: false, seedName: s.baseLine === 'Joy' ? 'Graine solaire' : s.baseLine === 'Wrath' ? 'Graine tellurique' : s.baseLine === 'Disgust' ? 'Graine caustique' : s.baseLine === 'Sorrow' ? 'Graine boréale' : 'Graine spectrale' });
+      lines.push({ code: darkCode[s.key], name: 'Dark ' + s.baseLine, key: s.key, color: s.color, dark: true, seedName: s.baseLine === 'Joy' ? 'Graine solaire' : s.baseLine === 'Wrath' ? 'Graine tellurique' : s.baseLine === 'Disgust' ? 'Graine caustique' : s.baseLine === 'Sorrow' ? 'Graine boréale' : 'Graine spectrale' });
+    });
+    lines.push({ code: 'N', name: 'Neutre', key: 'neutre', color: '#5a5044', dark: false, seedName: null });
+    lines.push({ code: 'DN', name: 'Dark Neutre', key: 'neutre', color: '#5a5044', dark: true, seedName: null });
+
+    const bebeImg = (l) => l.key === 'neutre' ? './assets/bebe-' + (l.dark ? 'dark-neutre' : 'neutre') + '.png' : './assets/bebe-' + (l.dark ? 'dark-' : '') + l.key + '.png';
+    const enfantImg = (l) => l.key === 'neutre' ? './assets/enfant-' + (l.dark ? 'dark-neutre' : 'neutre') + '.png' : './assets/enfant-' + (l.dark ? 'dark-' : '') + l.key + '.png';
+    const adoImg = (l) => {
+      if (l.key === 'neutre') return './assets/ado-' + (l.dark ? 'dark-neutre' : 'neutre') + '.png';
+      if (l.key === 'joy' && !l.dark) return './assets/ado-joy-m.png';
+      if (l.key === 'joy' && l.dark) return './assets/ado-dark-joy-m.png';
+      return './assets/ado-' + (l.dark ? 'dark-' : '') + l.key + '.png';
+    };
+    const techList = (names) => names.join(', ');
+
+    const bebes = lines.map(l => ({
+      name: l.name, color: l.color, borderColor: l.color, img: bebeImg(l),
+      prevolution: l.seedName ? l.seedName : 'Aucune (choix Neutre au démarrage)',
+      evolution: 'Enfant ' + l.name,
+      techniques: techList(BABY_POOL[l.code])
+    }));
+    const enfants = lines.map(l => {
+      const branch = branchForCode(l.code);
+      const partnerLine = branch ? lines.find(pl => pl.code === (primCode[l.key] === l.code ? darkCode[branch.darkOf] : primCode[branch.primaryOf])) : null;
+      const evoParts = ['Adolescent ' + l.name + ' (directe)'];
+      if (branch && partnerLine) evoParts.push('branche ' + branch.code + ' (fusion avec Enfant ' + partnerLine.name + ')');
+      return {
+        name: l.name, color: l.color, borderColor: l.color, img: enfantImg(l),
+        prevolution: 'Bébé ' + l.name,
+        evolution: evoParts.join(' OU '),
+        techniques: techList(BABY_POOL[l.code]) + ' (identiques au stade Bébé)'
+      };
+    });
+    const adosDirect = lines.map(l => ({
+      name: l.name, color: l.color, borderColor: l.color, img: adoImg(l),
+      prevolution: 'Enfant ' + l.name,
+      evolution: 'Stade final actuellement disponible (Adulte à venir)',
+      techniques: techList(ADO_POOL[l.code])
+    }));
+    const FRAG_POOL = {
+      'PM+': ['Coup brutal', 'Déchirure', 'Onde de choc', 'Morsure venimeuse', 'Absorption vitale', 'Cri des âmes'],
+      'C+': ['Orbe de mana', 'Éclat éthéré', 'Sanctuaire', 'Rayon sacré', 'Vague solaire', 'Malédiction'],
+      'SA+': ['Second souffle', 'Barrière magique', 'Protection impénétrable', 'Vague apaisante', 'Anticorps', 'Rayon sacré']
+    };
+    const fragments = [
+      { code: 'C+', name: 'Cognitif+', img: './assets/ado-fragment-cognitif.png', domain: 'l\u2019éducation Cognitive' },
+      { code: 'PM+', name: 'Psychomoteur+', img: './assets/ado-fragment-psychomoteur.png', domain: 'l\u2019éducation Psychomotrice' },
+      { code: 'SA+', name: 'Socio-affectif+', img: './assets/ado-fragment-socio.png', domain: 'l\u2019éducation Socio-affective' }
+    ];
+    const adosFragment = fragments.map(f => ({
+      name: f.name, color: '#a04a3a', borderColor: '#a04a3a', img: f.img,
+      prevolution: 'N\u2019importe quel Enfant, si ' + f.domain + ' a représenté 80% ou plus de son éducation totale (forme exceptionnelle, remplace la lignée)',
+      evolution: 'Stade final actuellement disponible (Adulte à venir)',
+      techniques: techList(FRAG_POOL[f.code])
+    }));
+    const adosBranch = branches.map(b => {
+      const primaryLine = lines.find(l => l.code === primCode[b.primaryOf]);
+      const darkLine = lines.find(l => l.code === darkCode[b.darkOf]);
+      const pName = b.primaryOf === 'neutral' ? 'Neutre' : primaryLine.name;
+      const dName = b.darkOf === 'neutral' ? 'Dark Neutre' : darkLine.name;
+      return {
+        name: 'Branche ' + b.code, color: '#8a5a1f', borderColor: '#c9791f', img: './assets/ado-branch-' + b.code.toLowerCase() + '.png',
+        prevolution: 'Enfant ' + pName + ' + Enfant ' + dName + ' (fusion)',
+        evolution: 'Stade final actuellement disponible (Adulte à venir)',
+        techniques: techList(BRANCH_POOL[b.code])
+      };
+    });
+
+    return [
+      { label: 'Stade Bébé', forms: bebes },
+      { label: 'Stade Enfant', forms: enfants },
+      { label: 'Stade Adolescent', forms: adosDirect.concat(adosBranch).concat(adosFragment) }
+    ];
+  }
+
+  buildTechniqueGroups() {
+    const ELEMENTS = [
+      { key: 'physique', label: 'Physique', color: '#7a5a3a', icon: './assets/tech-physique.png' },
+      { key: 'spectral', label: 'Spectral', color: '#4a3a6b', icon: './assets/tech-spectral.png' },
+      { key: 'poison', label: 'Poison', color: '#566b3a', icon: './assets/tech-poison.png' },
+      { key: 'aquatique', label: 'Aquatique', color: '#2f5a7a', icon: './assets/tech-aquatique.png' },
+      { key: 'incendiaire', label: 'Incendiaire', color: '#b3671a', icon: './assets/tech-incendiaire.png' },
+      { key: 'malefique', label: 'Maléfique', color: '#7a2e2e', icon: './assets/tech-malefique.png' },
+      { key: 'lumineux', label: 'Lumineux', color: '#a8871f', icon: './assets/tech-lumineux.png' },
+      { key: 'ethere', label: 'Éthéré', color: '#3a7a6b', icon: './assets/tech-ethere.png' }
+    ];
+    const TECHNIQUES = {
+      physique: ['Coup brutal', 'Second souffle', 'Déchirure', 'Onde de choc'],
+      spectral: ['Sphère spectrale', 'Cri des âmes', 'Voile fantômatique', 'Étreinte sombre'],
+      poison: ['Morsure venimeuse', 'Spore toxique', 'Peau corrosive', 'Anticorps'],
+      aquatique: ['Vague apaisante', 'Brume engouffrante', 'Tourbillon', "Jet haute pression"],
+      incendiaire: ['Boule de feu', 'Poing incandescent', 'Vague solaire', 'Souffle enflammé'],
+      malefique: ['Regard funeste', 'Absorption vitale', 'Abîme', 'Malédiction'],
+      lumineux: ['Rayon sacré', 'Protection impénétrable', 'Sanctuaire', "Lame de l'aube"],
+      ethere: ['Barrière magique', 'Résonance arcanique', 'Éclat éthéré', 'Orbe de mana']
+    };
+    const ROLE_LABELS = { aggressive: 'Agressif', defensive: 'Défensif', prevent: 'Préventif' };
+    const PREVENT = ['Second souffle', 'Voile fantômatique', 'Peau corrosive', 'Anticorps', 'Barrière magique', 'Résonance arcanique', 'Malédiction', 'Regard funeste'];
+    const DEFENSIVE = ['Anticorps', 'Vague apaisante', 'Protection impénétrable', 'Sanctuaire'];
+    const roleFor = (name) => DEFENSIVE.includes(name) ? 'defensive' : PREVENT.includes(name) ? 'prevent' : 'aggressive';
+    return ELEMENTS.map(el => ({
+      label: el.label, color: el.color, icon: el.icon,
+      techniques: TECHNIQUES[el.key].map(name => ({ name, role: ROLE_LABELS[roleFor(name)], desc: this.techDesc(name) }))
+    }));
+  }
+
+  techDesc(name) {
+    const D = {
+      'Coup brutal': 'Attaque perçant 50% de la résistance adverse, avec 20% de chances d\u2019étourdissement.',
+      'Second souffle': 'Régénère 10% des PV sur 15s et applique Immunité 15s sur soi.',
+      'Déchirure': 'Attaque perçant 50% de la résistance, 35% de chances de Saignement.',
+      'Onde de choc': 'Attaque de zone, 40% de chances d\u2019étourdissement.',
+      'Sphère spectrale': 'Attaque à distance, 25% de chances de Terreur.',
+      'Cri des âmes': 'Applique Terreur et Ralentissement à l\u2019adversaire sans attaquer (80%).',
+      'Voile fantomatique': 'Applique Rapidité, Protection et Immunité sur soi (10s).',
+      'Étreinte sombre': 'Attaque pouvant provoquer Étourdissement (30%) et Empoisonnement (35%).',
+      'Morsure venimeuse': 'Attaque, 60% de chances d\u2019Empoisonnement.',
+      'Spore toxique': 'Attaque de zone, 50% de chances d\u2019Empoisonnement sur les adversaires touchés.',
+      'Peau corrosive': 'Applique Renvoi de dégâts (20%, 15s) ; chaque coup reçu a 20% de chances d\u2019empoisonner l\u2019attaquant.',
+      'Anticorps': 'Étourdit et régénère 30% des PV sur soi (15s).',
+      'Vague apaisante': 'Régénère 25% des PV sur soi (15s) mais applique Ralentissement (10s).',
+      'Brume engouffrante': 'Attaque de zone, 20% de Terreur et 20% de Ralentissement.',
+      'Tourbillon': 'Attaque de zone, 60% de chances d\u2019Annulation.',
+      "Jet haute pression": 'Attaque à distance perçant 50% de la résistance.',
+      'Boule de feu': 'Attaque à distance, 70% de chances d\u20191 Brûlure.',
+      'Poing incandescent': 'Attaque, applique toujours 1 Brûlure.',
+      'Vague solaire': 'Attaque de zone, 70% pour 1 Brûlure puis 30% pour une 2e.',
+      'Souffle enflammé': 'Sans dégâts : applique 2 Brûlures (100%), 50% pour une 3e, 25% pour une 4e.',
+      'Regard funeste': 'Applique Terreur et Annulation à l\u2019adversaire sans attaquer.',
+      'Absorption vitale': 'Attaque qui vole 50% des dégâts infligés en PV.',
+      'Abîme': 'Attaque de zone perçant 50% de la résistance, applique Annulation.',
+      'Malédiction': 'Applique Annulation, Empoisonnement, Brûlure et Ralentissement à l\u2019adversaire ; le lanceur perd 30% de sa vie restante.',
+      'Rayon sacré': 'Attaque à distance, 50% de chances d\u2019étourdissement.',
+      'Protection impénétrable': 'Applique Immunité et Protection sur soi (15s).',
+      'Sanctuaire': 'Régénère 20% des PV, applique Protection et Rapidité (20s), mais étourdit le lanceur.',
+      "Lame de l'aube": 'Attaque perçant 50% de la résistance, 50% de chances d\u20191 Brûlure.',
+      'Barrière magique': 'Applique Protection sur soi.',
+      'Résonance arcanique': 'Applique Rapidité sur soi.',
+      'Éclat éthéré': 'Attaque à distance, 15% pour 1 Brûlure et 15% d\u2019Empoisonnement.',
+      'Orbe de mana': 'Attaque à distance, 40% d\u2019étourdissement, 10% Brûlure et 10% Empoisonnement.'
+    };
+    return D[name] || '';
+  }
+}
+
+</script>
+</body>
+</html>

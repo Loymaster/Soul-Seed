@@ -1,0 +1,930 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+
+<helmet>
+  <style>
+    body { margin: 0; background: #1c1712; }
+    ::-webkit-scrollbar { width: 8px; }
+    select { font-family: system-ui; }
+    [data-speaker-tag]:empty { display: none; }
+  </style>
+</helmet>
+<div style="min-height:100vh;background:#241d14;color:#f0e6d6;font-family:system-ui,sans-serif;padding:28px 20px 80px">
+  <sc-if value="{{ true }}" hint-placeholder-val="{{ true }}">
+    <div style="max-width:960px;margin:0 auto;display:flex;flex-direction:column;gap:20px">
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px">
+        <div>
+          <div style="font-size:22px;font-weight:800">Éditeur de dialogues — Soul Seed</div>
+          <div style="font-size:13px;color:#b8a888">Enregistre puis exporte le JSON pour me le transmettre en vue de l'intégration finale.</div>
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button onClick="{{ onSave }}" style="padding:9px 16px;border-radius:8px;border:none;background:#4a7a4a;color:#fff;font-weight:700;cursor:pointer">Enregistrer</button>
+          <button onClick="{{ onExport }}" style="padding:9px 16px;border-radius:8px;border:1px solid #4a3f2e;background:#2e2418;color:#f0e6d6;cursor:pointer">Exporter JSON</button>
+          <label style="padding:9px 16px;border-radius:8px;border:1px solid #4a3f2e;background:#2e2418;color:#f0e6d6;cursor:pointer">
+            Importer JSON
+            <input type="file" accept="application/json" onChange="{{ onImport }}" style="display:none" />
+          </label>
+          <button onClick="{{ onResetDefaults }}" style="padding:9px 16px;border-radius:8px;border:1px solid #6b3a3a;background:#3a1f1f;color:#e0a0a0;cursor:pointer">Réinitialiser</button>
+        </div>
+      </div>
+      <sc-if value="{{ savedFlash }}" hint-placeholder-val="{{ false }}">
+        <div style="background:#2f4a2f;border:1px solid #4a7a4a;border-radius:8px;padding:10px 14px;font-size:13px">Enregistré. Pris en compte au prochain chargement du jeu (même navigateur).</div>
+      </sc-if>
+
+      <div style="display:flex;gap:8px;border-bottom:1px solid #4a3f2e">
+        <button onClick="{{ onTabExisting }}" style="padding:12px 20px;border:none;background:transparent;color:{{ tabExistingColor }};font-weight:700;font-size:14px;cursor:pointer;border-bottom:3px solid {{ tabExistingBorder }}">Modifier Dialogues</button>
+        <button onClick="{{ onTabNew }}" style="padding:12px 20px;border:none;background:transparent;color:{{ tabNewColor }};font-weight:700;font-size:14px;cursor:pointer;border-bottom:3px solid {{ tabNewBorder }}">Créer nouveaux dialogues</button>
+      </div>
+
+      <sc-if value="{{ showExistingTab }}" hint-placeholder-val="{{ true }}">
+        <div style="display:flex;flex-direction:column;gap:20px">
+          <div style="background:#2e2418;border:1px solid #4a3f2e;border-radius:12px;padding:20px">
+            <div style="font-size:16px;font-weight:700;margin-bottom:4px">Jumpy (vendeur) — accueil boutique</div>
+            <div style="font-size:12px;color:#b8a888;margin-bottom:12px">Une ligne aléatoire choisie à chaque entrée dans la boutique. Placeholders : {joueur}, {H:.../...}, {J:.../...}</div>
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
+              <span style="font-size:12px;color:#d8c8a8">Humeur de Jumpy affichée</span>
+              <select value="{{ jumpyMood }}" onChange="{{ onJumpyMoodChange }}" style="background:#1c1712;color:#f0e6d6;border:1px solid #4a3f2e;border-radius:6px;padding:6px;font-size:12px">
+                <sc-for list="{{ jumpyMoodOptions }}" as="mo" hint-placeholder-count="0">
+                  <option value="{{ mo.value }}">{{ mo.label }}</option>
+                </sc-for>
+              </select>
+            </div>
+            <textarea value="{{ greetingLinesText }}" onChange="{{ onGreetingLinesChange }}" rows="4" style="width:100%;box-sizing:border-box;background:#1c1712;color:#f0e6d6;border:1px solid #4a3f2e;border-radius:8px;padding:10px;font-size:13px;font-family:inherit;resize:vertical"></textarea>
+          </div>
+          <div style="background:#2e2418;border:1px solid #4a3f2e;border-radius:12px;padding:20px">
+            <div style="font-size:16px;font-weight:700;margin-bottom:4px">Jumpy (vendeur) — discussion</div>
+            <div style="font-size:12px;color:#b8a888;margin-bottom:12px">Une ligne aléatoire par jour au bouton "Discuter". Placeholders : {nom}, {joueur}</div>
+            <textarea value="{{ chatLinesText }}" onChange="{{ onChatLinesChange }}" rows="8" style="width:100%;box-sizing:border-box;background:#1c1712;color:#f0e6d6;border:1px solid #4a3f2e;border-radius:8px;padding:10px;font-size:13px;font-family:inherit;resize:vertical"></textarea>
+            <div style="font-size:12px;color:#b8a888;margin:12px 0 4px">Texte si déjà discuté aujourd'hui</div>
+            <input value="{{ chatRepeat }}" onChange="{{ onChatRepeatChange }}" style="width:100%;box-sizing:border-box;background:#1c1712;color:#f0e6d6;border:1px solid #4a3f2e;border-radius:8px;padding:10px;font-size:13px" />
+          </div>
+          <div style="background:#2e2418;border:1px solid #4a3f2e;border-radius:12px;padding:20px">
+            <div style="font-size:16px;font-weight:700;margin-bottom:4px">Jumpy (vendeur) — proposition d'emploi</div>
+            <div style="font-size:12px;color:#b8a888;margin-bottom:12px">2 répliques. Placeholders : {nom}, {H:.../...}, {J:.../...}</div>
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px">
+              <div style="font-size:12px;color:#d8c8a8">Réplique 1</div>
+              <select value="{{ jobStep1Mood }}" onChange="{{ onJobStep1MoodChange }}" style="background:#1c1712;color:#f0e6d6;border:1px solid #4a3f2e;border-radius:6px;padding:5px;font-size:11px">
+                <sc-for list="{{ jumpyMoodOptions }}" as="mo" hint-placeholder-count="0">
+                  <option value="{{ mo.value }}">{{ mo.label }}</option>
+                </sc-for>
+              </select>
+            </div>
+            <textarea value="{{ jobStep1 }}" onChange="{{ onJobStep1Change }}" rows="2" style="width:100%;box-sizing:border-box;background:#1c1712;color:#f0e6d6;border:1px solid #4a3f2e;border-radius:8px;padding:10px;font-size:13px;font-family:inherit;resize:vertical;margin-bottom:12px"></textarea>
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px">
+              <div style="font-size:12px;color:#d8c8a8">Réplique 2</div>
+              <select value="{{ jobStep2Mood }}" onChange="{{ onJobStep2MoodChange }}" style="background:#1c1712;color:#f0e6d6;border:1px solid #4a3f2e;border-radius:6px;padding:5px;font-size:11px">
+                <sc-for list="{{ jumpyMoodOptions }}" as="mo" hint-placeholder-count="0">
+                  <option value="{{ mo.value }}">{{ mo.label }}</option>
+                </sc-for>
+              </select>
+            </div>
+            <textarea value="{{ jobStep2 }}" onChange="{{ onJobStep2Change }}" rows="2" style="width:100%;box-sizing:border-box;background:#1c1712;color:#f0e6d6;border:1px solid #4a3f2e;border-radius:8px;padding:10px;font-size:13px;font-family:inherit;resize:vertical"></textarea>
+          </div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ showNewTab }}" hint-placeholder-val="{{ false }}">
+        <div style="background:#2e2418;border:1px solid #4a3f2e;border-radius:12px;padding:20px">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
+            <div style="font-size:16px;font-weight:700">Nouvelles scènes de dialogue</div>
+            <button onClick="{{ onAddScene }}" style="padding:7px 14px;border-radius:8px;border:none;background:#7a5a34;color:#fff;font-weight:700;cursor:pointer;font-size:13px">+ Nouvelle scène</button>
+          </div>
+
+          <sc-if value="{{ preview }}" hint-placeholder-val="{{ false }}">
+            <div style="position:fixed;inset:0;z-index:50;background:rgba(10,8,5,.85);display:flex;align-items:center;justify-content:center" onClick="{{ onClosePreview }}">
+              <div style="width:min(90vw,700px);height:min(80vh,600px);position:relative" onClick="{{ stopProp }}">
+                <sc-if value="{{ preview.leftPortrait }}" hint-placeholder-val="{{ false }}">
+                  <img src="{{ preview.leftPortrait }}" style="position:absolute;top:50%;left:2%;transform:translateY(-50%) {{ preview.leftTransform }};height:56%;object-fit:contain;opacity:{{ preview.leftOpacity }};transition:opacity .5s ease,transform .5s ease;z-index:1" />
+                </sc-if>
+                <sc-if value="{{ preview.rightPortrait }}" hint-placeholder-val="{{ false }}">
+                  <img src="{{ preview.rightPortrait }}" style="position:absolute;top:50%;right:2%;transform:translateY(-50%) {{ preview.rightTransform }};height:56%;object-fit:contain;opacity:{{ preview.rightOpacity }};transition:opacity .5s ease,transform .5s ease;z-index:1" />
+                </sc-if>
+                <sc-if value="{{ preview.centerImage }}" hint-placeholder-val="{{ false }}">
+                  <div style="position:absolute;top:8%;left:50%;transform:translateX(-50%);width:26%;height:26%;background:#fff;border-radius:12px;box-shadow:0 10px 24px rgba(0,0,0,.4);display:flex;align-items:center;justify-content:center;opacity:{{ preview.centerOpacity }};transition:opacity .5s ease;z-index:2">
+                    <img src="{{ preview.centerImage }}" style="max-width:88%;max-height:88%;object-fit:contain" />
+                  </div>
+                </sc-if>
+                <div style="position:absolute;bottom:0;left:0;right:0;background:#2e2418;border:1px solid #4a3f2e;border-radius:16px;padding:20px 24px;min-height:130px;box-sizing:border-box;z-index:3">
+                  <div data-speaker-tag="1" style="position:absolute;top:-18px;left:20px;background:#1c1712;color:#f0e6d6;padding:6px 16px;border-radius:8px;font-weight:700;font-size:13px">{{ preview.speakerName }}</div>
+                  <div style="font-size:15px;line-height:1.6;margin-top:8px">{{ preview.text }}</div>
+                  <div style="position:absolute;bottom:14px;right:18px;display:flex;gap:8px">
+                    <sc-if value="{{ preview.hasPrev }}" hint-placeholder-val="{{ false }}">
+                      <button onClick="{{ preview.onPrev }}" style="padding:7px 14px;border-radius:8px;border:1px solid #4a3f2e;background:#1c1712;color:#f0e6d6;cursor:pointer;font-size:12px">◀ Précédent</button>
+                    </sc-if>
+                    <sc-if value="{{ preview.hasNext }}" hint-placeholder-val="{{ false }}">
+                      <button onClick="{{ preview.onNext }}" style="padding:7px 14px;border-radius:8px;border:none;background:#7a5a34;color:#fff;cursor:pointer;font-size:12px">Suivant ▶</button>
+                    </sc-if>
+                    <button onClick="{{ onClosePreview }}" style="padding:7px 14px;border-radius:8px;border:1px solid #4a3f2e;background:#1c1712;color:#f0e6d6;cursor:pointer;font-size:12px">Fermer</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </sc-if>
+          <div style="font-size:12px;color:#b8a888;margin-bottom:14px">Placeholders dans les textes : {nom} (écho), {joueur} (joueur). Genre : {H:mot masculin|mot féminin} suit le genre de l'écho, {J:mot masculin|mot féminin} suit le genre du joueur.</div>
+
+          <sc-for list="{{ scenes }}" as="scene" hint-placeholder-count="1">
+            <div style="border:1px solid #4a3f2e;border-radius:10px;padding:16px;margin-bottom:16px;background:#241d14">
+              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;gap:10px">
+                <input value="{{ scene.name }}" onChange="{{ scene.onNameChange }}" placeholder="Nom de la scène (interne)" style="flex:1;background:#1c1712;color:#f0e6d6;border:1px solid #4a3f2e;border-radius:6px;padding:8px 10px;font-size:13px" />
+                <div style="display:flex;align-items:center;gap:6px">
+                  <span style="font-size:11px;color:#b8a888">Priorité</span>
+                  <input type="number" value="{{ scene.priority }}" onChange="{{ scene.onPriorityChange }}" style="width:56px;background:#1c1712;color:#f0e6d6;border:1px solid #4a3f2e;border-radius:6px;padding:6px 8px;font-size:12px" />
+                </div>
+                <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:#d8c8a8">
+                  <input type="checkbox" checked="{{ scene.once }}" onChange="{{ scene.onOnceChange }}" /> Unique
+                </label>
+                <button onClick="{{ scene.onPreview }}" style="border:1px solid #4a6a7a;background:#1f2e3a;color:#a0c8e0;border-radius:6px;padding:7px 12px;font-size:12px;cursor:pointer">Aperçu</button>
+                <button onClick="{{ scene.onDelete }}" style="border:1px solid #6b3a3a;background:#3a1f1f;color:#e0a0a0;border-radius:6px;padding:7px 12px;font-size:12px;cursor:pointer">Supprimer</button>
+              </div>
+
+              <div style="font-size:12px;font-weight:700;color:#d8c8a8;margin-bottom:8px">Mise en scène</div>
+              <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:14px">
+                <div>
+                  <div style="font-size:11px;color:#b8a888;margin-bottom:4px">Personnage gauche</div>
+                  <select value="{{ scene.leftKind }}" onChange="{{ scene.onLeftKindChange }}" style="width:100%;background:#1c1712;color:#f0e6d6;border:1px solid #4a3f2e;border-radius:6px;padding:7px;font-size:12px;margin-bottom:6px">
+                    <option value="none">— aucun —</option>
+                    <option value="jumpy">Jumpy</option>
+                    <option value="garry">Garry</option>
+                    <option value="gardienne">La Gardienne</option>
+                    <option value="echo">Votre écho (dynamique)</option>
+                    <option value="custom">Personnalisé…</option>
+                  </select>
+                  <sc-if value="{{ scene.leftIsCustom }}" hint-placeholder-val="{{ false }}">
+                    <input value="{{ scene.leftName }}" onChange="{{ scene.onLeftNameChange }}" placeholder="Nom affiché" style="width:100%;box-sizing:border-box;background:#1c1712;color:#f0e6d6;border:1px solid #4a3f2e;border-radius:6px;padding:6px 8px;font-size:12px;margin-bottom:6px" />
+                    <input value="{{ scene.leftPortrait }}" onChange="{{ scene.onLeftPortraitChange }}" placeholder="Chemin image (./assets/...)" style="width:100%;box-sizing:border-box;background:#1c1712;color:#f0e6d6;border:1px solid #4a3f2e;border-radius:6px;padding:6px 8px;font-size:12px;margin-bottom:6px" />
+                  </sc-if>
+                  <sc-if value="{{ scene.leftHasMoods }}" hint-placeholder-val="{{ false }}">
+                    <select value="{{ scene.leftMood }}" onChange="{{ scene.onLeftMoodChange }}" style="width:100%;background:#1c1712;color:#f0e6d6;border:1px solid #4a3f2e;border-radius:6px;padding:6px;font-size:12px;margin-bottom:6px">
+                      <sc-for list="{{ scene.leftMoodOptions }}" as="mo" hint-placeholder-count="0">
+                        <option value="{{ mo.value }}">{{ mo.label }}</option>
+                      </sc-for>
+                    </select>
+                  </sc-if>
+                  <sc-if value="{{ scene.leftKindNotNone }}" hint-placeholder-val="{{ false }}">
+                    <div style="display:flex;align-items:center;gap:6px">
+                      <span style="font-size:11px;color:#b8a888">Taille ×</span>
+                      <input type="number" step="0.1" value="{{ scene.leftSizeMult }}" onChange="{{ scene.onLeftSizeMultChange }}" style="width:70px;background:#1c1712;color:#f0e6d6;border:1px solid #4a3f2e;border-radius:6px;padding:5px 7px;font-size:12px" />
+                    </div>
+                  </sc-if>
+                </div>
+                <div>
+                  <div style="font-size:11px;color:#b8a888;margin-bottom:4px">Personnage droite</div>
+                  <select value="{{ scene.rightKind }}" onChange="{{ scene.onRightKindChange }}" style="width:100%;background:#1c1712;color:#f0e6d6;border:1px solid #4a3f2e;border-radius:6px;padding:7px;font-size:12px;margin-bottom:6px">
+                    <option value="none">— aucun —</option>
+                    <option value="jumpy">Jumpy</option>
+                    <option value="garry">Garry</option>
+                    <option value="gardienne">La Gardienne</option>
+                    <option value="echo">Votre écho (dynamique)</option>
+                    <option value="custom">Personnalisé…</option>
+                  </select>
+                  <sc-if value="{{ scene.rightIsCustom }}" hint-placeholder-val="{{ false }}">
+                    <input value="{{ scene.rightName }}" onChange="{{ scene.onRightNameChange }}" placeholder="Nom affiché" style="width:100%;box-sizing:border-box;background:#1c1712;color:#f0e6d6;border:1px solid #4a3f2e;border-radius:6px;padding:6px 8px;font-size:12px;margin-bottom:6px" />
+                    <input value="{{ scene.rightPortrait }}" onChange="{{ scene.onRightPortraitChange }}" placeholder="Chemin image (./assets/...)" style="width:100%;box-sizing:border-box;background:#1c1712;color:#f0e6d6;border:1px solid #4a3f2e;border-radius:6px;padding:6px 8px;font-size:12px;margin-bottom:6px" />
+                  </sc-if>
+                  <sc-if value="{{ scene.rightHasMoods }}" hint-placeholder-val="{{ false }}">
+                    <select value="{{ scene.rightMood }}" onChange="{{ scene.onRightMoodChange }}" style="width:100%;background:#1c1712;color:#f0e6d6;border:1px solid #4a3f2e;border-radius:6px;padding:6px;font-size:12px;margin-bottom:6px">
+                      <sc-for list="{{ scene.rightMoodOptions }}" as="mo" hint-placeholder-count="0">
+                        <option value="{{ mo.value }}">{{ mo.label }}</option>
+                      </sc-for>
+                    </select>
+                  </sc-if>
+                  <sc-if value="{{ scene.rightKindNotNone }}" hint-placeholder-val="{{ false }}">
+                    <div style="display:flex;align-items:center;gap:6px">
+                      <span style="font-size:11px;color:#b8a888">Taille ×</span>
+                      <input type="number" step="0.1" value="{{ scene.rightSizeMult }}" onChange="{{ scene.onRightSizeMultChange }}" style="width:70px;background:#1c1712;color:#f0e6d6;border:1px solid #4a3f2e;border-radius:6px;padding:5px 7px;font-size:12px" />
+                    </div>
+                  </sc-if>
+                </div>
+                <div>
+                  <div style="font-size:11px;color:#b8a888;margin-bottom:4px">Centre (objet/effet, cadre blanc)</div>
+                  <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:#d8c8a8;margin-bottom:6px">
+                    <input type="checkbox" checked="{{ scene.centerUsed }}" onChange="{{ scene.onCenterUsedChange }}" />
+                    Utiliser un visuel central
+                  </label>
+                  <sc-if value="{{ scene.centerUsed }}" hint-placeholder-val="{{ false }}">
+                    <input value="{{ scene.centerImage }}" onChange="{{ scene.onCenterImageChange }}" placeholder="Chemin image (./assets/...)" style="width:100%;box-sizing:border-box;background:#1c1712;color:#f0e6d6;border:1px solid #4a3f2e;border-radius:6px;padding:6px 8px;font-size:12px" />
+                  </sc-if>
+                </div>
+              </div>
+
+              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+                <div style="font-size:12px;font-weight:700;color:#d8c8a8">Conditions de déclenchement (toutes doivent être vraies)</div>
+                <button onClick="{{ scene.onAddCondition }}" style="border:1px dashed #4a3f2e;background:transparent;color:#b8a888;border-radius:6px;padding:5px 10px;font-size:11px;cursor:pointer">+ Ajouter une condition</button>
+              </div>
+              <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:14px">
+                <sc-for list="{{ scene.conditions }}" as="cond" hint-placeholder-count="1">
+                  <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;background:#1c1712;border:1px solid #3a2f22;border-radius:8px;padding:10px">
+                    <div>
+                      <div style="font-size:11px;color:#b8a888;margin-bottom:4px">Type</div>
+                      <select value="{{ cond.type }}" onChange="{{ cond.onTypeChange }}" style="background:#241d14;color:#f0e6d6;border:1px solid #4a3f2e;border-radius:6px;padding:7px;font-size:12px">
+                        <option value="day">Jour atteint</option>
+                        <option value="button">Bouton manuel (nouveau)</option>
+                        <option value="random_pool">Ajout au pool "comportements aléatoires"</option>
+                        <option value="event">Événement déjà survenu</option>
+                        <option value="probability">Probabilité sur une période</option>
+                        <option value="chain">Juste après une autre scène</option>
+                        <option value="custom">Autre (je décris, à interpréter)</option>
+                      </select>
+                    </div>
+
+                    <sc-if value="{{ cond.showDay }}" hint-placeholder-val="{{ false }}">
+                      <div>
+                        <div style="font-size:11px;color:#b8a888;margin-bottom:4px">Jour ≥</div>
+                        <input type="number" value="{{ cond.dayValue }}" onChange="{{ cond.onDayValueChange }}" style="width:90px;background:#241d14;color:#f0e6d6;border:1px solid #4a3f2e;border-radius:6px;padding:7px 9px;font-size:12px" />
+                      </div>
+                    </sc-if>
+                    <sc-if value="{{ cond.showButton }}" hint-placeholder-val="{{ false }}">
+                      <div>
+                        <div style="font-size:11px;color:#b8a888;margin-bottom:4px">Emplacement souhaité</div>
+                        <input value="{{ cond.buttonLocation }}" onChange="{{ cond.onButtonLocationChange }}" placeholder="ex. Menu boutique..." style="width:180px;background:#241d14;color:#f0e6d6;border:1px solid #4a3f2e;border-radius:6px;padding:7px 9px;font-size:12px" />
+                      </div>
+                      <div>
+                        <div style="font-size:11px;color:#b8a888;margin-bottom:4px">Texte du bouton</div>
+                        <input value="{{ cond.buttonLabel }}" onChange="{{ cond.onButtonLabelChange }}" style="width:160px;background:#241d14;color:#f0e6d6;border:1px solid #4a3f2e;border-radius:6px;padding:7px 9px;font-size:12px" />
+                      </div>
+                    </sc-if>
+                    <sc-if value="{{ cond.showPool }}" hint-placeholder-val="{{ false }}">
+                      <div>
+                        <div style="font-size:11px;color:#b8a888;margin-bottom:4px">Chance d'apparaître (%)</div>
+                        <input type="number" value="{{ cond.poolWeight }}" onChange="{{ cond.onPoolWeightChange }}" style="width:100px;background:#241d14;color:#f0e6d6;border:1px solid #4a3f2e;border-radius:6px;padding:7px 9px;font-size:12px" />
+                      </div>
+                    </sc-if>
+                    <sc-if value="{{ cond.showEvent }}" hint-placeholder-val="{{ false }}">
+                      <div>
+                        <div style="font-size:11px;color:#b8a888;margin-bottom:4px">Événement</div>
+                        <select value="{{ cond.eventKey }}" onChange="{{ cond.onEventKeyChange }}" style="background:#241d14;color:#f0e6d6;border:1px solid #4a3f2e;border-radius:6px;padding:7px;font-size:12px">
+                          <option value="job_unlocked">Emploi boutique débloqué</option>
+                          <option value="devphase_enfant">A évolué en Enfant</option>
+                          <option value="devphase_ado">A évolué en Adolescent</option>
+                          <option value="garry_defeated">Garry vaincu</option>
+                          <option value="custom">Autre (nom personnalisé ci-dessous)</option>
+                        </select>
+                      </div>
+                      <sc-if value="{{ cond.eventIsCustom }}" hint-placeholder-val="{{ false }}">
+                        <div>
+                          <div style="font-size:11px;color:#b8a888;margin-bottom:4px">Nom de l'événement</div>
+                          <input value="{{ cond.eventCustomKey }}" onChange="{{ cond.onEventCustomKeyChange }}" placeholder="ex. a_recu_epee" style="width:160px;background:#241d14;color:#f0e6d6;border:1px solid #4a3f2e;border-radius:6px;padding:7px 9px;font-size:12px" />
+                        </div>
+                      </sc-if>
+                    </sc-if>
+                    <sc-if value="{{ cond.showProbability }}" hint-placeholder-val="{{ false }}">
+                      <div>
+                        <div style="font-size:11px;color:#b8a888;margin-bottom:4px">Chance par vérification (%)</div>
+                        <input type="number" value="{{ cond.chancePercent }}" onChange="{{ cond.onChancePercentChange }}" style="width:110px;background:#241d14;color:#f0e6d6;border:1px solid #4a3f2e;border-radius:6px;padding:7px 9px;font-size:12px" />
+                      </div>
+                      <div>
+                        <div style="font-size:11px;color:#b8a888;margin-bottom:4px">Délai min. entre 2 (jours)</div>
+                        <input type="number" value="{{ cond.cooldownDays }}" onChange="{{ cond.onCooldownDaysChange }}" style="width:130px;background:#241d14;color:#f0e6d6;border:1px solid #4a3f2e;border-radius:6px;padding:7px 9px;font-size:12px" />
+                      </div>
+                    </sc-if>
+                    <sc-if value="{{ cond.showChain }}" hint-placeholder-val="{{ false }}">
+                      <div>
+                        <div style="font-size:11px;color:#b8a888;margin-bottom:4px">Se joue juste après (nom de scène)</div>
+                        <input value="{{ cond.chainAfterName }}" onChange="{{ cond.onChainAfterNameChange }}" placeholder="Nom exact d'une autre scène" style="width:220px;background:#241d14;color:#f0e6d6;border:1px solid #4a3f2e;border-radius:6px;padding:7px 9px;font-size:12px" />
+                      </div>
+                    </sc-if>
+                    <sc-if value="{{ cond.showCustom }}" hint-placeholder-val="{{ false }}">
+                      <div style="flex:1">
+                        <div style="font-size:11px;color:#b8a888;margin-bottom:4px">Description (je l'implémenterai)</div>
+                        <input value="{{ cond.customDescription }}" onChange="{{ cond.onCustomDescriptionChange }}" placeholder="ex. Après avoir gagné 3 combats" style="width:100%;box-sizing:border-box;background:#241d14;color:#f0e6d6;border:1px solid #4a3f2e;border-radius:6px;padding:7px 9px;font-size:12px" />
+                      </div>
+                    </sc-if>
+
+                    <button onClick="{{ cond.onDelete }}" style="border:none;background:transparent;color:#e0a0a0;font-size:11px;cursor:pointer;margin-left:auto">✕ Retirer</button>
+                  </div>
+                </sc-for>
+              </div>
+
+              <div style="font-size:12px;font-weight:700;color:#d8c8a8;margin-bottom:8px">Répliques</div>
+              <sc-for list="{{ scene.lines }}" as="line" hint-placeholder-count="1">
+                <div style="border:1px solid #3a2f22;border-radius:8px;padding:10px;margin-bottom:8px;background:#1c1712">
+                  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;gap:10px;flex-wrap:wrap">
+                    <div style="font-size:11px;color:#8a7a5e">Réplique {{ line.displayIdx }}</div>
+                    <div style="display:flex;gap:8px;align-items:center">
+                      <span style="font-size:11px;color:#b8a888">Parle :</span>
+                      <select value="{{ line.speaker }}" onChange="{{ line.onSpeakerChange }}" style="background:#241d14;color:#f0e6d6;border:1px solid #4a3f2e;border-radius:6px;padding:5px;font-size:11px">
+                        <option value="left">Gauche</option>
+                        <option value="right">Droite</option>
+                        <option value="center">Narration</option>
+                      </select>
+                      <span style="font-size:11px;color:#b8a888">Entrée :</span>
+                      <select value="{{ line.enterSlot }}" onChange="{{ line.onEnterSlotChange }}" style="background:#241d14;color:#f0e6d6;border:1px solid #4a3f2e;border-radius:6px;padding:5px;font-size:11px">
+                        <option value="">— aucune —</option>
+                        <option value="left">Gauche apparaît ici</option>
+                        <option value="right">Droite apparaît ici</option>
+                        <option value="center">Centre apparaît ici</option>
+                      </select>
+                      <sc-if value="{{ line.showEnterAnim }}" hint-placeholder-val="{{ false }}">
+                        <select value="{{ line.enterAnim }}" onChange="{{ line.onEnterAnimChange }}" style="background:#241d14;color:#f0e6d6;border:1px solid #4a3f2e;border-radius:6px;padding:5px;font-size:11px">
+                          <option value="immediate">Apparition immédiate</option>
+                          <option value="fade">Fondu</option>
+                          <option value="slide">Glissement</option>
+                          <option value="scale">Zoom</option>
+                        </select>
+                      </sc-if>
+                      <span style="font-size:11px;color:#b8a888">Sortie :</span>
+                      <select value="{{ line.exitSlot }}" onChange="{{ line.onExitSlotChange }}" style="background:#241d14;color:#f0e6d6;border:1px solid #4a3f2e;border-radius:6px;padding:5px;font-size:11px">
+                        <option value="">— aucune —</option>
+                        <option value="left">Gauche sort ici</option>
+                        <option value="right">Droite sort ici</option>
+                        <option value="center">Centre sort ici</option>
+                      </select>
+                      <sc-if value="{{ line.showExitAnim }}" hint-placeholder-val="{{ false }}">
+                        <select value="{{ line.exitAnim }}" onChange="{{ line.onExitAnimChange }}" style="background:#241d14;color:#f0e6d6;border:1px solid #4a3f2e;border-radius:6px;padding:5px;font-size:11px">
+                          <option value="fade">Fondu</option>
+                          <option value="slide">Glissement</option>
+                          <option value="scale">Zoom</option>
+                        </select>
+                      </sc-if>
+                      <button onClick="{{ line.onDelete }}" style="border:none;background:transparent;color:#e0a0a0;font-size:11px;cursor:pointer">Supprimer</button>
+                    </div>
+                  </div>
+                  <textarea value="{{ line.text }}" onChange="{{ line.onTextChange }}" rows="2" placeholder="Texte de la réplique" style="width:100%;box-sizing:border-box;background:#241d14;color:#f0e6d6;border:1px solid #4a3f2e;border-radius:6px;padding:8px;font-size:13px;font-family:inherit;resize:vertical;margin-bottom:8px"></textarea>
+                  <label style="display:flex;align-items:center;gap:6px;font-size:11px;color:#8a7a5e;margin-bottom:8px">
+                    <input type="checkbox" checked="{{ line.hasOverride }}" onChange="{{ line.onToggleOverride }}" /> Changer les personnages/objet à partir de cette réplique
+                  </label>
+                  <sc-if value="{{ line.hasOverride }}" hint-placeholder-val="{{ false }}">
+                    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:10px;background:#241d14;border:1px solid #3a2f22;border-radius:6px;padding:10px">
+                      <div>
+                        <div style="font-size:11px;color:#b8a888;margin-bottom:4px">Gauche</div>
+                        <select value="{{ line.ovLeftKind }}" onChange="{{ line.onOvLeftKindChange }}" style="width:100%;background:#1c1712;color:#f0e6d6;border:1px solid #4a3f2e;border-radius:6px;padding:6px;font-size:12px;margin-bottom:6px">
+                          <option value="none">— aucun —</option>
+                          <option value="jumpy">Jumpy</option>
+                          <option value="garry">Garry</option>
+                          <option value="gardienne">La Gardienne</option>
+                          <option value="echo">Votre écho</option>
+                          <option value="custom">Personnalisé…</option>
+                        </select>
+                        <sc-if value="{{ line.ovLeftIsCustom }}" hint-placeholder-val="{{ false }}">
+                          <input value="{{ line.ovLeftName }}" onChange="{{ line.onOvLeftNameChange }}" placeholder="Nom" style="width:100%;box-sizing:border-box;background:#1c1712;color:#f0e6d6;border:1px solid #4a3f2e;border-radius:6px;padding:5px 7px;font-size:11px;margin-bottom:4px" />
+                          <input value="{{ line.ovLeftPortrait }}" onChange="{{ line.onOvLeftPortraitChange }}" placeholder="Chemin image" style="width:100%;box-sizing:border-box;background:#1c1712;color:#f0e6d6;border:1px solid #4a3f2e;border-radius:6px;padding:5px 7px;font-size:11px" />
+                        </sc-if>
+                        <sc-if value="{{ line.ovLeftHasMoods }}" hint-placeholder-val="{{ false }}">
+                          <select value="{{ line.ovLeftMood }}" onChange="{{ line.onOvLeftMoodChange }}" style="width:100%;background:#1c1712;color:#f0e6d6;border:1px solid #4a3f2e;border-radius:6px;padding:5px;font-size:11px;margin-bottom:4px">
+                            <sc-for list="{{ line.ovLeftMoodOptions }}" as="mo" hint-placeholder-count="0">
+                              <option value="{{ mo.value }}">{{ mo.label }}</option>
+                            </sc-for>
+                          </select>
+                        </sc-if>
+                      </div>
+                      <div>
+                        <div style="font-size:11px;color:#b8a888;margin-bottom:4px">Droite</div>
+                        <select value="{{ line.ovRightKind }}" onChange="{{ line.onOvRightKindChange }}" style="width:100%;background:#1c1712;color:#f0e6d6;border:1px solid #4a3f2e;border-radius:6px;padding:6px;font-size:12px;margin-bottom:6px">
+                          <option value="none">— aucun —</option>
+                          <option value="jumpy">Jumpy</option>
+                          <option value="garry">Garry</option>
+                          <option value="gardienne">La Gardienne</option>
+                          <option value="echo">Votre écho</option>
+                          <option value="custom">Personnalisé…</option>
+                        </select>
+                        <sc-if value="{{ line.ovRightIsCustom }}" hint-placeholder-val="{{ false }}">
+                          <input value="{{ line.ovRightName }}" onChange="{{ line.onOvRightNameChange }}" placeholder="Nom" style="width:100%;box-sizing:border-box;background:#1c1712;color:#f0e6d6;border:1px solid #4a3f2e;border-radius:6px;padding:5px 7px;font-size:11px;margin-bottom:4px" />
+                          <input value="{{ line.ovRightPortrait }}" onChange="{{ line.onOvRightPortraitChange }}" placeholder="Chemin image" style="width:100%;box-sizing:border-box;background:#1c1712;color:#f0e6d6;border:1px solid #4a3f2e;border-radius:6px;padding:5px 7px;font-size:11px" />
+                        </sc-if>
+                        <sc-if value="{{ line.ovRightHasMoods }}" hint-placeholder-val="{{ false }}">
+                          <select value="{{ line.ovRightMood }}" onChange="{{ line.onOvRightMoodChange }}" style="width:100%;background:#1c1712;color:#f0e6d6;border:1px solid #4a3f2e;border-radius:6px;padding:5px;font-size:11px;margin-bottom:4px">
+                            <sc-for list="{{ line.ovRightMoodOptions }}" as="mo" hint-placeholder-count="0">
+                              <option value="{{ mo.value }}">{{ mo.label }}</option>
+                            </sc-for>
+                          </select>
+                        </sc-if>
+                      </div>
+                      <div>
+                        <div style="font-size:11px;color:#b8a888;margin-bottom:4px">Centre</div>
+                        <label style="display:flex;align-items:center;gap:6px;font-size:11px;color:#d8c8a8;margin-bottom:6px">
+                          <input type="checkbox" checked="{{ line.ovCenterUsed }}" onChange="{{ line.onOvCenterUsedChange }}" /> Visuel central
+                        </label>
+                        <sc-if value="{{ line.ovCenterUsed }}" hint-placeholder-val="{{ false }}">
+                          <input value="{{ line.ovCenterImage }}" onChange="{{ line.onOvCenterImageChange }}" placeholder="Chemin image" style="width:100%;box-sizing:border-box;background:#1c1712;color:#f0e6d6;border:1px solid #4a3f2e;border-radius:6px;padding:5px 7px;font-size:11px" />
+                        </sc-if>
+                      </div>
+                    </div>
+                  </sc-if>
+                  <div style="font-size:11px;color:#8a7a5e;margin-bottom:6px">Choix (laisser vide = bouton "Suivant" automatique)</div>
+                  <sc-for list="{{ line.choices }}" as="choice" hint-placeholder-count="0">
+                    <div style="display:flex;gap:6px;margin-bottom:6px;align-items:center">
+                      <input value="{{ choice.label }}" onChange="{{ choice.onLabelChange }}" placeholder="Texte du bouton" style="flex:2;background:#241d14;color:#f0e6d6;border:1px solid #4a3f2e;border-radius:6px;padding:6px 8px;font-size:12px" />
+                      <input value="{{ choice.gotoDisplay }}" onChange="{{ choice.onGotoChange }}" placeholder="→ réplique n° ou 'fin'" style="flex:1;background:#241d14;color:#f0e6d6;border:1px solid #4a3f2e;border-radius:6px;padding:6px 8px;font-size:12px" />
+                      <button onClick="{{ choice.onDelete }}" style="border:none;background:transparent;color:#e0a0a0;font-size:11px;cursor:pointer">✕</button>
+                    </div>
+                  </sc-for>
+                  <button onClick="{{ line.onAddChoice }}" style="border:1px dashed #4a3f2e;background:transparent;color:#b8a888;border-radius:6px;padding:5px 10px;font-size:11px;cursor:pointer">+ Ajouter un choix</button>
+                </div>
+              </sc-for>
+              <button onClick="{{ scene.onAddLine }}" style="border:1px dashed #6b5a3a;background:transparent;color:#d8c8a8;border-radius:6px;padding:7px 12px;font-size:12px;cursor:pointer">+ Ajouter une réplique</button>
+            </div>
+          </sc-for>
+          <sc-if value="{{ noScenes }}" hint-placeholder-val="{{ false }}">
+            <div style="font-size:13px;color:#8a7a5e;text-align:center;padding:20px">Aucune nouvelle scène pour l'instant.</div>
+          </sc-if>
+        </div>
+      </sc-if>
+    </div>
+  </sc-if>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+const ACCESS_CODE = '8173';
+const STORAGE_KEY = 'ss_dialogues_v1';
+
+const DEFAULTS = {
+  vendorGreetingLines: [
+    'Bonjour {joueur}, bienvenue dans ma boutique ! Tu veux acheter quelque chose ?',
+    'Ah, {joueur} ! Quel plaisir de te voir par ici, entre donc !',
+    'Salut {joueur} ! J\u2019espère que tu as de l\u2019or, j\u2019ai de belles trouvailles aujourd\u2019hui !'
+  ],
+  vendorChatLines: [
+    "Tu as vu tout ce que j'ai déniché ce matin ? N'hésite pas à te servir ! Tant que tu paies...",
+    "Les stocks changent tous les jours, reviens souvent voir les nouveautés !",
+    "Les échos sauvages traînent régulièrement dans les environs... Tu as déjà reçu leur visite ?",
+    "Le risotto à la truffe part toujours en premier, tu devrais te dépêcher !",
+    "J'ai une théorie sur la provenance de mes pansements... mais chut, secret professionnel.",
+    "J'espère que ça ne te vient pas à l'esprit de gronder {nom} pour rien ! Tu imagines ce qu'il / elle pourrait ressentir si tu le faisais ?",
+    "Certains d'entre nous ne grandissent pas... il y a certainement une explication à ça, mais laquelle ?",
+    "J'avais beaucoup d'amis avant, mais tout le monde a disparu... C'est pas grave ! C'est l'occasion de partir à l'aventure et de s'en faire de nouveaux !",
+    "Tu as besoin d'argent ? J'aurais peut-être besoin d'un assistant si ça t'intéresse !",
+    "Si jamais tu as besoin de sortir, je peux m'occuper de {nom} en ton absence !"
+  ],
+  vendorChatRepeat: "Tu veux qu'on discute ? Là je suis occupé, mais reviens demain, j'aurai d'autres anecdotes !",
+  vendorJobOffer: {
+    step1: 'Ah oui... c\u2019est vrai qu\u2019il va vous falloir de l\u2019argent... si vous le souhaitez, vous pouvez venir travailler à ma boutique !',
+    step2: 'Ne vous inquiétez pas pour {nom}. Je m\u2019occuperai de lui pendant ce temps là et tâcherai de faire en sorte qu\u2019il ne manque de rien !',
+    step1Mood: 'neutre',
+    step2Mood: 'neutre'
+  },
+  vendorMood: 'neutre',
+  customScenes: []
+};
+const KNOWN_CHAR_LABELS = { jumpy: 'Jumpy', garry: 'Garry', gardienne: 'La Gardienne' };
+const MOOD_PORTRAITS = {
+  jumpy: { neutre: './assets/boutique-vendeur.png', colere: './assets/jumpy-colere.png', daccord: './assets/jumpy-daccord.png', face: './assets/jumpy-face.png', pensif: './assets/jumpy-pensif.png', pleurs: './assets/jumpy-pleurs.png', rit: './assets/jumpy-rit.png', surpris: './assets/jumpy-surpris.png', triste: './assets/jumpy-triste.png' },
+  gardienne: { neutre: './assets/gardienne-neutre.png', inquiete: './assets/gardienne-inquiete.png', compassion: './assets/gardienne-compassion.png' }
+};
+const MOOD_VARIANTS = {
+  jumpy: ['neutre', 'colere', 'daccord', 'face', 'pensif', 'pleurs', 'rit', 'surpris', 'triste'],
+  gardienne: ['neutre', 'inquiete', 'compassion']
+};
+function moodOptionsFor(kind) {
+  const moods = MOOD_VARIANTS[kind];
+  if (!moods) return [];
+  return moods.map(m => ({ value: m, label: m.charAt(0).toUpperCase() + m.slice(1) }));
+}
+
+function loadData() {
+  try {
+    const raw = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}') || {};
+    return {
+      vendorGreetingLines: (raw.vendorGreetingLines && raw.vendorGreetingLines.length) ? raw.vendorGreetingLines : DEFAULTS.vendorGreetingLines.slice(),
+      vendorChatLines: (raw.vendorChatLines && raw.vendorChatLines.length) ? raw.vendorChatLines : DEFAULTS.vendorChatLines.slice(),
+      vendorChatRepeat: raw.vendorChatRepeat || DEFAULTS.vendorChatRepeat,
+      vendorJobOffer: { ...DEFAULTS.vendorJobOffer, ...(raw.vendorJobOffer || {}) },
+      vendorMood: raw.vendorMood || 'neutre',
+      customScenes: Array.isArray(raw.customScenes) ? raw.customScenes : []
+    };
+  } catch (e) { return JSON.parse(JSON.stringify(DEFAULTS)); }
+}
+
+let sceneIdCounter = 1;
+const KNOWN_CHAR_PORTRAITS = {
+  jumpy: './assets/boutique-vendeur.png',
+  garry: './assets/garry-face.png',
+  gardienne: './assets/gardienne-neutre.png'
+};
+
+function newCondition(type) {
+  const base = { type: type || 'day' };
+  if (base.type === 'day') return { ...base, value: 1 };
+  if (base.type === 'button') return { ...base, location: '', buttonLabel: 'Parler' };
+  if (base.type === 'random_pool') return { ...base, poolWeight: 20 };
+  if (base.type === 'event') return { ...base, eventKey: 'job_unlocked' };
+  if (base.type === 'probability') return { ...base, chancePercent: 10, cooldownDays: 3 };
+  if (base.type === 'chain') return { ...base, afterSceneId: null, afterSceneName: '' };
+  if (base.type === 'custom') return { ...base, customDescription: '' };
+  return base;
+}
+
+function newScene() {
+  return {
+    id: 'scene_' + Date.now() + '_' + (sceneIdCounter++),
+    name: 'Nouvelle scène',
+    priority: 0,
+    once: true,
+    left: { kind: 'jumpy' },
+    right: { kind: 'none' },
+    center: { kind: 'none', image: '' },
+    conditions: [newCondition('day')],
+    lines: [{ speaker: 'left', text: '' }]
+  };
+}
+
+function slotPreview(def) {
+  if (!def || def.kind === 'none' || !def.kind) return null;
+  if (def.kind === 'echo') return { name: 'Votre écho', portrait: './assets/boutique-vendeur.png', sizeMult: def.sizeMult && def.sizeMult > 0 ? def.sizeMult : 1 };
+  if (def.kind === 'custom') return { name: def.name || '?', portrait: def.portrait || '', sizeMult: def.sizeMult && def.sizeMult > 0 ? def.sizeMult : 1 };
+  const label = KNOWN_CHAR_LABELS[def.kind];
+  if (!label) return null;
+  const moods = MOOD_PORTRAITS[def.kind];
+  const portrait = (def.mood && moods && moods[def.mood]) ? moods[def.mood] : KNOWN_CHAR_PORTRAITS[def.kind];
+  return { name: label, portrait, sizeMult: def.sizeMult && def.sizeMult > 0 ? def.sizeMult : 1 };
+}
+function resolveLineSlotsPreview(scene, lineIdx) {
+  let left = scene.left, right = scene.right, center = scene.center;
+  for (let i = 0; i <= lineIdx; i++) {
+    const l = scene.lines[i];
+    if (!l) continue;
+    if (l.leftOverride) left = l.leftOverride;
+    if (l.rightOverride) right = l.rightOverride;
+    if (l.centerOverride) center = l.centerOverride;
+  }
+  return { left, right, center };
+}
+
+class Component extends DCLogic {
+  state = {
+    unlocked: false,
+    pwInput: '',
+    pwError: false,
+    savedFlash: false,
+    tab: 'existing',
+    data: loadData()
+  };
+
+  onPwChange(e) { this.setState({ pwInput: e.target.value, pwError: false }); }
+  onUnlock() {
+    if (this.state.pwInput === ACCESS_CODE) this.setState({ unlocked: true, pwError: false });
+    else this.setState({ pwError: true });
+  }
+
+  save() {
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(this.state.data)); } catch (e) {}
+    this.setState({ savedFlash: true });
+    clearTimeout(this._flashTimer);
+    this._flashTimer = setTimeout(() => this.setState({ savedFlash: false }), 2500);
+  }
+
+  onExport() {
+    const blob = new Blob([JSON.stringify(this.state.data, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = 'soul-seed-dialogues.json'; a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  onImport(e) {
+    const file = e.target.files && e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      try {
+        const parsed = JSON.parse(reader.result);
+        this.setState({
+          data: {
+            vendorGreetingLines: parsed.vendorGreetingLines || DEFAULTS.vendorGreetingLines.slice(),
+            vendorChatLines: parsed.vendorChatLines || DEFAULTS.vendorChatLines.slice(),
+            vendorChatRepeat: parsed.vendorChatRepeat || DEFAULTS.vendorChatRepeat,
+            vendorJobOffer: { ...DEFAULTS.vendorJobOffer, ...(parsed.vendorJobOffer || {}) },
+            vendorMood: parsed.vendorMood || 'neutre',
+            customScenes: Array.isArray(parsed.customScenes) ? parsed.customScenes : []
+          }
+        });
+      } catch (err) { window.alert('Fichier JSON invalide.'); }
+    };
+    reader.readAsText(file);
+    e.target.value = '';
+  }
+
+  onResetDefaults() {
+    if (!window.confirm('Réinitialiser tous les dialogues aux valeurs par défaut ?')) return;
+    this.setState({ data: JSON.parse(JSON.stringify(DEFAULTS)) });
+  }
+
+  onGreetingLinesChange(e) { const lines = e.target.value.split('\n'); this.setState(s => ({ data: { ...s.data, vendorGreetingLines: lines } })); }
+  onChatLinesChange(e) { const lines = e.target.value.split('\n'); this.setState(s => ({ data: { ...s.data, vendorChatLines: lines } })); }
+  onChatRepeatChange(e) { const v = e.target.value; this.setState(s => ({ data: { ...s.data, vendorChatRepeat: v } })); }
+  onJobStep1Change(e) { const v = e.target.value; this.setState(s => ({ data: { ...s.data, vendorJobOffer: { ...s.data.vendorJobOffer, step1: v } } })); }
+  onJobStep2Change(e) { const v = e.target.value; this.setState(s => ({ data: { ...s.data, vendorJobOffer: { ...s.data.vendorJobOffer, step2: v } } })); }
+
+  onAddScene() { this.setState(s => ({ data: { ...s.data, customScenes: [...s.data.customScenes, newScene()] } })); }
+  updateScene(idx, patch) {
+    this.setState(s => {
+      const customScenes = s.data.customScenes.slice();
+      customScenes[idx] = { ...customScenes[idx], ...patch };
+      return { data: { ...s.data, customScenes } };
+    });
+  }
+  updateSceneField(idx, updater) {
+    this.setState(s => {
+      const customScenes = s.data.customScenes.slice();
+      customScenes[idx] = updater(customScenes[idx]);
+      return { data: { ...s.data, customScenes } };
+    });
+  }
+  deleteScene(idx) { this.setState(s => ({ data: { ...s.data, customScenes: s.data.customScenes.filter((_, i) => i !== idx) } })); }
+  addLine(sceneIdx) { this.updateSceneField(sceneIdx, sc => ({ ...sc, lines: [...sc.lines, { speaker: 'left', text: '' }] })); }
+  deleteLine(sceneIdx, lineIdx) { this.updateSceneField(sceneIdx, sc => ({ ...sc, lines: sc.lines.filter((_, i) => i !== lineIdx) })); }
+  updateLine(sceneIdx, lineIdx, patch) { this.updateSceneField(sceneIdx, sc => ({ ...sc, lines: sc.lines.map((l, i) => i === lineIdx ? { ...l, ...patch } : l) })); }
+  addChoice(sceneIdx, lineIdx) { this.updateSceneField(sceneIdx, sc => ({ ...sc, lines: sc.lines.map((l, i) => i === lineIdx ? { ...l, choices: [...(l.choices || []), { label: '', goto: 'close' }] } : l) })); }
+  updateChoice(sceneIdx, lineIdx, choiceIdx, patch) { this.updateSceneField(sceneIdx, sc => ({ ...sc, lines: sc.lines.map((l, i) => i === lineIdx ? { ...l, choices: l.choices.map((c, ci) => ci === choiceIdx ? { ...c, ...patch } : c) } : l) })); }
+  deleteChoice(sceneIdx, lineIdx, choiceIdx) { this.updateSceneField(sceneIdx, sc => ({ ...sc, lines: sc.lines.map((l, i) => i === lineIdx ? { ...l, choices: l.choices.filter((_, ci) => ci !== choiceIdx) } : l) })); }
+
+  addCondition(sceneIdx) { this.updateSceneField(sceneIdx, sc => ({ ...sc, conditions: [...(sc.conditions || []), newCondition('day')] })); }
+  deleteCondition(sceneIdx, condIdx) { this.updateSceneField(sceneIdx, sc => ({ ...sc, conditions: sc.conditions.filter((_, i) => i !== condIdx) })); }
+  updateCondition(sceneIdx, condIdx, patch) { this.updateSceneField(sceneIdx, sc => ({ ...sc, conditions: sc.conditions.map((c, i) => i === condIdx ? { ...c, ...patch } : c) })); }
+  setConditionType(sceneIdx, condIdx, type) { this.updateSceneField(sceneIdx, sc => ({ ...sc, conditions: sc.conditions.map((c, i) => i === condIdx ? newCondition(type) : c) })); }
+
+  toggleLineOverride(sceneIdx, lineIdx, on) {
+    this.updateSceneField(sceneIdx, sc => {
+      const prevSlots = resolveLineSlotsPreview(sc, Math.max(0, lineIdx - 1));
+      return {
+        ...sc,
+        lines: sc.lines.map((l, i) => i === lineIdx ? (on ? { ...l, leftOverride: prevSlots.left, rightOverride: prevSlots.right, centerOverride: prevSlots.center } : { ...l, leftOverride: null, rightOverride: null, centerOverride: null }) : l)
+      };
+    });
+  }
+  updateLineOverrideSlot(sceneIdx, lineIdx, slotKey, patch) {
+    this.updateSceneField(sceneIdx, sc => ({
+      ...sc,
+      lines: sc.lines.map((l, i) => i === lineIdx ? { ...l, [slotKey + 'Override']: { ...(l[slotKey + 'Override'] || {}), ...patch } } : l)
+    }));
+  }
+
+  onPreviewScene(sceneIdx) { this.setState({ previewSceneIdx: sceneIdx, previewLineIdx: 0 }); }
+  onClosePreview() { this.setState({ previewSceneIdx: null }); }
+  onPreviewPrev() { this.setState(s => ({ previewLineIdx: Math.max(0, s.previewLineIdx - 1) })); }
+  onPreviewNext() {
+    this.setState(s => {
+      const scene = s.data.customScenes[s.previewSceneIdx];
+      if (!scene) return {};
+      return { previewLineIdx: Math.min(scene.lines.length - 1, s.previewLineIdx + 1) };
+    });
+  }
+
+  renderVals() {
+    const data = this.state.data;
+    const scenesById = {};
+    data.customScenes.forEach(sc => { scenesById[sc.id] = sc.name; });
+
+    const scenes = data.customScenes.map((scene, sceneIdx) => {
+      const conditions = (scene.conditions || []).map((cond, condIdx) => ({
+        type: cond.type,
+        onTypeChange: (e) => this.setConditionType(sceneIdx, condIdx, e.target.value),
+        onDelete: () => this.deleteCondition(sceneIdx, condIdx),
+        showDay: cond.type === 'day',
+        dayValue: cond.value != null ? cond.value : 1,
+        onDayValueChange: (e) => this.updateCondition(sceneIdx, condIdx, { value: parseInt(e.target.value, 10) || 0 }),
+        showButton: cond.type === 'button',
+        buttonLocation: cond.location || '',
+        onButtonLocationChange: (e) => this.updateCondition(sceneIdx, condIdx, { location: e.target.value }),
+        buttonLabel: cond.buttonLabel || '',
+        onButtonLabelChange: (e) => this.updateCondition(sceneIdx, condIdx, { buttonLabel: e.target.value }),
+        showPool: cond.type === 'random_pool',
+        poolWeight: cond.poolWeight != null ? cond.poolWeight : 20,
+        onPoolWeightChange: (e) => this.updateCondition(sceneIdx, condIdx, { poolWeight: parseInt(e.target.value, 10) || 0 }),
+        showEvent: cond.type === 'event',
+        eventKey: cond.eventKey || 'job_unlocked',
+        onEventKeyChange: (e) => this.updateCondition(sceneIdx, condIdx, { eventKey: e.target.value }),
+        eventIsCustom: cond.eventKey === 'custom',
+        eventCustomKey: cond.eventCustomKey || '',
+        onEventCustomKeyChange: (e) => this.updateCondition(sceneIdx, condIdx, { eventCustomKey: e.target.value }),
+        showProbability: cond.type === 'probability',
+        chancePercent: cond.chancePercent != null ? cond.chancePercent : 10,
+        onChancePercentChange: (e) => this.updateCondition(sceneIdx, condIdx, { chancePercent: parseInt(e.target.value, 10) || 0 }),
+        cooldownDays: cond.cooldownDays != null ? cond.cooldownDays : 3,
+        onCooldownDaysChange: (e) => this.updateCondition(sceneIdx, condIdx, { cooldownDays: parseInt(e.target.value, 10) || 0 }),
+        showChain: cond.type === 'chain',
+        chainAfterName: (cond.afterSceneId && scenesById[cond.afterSceneId]) || cond.afterSceneName || '',
+        onChainAfterNameChange: (e) => {
+          const name = e.target.value;
+          const match = data.customScenes.find(sc => sc.name === name);
+          this.updateCondition(sceneIdx, condIdx, { afterSceneId: match ? match.id : null, afterSceneName: name });
+        },
+        showCustom: cond.type === 'custom',
+        customDescription: cond.customDescription || '',
+        onCustomDescriptionChange: (e) => this.updateCondition(sceneIdx, condIdx, { customDescription: e.target.value })
+      }));
+
+      return {
+        name: scene.name,
+        onNameChange: (e) => this.updateScene(sceneIdx, { name: e.target.value }),
+        priority: scene.priority || 0,
+        onPriorityChange: (e) => this.updateScene(sceneIdx, { priority: parseInt(e.target.value, 10) || 0 }),
+        once: scene.once !== false,
+        onOnceChange: (e) => this.updateScene(sceneIdx, { once: e.target.checked }),
+        onDelete: () => this.deleteScene(sceneIdx),
+        onPreview: () => this.onPreviewScene(sceneIdx),
+
+        leftKind: scene.left ? scene.left.kind : 'none',
+        onLeftKindChange: (e) => this.updateScene(sceneIdx, { left: { kind: e.target.value } }),
+        leftIsCustom: scene.left && scene.left.kind === 'custom',
+        leftName: scene.left ? scene.left.name || '' : '',
+        onLeftNameChange: (e) => this.updateScene(sceneIdx, { left: { ...scene.left, name: e.target.value } }),
+        leftPortrait: scene.left ? scene.left.portrait || '' : '',
+        onLeftPortraitChange: (e) => this.updateScene(sceneIdx, { left: { ...scene.left, portrait: e.target.value } }),
+        leftHasMoods: !!(scene.left && MOOD_VARIANTS[scene.left.kind]),
+        leftMoodOptions: moodOptionsFor(scene.left && scene.left.kind),
+        leftMood: scene.left ? scene.left.mood || 'neutre' : 'neutre',
+        onLeftMoodChange: (e) => this.updateScene(sceneIdx, { left: { ...scene.left, mood: e.target.value } }),
+        leftKindNotNone: !!(scene.left && scene.left.kind !== 'none'),
+        leftSizeMult: scene.left && scene.left.sizeMult ? scene.left.sizeMult : 1,
+        onLeftSizeMultChange: (e) => this.updateScene(sceneIdx, { left: { ...scene.left, sizeMult: parseFloat(e.target.value) || 1 } }),
+
+        rightKind: scene.right ? scene.right.kind : 'none',
+        onRightKindChange: (e) => this.updateScene(sceneIdx, { right: { kind: e.target.value } }),
+        rightIsCustom: scene.right && scene.right.kind === 'custom',
+        rightName: scene.right ? scene.right.name || '' : '',
+        onRightNameChange: (e) => this.updateScene(sceneIdx, { right: { ...scene.right, name: e.target.value } }),
+        rightPortrait: scene.right ? scene.right.portrait || '' : '',
+        onRightPortraitChange: (e) => this.updateScene(sceneIdx, { right: { ...scene.right, portrait: e.target.value } }),
+        rightHasMoods: !!(scene.right && MOOD_VARIANTS[scene.right.kind]),
+        rightMoodOptions: moodOptionsFor(scene.right && scene.right.kind),
+        rightMood: scene.right ? scene.right.mood || 'neutre' : 'neutre',
+        onRightMoodChange: (e) => this.updateScene(sceneIdx, { right: { ...scene.right, mood: e.target.value } }),
+        rightKindNotNone: !!(scene.right && scene.right.kind !== 'none'),
+        rightSizeMult: scene.right && scene.right.sizeMult ? scene.right.sizeMult : 1,
+        onRightSizeMultChange: (e) => this.updateScene(sceneIdx, { right: { ...scene.right, sizeMult: parseFloat(e.target.value) || 1 } }),
+
+        centerUsed: scene.center && scene.center.kind !== 'none',
+        onCenterUsedChange: (e) => this.updateScene(sceneIdx, { center: { kind: e.target.checked ? 'image' : 'none', image: scene.center ? scene.center.image : '' } }),
+        centerImage: scene.center ? scene.center.image || '' : '',
+        onCenterImageChange: (e) => this.updateScene(sceneIdx, { center: { ...scene.center, kind: 'image', image: e.target.value } }),
+
+        conditions,
+        onAddCondition: () => this.addCondition(sceneIdx),
+
+        onAddLine: () => this.addLine(sceneIdx),
+        lines: scene.lines.map((line, lineIdx) => {
+          const ov = { left: line.leftOverride, right: line.rightOverride, center: line.centerOverride };
+          return {
+            displayIdx: lineIdx + 1,
+            text: line.text,
+            onTextChange: (e) => this.updateLine(sceneIdx, lineIdx, { text: e.target.value }),
+            speaker: line.speaker || 'left',
+            onSpeakerChange: (e) => this.updateLine(sceneIdx, lineIdx, { speaker: e.target.value }),
+            enterSlot: (line.enter && line.enter.slot) || '',
+            onEnterSlotChange: (e) => this.updateLine(sceneIdx, lineIdx, { enter: e.target.value ? { slot: e.target.value, anim: (line.enter && line.enter.anim) || 'fade' } : null }),
+            showEnterAnim: !!(line.enter && line.enter.slot),
+            enterAnim: (line.enter && line.enter.anim) || 'immediate',
+            onEnterAnimChange: (e) => this.updateLine(sceneIdx, lineIdx, { enter: { slot: line.enter.slot, anim: e.target.value } }),
+            exitSlot: (line.exit && line.exit.slot) || '',
+            onExitSlotChange: (e) => this.updateLine(sceneIdx, lineIdx, { exit: e.target.value ? { slot: e.target.value, anim: (line.exit && line.exit.anim) || 'fade' } : null }),
+            showExitAnim: !!(line.exit && line.exit.slot),
+            exitAnim: (line.exit && line.exit.anim) || 'fade',
+            onExitAnimChange: (e) => this.updateLine(sceneIdx, lineIdx, { exit: { slot: line.exit.slot, anim: e.target.value } }),
+            onDelete: () => this.deleteLine(sceneIdx, lineIdx),
+            onAddChoice: () => this.addChoice(sceneIdx, lineIdx),
+
+            hasOverride: !!(line.leftOverride || line.rightOverride || line.centerOverride),
+            onToggleOverride: (e) => this.toggleLineOverride(sceneIdx, lineIdx, e.target.checked),
+            ovLeftKind: ov.left ? ov.left.kind : 'none',
+            onOvLeftKindChange: (e) => this.updateLineOverrideSlot(sceneIdx, lineIdx, 'left', { kind: e.target.value }),
+            ovLeftIsCustom: ov.left && ov.left.kind === 'custom',
+            ovLeftName: ov.left ? ov.left.name || '' : '',
+            onOvLeftNameChange: (e) => this.updateLineOverrideSlot(sceneIdx, lineIdx, 'left', { name: e.target.value }),
+            ovLeftPortrait: ov.left ? ov.left.portrait || '' : '',
+            onOvLeftPortraitChange: (e) => this.updateLineOverrideSlot(sceneIdx, lineIdx, 'left', { portrait: e.target.value }),
+            ovLeftHasMoods: !!(ov.left && MOOD_VARIANTS[ov.left.kind]),
+            ovLeftMoodOptions: moodOptionsFor(ov.left && ov.left.kind),
+            ovLeftMood: ov.left ? ov.left.mood || 'neutre' : 'neutre',
+            onOvLeftMoodChange: (e) => this.updateLineOverrideSlot(sceneIdx, lineIdx, 'left', { mood: e.target.value }),
+            ovRightKind: ov.right ? ov.right.kind : 'none',
+            onOvRightKindChange: (e) => this.updateLineOverrideSlot(sceneIdx, lineIdx, 'right', { kind: e.target.value }),
+            ovRightIsCustom: ov.right && ov.right.kind === 'custom',
+            ovRightName: ov.right ? ov.right.name || '' : '',
+            onOvRightNameChange: (e) => this.updateLineOverrideSlot(sceneIdx, lineIdx, 'right', { name: e.target.value }),
+            ovRightPortrait: ov.right ? ov.right.portrait || '' : '',
+            onOvRightPortraitChange: (e) => this.updateLineOverrideSlot(sceneIdx, lineIdx, 'right', { portrait: e.target.value }),
+            ovRightHasMoods: !!(ov.right && MOOD_VARIANTS[ov.right.kind]),
+            ovRightMoodOptions: moodOptionsFor(ov.right && ov.right.kind),
+            ovRightMood: ov.right ? ov.right.mood || 'neutre' : 'neutre',
+            onOvRightMoodChange: (e) => this.updateLineOverrideSlot(sceneIdx, lineIdx, 'right', { mood: e.target.value }),
+            ovCenterUsed: ov.center && ov.center.kind !== 'none',
+            onOvCenterUsedChange: (e) => this.updateLineOverrideSlot(sceneIdx, lineIdx, 'center', { kind: e.target.checked ? 'image' : 'none' }),
+            ovCenterImage: ov.center ? ov.center.image || '' : '',
+            onOvCenterImageChange: (e) => this.updateLineOverrideSlot(sceneIdx, lineIdx, 'center', { kind: 'image', image: e.target.value }),
+
+            choices: (line.choices || []).map((choice, choiceIdx) => ({
+              label: choice.label,
+              onLabelChange: (e) => this.updateChoice(sceneIdx, lineIdx, choiceIdx, { label: e.target.value }),
+              gotoDisplay: choice.goto === 'close' || choice.goto == null ? 'fin' : String(choice.goto + 1),
+              onGotoChange: (e) => {
+                const v = e.target.value.trim().toLowerCase();
+                const goto = (v === 'fin' || v === '') ? 'close' : (Math.max(1, parseInt(v, 10) || 1) - 1);
+                this.updateChoice(sceneIdx, lineIdx, choiceIdx, { goto });
+              },
+              onDelete: () => this.deleteChoice(sceneIdx, lineIdx, choiceIdx)
+            }))
+          };
+        })
+      };
+    });
+
+    let preview = null;
+    if (this.state.previewSceneIdx != null && data.customScenes[this.state.previewSceneIdx]) {
+      const scene = data.customScenes[this.state.previewSceneIdx];
+      const lineIdx = this.state.previewLineIdx || 0;
+      const line = scene.lines[lineIdx];
+      const slots = resolveLineSlotsPreview(scene, lineIdx);
+      const leftP = slotPreview(slots.left);
+      const rightP = slotPreview(slots.right);
+      const centerImg = slots.center && slots.center.kind !== 'none' ? slots.center.image : null;
+      const firstAppear = (slotKey) => {
+        for (let i = 0; i <= lineIdx; i++) {
+          const l = scene.lines[i];
+          if (l && l.enter && l.enter.slot === slotKey) return i;
+        }
+        return -1;
+      };
+      const firstExit = (slotKey) => {
+        for (let i = 0; i <= lineIdx; i++) {
+          const l = scene.lines[i];
+          if (l && l.exit && l.exit.slot === slotKey) return i;
+        }
+        return -1;
+      };
+      const visible = (slotKey, exists) => {
+        if (!exists) return false;
+        const at = firstAppear(slotKey);
+        const exitAt = firstExit(slotKey);
+        const entered = at === -1 ? true : lineIdx >= at;
+        const exited = exitAt !== -1 && lineIdx >= exitAt;
+        return entered && !exited;
+      };
+      const speakerSlot = (line && line.speaker) || 'left';
+      preview = {
+        leftPortrait: leftP ? leftP.portrait : '',
+        leftOpacity: visible('left', !!leftP) ? 1 : 0,
+        leftTransform: leftP ? 'scale(' + (leftP.sizeMult || 1) + ')' : '',
+        rightPortrait: rightP ? rightP.portrait : '',
+        rightOpacity: visible('right', !!rightP) ? 1 : 0,
+        rightTransform: rightP ? 'scaleX(-1) scale(' + (rightP.sizeMult || 1) + ')' : 'scaleX(-1)',
+        centerImage: centerImg || '',
+        centerOpacity: visible('center', !!centerImg) ? 1 : 0,
+        speakerName: speakerSlot === 'right' ? (rightP ? rightP.name : '') : speakerSlot === 'center' ? '' : (leftP ? leftP.name : ''),
+        text: line ? line.text : '',
+        hasPrev: lineIdx > 0,
+        onPrev: () => this.onPreviewPrev(),
+        hasNext: lineIdx < scene.lines.length - 1,
+        onNext: () => this.onPreviewNext()
+      };
+    }
+
+    return {
+      unlocked: this.state.unlocked,
+      pwInput: this.state.pwInput,
+      pwError: this.state.pwError,
+      onPwChange: (e) => this.onPwChange(e),
+      onUnlock: () => this.onUnlock(),
+      savedFlash: this.state.savedFlash,
+      onSave: () => this.save(),
+      onExport: () => this.onExport(),
+      onImport: (e) => this.onImport(e),
+      onResetDefaults: () => this.onResetDefaults(),
+
+      tabExistingColor: this.state.tab === 'existing' ? '#f0e6d6' : '#8a7a5e',
+      tabExistingBorder: this.state.tab === 'existing' ? '#7a5a34' : 'transparent',
+      tabNewColor: this.state.tab === 'new' ? '#f0e6d6' : '#8a7a5e',
+      tabNewBorder: this.state.tab === 'new' ? '#7a5a34' : 'transparent',
+      onTabExisting: () => this.setState({ tab: 'existing' }),
+      onTabNew: () => this.setState({ tab: 'new' }),
+      showExistingTab: this.state.tab === 'existing',
+      showNewTab: this.state.tab === 'new',
+
+      greetingLinesText: data.vendorGreetingLines.join('\n'),
+      onGreetingLinesChange: (e) => this.onGreetingLinesChange(e),
+      chatLinesText: data.vendorChatLines.join('\n'),
+      onChatLinesChange: (e) => this.onChatLinesChange(e),
+      chatRepeat: data.vendorChatRepeat,
+      onChatRepeatChange: (e) => this.onChatRepeatChange(e),
+      jobStep1: data.vendorJobOffer.step1,
+      onJobStep1Change: (e) => this.onJobStep1Change(e),
+      jobStep2: data.vendorJobOffer.step2,
+      onJobStep2Change: (e) => this.onJobStep2Change(e),
+      jumpyMoodOptions: moodOptionsFor('jumpy'),
+      jumpyMood: data.vendorMood || 'neutre',
+      onJumpyMoodChange: (e) => this.setState(s => ({ data: { ...s.data, vendorMood: e.target.value } })),
+      jobStep1Mood: data.vendorJobOffer.step1Mood || 'neutre',
+      onJobStep1MoodChange: (e) => this.setState(s => ({ data: { ...s.data, vendorJobOffer: { ...s.data.vendorJobOffer, step1Mood: e.target.value } } })),
+      jobStep2Mood: data.vendorJobOffer.step2Mood || 'neutre',
+      onJobStep2MoodChange: (e) => this.setState(s => ({ data: { ...s.data, vendorJobOffer: { ...s.data.vendorJobOffer, step2Mood: e.target.value } } })),
+
+      onAddScene: () => this.onAddScene(),
+      scenes,
+      noScenes: scenes.length === 0,
+      preview,
+      onClosePreview: () => this.onClosePreview(),
+      stopProp: (e) => e.stopPropagation()
+    };
+  }
+}
+
+</script>
+</body>
+</html>
