@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <style>doc-page:not(:defined){visibility:hidden}</style>
+</helmet>
+<x-import component-from-global-scope="doc-page" from="./doc-page.js" size="a4" orientation="portrait" margin="0.9in" hint-size="100%,100%">
+
+  <div style="font-family:Georgia,serif">
+
+    <div style="text-align:center;margin-bottom:36px">
+      <div style="font-size:13px;letter-spacing:3px;text-transform:uppercase;color:#8a7a63">Soul Seed — Forgotten Echoes</div>
+      <h1 style="font-size:34px;margin:8px 0 4px">Notes de version — v0.3</h1>
+      <div style="font-size:14px;color:#666">Dernière mise à jour — 11 août 2026</div>
+    </div>
+
+    <p style="font-size:15px;line-height:1.6;color:#333">
+      Récapitulatif des ajouts de la v0.3. <strong>Attention spoil</strong> devant chaque ligne qui dévoile une histoire ou une fonctionnalité à découvrir.
+    </p>
+
+    <h2 style="font-size:22px;margin-top:36px;margin-bottom:2px">Nouveautés</h2>
+
+    <h3 style="font-size:18px;border-bottom:2px solid #2c2c2c;padding-bottom:6px;margin-top:22px">🌳 Fiches techniques — Arbre évolutif</h3>
+    <ul style="font-size:14.5px;line-height:1.7">
+      <li>Nouvel onglet "Arbre évolutif" dans les Fiches techniques, reprenant l'intégralité de l'arbre des lignées (Graine → Bébé → Enfant → Adolescent → Adulte)</li>
+      <li>5 nouvelles branches partagées (fusions Enfant) : J-DS, W-DD, F-DJ, S-DW, D-DF, en plus des 6 déjà existantes (11 au total)</li>
+      <li>Pools de techniques Adolescent mis à jour pour toutes les branches, avec correction de la description manquante de "Voile fantomatique" (incohérence d'accent qui cassait sa fiche)</li>
+      <li>Arbre cliquable : chaque écho ouvre une fenêtre dédiée avec un arbre simplifié de ses pré-évolutions et évolutions, dans les Fiches techniques comme dans l'onglet Mémoire du jeu</li>
+    </ul>
+
+    <h3 style="font-size:18px;border-bottom:2px solid #2c2c2c;padding-bottom:6px;margin-top:22px">🌱 Stade Adulte</h3>
+    <ul style="font-size:14.5px;line-height:1.7">
+      <li>Troisième évolution (Adolescent → Adulte) à 12 jours, entre 12h et 18h (heure tirée aléatoirement, même mécanique que les évolutions précédentes)</li>
+      <li>Mort naturelle repoussée de l'âge 14 à l'âge 20</li>
+      <li>14 sprites Adulte illustrés : les 5 lignées principales (primaire + Dark) et Neutre/Dark Neutre, avec variantes mâle/femelle pour la lignée Joy</li>
+      <li>Conditions d'évolution vers la forme principale : le processus majoritaire doit correspondre au processus initial de la lignée (Joy pour J/DJ, Wrath pour W/DW...) ; Neutre/Dark Neutre suivent la même logique que le passage Enfant → Adolescent</li>
+      <li>Les 3 échos fragmentés (Cognitif+, Psychomoteur+, Socio-affectif+) n'évoluent jamais : ils restent Adolescent jusqu'à leur mort</li>
+      <li>Les 11 branches partagées ont désormais leur propre évolution Adulte : elle se déclenche si les 2 processus liés à la branche redeviennent tous deux majoritaires (ex. J-DD → Joy et Disgust), et pour N-DN si les 5 processus sont chacun entre 16% et 24% (répartition quasi égale)</li>
+      <li>10 formes Adulte "mêlées", exceptionnellement rares (JWF, WFS, FSD, SDJ, DJW, JFD, JFS, JWS, WFD, WSD) : accessibles depuis n'importe quelle lignée normale (primaire ou Dark) parmi les 3 processus concernés, si chacun des 3 représente entre 28% et 38% du total éducatif émotionnel</li>
+      <li>Chaque Ado Branche peut désormais, exceptionnellement, évoluer vers l'une des 3 formes mêlées voisines si un 3ᵉ processus devient majoritaire, en plus de sa voie Adulte normale</li>
+      <li>Pools de techniques Adulte désormais complets et distincts de l'Adolescent : 8 techniques par lignée, par branche, par forme mêlée et par écho de souvenir (au lieu de reprendre celles de l'Adolescent)</li>
+      <li><strong>Attention spoil</strong> — 6 échos de souvenir (Vent, Feu, Foudre, Eau, Terre, Ether), prioritaires sur toute autre évolution : nécessitent le souvenir élémentaire correspondant débloqué ET la pierre runique associée présente dans l'inventaire principal (le coffre de Maïko ou tout autre espace de stockage ne compte pas) au moment de l'évolution ; la pierre est consommée lors du passage</li>
+      <li><strong>Attention spoil</strong> — 6 nouvelles pierres runiques élémentaires : objets mystiques uniques (un seul exemplaire chacun), non disponibles en boutique, obtenus uniquement via quêtes ou événements à venir</li>
+    </ul>
+
+    <div style="margin-top:20px;padding:12px 16px;background:#f4f1ea;border-radius:4px;font-size:13px;color:#666;font-style:italic">
+      Les échos fragmentés et les formes mêlées/de souvenir n'ont pas de forme visuelle propre au-delà de l'Adulte : ce sont des stades finaux.
+    </div>
+
+    <h3 style="font-size:18px;border-bottom:2px solid #2c2c2c;padding-bottom:6px;margin-top:22px">⚔️ Techniques &amp; statuts</h3>
+    <ul style="font-size:14.5px;line-height:1.7">
+      <li>32 nouvelles techniques (4 par élément), portant le total à 64 (8 par élément)</li>
+      <li>Nouveaux mécanismes : rebond en chaîne sur une cible différente (Arc éthéré foudroyant), auto-dissipation à régénération cumulative selon le nombre d'effets positifs retirés (Offrande), retrait complet des effets négatifs (Grâce sacrée)</li>
+      <li>Renvoi de dégâts : nouvelle variante infligeant une chance de Brûlure au contact (Fournaise interne), en plus de la variante Poison existante (Peau corrosive)</li>
+      <li>Nouvelle section "Statuts" dans les Fiches techniques : les 11 états persistants et l'Annulation, avec icône et effet de chacun</li>
+      <li>"Spore toxique" renommée "Spores toxiques" (pluriel) : 40% de chances d'Empoisonnement, 40% de chances d'Étourdissement</li>
+      <li>Onde de choc : 65% de chances d'Étourdissement (au lieu de 40%)</li>
+      <li>Rayon sacré : 50% d'Étourdissement, 30% d'infliger 1 Brûlure</li>
+      <li>Pacte maléfique : retire désormais immédiatement 20% de la vie restante du lanceur</li>
+      <li>Cri des âmes : applique en zone Terreur ou Ralentissement (aléatoire), puis 50% de chances d'appliquer l'autre état</li>
+      <li>Malédiction : applique désormais également Étourdissement, en plus d'Annulation, Empoisonnement, Brûlure et Ralentissement</li>
+      <li>Anticorps : applique Empoisonnement sur soi, puis régénère 40% des PV en 15s</li>
+      <li>Résonance arcanique et Barrière magique précisent désormais leur durée (20s) ; Distorsion spatio-temporelle précise la sienne (10s)</li>
+      <li>Techniques des bébés retirées des Fiches techniques : les bébés n'ont aucune technique</li>
+    </ul>
+
+    <h3 style="font-size:18px;border-bottom:2px solid #2c2c2c;padding-bottom:6px;margin-top:22px">🏟️ Mode Arène</h3>
+    <ul style="font-size:14.5px;line-height:1.7">
+      <li>Nouveau bouton "Mode Arène" au menu principal, avec avertissement spoil dédié (fenêtre "Je comprends" / "Revenir au menu principal") : ce mode permet de tester des combats sans aucune incidence sur la sauvegarde</li>
+      <li>Configuration complète : choix du terrain de combat (6 paysages, aperçu miniature), choix de la musique de combat, nombre de combattants alliés et ennemis (1 à 3 chacun), l'Allié 1 étant toujours l'écho jouable</li>
+      <li>Pour chaque combattant : stade de développement (Bébé à Adulte, plus le stade à part "Fragmentés"), lignée/branche/forme mêlée/écho de souvenir selon le stade, jusqu'à 3 techniques équipées parmi le pool disponible</li>
+      <li>Caractéristiques tirées au hasard par tranche de puissance (Faible à Divin) ou personnalisées caractéristique par caractéristique, avec un bouton "Aide" dédié expliquant la configuration</li>
+      <li>Stock de soins configurable pour le combat, lancement avec compte à rebours</li>
+      <li>En Arène, "Fuir le combat" est remplacé par "Mettre fin au combat" (arrêt immédiat, sans résultat victoire/défaite/fuite)</li>
+      <li>Musique de combat par défaut en Arène : nouvelle piste (Yu-Gi-Oh! Forbidden Memories — Free Duel, X Remastered), sélectionnable comme n'importe quelle autre musique de combat</li>
+      <li><strong>Attention spoil</strong> — nouvelle mécanique de combat à plusieurs combattants : un écho attaqué par un adversaire qui ne le ciblait pas a 1 chance sur 2 de riposter sur lui ; à 700 d'Intelligence, l'ordre "Change de cible !" (CD 5s) verrouille le ciblage sur un adversaire précis jusqu'à son KO</li>
+      <li>La jauge de vie d'un écho réapparaît désormais dès qu'il se soigne ou qu'il est soigné</li>
+    </ul>
+
+    <h3 style="font-size:18px;border-bottom:2px solid #2c2c2c;padding-bottom:6px;margin-top:22px">😊 État émotionnel &amp; bulle Observer</h3>
+    <ul style="font-size:14.5px;line-height:1.7">
+      <li>Nouvel onglet "État émotionnel" dans les Fiches techniques : rappel des éléments d'humeur principaux, et tableau de 32 états émotionnels (32 icônes dédiées) avec pour chacun ses seuils d'activation (émotions primaires Colère/Joie/Tristesse/Surprise/Dégoût/Peur, Humeur, Affection Joueur, Manque d'affection, Anxiété/Angoisse, Malade, Blessé, Fatigué) et sa priorité (1 à 100, score unique) pour arbitrer les états concomitants</li>
+      <li>L'action rapide "Observer" au ranch affiche désormais une bulle avec l'émote correspondant à l'état émotionnel réel de l'écho (calculé à partir de ses stats en cours), au-dessus de sa tête, taille fixe, pendant 4 secondes avant de disparaître en fondu ; ré-affichable en cliquant à nouveau sur Observer</li>
+    </ul>
+
+    <h3 style="font-size:18px;border-bottom:2px solid #2c2c2c;padding-bottom:6px;margin-top:22px">🧱 Matériaux de construction</h3>
+    <ul style="font-size:14.5px;line-height:1.7">
+      <li>6 nouveaux matériaux documentés dans les Fiches techniques (onglet Objets) en vue des futures constructions du village : Bois, Pierre, Fibres végétales, Résine, Ferraille, Cristaux</li>
+    </ul>
+
+    <h3 style="font-size:18px;border-bottom:2px solid #2c2c2c;padding-bottom:6px;margin-top:22px">🌳 Ajustements de l'arbre évolutif</h3>
+    <ul style="font-size:14.5px;line-height:1.7">
+      <li>Suppression du stade "Mature", non implémenté</li>
+    </ul>
+
+    <h3 style="font-size:18px;border-bottom:2px solid #2c2c2c;padding-bottom:6px;margin-top:22px">🔨 Ash, l'atelier &amp; l'entrepôt</h3>
+    <ul style="font-size:14.5px;line-height:1.7">
+      <li>Récolte de matériaux (Bois, Pierre, Fibres, Résine, Ferraille, Cristaux) en butin bonus de fouille selon la zone d'exploration, avec plafond de 5 par ressource sur soi</li>
+      <li>Coffre de Maïko : ressources affichées à côté de l'inventaire et du coffre, bouton "Déposer ses ressources" (au maximum possible par ressource), avertissement quand le coffre est plein sur une ressource</li>
+      <li>Ash peut désormais construire l'Atelier (10 bois, 10 pierre, 5 fibres, 3 résine — 24h) puis l'Entrepôt (20 bois, 10 pierre, 10 fibres, 5 résine — 24h) : les matériaux du coffre de Maïko sont utilisés en priorité sur ceux portés par le joueur</li>
+      <li>Une fois l'Atelier construit, il apparaît dans le village (Ash n'est plus visible dehors) ; à l'intérieur, Ash propose de nouveaux dialogues selon l'avancement des constructions</li>
+      <li>Une fois l'Entrepôt construit, Maïko s'y installe (elle ne se trouve plus à l'entrée de la forêt) avec de nouveaux dialogues, et les plafonds de stockage passent à 48 objets / 50 ressources (contre 24 objets / 20 ressources avant l'Entrepôt)</li>
+      <li>Menu Construction : onglet Ranch dédié pour les niveaux des corvées (amélioration niveau 2 : 12h, niveau 3 : 18h, chaque corvée progresse indépendamment)</li>
+    </ul>
+
+    <h3 style="font-size:18px;border-bottom:2px solid #2c2c2c;padding-bottom:6px;margin-top:22px">🛠️ Mode Debug</h3>
+    <ul style="font-size:14.5px;line-height:1.7">
+      <li>Panneau simplifié : boutons +/- pour l'or, fenêtres dédiées "Événements aléatoires" et "Évolutions" (au lieu d'une longue liste de boutons), réglage manuel des ressources (joueur et coffre) jusqu'aux plafonds en vigueur</li>
+      <li>Bouton pour évoluer directement au stade Adulte</li>
+      <li>Nouveau bouton "Constructions" dans l'onglet Ranch : fenêtre dédiée pour débloquer instantanément n'importe quel bâtiment d'Ash, du Village ou du Ranch (prérequis et PNJ associés satisfaits automatiquement), régler le niveau de chaque corvée (0 à 3), ou tout débloquer d'un coup au niveau maximum</li>
+    </ul>
+
+    <h3 style="font-size:18px;border-bottom:2px solid #2c2c2c;padding-bottom:6px;margin-top:22px">🔨 Constructions &amp; corvées — coûts et verrous</h3>
+    <ul style="font-size:14.5px;line-height:1.7">
+      <li>Fiches techniques : ajout des coûts de construction (matériaux et durée) sur toutes les fiches de bâtiments concernées</li>
+      <li>Entrepôt niveau 2 (45 bois, 35 pierre, 20 ferraille, 25 fibres, 15 résine, 5 cristaux) : porte le stockage à 60 emplacements et 100 par ressource</li>
+      <li>Entrepôt niveau 3 (90 bois, 80 pierre, 40 ferraille, 60 fibres, 40 résine, 15 cristaux) : porte le stockage à 72 emplacements et 200 par ressource</li>
+      <li>L'Entrepôt (tous niveaux) ne peut être construit/amélioré que si Maïko a rejoint le village</li>
+      <li>Toutes les corvées coûtent désormais des matériaux (plus d'or) à chaque niveau : Nettoyage de la grange, Remise en état de la barrière (renommée, ex-"Réparation"), Remise en état du poulailler, Remise en état de la charrue, Rafistolage des seaux, Remise en état du sentier</li>
+      <li>Jardin, Cuisine, Abri de l'écho et Zone de jeux désactivés pour l'instant : leurs colonnes dans le menu de construction d'Ash affichent "En développement"</li>
+      <li>Constructions du village verrouillées par PNJ : le nom du bâtiment reste masqué ("???") tant que le bon écho n'a pas été recruté, et tenter de construire affiche "Un écho doit pouvoir vous renseigner sur cette construction" (ex. le Dojo nécessite Hevann vaincu)</li>
+      <li>Au recrutement d'Ash, seul l'Atelier est proposé dans l'onglet Village au départ ; les autres constructions du village restent à déterminer</li>
+    </ul>
+
+    <h3 style="font-size:18px;border-bottom:2px solid #2c2c2c;padding-bottom:6px;margin-top:22px">🕳️ Exploration — Grimp &amp; Glamp</h3>
+    <ul style="font-size:14.5px;line-height:1.7">
+      <li><strong>Attention spoil</strong> — nouvelle rencontre en zone 23 (entrée de la caverne), visible de 12h à minuit : Grimp demande de l'aide pour retrouver son amie descendue trop profondément, avec dialogue à embranchements</li>
+      <li>En acceptant, deux chemins possibles : faire le tour normalement, ou tenter de passer par le trou (réservé aux échos Bébé ou Enfant ; les autres stades reçoivent le message "{nom de l'écho} ne passe pas dans la cavité") pour rejoindre directement le passage sans issue (zone 27.)</li>
+      <li>Le passage encombré des tréfonds (zone 28.) ne peut être déblayé qu'après avoir accepté d'aider Grimp ; l'action ouvre une confirmation puis un mini-jeu de glisser-déposer d'une douzaine de pierres à rassembler en tas</li>
+      <li>Une fois le passage déblayé, la zone passe en 28bis et Glamp y apparaît ; lui parler déclenche un court dialogue puis son ralliement au village (+1 prospérité) — Grimp disparaît alors définitivement de la zone 23</li>
+      <li>Glamp apparaît ensuite dans l'Atelier (une fois construit), superposé derrière Ash avec le nouveau visuel d'atelier ; cliquer sur elle propose "Demander un service" (en développement) et "Discuter" (elle exprime son inquiétude pour Grimp tant qu'il n'a pas été recruté)</li>
+    </ul>
+
+    <h3 style="font-size:18px;border-bottom:2px solid #2c2c2c;padding-bottom:6px;margin-top:22px">⛏️ Exploration : la caverne</h3>
+    <ul style="font-size:14.5px;line-height:1.7">
+      <li>Nouvelles zones explorables depuis le passage proche de la caverne (11.) : entrée de la caverne, embranchement, lac souterrain (pêche), passage dérobé vers le gouffre, tréfonds et jusqu'à l'arène du crystal en fusion</li>
+      <li>Nouvelle musique d'ambiance glaciale pour la caverne (la musique d'exploration normale reprend en sortant vers la zone 11.)</li>
+      <li>Nouveaux échos rencontrables : Fear et Wrath (Enfant), Dark Disgust, et Dark Sorrow près des zones aquatiques ; des Adolescents apparaissent au fond des tréfonds</li>
+      <li>Nouvelles espèces de pêche (Tetra aveugle, Poisson-chat cavernicole, Silure, Cyprinodon) et nouvelles ressources/objets de fouille adaptés à l'aspect minéral et géothermique des lieux (Pierre ardente, Noyau incandescent, Perle de roche, Éclat de stalactite, Champignon des tréfonds, Champignon lumineux, Sel des profondeurs...)</li>
+      <li>Le crystal ne se trouve qu'en fouillant l'arène du crystal en fusion (zone 30.), en petite quantité</li>
+      <li>Passage encombré dans les tréfonds : quête de déblaiement débloquant la suite du chemin</li>
+    </ul>
+
+    <h3 style="font-size:18px;border-bottom:2px solid #2c2c2c;padding-bottom:6px;margin-top:22px">🎨 Divers</h3>
+    <ul style="font-size:14.5px;line-height:1.7">
+      <li>Nouveau visuel d'Ash dans l'atelier</li>
+      <li>Zone 24 : correction du libellé du bouton ("S'enfoncer profondément dans la caverne", était affiché "S'enfonce")</li>
+    </ul>
+
+    <h2 style="font-size:22px;margin-top:40px;margin-bottom:2px">Corrections de bugs</h2>
+    <ul style="font-size:14px;line-height:1.65;margin-top:14px;color:#444">
+      <li>Mode Exploration : les fenêtres d'utilisation d'objet (nourrir, soigner, câliner, entraînement, corvées...) ne s'affichaient plus derrière la fenêtre d'exploration</li>
+      <li>Le sommeil ne comptabilisait pas les heures écoulées, ce qui faussait la fin des constructions en cours</li>
+      <li>Arbre "Mémoire" : les échos Adultes (lignées, branches croisées, mêlées, souvenirs) n'apparaissaient pas ; seules les pré/évolutions débloquées s'affichent désormais, les autres montrant un "?"</li>
+      <li>Exploration, zone 1 : le bouton "Revenir au village" ramenait à l'entrée du village au lieu du centre (chez Maïko)</li>
+      <li>Détection de clic à l'alpha sur Ash et l'atelier au village, sur Ash et Maïko à l'intérieur des bâtiments (le clic ne fonctionne plus n'importe où autour du personnage)</li>
+    </ul>
+
+    <div style="margin-top:36px;padding:16px 20px;background:#f4f1ea;border-radius:4px;font-size:13.5px;color:#555;font-style:italic">
+      Voir la Roadmap pour la suite prévue.
+    </div>
+
+  </div>
+
+</x-import>
+</x-dc>
+</body>
+</html>

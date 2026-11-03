@@ -29,6 +29,9 @@
       <button onClick="{{ onTabHabitants }}" style="padding:10px 20px;border:none;border-bottom:3px solid {{ tabHabitantsBorder }};background:transparent;color:{{ tabHabitantsColor }};font-weight:700;font-size:14px;font-family:Inter,sans-serif;cursor:pointer">Habitants</button>
       <button onClick="{{ onTabTechniques }}" style="padding:10px 20px;border:none;border-bottom:3px solid {{ tabTechniquesBorder }};background:transparent;color:{{ tabTechniquesColor }};font-weight:700;font-size:14px;font-family:Inter,sans-serif;cursor:pointer">Techniques</button>
       <button onClick="{{ onTabObjets }}" style="padding:10px 20px;border:none;border-bottom:3px solid {{ tabObjetsBorder }};background:transparent;color:{{ tabObjetsColor }};font-weight:700;font-size:14px;font-family:Inter,sans-serif;cursor:pointer">Objets</button>
+      <button onClick="{{ onTabArbre }}" style="padding:10px 20px;border:none;border-bottom:3px solid {{ tabArbreBorder }};background:transparent;color:{{ tabArbreColor }};font-weight:700;font-size:14px;font-family:Inter,sans-serif;cursor:pointer">Arbre évolutif</button>
+      <button onClick="{{ onTabEmotionnel }}" style="padding:10px 20px;border:none;border-bottom:3px solid {{ tabEmotionnelBorder }};background:transparent;color:{{ tabEmotionnelColor }};font-weight:700;font-size:14px;font-family:Inter,sans-serif;cursor:pointer">État émotionnel</button>
+      <button onClick="{{ onTabConstruction }}" style="padding:10px 20px;border:none;border-bottom:3px solid {{ tabConstructionBorder }};background:transparent;color:{{ tabConstructionColor }};font-weight:700;font-size:14px;font-family:Inter,sans-serif;cursor:pointer">Construction</button>
     </div>
 
     <sc-if value="{{ showPlayable }}" hint-placeholder-val="{{ true }}">
@@ -91,8 +94,26 @@
     <sc-if value="{{ showTechniques }}" hint-placeholder-val="{{ false }}">
       <div style="display:flex;flex-direction:column;gap:22px">
         <div style="background:#fffaf0;border:1px solid #d8c9a0;border-radius:12px;padding:18px 20px">
-          <div style="font-weight:700;font-size:15px;margin-bottom:8px">32 techniques, 8 éléments</div>
-          <div style="font-size:13.5px;line-height:1.6;color:#4a3e2c">4 techniques par élément. Débloquées au hasard dans le pool de l’écho (selon lignée et stade) à chaque palier d’Intelligence franchi : 150 / 350 / 550 / 750. Une technique apprise reste acquise définitivement ; jusqu’à 3 équipables simultanément (équipement débloqué à 500 d’Intelligence).</div>
+          <div style="font-weight:700;font-size:15px;margin-bottom:8px">64 techniques, 8 éléments</div>
+          <div style="font-size:13.5px;line-height:1.6;color:#4a3e2c">8 techniques par élément. Débloquées au hasard dans le pool de l’écho (selon lignée et stade) à chaque palier d’Intelligence franchi : 150 / 350 / 550 / 750. Une technique apprise reste acquise définitivement ; jusqu’à 3 équipables simultanément (équipement débloqué à 500 d’Intelligence).</div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:10px">
+          <div style="font-family:Cinzel,serif;font-weight:700;font-size:18px;color:#3a2e1c;border-bottom:2px solid #d8c9a0;padding-bottom:6px">Statuts</div>
+          <div style="font-size:13.5px;line-height:1.6;color:#4a3e2c;margin-bottom:4px">États appliqués en combat par les techniques ci-dessous. Une lueur bleue entoure l’écho pour un état positif, rouge pour un état négatif.</div>
+          <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px">
+            <sc-for list="{{ statusList }}" as="st" hint-placeholder-count="12">
+              <div style="background:#fffaf0;border:1px solid {{ st.borderColor }};border-radius:10px;padding:12px 14px;display:flex;gap:10px;align-items:flex-start">
+                <img src="{{ st.icon }}" alt="{{ st.name }}" style="width:34px;height:34px;object-fit:contain;flex-shrink:0">
+                <div style="display:flex;flex-direction:column;gap:3px">
+                  <div style="display:flex;align-items:center;gap:6px">
+                    <div style="font-weight:700;font-size:13.5px;color:#3a2e1c">{{ st.name }}</div>
+                    <div style="font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:.03em;color:{{ st.borderColor }}">{{ st.polarity }}</div>
+                  </div>
+                  <div style="font-size:12.5px;line-height:1.5;color:#5a4d38">{{ st.desc }}</div>
+                </div>
+              </div>
+            </sc-for>
+          </div>
         </div>
         <sc-for list="{{ techniqueGroups }}" as="grp" hint-placeholder-count="8">
           <div style="display:flex;flex-direction:column;gap:10px">
@@ -139,13 +160,607 @@
         </sc-for>
       </div>
     </sc-if>
+
+    <sc-if value="{{ showArbre }}" hint-placeholder-val="{{ false }}">
+      <div style="display:flex;flex-direction:column;gap:16px;overflow:auto">
+        <div style="background:#fffaf0;border:1px solid #d8c9a0;border-radius:12px;padding:18px 20px">
+          <div style="font-weight:700;font-size:15px;margin-bottom:8px">Arbre généalogique des lignées</div>
+          <div style="font-size:13.5px;line-height:1.6;color:#4a3e2c">Chaque graine donne une variante Primaire (bleu) et Dark (bleu foncé), du Bébé à l'Adulte. Les branches en pointillés orange représentent les fusions entre deux lignées Enfant ; leur propre forme Adulte (bordure orange) suit dans une colonne dédiée, alignée sur la même ligne, si les 2 processus de la branche redeviennent majoritaires. Les échos fragmentés (bordure rouge) sont des formes exceptionnelles non liées à une lignée précise et n'évoluent jamais vers l'Adulte. Les formes mêlées (bordure violette) sont des évolutions Adulte très rares croisant 3 processus émotionnels. Les échos de souvenir (bordure verte) nécessitent un souvenir élémentaire débloqué et une pierre runique en inventaire.</div>
+        </div>
+        <div style="display:flex;gap:0;position:sticky;top:0;background:#f4ecd8;z-index:2;padding-bottom:6px">
+          <div style="width:230px;flex:none;text-align:center;font-family:Inter,sans-serif;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:#7a6b52">Soul Seed</div>
+          <div style="width:230px;flex:none;text-align:center;font-family:Inter,sans-serif;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:#7a6b52">Bébé</div>
+          <div style="width:230px;flex:none;text-align:center;font-family:Inter,sans-serif;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:#7a6b52">Enfant</div>
+          <div style="width:230px;flex:none;text-align:center;font-family:Inter,sans-serif;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:#7a6b52">Adolescent</div>
+          <div style="width:230px;flex:none;text-align:center;font-family:Inter,sans-serif;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:#7a6b52">Adulte</div>
+        </div>
+        <div style="position:relative;width:{{ echoTreeData.width }}px;height:{{ echoTreeData.height }}px">
+          <sc-for list="{{ echoTreeData.nonSpecificBoxes }}" as="b" hint-placeholder-count="2">
+            <div style="position:absolute;left:{{ b.left }};top:{{ b.top }};width:{{ b.width }};height:{{ b.height }};z-index:0;background:rgba(196,154,108,.22);border:2px dashed rgba(150,110,70,.6);border-radius:10px"></div>
+          </sc-for>
+          <svg width="{{ echoTreeData.width }}" height="{{ echoTreeData.height }}" style="position:absolute;top:0;left:0;z-index:0;pointer-events:none">
+            <sc-for list="{{ echoTreeData.lines }}" as="l" hint-placeholder-count="22">
+              <line x1="{{ l.x1 }}" y1="{{ l.y1 }}" x2="{{ l.x2 }}" y2="{{ l.y2 }}" stroke="{{ l.color }}" stroke-width="2" stroke-dasharray="{{ l.dash }}"></line>
+            </sc-for>
+          </svg>
+          <sc-for list="{{ echoTreeData.seedSlots }}" as="s" hint-placeholder-count="5">
+            <div onClick="{{ s.onClick }}" style="position:absolute;left:{{ s.left }};top:{{ s.top }};transform:translate(-50%,-50%);z-index:1;display:flex;flex-direction:column;align-items:center;gap:2px;width:76px;cursor:pointer">
+              <div style="width:52px;height:52px;border-radius:8px;background:#fffaf0;border:1px solid #d8c9a0;display:flex;align-items:center;justify-content:center;overflow:hidden"><img src="{{ s.img }}" alt="{{ s.label }}" style="width:100%;height:100%;object-fit:contain"></div>
+              <div style="font-family:Inter,sans-serif;font-size:9px;color:#7a6b52;text-align:center;line-height:1.2">{{ s.label }}</div>
+            </div>
+          </sc-for>
+          <sc-for list="{{ echoTreeData.babySlots }}" as="s" hint-placeholder-count="12">
+            <div onClick="{{ s.onClick }}" style="position:absolute;left:{{ s.left }};top:{{ s.top }};transform:translate(-50%,-50%);z-index:1;display:flex;flex-direction:column;align-items:center;gap:2px;width:76px;cursor:pointer">
+              <div style="width:52px;height:52px;border-radius:8px;background:#fffaf0;border:1px solid #d8c9a0;display:flex;align-items:center;justify-content:center;overflow:hidden"><img src="{{ s.img }}" alt="{{ s.label }}" style="width:100%;height:100%;object-fit:contain"></div>
+              <div style="font-family:Inter,sans-serif;font-size:9px;color:#7a6b52;text-align:center;line-height:1.2">{{ s.label }}</div>
+            </div>
+          </sc-for>
+          <sc-for list="{{ echoTreeData.childSlots }}" as="s" hint-placeholder-count="12">
+            <div onClick="{{ s.onClick }}" style="position:absolute;left:{{ s.left }};top:{{ s.top }};transform:translate(-50%,-50%);z-index:1;display:flex;flex-direction:column;align-items:center;gap:2px;width:76px;cursor:pointer">
+              <div style="width:52px;height:52px;border-radius:8px;background:#fffaf0;border:1px solid #d8c9a0;display:flex;align-items:center;justify-content:center;overflow:hidden"><img src="{{ s.img }}" alt="{{ s.label }}" style="width:100%;height:100%;object-fit:contain"></div>
+              <div style="font-family:Inter,sans-serif;font-size:9px;color:#7a6b52;text-align:center;line-height:1.2">{{ s.label }}</div>
+            </div>
+          </sc-for>
+          <sc-for list="{{ echoTreeData.adoSlots }}" as="s" hint-placeholder-count="18">
+            <div onClick="{{ s.onClick }}" style="position:absolute;left:{{ s.left }};top:{{ s.top }};transform:translate(-50%,-50%);z-index:1;display:flex;flex-direction:column;align-items:center;gap:2px;width:76px;cursor:pointer">
+              <div style="width:52px;height:52px;border-radius:8px;background:#fffaf0;border:1px solid #d8c9a0;display:flex;align-items:center;justify-content:center;overflow:hidden"><img src="{{ s.img }}" alt="{{ s.label }}" style="width:100%;height:100%;object-fit:contain"></div>
+              <div style="font-family:Inter,sans-serif;font-size:9px;color:#7a6b52;text-align:center;line-height:1.2">{{ s.label }}</div>
+            </div>
+          </sc-for>
+          <sc-for list="{{ echoTreeData.adulteSlots }}" as="s" hint-placeholder-count="12">
+            <div onClick="{{ s.onClick }}" style="position:absolute;left:{{ s.left }};top:{{ s.top }};transform:translate(-50%,-50%);z-index:1;display:flex;flex-direction:column;align-items:center;gap:2px;width:76px;cursor:pointer">
+              <div style="width:52px;height:52px;border-radius:8px;background:#fffaf0;border:1px solid #d8c9a0;display:flex;align-items:center;justify-content:center;overflow:hidden"><img src="{{ s.img }}" alt="{{ s.label }}" style="width:100%;height:100%;object-fit:contain"></div>
+              <div style="font-family:Inter,sans-serif;font-size:9px;color:#7a6b52;text-align:center;line-height:1.2">{{ s.label }}</div>
+            </div>
+          </sc-for>
+          <sc-for list="{{ echoTreeData.fragmentSlots }}" as="s" hint-placeholder-count="3">
+            <div onClick="{{ s.onClick }}" style="position:absolute;left:{{ s.left }};top:{{ s.top }};transform:translate(-50%,-50%);z-index:1;display:flex;flex-direction:column;align-items:center;gap:2px;width:76px;cursor:pointer">
+              <div style="width:52px;height:52px;border-radius:8px;background:#fffaf0;border:2px solid #a04a3a;display:flex;align-items:center;justify-content:center;overflow:hidden"><img src="{{ s.img }}" alt="{{ s.label }}" style="width:100%;height:100%;object-fit:contain"></div>
+              <div style="font-family:Inter,sans-serif;font-size:9px;color:#7a6b52;text-align:center;line-height:1.2">{{ s.label }}</div>
+            </div>
+          </sc-for>
+          <sc-for list="{{ echoTreeData.branchAdulteSlots }}" as="s" hint-placeholder-count="11">
+            <div onClick="{{ s.onClick }}" style="position:absolute;left:{{ s.left }};top:{{ s.top }};transform:translate(-50%,-50%);z-index:1;display:flex;flex-direction:column;align-items:center;gap:2px;width:76px;cursor:pointer">
+              <div style="width:52px;height:52px;border-radius:8px;background:#fffaf0;border:2px solid #c9791f;display:flex;align-items:center;justify-content:center;overflow:hidden"><img src="{{ s.img }}" alt="{{ s.label }}" style="width:100%;height:100%;object-fit:contain"></div>
+              <div style="font-family:Inter,sans-serif;font-size:9px;color:#7a6b52;text-align:center;line-height:1.2">{{ s.label }}</div>
+            </div>
+          </sc-for>
+          <sc-for list="{{ echoTreeData.meleeSlots }}" as="s" hint-placeholder-count="10">
+            <div onClick="{{ s.onClick }}" style="position:absolute;left:{{ s.left }};top:{{ s.top }};transform:translate(-50%,-50%);z-index:1;display:flex;flex-direction:column;align-items:center;gap:2px;width:76px;cursor:pointer">
+              <div style="width:52px;height:52px;border-radius:8px;background:#fffaf0;border:2px solid #a15fc9;display:flex;align-items:center;justify-content:center;overflow:hidden"><img src="{{ s.img }}" alt="{{ s.label }}" style="width:100%;height:100%;object-fit:contain"></div>
+              <div style="font-family:Inter,sans-serif;font-size:9px;color:#7a6b52;text-align:center;line-height:1.2">{{ s.label }}</div>
+            </div>
+          </sc-for>
+          <sc-for list="{{ echoTreeData.memorySlots }}" as="s" hint-placeholder-count="6">
+            <div onClick="{{ s.onClick }}" style="position:absolute;left:{{ s.left }};top:{{ s.top }};transform:translate(-50%,-50%);z-index:1;display:flex;flex-direction:column;align-items:center;gap:2px;width:76px;cursor:pointer">
+              <div style="width:52px;height:52px;border-radius:8px;background:#fffaf0;border:2px solid #2f9e7a;display:flex;align-items:center;justify-content:center;overflow:hidden"><img src="{{ s.img }}" alt="{{ s.label }}" style="width:100%;height:100%;object-fit:contain"></div>
+              <div style="font-family:Inter,sans-serif;font-size:9px;color:#7a6b52;text-align:center;line-height:1.2">{{ s.label }}</div>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ showEmotionnel }}" hint-placeholder-val="{{ false }}">
+      <div style="display:flex;flex-direction:column;gap:16px">
+        <div style="background:#fffaf0;border:1px solid #d8c9a0;border-radius:12px;padding:18px 20px">
+          <div style="font-weight:700;font-size:15px;margin-bottom:8px">Éléments d'humeur principaux</div>
+          <div style="font-size:13.5px;line-height:1.7;color:#4a3e2c">
+            L'état émotionnel affiché à l'écran (via une bulle d'émote au-dessus de l'écho) résulte de la combinaison de plusieurs éléments déjà suivis en interne :
+            <ul style="margin:10px 0 0;padding-left:20px">
+              <li><strong>Besoins critiques</strong> — Faim, Énergie, Propreté, Manque d'affection : chacun a un seuil d'alerte visuel dédié (icônes déjà existantes) et prime sur le reste quand il est bas.</li>
+              <li><strong>Humeur</strong> — jauge de fond, alimentée par les besoins comblés/négligés et les actions du joueur (Féliciter/Gronder, câlins). Détermine le ton général de l'expression hors alerte.</li>
+              <li><strong>Anxiété/Angoisse</strong> — état ponctuel (icône "Angoisse" existante), déclenché par la négligence prolongée ou certains événements ; prioritaire sur l'humeur de fond.</li>
+              <li><strong>Attachement / Affection Joueur</strong> — jauges de relation à plus long terme : influencent les expressions "affectueuses" et la réaction de l'écho à la présence du joueur.</li>
+              <li><strong>Tempérament (par graine)</strong> — Curiosité (Joy), Résolution (Wrath), Discernement (Disgust), Observation (Sorrow), Anticipation (Fear) : teinte la manière dont chaque émotion s'exprime plutôt que de créer une émotion à part.</li>
+              <li><strong>Comportement/état ponctuel</strong> — Tendance aux bêtises, Volonté de faire mieux, Sentiment de justice, état "Malade" : déclenchent des expressions réactives de courte durée (fierté, bouderie, douleur).</li>
+            </ul>
+          </div>
+        </div>
+
+        <div style="background:#fffaf0;border:1px solid #d8c9a0;border-radius:12px;padding:18px 20px;display:flex;flex-direction:column;gap:10px">
+          <div style="font-weight:700;font-size:15px">Tableau des états émotionnels</div>
+          <div style="font-size:12.5px;line-height:1.5;color:#4a3e2c">Sauf indication contraire, chaque paramètre est noté sur une échelle de <strong>0 à 100</strong> (0 = absence totale, 100 = maximum) — plus la valeur est haute, plus l'émotion/l'état est intense (Humeur et Affection Joueur suivent la même logique : haut = bonne humeur / fort attachement ; <strong>Manque d'affection</strong> suit la logique inverse : haut = négligé récemment, quel que soit le niveau d'attachement global). <strong>Fatigué</strong> est l'inverse de la jauge Énergie (Fatigue = 100 − Énergie). <strong>Malade</strong> et <strong>Blessé</strong> sont binaires (Oui/Non). La <strong>priorité</strong> est notée sur une échelle de <strong>1 à 100</strong>, chaque état ayant un score unique : quand plusieurs états sont concomitants, celui au score le plus élevé l'emporte dans l'affichage de la bulle d'émote.</div>
+          <div style="overflow-x:auto">
+            <table style="border-collapse:collapse;width:100%;font-size:11.5px;font-family:Inter,sans-serif;white-space:nowrap">
+              <thead>
+                <tr style="background:#e9dcb8">
+                  <th style="padding:6px 8px;border:1px solid #d8c9a0">Icône</th>
+                  <th style="text-align:left;padding:6px 8px;border:1px solid #d8c9a0;position:sticky;left:0;background:#e9dcb8;z-index:1">État émotionnel</th>
+                  <th style="padding:6px 8px;border:1px solid #d8c9a0">Colère</th>
+                  <th style="padding:6px 8px;border:1px solid #d8c9a0">Joie</th>
+                  <th style="padding:6px 8px;border:1px solid #d8c9a0">Tristesse</th>
+                  <th style="padding:6px 8px;border:1px solid #d8c9a0">Surprise</th>
+                  <th style="padding:6px 8px;border:1px solid #d8c9a0">Dégoût</th>
+                  <th style="padding:6px 8px;border:1px solid #d8c9a0">Peur</th>
+                  <th style="padding:6px 8px;border:1px solid #d8c9a0">Humeur</th>
+                  <th style="padding:6px 8px;border:1px solid #d8c9a0">Affection Joueur</th>
+                  <th style="padding:6px 8px;border:1px solid #d8c9a0">Manque d'affection</th>
+                  <th style="padding:6px 8px;border:1px solid #d8c9a0">Anxiété/Angoisse</th>
+                  <th style="padding:6px 8px;border:1px solid #d8c9a0">Malade</th>
+                  <th style="padding:6px 8px;border:1px solid #d8c9a0">Blessé</th>
+                  <th style="padding:6px 8px;border:1px solid #d8c9a0">Fatigué</th>
+                  <th style="padding:6px 8px;border:1px solid #d8c9a0;background:#dfcf9e">Priorité</th>
+                </tr>
+              </thead>
+              <tbody>
+                <sc-for list="{{ emotionRows }}" as="er" hint-placeholder-count="24">
+                  <tr style="background:{{ er.rowBg }}">
+                    <td style="padding:4px 8px;border:1px solid #d8c9a0;text-align:center"><img src="{{ er.icon }}" alt="{{ er.name }}" style="width:28px;height:28px;object-fit:contain"></td>
+                    <td style="text-align:left;padding:6px 8px;border:1px solid #d8c9a0;font-weight:700;position:sticky;left:0;background:{{ er.rowBg }}">{{ er.name }}</td>
+                    <td style="padding:6px 8px;border:1px solid #d8c9a0;text-align:center">{{ er.colere }}</td>
+                    <td style="padding:6px 8px;border:1px solid #d8c9a0;text-align:center">{{ er.joie }}</td>
+                    <td style="padding:6px 8px;border:1px solid #d8c9a0;text-align:center">{{ er.tristesse }}</td>
+                    <td style="padding:6px 8px;border:1px solid #d8c9a0;text-align:center">{{ er.surprise }}</td>
+                    <td style="padding:6px 8px;border:1px solid #d8c9a0;text-align:center">{{ er.degout }}</td>
+                    <td style="padding:6px 8px;border:1px solid #d8c9a0;text-align:center">{{ er.peur }}</td>
+                    <td style="padding:6px 8px;border:1px solid #d8c9a0;text-align:center">{{ er.humeur }}</td>
+                    <td style="padding:6px 8px;border:1px solid #d8c9a0;text-align:center">{{ er.affectionJoueur }}</td>
+                    <td style="padding:6px 8px;border:1px solid #d8c9a0;text-align:center">{{ er.affectionLack }}</td>
+                    <td style="padding:6px 8px;border:1px solid #d8c9a0;text-align:center">{{ er.anxiete }}</td>
+                    <td style="padding:6px 8px;border:1px solid #d8c9a0;text-align:center">{{ er.malade }}</td>
+                    <td style="padding:6px 8px;border:1px solid #d8c9a0;text-align:center">{{ er.blesse }}</td>
+                    <td style="padding:6px 8px;border:1px solid #d8c9a0;text-align:center">{{ er.fatigue }}</td>
+                    <td style="padding:6px 8px;border:1px solid #d8c9a0;text-align:center;font-weight:700;background:#f5ecd2">{{ er.priorite }}</td>
+                  </tr>
+                </sc-for>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ showConstruction }}" hint-placeholder-val="{{ false }}">
+      <div style="display:flex;flex-direction:column;gap:16px">
+        <div style="background:#fffaf0;border:1px solid #d8c9a0;border-radius:12px;padding:18px 20px">
+          <div style="font-weight:700;font-size:15px;margin-bottom:8px">Système de construction (Ash)</div>
+          <div style="font-size:13.5px;line-height:1.7;color:#4a3e2c">
+            Ash débute avec des <strong>petites constructions</strong> seulement. Sans son <strong>Atelier</strong> (première construction à débloquer), il ne peut réaliser aucun bâtiment ni aucune construction d'envergure — l'Atelier est donc lui-même une construction du village, prérequis de presque tout le reste.
+            <ul style="margin:10px 0 0;padding-left:20px">
+              <li>Certaines constructions demandent des <strong>prérequis</strong> : un villageois débloqué, un objet unique en possession, un autre bâtiment déjà construit (l'Atelier, typiquement), etc.</li>
+              <li>Certains bâtiments sont <strong>améliorables en plusieurs niveaux</strong> ; certains niveaux ont eux-mêmes leurs propres prérequis.</li>
+              <li>Une construction n'est pas toujours un bâtiment entier : ce peut être un <strong>aménagement</strong> qui améliore une seule fonction d'un bâtiment à plusieurs usages, sans toucher au reste.</li>
+              <li>Le principe s'applique aussi au ranch et aux corvées : voir la ligne "Atelier des corvées" ci-dessous, qui fait passer le nombre d'essais des corvées de 8 (par défaut) à 4 (niveau 1), 8 (niveau 2), puis 12 (niveau 3) — chaque niveau augmentant aussi les gains obtenus.</li>
+            </ul>
+          </div>
+        </div>
+        <div style="background:#f4ecd8;border:1px solid #d8c9a0;border-radius:10px;padding:12px 16px;font-size:12.5px;color:#7a6b45;font-style:italic">
+          Liste ci-dessous à titre de proposition de conception (non encore implémentée en jeu), à valider/ajuster.
+        </div>
+
+        <div style="font-family:Cinzel,serif;font-weight:700;font-size:18px;color:#3a2e1c;border-bottom:2px solid #d8c9a0;padding-bottom:6px">Village</div>
+        <sc-for list="{{ constructionVillage }}" as="c" hint-placeholder-count="10">
+          <div style="background:#fffaf0;border:1px solid {{ c.borderColor }};border-radius:12px;padding:16px 18px;display:flex;flex-direction:column;gap:8px;margin-left:{{ c.indent }}px">
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:10px">
+              <div style="font-weight:700;font-size:15px;color:#3a2e1c">{{ c.name }}</div>
+              <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:{{ c.typeColor }};background:{{ c.typeBg }};padding:3px 10px;border-radius:12px">{{ c.typeLabel }}</div>
+            </div>
+            <div style="font-size:13px;line-height:1.55;color:#4a3e2c">{{ c.desc }}</div>
+            <div style="font-size:12px;color:#7a6b52"><strong>Prérequis :</strong> {{ c.prereq }}</div>
+            <sc-if value="{{ c.hasLevels }}" hint-placeholder-val="{{ false }}">
+              <div style="display:flex;flex-direction:column;gap:4px;margin-top:4px;border-top:1px solid #ecdfc0;padding-top:8px">
+                <sc-for list="{{ c.levels }}" as="lvl" hint-placeholder-count="3">
+                  <div style="font-size:12px;color:#4a3e2c"><strong>{{ lvl.label }}</strong> — {{ lvl.desc }}</div>
+                </sc-for>
+              </div>
+            </sc-if>
+          </div>
+        </sc-for>
+
+        <div style="font-family:Cinzel,serif;font-weight:700;font-size:18px;color:#3a2e1c;border-bottom:2px solid #d8c9a0;padding-bottom:6px;margin-top:10px">Ranch</div>
+        <sc-for list="{{ constructionRanch }}" as="c" hint-placeholder-count="8">
+          <div style="background:#fffaf0;border:1px solid {{ c.borderColor }};border-radius:12px;padding:16px 18px;display:flex;flex-direction:column;gap:8px;margin-left:{{ c.indent }}px">
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:10px">
+              <div style="font-weight:700;font-size:15px;color:#3a2e1c">{{ c.name }}</div>
+              <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:{{ c.typeColor }};background:{{ c.typeBg }};padding:3px 10px;border-radius:12px">{{ c.typeLabel }}</div>
+            </div>
+            <div style="font-size:13px;line-height:1.55;color:#4a3e2c">{{ c.desc }}</div>
+            <div style="font-size:12px;color:#7a6b52"><strong>Prérequis :</strong> {{ c.prereq }}</div>
+            <sc-if value="{{ c.hasLevels }}" hint-placeholder-val="{{ false }}">
+              <div style="display:flex;flex-direction:column;gap:4px;margin-top:4px;border-top:1px solid #ecdfc0;padding-top:8px">
+                <sc-for list="{{ c.levels }}" as="lvl" hint-placeholder-count="3">
+                  <div style="font-size:12px;color:#4a3e2c"><strong>{{ lvl.label }}</strong> — {{ lvl.desc }}</div>
+                </sc-for>
+              </div>
+            </sc-if>
+          </div>
+        </sc-for>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ showEchoZoom }}" hint-placeholder-val="{{ false }}">
+      <div style="position:fixed;inset:0;z-index:50;background:rgba(20,15,10,.72);display:flex;align-items:center;justify-content:center;padding:20px" onClick="{{ onCloseEchoZoom }}">
+        <div style="background:#fffaf0;border-radius:16px;padding:24px 28px;position:relative;box-shadow:0 16px 40px rgba(43,35,24,.4);max-width:92vw;max-height:88vh;overflow:auto" onClick="{{ stopClick }}">
+          <button onClick="{{ onCloseEchoZoom }}" style="position:absolute;top:12px;right:12px;border:none;background:#e8ddc0;color:#3a2e1c;border-radius:6px;width:28px;height:28px;font-size:14px;cursor:pointer">×</button>
+          <div style="position:relative;width:{{ selectedEchoTree.width }}px;height:{{ selectedEchoTree.height }}px">
+            <svg width="{{ selectedEchoTree.width }}" height="{{ selectedEchoTree.height }}" style="position:absolute;top:0;left:0;z-index:0;pointer-events:none">
+              <sc-for list="{{ selectedEchoTree.lines }}" as="l" hint-placeholder-count="4">
+                <line x1="{{ l.x1 }}" y1="{{ l.y1 }}" x2="{{ l.x2 }}" y2="{{ l.y2 }}" stroke="{{ l.color }}" stroke-width="4" stroke-dasharray="{{ l.dash }}"></line>
+              </sc-for>
+            </svg>
+            <sc-for list="{{ selectedEchoTree.nodes }}" as="n" hint-placeholder-count="3">
+              <div style="position:absolute;left:{{ n.left }};top:{{ n.top }};transform:translate(-50%,-50%);z-index:1;display:flex;flex-direction:column;align-items:center;gap:6px;width:150px">
+                <div style="width:{{ n.boxSize }};height:{{ n.boxSize }};border-radius:12px;background:#fff;border:2px solid #d8c9a0;display:flex;align-items:center;justify-content:center;overflow:hidden;box-shadow:0 4px 10px rgba(0,0,0,.12)"><img src="{{ n.img }}" alt="{{ n.label }}" style="width:100%;height:100%;object-fit:contain"></div>
+                <div style="font-family:Inter,sans-serif;font-size:12px;font-weight:600;color:#3a2e1c;text-align:center;line-height:1.2">{{ n.label }}</div>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+      </div>
+    </sc-if>
   </div>
 </div>
 
 </x-dc>
 <script type="text/x-dc" data-dc-script>
+const SEED_DATA = [
+  { key: 'joy', name: 'Graine solaire', baseLine: 'Joy', img: './assets/seed-joy.png' },
+  { key: 'wrath', name: 'Graine tellurique', baseLine: 'Wrath', img: './assets/seed-wrath.png' },
+  { key: 'disgust', name: 'Graine caustique', baseLine: 'Disgust', img: './assets/seed-disgust.png' },
+  { key: 'sorrow', name: 'Graine boréale', baseLine: 'Sorrow', img: './assets/seed-sorrow.png' },
+  { key: 'fear', name: 'Graine spectrale', baseLine: 'Fear', img: './assets/seed-fear.png' }
+];
+const TREE_COLOR_PRIMARY = '#2f6fb0';
+const TREE_COLOR_DARK = '#16233f';
+const TREE_COLOR_BRANCH = '#c9791f';
+const TREE_COLOR_MELEE = '#a15fc9';
+const TREE_COLOR_MEMORY = '#2f9e7a';
+const MELEE_TRIADS_FICHE = [
+  { code: 'JWF', emotions: ['joy', 'wrath', 'fear'], label: 'Joie / Colère / Peur' },
+  { code: 'WFS', emotions: ['wrath', 'fear', 'sorrow'], label: 'Colère / Peur / Tristesse' },
+  { code: 'FSD', emotions: ['fear', 'sorrow', 'disgust'], label: 'Peur / Tristesse / Dégoût' },
+  { code: 'SDJ', emotions: ['sorrow', 'disgust', 'joy'], label: 'Tristesse / Dégoût / Joie' },
+  { code: 'DJW', emotions: ['disgust', 'joy', 'wrath'], label: 'Dégoût / Joie / Colère' },
+  { code: 'JFD', emotions: ['joy', 'fear', 'disgust'], label: 'Joie / Peur / Dégoût' },
+  { code: 'JFS', emotions: ['joy', 'fear', 'sorrow'], label: 'Joie / Peur / Tristesse' },
+  { code: 'JWS', emotions: ['joy', 'wrath', 'sorrow'], label: 'Joie / Colère / Tristesse' },
+  { code: 'WFD', emotions: ['wrath', 'fear', 'disgust'], label: 'Colère / Peur / Dégoût' },
+  { code: 'WSD', emotions: ['wrath', 'sorrow', 'disgust'], label: 'Colère / Tristesse / Dégoût' }
+];
+const MEMORY_ECHOES_FICHE = [
+  { code: 'J-VENT', seedKey: 'joy', label: 'Souvenir du Vent' },
+  { code: 'W-FEU', seedKey: 'wrath', label: 'Souvenir du Feu' },
+  { code: 'F-FOUDRE', seedKey: 'fear', label: 'Souvenir de la Foudre' },
+  { code: 'S-EAU', seedKey: 'sorrow', label: 'Souvenir de l\'Eau' },
+  { code: 'D-TERRE', seedKey: 'disgust', label: 'Souvenir de la Terre' },
+  { code: 'N-ETHER', seedKey: 'neutral', label: 'Souvenir de l\'Ether' }
+];
+
+const CROSS_BRANCH_MELEE = {
+  'J-DD': [{ code: 'SDJ', maj: 'Sorrow' }, { code: 'JFD', maj: 'Fear' }, { code: 'DJW', maj: 'Wrath' }],
+  'J-DS': [{ code: 'SDJ', maj: 'Disgust' }, { code: 'JFS', maj: 'Fear' }, { code: 'JWS', maj: 'Wrath' }],
+  'W-DJ': [{ code: 'JWF', maj: 'Fear' }, { code: 'DJW', maj: 'Disgust' }, { code: 'JWS', maj: 'Sorrow' }],
+  'W-DD': [{ code: 'DJW', maj: 'Joy' }, { code: 'WSD', maj: 'Sorrow' }, { code: 'WFD', maj: 'Fear' }],
+  'F-DJ': [{ code: 'JWF', maj: 'Wrath' }, { code: 'JFS', maj: 'Sorrow' }, { code: 'JFD', maj: 'Disgust' }],
+  'F-DW': [{ code: 'JWF', maj: 'Joy' }, { code: 'WFS', maj: 'Sorrow' }, { code: 'WFD', maj: 'Disgust' }],
+  'S-DW': [{ code: 'WFS', maj: 'Fear' }, { code: 'JWS', maj: 'Joy' }, { code: 'WSD', maj: 'Disgust' }],
+  'S-DF': [{ code: 'WFS', maj: 'Wrath' }, { code: 'FSD', maj: 'Disgust' }, { code: 'JFS', maj: 'Joy' }],
+  'D-DF': [{ code: 'FSD', maj: 'Sorrow' }, { code: 'JFD', maj: 'Joy' }, { code: 'WFD', maj: 'Wrath' }],
+  'D-DS': [{ code: 'SDJ', maj: 'Joy' }, { code: 'FSD', maj: 'Fear' }, { code: 'WSD', maj: 'Wrath' }]
+};
+
+function buildEchoTreeData() {
+  const col1 = 115, col2 = 345, col3 = 575, col4 = 805, colBranchAdulte = 955, colMelee = 1105, col5 = 1255;
+  const groupH = 150;
+  const seedSlots = [];
+  const babySlots = [];
+  const childSlots = [];
+  const adoSlots = [];
+  const adulteSlots = [];
+  const lines = [];
+  const edges = [];
+  const rowY = {};
+  SEED_DATA.forEach((seed, i) => {
+    const groupTop = i * groupH + 40;
+    const primaryY = groupTop;
+    const darkY = groupTop + 78;
+    const seedY = groupTop + 39;
+    rowY[seed.key] = { primary: primaryY, dark: darkY };
+    seedSlots.push({ x: col1, y: seedY, img: seed.img, label: seed.name, catKey: 'seed_' + seed.key });
+    babySlots.push({ x: col2, y: primaryY, img: './assets/bebe-' + seed.key + '.png', label: seed.baseLine, catKey: seed.key + '_primary_Bébé' });
+    babySlots.push({ x: col2, y: darkY, img: './assets/bebe-dark-' + seed.key + '.png', label: 'Dark ' + seed.baseLine, catKey: seed.key + '_dark_Bébé' });
+    childSlots.push({ x: col3, y: primaryY, img: './assets/enfant-' + seed.key + '.png', label: seed.baseLine, catKey: seed.key + '_primary_Enfant' });
+    childSlots.push({ x: col3, y: darkY, img: './assets/enfant-dark-' + seed.key + '.png', label: 'Dark ' + seed.baseLine, catKey: seed.key + '_dark_Enfant' });
+    lines.push({ x1: col1, y1: seedY, x2: col2, y2: primaryY, color: TREE_COLOR_PRIMARY });
+    lines.push({ x1: col1, y1: seedY, x2: col2, y2: darkY, color: TREE_COLOR_DARK });
+    lines.push({ x1: col2, y1: primaryY, x2: col3, y2: primaryY, color: TREE_COLOR_PRIMARY });
+    lines.push({ x1: col2, y1: darkY, x2: col3, y2: darkY, color: TREE_COLOR_DARK });
+    edges.push({ from: 'seed_' + seed.key, to: seed.key + '_primary_Bébé', color: TREE_COLOR_PRIMARY });
+    edges.push({ from: 'seed_' + seed.key, to: seed.key + '_dark_Bébé', color: TREE_COLOR_DARK });
+    edges.push({ from: seed.key + '_primary_Bébé', to: seed.key + '_primary_Enfant', color: TREE_COLOR_PRIMARY });
+    edges.push({ from: seed.key + '_dark_Bébé', to: seed.key + '_dark_Enfant', color: TREE_COLOR_DARK });
+    const adoImgPrimary = seed.key === 'joy' ? './assets/ado-joy-m.png' : './assets/ado-' + seed.key + '.png';
+    const adoImgDark = seed.key === 'joy' ? './assets/ado-dark-joy-m.png' : './assets/ado-dark-' + seed.key + '.png';
+    adoSlots.push({ x: col4, y: primaryY, img: adoImgPrimary, label: seed.baseLine, catKey: seed.key + '_primary_Adolescent' });
+    adoSlots.push({ x: col4, y: darkY, img: adoImgDark, label: 'Dark ' + seed.baseLine, catKey: seed.key + '_dark_Adolescent' });
+    lines.push({ x1: col3, y1: primaryY, x2: col4, y2: primaryY, color: TREE_COLOR_PRIMARY });
+    lines.push({ x1: col3, y1: darkY, x2: col4, y2: darkY, color: TREE_COLOR_DARK });
+    edges.push({ from: seed.key + '_primary_Enfant', to: seed.key + '_primary_Adolescent', color: TREE_COLOR_PRIMARY });
+    edges.push({ from: seed.key + '_dark_Enfant', to: seed.key + '_dark_Adolescent', color: TREE_COLOR_DARK });
+    const genderSuffix = seed.key === 'joy' ? '-m' : '';
+    adulteSlots.push({ x: col5, y: primaryY, img: './assets/adulte-' + seed.key + genderSuffix + '.png', label: seed.baseLine, catKey: seed.key + '_primary_Adulte' });
+    adulteSlots.push({ x: col5, y: darkY, img: './assets/adulte-dark-' + seed.key + genderSuffix + '.png', label: 'Dark ' + seed.baseLine, catKey: seed.key + '_dark_Adulte' });
+    lines.push({ x1: col4, y1: primaryY, x2: col5, y2: primaryY, color: TREE_COLOR_PRIMARY });
+    lines.push({ x1: col4, y1: darkY, x2: col5, y2: darkY, color: TREE_COLOR_DARK });
+    edges.push({ from: seed.key + '_primary_Adolescent', to: seed.key + '_primary_Adulte', color: TREE_COLOR_PRIMARY });
+    edges.push({ from: seed.key + '_dark_Adolescent', to: seed.key + '_dark_Adulte', color: TREE_COLOR_DARK });
+  });
+  const neutralTop = SEED_DATA.length * groupH + 40;
+  const neutralY = neutralTop;
+  const darkNeutralY = neutralTop + 78;
+  babySlots.push({ x: col2, y: neutralY, img: './assets/bebe-neutre.png', label: 'Neutre', catKey: 'neutral_Bébé' });
+  babySlots.push({ x: col2, y: darkNeutralY, img: './assets/bebe-dark-neutre.png', label: 'Dark Neutre', catKey: 'darkNeutral_Bébé' });
+  childSlots.push({ x: col3, y: neutralY, img: './assets/enfant-neutre.png', label: 'Neutre', catKey: 'neutral_Enfant' });
+  childSlots.push({ x: col3, y: darkNeutralY, img: './assets/enfant-dark-neutre.png', label: 'Dark Neutre', catKey: 'darkNeutral_Enfant' });
+  lines.push({ x1: col2, y1: neutralY, x2: col3, y2: neutralY, color: TREE_COLOR_PRIMARY });
+  lines.push({ x1: col2, y1: darkNeutralY, x2: col3, y2: darkNeutralY, color: TREE_COLOR_DARK });
+  edges.push({ from: 'neutral_Bébé', to: 'neutral_Enfant', color: TREE_COLOR_PRIMARY });
+  edges.push({ from: 'darkNeutral_Bébé', to: 'darkNeutral_Enfant', color: TREE_COLOR_DARK });
+  adoSlots.push({ x: col4, y: neutralY, img: './assets/ado-neutre.png', label: 'Neutre', catKey: 'neutral_Adolescent' });
+  adoSlots.push({ x: col4, y: darkNeutralY, img: './assets/ado-dark-neutre.png', label: 'Dark Neutre', catKey: 'darkNeutral_Adolescent' });
+  lines.push({ x1: col3, y1: neutralY, x2: col4, y2: neutralY, color: TREE_COLOR_PRIMARY });
+  lines.push({ x1: col3, y1: darkNeutralY, x2: col4, y2: darkNeutralY, color: TREE_COLOR_DARK });
+  edges.push({ from: 'neutral_Enfant', to: 'neutral_Adolescent', color: TREE_COLOR_PRIMARY });
+  edges.push({ from: 'darkNeutral_Enfant', to: 'darkNeutral_Adolescent', color: TREE_COLOR_DARK });
+  adulteSlots.push({ x: col5, y: neutralY, img: './assets/adulte-neutre.png', label: 'Neutre', catKey: 'neutral_Adulte' });
+  adulteSlots.push({ x: col5, y: darkNeutralY, img: './assets/adulte-dark-neutre.png', label: 'Dark Neutre', catKey: 'darkNeutral_Adulte' });
+  lines.push({ x1: col4, y1: neutralY, x2: col5, y2: neutralY, color: TREE_COLOR_PRIMARY });
+  lines.push({ x1: col4, y1: darkNeutralY, x2: col5, y2: darkNeutralY, color: TREE_COLOR_DARK });
+  edges.push({ from: 'neutral_Adolescent', to: 'neutral_Adulte', color: TREE_COLOR_PRIMARY });
+  edges.push({ from: 'darkNeutral_Adolescent', to: 'darkNeutral_Adulte', color: TREE_COLOR_DARK });
+  const nonSpecificBoxes = [
+    { x: col2 - 45, y: neutralY - 46, width: 90, height: (darkNeutralY - neutralY) + 92 }
+  ];
+  const branches = [
+    { code: 'S-DF', a: { key: 'sorrow', side: 'primary' }, b: { key: 'fear', side: 'dark' } },
+    { code: 'J-DD', a: { key: 'joy', side: 'primary' }, b: { key: 'disgust', side: 'dark' } },
+    { code: 'F-DW', a: { key: 'fear', side: 'primary' }, b: { key: 'wrath', side: 'dark' } },
+    { code: 'W-DJ', a: { key: 'wrath', side: 'primary' }, b: { key: 'joy', side: 'dark' } },
+    { code: 'D-DS', a: { key: 'disgust', side: 'primary' }, b: { key: 'sorrow', side: 'dark' } },
+    { code: 'J-DS', a: { key: 'joy', side: 'primary' }, b: { key: 'sorrow', side: 'dark' } },
+    { code: 'W-DD', a: { key: 'wrath', side: 'primary' }, b: { key: 'disgust', side: 'dark' } },
+    { code: 'F-DJ', a: { key: 'fear', side: 'primary' }, b: { key: 'joy', side: 'dark' } },
+    { code: 'S-DW', a: { key: 'sorrow', side: 'primary' }, b: { key: 'wrath', side: 'dark' } },
+    { code: 'D-DF', a: { key: 'disgust', side: 'primary' }, b: { key: 'fear', side: 'dark' } },
+    { code: 'N-DN', aY: neutralY, bY: darkNeutralY }
+  ];
+  const branchX = col4 - 92;
+  const branchSpacing = 90;
+  const branchYByCode = {};
+  branches.forEach((br, i) => {
+    const aY = br.aY !== undefined ? br.aY : rowY[br.a.key][br.a.side];
+    const bY = br.bY !== undefined ? br.bY : rowY[br.b.key][br.b.side];
+    const branchY = 40 + i * branchSpacing;
+    branchYByCode[br.code] = branchY;
+    adoSlots.push({ x: branchX, y: branchY, img: './assets/ado-branch-' + br.code.toLowerCase() + '.png', label: br.code, catKey: 'branch_' + br.code + '_Adolescent', branch: true });
+    lines.push({ x1: col3, y1: aY, x2: branchX, y2: branchY, dashed: true, color: TREE_COLOR_BRANCH });
+    lines.push({ x1: col3, y1: bY, x2: branchX, y2: branchY, dashed: true, color: TREE_COLOR_BRANCH });
+    const aCode = br.a ? br.a.key + '_' + br.a.side + '_Enfant' : 'neutral_Enfant';
+    const bCode = br.b ? br.b.key + '_' + br.b.side + '_Enfant' : 'darkNeutral_Enfant';
+    edges.push({ from: aCode, to: 'branch_' + br.code + '_Adolescent', dashed: true, color: TREE_COLOR_BRANCH });
+    edges.push({ from: bCode, to: 'branch_' + br.code + '_Adolescent', dashed: true, color: TREE_COLOR_BRANCH });
+  });
+  const branchMaxY = 40 + (branches.length - 1) * branchSpacing;
+  const height = Math.max(darkNeutralY, branchMaxY) + 40;
+  const fragSpacing = 76;
+  const fragY0 = height + 56;
+  const fragmentSlots = [
+    { x: col4, y: fragY0, img: './assets/ado-fragment-cognitif.png', label: 'Cognitif+', catKey: 'fragment_C+_Adolescent' },
+    { x: col4, y: fragY0 + fragSpacing, img: './assets/ado-fragment-psychomoteur.png', label: 'Psychomoteur+', catKey: 'fragment_PM+_Adolescent' },
+    { x: col4, y: fragY0 + fragSpacing * 2, img: './assets/ado-fragment-socio.png', label: 'Socio-affectif+', catKey: 'fragment_SA+_Adolescent' }
+  ];
+  nonSpecificBoxes.push({ x: col4 - 45, y: fragY0 - 46, width: 90, height: fragSpacing * 2 + 92 });
+  const totalHeight = fragY0 + fragSpacing * 2 + 56;
+
+  // Adulte Branche (11) : colonne dédiée alignée sur la même ligne (même Y) que leur Ado Branche d'origine,
+  // reliée par un trait plein de la couleur de la branche — comme les lignées principales, juste à côté.
+  const branchAdulteSlots = branches.map(br => ({ x: colBranchAdulte, y: branchYByCode[br.code], img: './assets/adulte-branch-' + br.code.toLowerCase() + '.png', label: br.code, catKey: 'branch_' + br.code + '_Adulte' }));
+  branches.forEach(br => {
+    lines.push({ x1: branchX, y1: branchYByCode[br.code], x2: colBranchAdulte, y2: branchYByCode[br.code], color: TREE_COLOR_BRANCH });
+    edges.push({ from: 'branch_' + br.code + '_Adolescent', to: 'branch_' + br.code + '_Adulte', color: TREE_COLOR_BRANCH });
+  });
+
+  // Formes Adulte mêlées (10) : très rares, accessibles depuis n'importe quelle lignée normale (primaire/dark)
+  // de l'un des 3 processus concernés. Colonne intermédiaire entre les Adulte Branche et les lignées principales.
+  const meleeSpacing = 90;
+  const meleeY0 = 40;
+  const meleeSlots = MELEE_TRIADS_FICHE.map((m, i) => ({ x: colMelee, y: meleeY0 + i * meleeSpacing, img: './assets/adulte-melee-' + m.code.toLowerCase() + '.png', label: m.code, catKey: 'melee_' + m.code + '_Adulte' }));
+  meleeSlots.forEach((slot, i) => {
+    const triad = MELEE_TRIADS_FICHE[i];
+    triad.emotions.forEach(em => {
+      lines.push({ x1: col4, y1: rowY[em].primary, x2: colMelee, y2: slot.y, dashed: true, color: TREE_COLOR_MELEE });
+      lines.push({ x1: col4, y1: rowY[em].dark, x2: colMelee, y2: slot.y, dashed: true, color: TREE_COLOR_MELEE });
+      edges.push({ from: em + '_primary_Adolescent', to: slot.catKey, dashed: true, color: TREE_COLOR_MELEE });
+      edges.push({ from: em + '_dark_Adolescent', to: slot.catKey, dashed: true, color: TREE_COLOR_MELEE });
+    });
+  });
+
+  // Branches croisées (10) : chaque Ado Branche peut aussi, exceptionnellement, évoluer vers l'une des
+  // 3 formes mêlées qui partagent 2 de ses 2 processus + un 3e processus devenu majoritaire.
+  branches.forEach(br => {
+    const opts = CROSS_BRANCH_MELEE[br.code];
+    if (!opts) return;
+    opts.forEach(o => {
+      const slot = meleeSlots.find(s => s.label === o.code);
+      if (!slot) return;
+      lines.push({ x1: branchX, y1: branchYByCode[br.code], x2: colMelee, y2: slot.y, dashed: true, color: TREE_COLOR_MELEE });
+      edges.push({ from: 'branch_' + br.code + '_Adolescent', to: slot.catKey, dashed: true, color: TREE_COLOR_MELEE });
+    });
+  });
+
+  // Échos de souvenir (6) : prioritaires sur toute autre évolution si le souvenir élémentaire est débloqué et
+  // la pierre runique correspondante en inventaire. Empilés dans la même colonne interm\u00e9diaire, sous les formes mêlées.
+  const memoryY0 = meleeY0 + meleeSpacing * meleeSlots.length + 30;
+  const memorySlots = MEMORY_ECHOES_FICHE.map((m, i) => ({ x: colMelee, y: memoryY0 + i * meleeSpacing, img: './assets/adulte-memoire-' + m.code.toLowerCase() + '.png', label: m.label, catKey: 'memoire_' + m.code + '_Adulte' }));
+  memorySlots.forEach((slot, i) => {
+    const mem = MEMORY_ECHOES_FICHE[i];
+    if (mem.seedKey === 'neutral') {
+      lines.push({ x1: col4, y1: neutralY, x2: colMelee, y2: slot.y, dashed: true, color: TREE_COLOR_MEMORY });
+      lines.push({ x1: col4, y1: darkNeutralY, x2: colMelee, y2: slot.y, dashed: true, color: TREE_COLOR_MEMORY });
+      edges.push({ from: 'neutral_Adolescent', to: slot.catKey, dashed: true, color: TREE_COLOR_MEMORY });
+      edges.push({ from: 'darkNeutral_Adolescent', to: slot.catKey, dashed: true, color: TREE_COLOR_MEMORY });
+    } else {
+      lines.push({ x1: col4, y1: rowY[mem.seedKey].primary, x2: colMelee, y2: slot.y, dashed: true, color: TREE_COLOR_MEMORY });
+      lines.push({ x1: col4, y1: rowY[mem.seedKey].dark, x2: colMelee, y2: slot.y, dashed: true, color: TREE_COLOR_MEMORY });
+      edges.push({ from: mem.seedKey + '_primary_Adolescent', to: slot.catKey, dashed: true, color: TREE_COLOR_MEMORY });
+      edges.push({ from: mem.seedKey + '_dark_Adolescent', to: slot.catKey, dashed: true, color: TREE_COLOR_MEMORY });
+    }
+  });
+  nonSpecificBoxes.push({ x: colMelee - 45, y: meleeY0 - 46, width: 90, height: (memoryY0 + meleeSpacing * (memorySlots.length - 1)) - meleeY0 + 92 });
+
+  const grandTotalHeight = Math.max(totalHeight, memoryY0 + meleeSpacing * (memorySlots.length - 1) + 56);
+  return { seedSlots, babySlots, childSlots, adoSlots, adulteSlots, fragmentSlots, branchAdulteSlots, meleeSlots, memorySlots, nonSpecificBoxes, lines, edges, width: col5 + 115, height: grandTotalHeight };
+}
+
+const EMOTION_ROWS = (() => {
+  const R = (name, priorite, icon, vals) => ({
+    name, priorite, icon,
+    colere: vals.colere || '—', joie: vals.joie || '—', tristesse: vals.tristesse || '—',
+    surprise: vals.surprise || '—', degout: vals.degout || '—', peur: vals.peur || '—',
+    humeur: vals.humeur || '—', affectionJoueur: vals.affectionJoueur || '—', affectionLack: vals.affectionLack || '—',
+    anxiete: vals.anxiete || '—', malade: vals.malade || '—', blesse: vals.blesse || '—',
+    fatigue: vals.fatigue || '—',
+    rowBg: priorite >= 80 ? '#f7dcd8' : priorite >= 60 ? '#faeadb' : priorite >= 40 ? '#fdf6e3' : '#fffaf0'
+  });
+  return [
+    R('Malade', 100, './assets/emotion-malade.png', { malade: '= Oui' }),
+    R('Blessée (grave)', 99, './assets/emotion-blesse.png', { blesse: '= Oui' }),
+    R('Épuisée', 92, './assets/emotion-epuise.png', { fatigue: '> 85' }),
+    R('Terrifiée', 91, './assets/emotion-terrifie.png', { peur: '> 85' }),
+    R('Furieuse', 85, './assets/emotion-furieux.png', { colere: '> 85' }),
+    R('Angoissée', 84, './assets/emotion-angoisse.png', { anxiete: '> 75' }),
+    R('Désespérée', 83, './assets/emotion-desespere.png', { peur: '> 60', tristesse: '> 60' }),
+    R('Sidérée (effroi)', 76, './assets/emotion-sidere.png', { peur: '> 50', surprise: '> 50' }),
+    R('Méprisante', 75, './assets/emotion-meprisant.png', { colere: '> 50', degout: '> 60' }),
+    R('Sur la défensive', 74, './assets/emotion-defensif.png', { colere: '> 50', peur: '> 50' }),
+    R('Craint l’abandon', 70, './assets/emotion-abandon.png', { affectionJoueur: '> 55', affectionLack: '> 65' }),
+    R('Anxieuse', 66, './assets/emotion-anxieux.png', { anxiete: '> 40 et < 75' }),
+    R('Abattue', 65, './assets/emotion-abattu.png', { tristesse: '> 60', degout: '> 50' }),
+    R('Frustrée', 64, './assets/emotion-frustre.png', { colere: '> 60', tristesse: '> 40' }),
+    R('Déçue', 63, './assets/emotion-deception.png', { tristesse: '> 40', surprise: '> 50' }),
+    R('Jalouse', 58, './assets/emotion-jaloux.png', { affectionJoueur: '> 60', affectionLack: '> 35' }),
+    R('Triste', 55, './assets/emotion-triste.png', { tristesse: '> 60' }),
+    R('En colère', 54, './assets/emotion-en-colere.png', { colere: '> 60' }),
+    R('Dégoûtée', 53, './assets/emotion-degout.png', { degout: '> 65' }),
+    R('Nerveuse (excitée)', 52, './assets/emotion-nerveux.png', { joie: '> 50', peur: '> 40' }),
+    R('Émerveillée', 51, './assets/emotion-emerveille.png', { joie: '> 60', surprise: '> 60' }),
+    R('Délaissée', 48, './assets/emotion-delaisse.png', { affectionLack: '> 70', tristesse: '> 50' }),
+    R('Adoratrice', 46, './assets/emotion-adorateur.png', { affectionJoueur: '> 85', joie: '> 60' }),
+    R('Affectueuse', 44, './assets/emotion-affectueux.png', { affectionJoueur: '> 70' }),
+    R('Fière', 43, './assets/emotion-fier.png', { joie: '> 50', humeur: '> 70' }),
+    R('Surprise', 42, './assets/emotion-surpris.png', { surprise: '> 70' }),
+    R('Joyeuse', 33, './assets/emotion-joyeux.png', { joie: '> 60' }),
+    R('Sereine', 32, './assets/emotion-serein.png', { humeur: '> 70', colere: '< 30', tristesse: '< 30', peur: '< 30', degout: '< 30', surprise: '< 30', anxiete: '< 20' }),
+    R('Boudeuse', 22, './assets/emotion-boudeur.png', { colere: '> 30', humeur: '< 30' }),
+    R('Morose', 21, './assets/emotion-morose.png', { humeur: '< 30' }),
+    R('Distante', 15, './assets/emotion-distant.png', { affectionJoueur: '< 20' }),
+    R('Neutre', 1, './assets/emotion-neutre.png', {})
+  ];
+})();
+
+const CONSTRUCTION_LIST = (() => {
+  const B = (name, prereq, desc, levels, parent) => ({
+    name, prereq, desc, parent: parent || null, borderColor: '#c9a86a', typeLabel: 'Bâtiment', typeColor: '#7a5a1f', typeBg: '#f4ecd8',
+    hasLevels: !!(levels && levels.length), levels: levels || []
+  });
+  const R = (name, prereq, desc, levels, parent) => ({
+    name, prereq, desc, parent: parent || null, borderColor: '#8aa5c9', typeLabel: 'Ranch', typeColor: '#2f5a8a', typeBg: '#e8eff8',
+    hasLevels: !!(levels && levels.length), levels: levels || []
+  });
+  const village = [
+    B('Atelier', 'Aucune (première construction disponible)', 'Débloque la capacité d\u2019Ash à bâtir des constructions d\u2019envergure au village. Sans lui, seules les petites réparations/aménagements de départ sont possibles. Coût : 10 bois, 10 pierre, 5 fibres, 3 résine · 24h.', null),
+    B('Entrepôt', 'Atelier + Maïko recrutée', 'Se situe dans l\u2019Atelier. Stockage des objets ET des matériaux de construction (Bois, Pierre, Fibres végétales, Résine, Ferraille, Cristaux). Ne peut être construit/amélioré tant que Maïko n\u2019a pas rejoint le village.', [
+      { label: 'Niveau 1', desc: 'Coût : 20 bois, 10 pierre, 10 fibres, 5 résine · 24h. Capacité : 48 emplacements d\u2019objets ; 50 par ressource.' },
+      { label: 'Niveau 2', desc: 'Coût : 45 bois, 35 pierre, 20 ferraille, 25 fibres, 15 résine, 5 cristaux · 30h. Capacité : 60 emplacements ; 100 par ressource.' },
+      { label: 'Niveau 3', desc: 'Coût : 90 bois, 80 pierre, 40 ferraille, 60 fibres, 40 résine, 15 cristaux · 36h. Capacité : 72 emplacements ; 200 par ressource.' }
+    ], 'Atelier'),
+    B('Dojo', 'Atelier + Hevann vaincu', 'Bâtiment d\u2019entraînement et de soin. Niveau 1 seulement — contient Salle d\u2019entraînement, Infirmerie et Salle de classe. Le nom et le contenu restent masqués ("???") tant qu\u2019Hevann n\u2019est pas vaincu ; tenter de construire avant affiche un message d\u2019indice.', [
+      { label: 'Niveau 1', desc: 'Seul niveau prévu pour le bâtiment Dojo lui-même.' }
+    ]),
+    B('Salle d\u2019entraînement', 'Dojo', 'Se situe au Dojo. Mini-jeux d\u2019entraînement pour les caractéristiques de l\u2019écho.', [
+      { label: 'Niveau 1', desc: 'À définir.' }, { label: 'Niveau 2', desc: 'À définir.' }, { label: 'Niveau 3', desc: 'À définir.' }
+    ], 'Dojo'),
+    B('Infirmerie', 'Dojo', 'Se situe au Dojo. Soins pour l\u2019écho (maladie, blessure).', null, 'Dojo'),
+    B('Salle de classe', 'Dojo', 'Se situe au Dojo. Éducation/connaissance de l\u2019écho.', [
+      { label: 'Niveau 1', desc: 'À définir.' }, { label: 'Niveau 2', desc: 'À définir.' }, { label: 'Niveau 3', desc: 'À définir.' }
+    ], 'Dojo'),
+    B('Comptoir commercial', 'Atelier', 'Remplace le concept de "Marché". Niveau 1 seulement — contient Boutique et Salle de duel.', [
+      { label: 'Niveau 1', desc: 'Seul niveau prévu pour le bâtiment lui-même.' }
+    ]),
+    B('Boutique', 'Comptoir commercial', 'Se situe au Comptoir commercial.', null, 'Comptoir commercial'),
+    B('Salle de duel', 'Comptoir commercial', 'Se situe au Comptoir commercial. Combats de cartes. À implémenter plus tard (voir Roadmap).', null, 'Comptoir commercial'),
+    B('Fontaine', 'Atelier', 'Fonction exacte à déterminer plus tard — peut-être une fonction cachée.', null),
+    B('Écurie', 'Atelier', 'Déplacements rapides entre zones d\u2019exploration débloquées.', null),
+    B('Centre communautaire', 'Atelier', 'Niveau 1 seulement — contient Restaurant, Arène, Panneau des quêtes et Bibliothèque.', [
+      { label: 'Niveau 1', desc: 'Seul niveau prévu pour le bâtiment lui-même.' }
+    ]),
+    B('Restaurant', 'Centre communautaire', 'Se situe au Centre communautaire. Niveau 1 seulement.', [
+      { label: 'Niveau 1', desc: 'Seul niveau prévu.' }
+    ], 'Centre communautaire'),
+    B('Arène', 'Centre communautaire', 'Se situe au Centre communautaire. Tournois et mini-jeux spéciaux.', [
+      { label: 'Niveau 1', desc: 'À définir.' }, { label: 'Niveau 2', desc: 'Débloque d\u2019autres types de tournois.' }, { label: 'Niveau 3', desc: 'Débloque d\u2019autres types de mini-jeux spéciaux.' }
+    ], 'Centre communautaire'),
+    B('Panneau des quêtes', 'Centre communautaire', 'Se situe au Centre communautaire. Débloque les services envers les PNJ.', null, 'Centre communautaire'),
+    B('Bibliothèque', 'Centre communautaire', 'Se situe au Centre communautaire.', null, 'Centre communautaire'),
+    B('Nettoyage final', 'Tous les bâtiments du village construits', 'Une fois toutes les constructions du village terminées : obtention de la version finale et "propre" du village.', null)
+  ];
+  const ranch = [
+    R('Jardin', 'Débloqué via Tourby', 'Amélioration du Jardin une fois débloqué. (En développement — désactivé pour l\u2019instant)', [
+      { label: 'Niveau 1', desc: 'À définir.' }, { label: 'Niveau 2', desc: 'À définir.' }, { label: 'Niveau 3', desc: 'À définir.' }
+    ]),
+    R('Cuisine', 'Débloquée (via un futur PNJ cuisinier)', 'Amélioration de la Cuisine une fois débloquée. (En développement — désactivé pour l\u2019instant)', [
+      { label: 'Niveau 1', desc: 'À définir.' }, { label: 'Niveau 2', desc: 'À définir.' }, { label: 'Niveau 3', desc: 'À définir.' }
+    ]),
+    R('Corvées', 'Aucun niveau 0 : chaque corvée est verrouillée par défaut', 'Chaque corvée s\u2019améliore individuellement, indépendamment des autres, moyennant des matériaux remis à Ash : Niveau 1 débloque la corvée à 4 actions, Niveau 2 la porte à 8, Niveau 3 à 12 (gains d\u2019expérience croissants à chaque niveau). Coûts détaillés par corvée ci-dessous.', [
+      { label: 'Niveau 1', desc: '4 tentatives — débloque la corvée.' },
+      { label: 'Niveau 2', desc: '8 tentatives.' },
+      { label: 'Niveau 3', desc: '12 tentatives.' }
+    ]),
+    R('Nettoyage de la grange', 'Corvées débloquées', 'Ranger le ranch. Le nombre d\u2019objets à trier suit les mêmes paliers que les autres corvées : 4 (Niv.1), 8 (Niv.2), 12 (Niv.3).', [
+      { label: 'Niveau 1', desc: 'Débloque la corvée. Coût : 5 bois, 5 fibres.' },
+      { label: 'Niveau 2', desc: 'Coût : 20 bois, 10 fibres, 5 résine.' },
+      { label: 'Niveau 3', desc: 'Coût : 40 bois, 20 fibres, 10 résine, 10 pierre.' }
+    ], 'Corvées'),
+    R('Remise en état de la barrière', 'Corvées débloquées', '3 tailles de barrière selon le niveau : Petite (4 morceaux, Niv.1), Moyenne (8 morceaux, Niv.2), Grosse (12 morceaux, Niv.3). Assets provisoires en attendant les illustrations définitives.', [
+      { label: 'Niveau 1', desc: 'Débloque la corvée. Coût : 5 bois, 2 ferraille.' },
+      { label: 'Niveau 2', desc: 'Coût : 15 bois, 10 ferraille.' },
+      { label: 'Niveau 3', desc: 'Coût : 40 bois, 30 ferraille.' }
+    ], 'Corvées'),
+    R('Remise en état du poulailler', 'Corvées débloquées', 'Rattraper les poules.', [
+      { label: 'Niveau 1', desc: 'Débloque la corvée. Coût : 5 bois, 5 fibres.' },
+      { label: 'Niveau 2', desc: 'Coût : 10 bois, 10 fibres.' },
+      { label: 'Niveau 3', desc: 'Coût : 25 bois, 25 fibres.' }
+    ], 'Corvées'),
+    R('Remise en état de la charrue', 'Corvées débloquées', 'Déplacer le foin.', [
+      { label: 'Niveau 1', desc: 'Débloque la corvée. Coût : 5 fibres, 3 pierre.' },
+      { label: 'Niveau 2', desc: 'Coût : 10 fibres, 5 pierre, 5 résine, 5 bois.' },
+      { label: 'Niveau 3', desc: 'Coût : 15 fibres, 10 pierre, 10 résine, 10 bois.' }
+    ], 'Corvées'),
+    R('Rafistolage des seaux', 'Corvées débloquées', 'Ramener l\u2019eau.', [
+      { label: 'Niveau 1', desc: 'Débloque la corvée. Coût : 5 ferraille.' },
+      { label: 'Niveau 2', desc: 'Coût : 10 pierre, 10 ferraille.' },
+      { label: 'Niveau 3', desc: 'Coût : 20 pierre, 20 ferraille.' }
+    ], 'Corvées'),
+    R('Remise en état du sentier', 'Corvées débloquées', 'Trouver l\u2019écho caché.', [
+      { label: 'Niveau 1', desc: 'Débloque la corvée. Coût : 5 résine.' },
+      { label: 'Niveau 2', desc: 'Coût : 10 résine, 10 fibres.' },
+      { label: 'Niveau 3', desc: 'Coût : 15 bois, 15 résine, 15 fibres.' }
+    ], 'Corvées'),
+    R('Abri de l\u2019écho', 'Aucun', 'Amélioration du confort de l\u2019écho au ranch. (En développement — désactivé pour l\u2019instant)', [
+      { label: 'Niveau 1', desc: 'À définir.' }, { label: 'Niveau 2', desc: 'À définir.' }, { label: 'Niveau 3', desc: 'À définir.' }
+    ]),
+    R('Zone de jeux de l\u2019écho', 'Aucun', 'Débloque des activités ludiques avec l\u2019écho, purement affectives. (En développement — désactivé pour l\u2019instant)', null)
+  ];
+  return { village, ranch };
+})();
+
 class Component extends DCLogic {
-  state = { tab: 'playable' };
+  state = { tab: 'playable', selectedEchoKey: null };
+
+  selectEcho(catKey) {
+    if (catKey) this.setState({ selectedEchoKey: catKey });
+  }
 
   renderVals() {
     const stageGroups = this.buildStageGroups();
@@ -169,10 +784,19 @@ class Component extends DCLogic {
       showHabitants: this.state.tab === 'habitants',
       showTechniques: this.state.tab === 'techniques',
       showObjets: this.state.tab === 'objets',
+      showArbre: this.state.tab === 'arbre',
+      showEmotionnel: this.state.tab === 'emotionnel',
+      emotionRows: EMOTION_ROWS,
+      showConstruction: this.state.tab === 'construction',
+      constructionVillage: CONSTRUCTION_LIST.village.map(c => ({ ...c, indent: c.parent ? 24 : 0 })),
+      constructionRanch: CONSTRUCTION_LIST.ranch.map(c => ({ ...c, indent: c.parent ? 24 : 0 })),
       onTabPlayable: () => this.setState({ tab: 'playable' }),
       onTabHabitants: () => this.setState({ tab: 'habitants' }),
       onTabTechniques: () => this.setState({ tab: 'techniques' }),
       onTabObjets: () => this.setState({ tab: 'objets' }),
+      onTabArbre: () => this.setState({ tab: 'arbre' }),
+      onTabEmotionnel: () => this.setState({ tab: 'emotionnel' }),
+      onTabConstruction: () => this.setState({ tab: 'construction' }),
       tabPlayableColor: this.state.tab === 'playable' ? '#3a2e1c' : '#a89572',
       tabPlayableBorder: this.state.tab === 'playable' ? '#c9a86a' : 'transparent',
       tabHabitantsColor: this.state.tab === 'habitants' ? '#3a2e1c' : '#a89572',
@@ -181,12 +805,92 @@ class Component extends DCLogic {
       tabTechniquesBorder: this.state.tab === 'techniques' ? '#c9a86a' : 'transparent',
       tabObjetsColor: this.state.tab === 'objets' ? '#3a2e1c' : '#a89572',
       tabObjetsBorder: this.state.tab === 'objets' ? '#c9a86a' : 'transparent',
+      tabArbreColor: this.state.tab === 'arbre' ? '#3a2e1c' : '#a89572',
+      tabArbreBorder: this.state.tab === 'arbre' ? '#c9a86a' : 'transparent',
+      tabEmotionnelColor: this.state.tab === 'emotionnel' ? '#3a2e1c' : '#a89572',
+      tabEmotionnelBorder: this.state.tab === 'emotionnel' ? '#c9a86a' : 'transparent',
+      tabConstructionColor: this.state.tab === 'construction' ? '#3a2e1c' : '#a89572',
+      tabConstructionBorder: this.state.tab === 'construction' ? '#c9a86a' : 'transparent',
       stageGroups,
       habitants,
       techniqueGroups: this.buildTechniqueGroups(),
+      statusList: this.buildStatusList(),
       objetGroups: this.buildObjetGroups(),
-      objets: this.buildObjetList()
+      objets: this.buildObjetList(),
+      echoTreeData: this.buildEchoTreeDataVals(),
+      showEchoZoom: !!this.state.selectedEchoKey,
+      onCloseEchoZoom: () => this.setState({ selectedEchoKey: null }),
+      stopClick: (e) => e.stopPropagation(),
+      selectedEchoTree: this.buildSimplifiedTreeVals()
     };
+  }
+
+  buildSimplifiedTreeVals() {
+    if (!this.state.selectedEchoKey) return null;
+    const t = this.buildSimplifiedTree(this.state.selectedEchoKey);
+    if (!t) return null;
+    const px = v => v + 'px';
+    return {
+      width: t.width, height: t.height,
+      nodes: t.nodes.map(n => ({ left: px(n.x), top: px(n.y), img: n.img, label: n.label, size: n.big ? '120px' : '76px', boxSize: n.big ? '96px' : '60px' })),
+      lines: t.lines.map(l => ({ x1: l.x1, y1: l.y1, x2: l.x2, y2: l.y2, color: l.color, dash: l.dashed ? '5,4' : '' }))
+    };
+  }
+
+  buildEchoTreeDataVals() {
+    const d = buildEchoTreeData();
+    const px = v => v + 'px';
+    const mapSlot = s => ({ left: px(s.x), top: px(s.y), img: s.img, label: s.label, onClick: () => this.selectEcho(s.catKey) });
+    return {
+      width: d.width, height: d.height,
+      seedSlots: d.seedSlots.map(mapSlot),
+      babySlots: d.babySlots.map(mapSlot),
+      childSlots: d.childSlots.map(mapSlot),
+      adoSlots: d.adoSlots.map(mapSlot),
+      adulteSlots: d.adulteSlots.map(mapSlot),
+      fragmentSlots: d.fragmentSlots.map(mapSlot),
+      branchAdulteSlots: d.branchAdulteSlots.map(mapSlot),
+      meleeSlots: d.meleeSlots.map(mapSlot),
+      memorySlots: d.memorySlots.map(mapSlot),
+      nonSpecificBoxes: d.nonSpecificBoxes.map(b => ({ left: px(b.x), top: px(b.y), width: px(b.width), height: px(b.height) })),
+      lines: d.lines.map(l => ({ x1: l.x1, y1: l.y1, x2: l.x2, y2: l.y2, color: l.color, dash: l.dashed ? '5,4' : '' }))
+    };
+  }
+
+  buildSimplifiedTree(catKey) {
+    const d = buildEchoTreeData();
+    const allSlots = [].concat(d.seedSlots, d.babySlots, d.childSlots, d.adoSlots, d.adulteSlots, d.fragmentSlots, d.branchAdulteSlots, d.meleeSlots, d.memorySlots);
+    const byKey = {};
+    allSlots.forEach(s => { byKey[s.catKey] = s; });
+    const node = byKey[catKey];
+    if (!node) return null;
+    const parentEdges = d.edges.filter(e => e.to === catKey).map(e => ({ dashed: e.dashed, color: e.color, node: byKey[e.from] })).filter(p => p.node);
+    const childEdges = d.edges.filter(e => e.from === catKey).map(e => ({ dashed: e.dashed, color: e.color, node: byKey[e.to] })).filter(c => c.node);
+    const rowH = 140;
+    const rows = Math.max(parentEdges.length, childEdges.length, 1);
+    const height = rows * rowH;
+    const centerY = height / 2;
+    const leftX = 90, midX = 340, rightX = 590;
+    const width = 680;
+    const distribute = (n) => {
+      if (n <= 1) return [centerY];
+      const span = (n - 1) * rowH;
+      const start = centerY - span / 2;
+      return Array.from({ length: n }, (_, i) => start + i * rowH);
+    };
+    const parentYs = distribute(parentEdges.length);
+    const childYs = distribute(childEdges.length);
+    const nodes = [{ x: midX, y: centerY, img: node.img, label: node.label, big: true }];
+    const lines = [];
+    parentEdges.forEach((p, i) => {
+      nodes.push({ x: leftX, y: parentYs[i], img: p.node.img, label: p.node.label });
+      lines.push({ x1: leftX + 45, y1: parentYs[i], x2: midX - 55, y2: centerY, dashed: p.dashed, color: p.color });
+    });
+    childEdges.forEach((c, i) => {
+      nodes.push({ x: rightX, y: childYs[i], img: c.node.img, label: c.node.label });
+      lines.push({ x1: midX + 55, y1: centerY, x2: rightX - 45, y2: childYs[i], dashed: c.dashed, color: c.color });
+    });
+    return { nodes, lines, width, height };
   }
 
   buildObjetGroups() {
@@ -196,6 +900,8 @@ class Component extends DCLogic {
     return [
       { label: 'Soins & santé', items: names(['Pansement', 'Médicament', 'Graine de vie', 'Feuille de vie', 'Rosée Astrale', 'Cristal vital', 'Éclat d\u2019âme']) },
       { label: 'Objets utiles et combat', items: names(['Pierre incantatoire', 'Appât à écho', 'Repousse']) },
+      { label: 'Pierres runiques élémentaires (uniques, quête)', items: names(['Pierre de Vent', 'Pierre de Feu', 'Pierre de Foudre', 'Pierre d\u2019Eau', 'Pierre de Roche', 'Pierre d\u2019Ether']) },
+      { label: 'Matériaux de construction (en développement)', items: names(['Bois', 'Pierre', 'Fibres végétales', 'Résine', 'Ferraille', 'Cristaux']) },
       { label: 'Outils', items: names(['Canne à pêche']) },
       { label: 'Nourriture préparée (boutique)', items: names(['Pomme', 'Mangue', 'Poire', 'Pêche', 'Bananes', 'Ananas', 'Carotte', 'Concombre', 'Brocoli', 'Laitue', 'Lentilles', 'Riz', 'Pain', 'Salade composée', 'Pâtes au pesto', 'Risotto à la truffe', 'Steak de bœuf', 'Cuisse de poulet', 'Côtelettes', 'Gigot d’agneau', 'Steak végétal', 'Burger', 'Filet de saumon', 'Filet de thon', 'Sardines', 'Anchois', 'Fromage', 'Bonbons', 'Chocolat noir', 'Riz-Dinde au curry', 'Épluchures', 'Restes']) },
       { label: 'Forage & exploration (nourriture)', items: names(['Navet', 'Panais', 'Racine amère', 'Fraises des bois', 'Mûres', 'Groseilles sauvages', 'Baies rouges', 'Noisettes', 'Châtaignes', 'Glands', 'Graines sauvages', 'Champignons bruns', 'Champignons blancs', 'Truffe', 'Œuf d’oiseau', 'Miel sauvage', 'Cannelle', 'Herbes aromatiques']) },
@@ -221,6 +927,20 @@ class Component extends DCLogic {
     items.push({ name: 'Appât à écho', icon: './assets/item-appat-echo.png', desc: 'Un écho sauvage vous rend visite au ranch : un écho déjà connu (probabilité selon l\u2019affect positif/négatif accumulé avec lui) ou un tout nouvel écho.', price: 45 });
     items.push({ name: 'Repousse', icon: './assets/item-repousse.png', desc: 'Réduit de 50% la probabilité de tomber sur un écho lors des fouilles et recherches en exploration, pendant 12h après utilisation.', price: 30 });
     items.push({ name: 'Canne à pêche', icon: './assets/item-canne-peche.png', desc: 'Outil pour la pêche : accès aux étendues d\u2019eau avec poissons variés.', price: 60 });
+    // Pierres runiques élémentaires (uniques, obtenues uniquement via quêtes/événements, jamais en boutique)
+    items.push({ name: 'Pierre de Vent', icon: './assets/item-pierre-vent.png', desc: 'Pierre runique unique liée au Souvenir du Vent. Doit être en inventaire (pas au coffre) au moment de l\u2019évolution Adulte pour débloquer cette forme ; consommée à l\u2019évolution.' });
+    items.push({ name: 'Pierre de Feu', icon: './assets/item-pierre-feu.png', desc: 'Pierre runique unique liée au Souvenir du Feu. Doit être en inventaire (pas au coffre) au moment de l\u2019évolution Adulte pour débloquer cette forme ; consommée à l\u2019évolution.' });
+    items.push({ name: 'Pierre de Foudre', icon: './assets/item-pierre-foudre.png', desc: 'Pierre runique unique liée au Souvenir de la Foudre. Doit être en inventaire (pas au coffre) au moment de l\u2019évolution Adulte pour débloquer cette forme ; consommée à l\u2019évolution.' });
+    items.push({ name: 'Pierre d\u2019Eau', icon: './assets/item-pierre-eau.png', desc: 'Pierre runique unique liée au Souvenir de l\u2019Eau. Doit être en inventaire (pas au coffre) au moment de l\u2019évolution Adulte pour débloquer cette forme ; consommée à l\u2019évolution.' });
+    items.push({ name: 'Pierre de Roche', icon: './assets/item-pierre-roche.png', desc: 'Pierre runique unique liée au Souvenir de la Terre. Doit être en inventaire (pas au coffre) au moment de l\u2019évolution Adulte pour débloquer cette forme ; consommée à l\u2019évolution.' });
+    items.push({ name: 'Pierre d\u2019Ether', icon: './assets/item-pierre-ether.png', desc: 'Pierre runique unique liée au Souvenir de l\u2019Ether. Doit être en inventaire (pas au coffre) au moment de l\u2019évolution Adulte pour débloquer cette forme ; consommée à l\u2019évolution.' });
+    // Matériaux de construction (à collecter, servent aux constructions du village — en développement)
+    items.push({ name: 'Bois', icon: './assets/material-bois.png', desc: 'Matériau de construction courant, ramassé en exploration. Base des structures simples (charpente, clôtures, meubles).' });
+    items.push({ name: 'Pierre', icon: './assets/material-pierre.png', desc: 'Matériau de construction courant, ramassé en zones rocheuses. Apporte solidité et fondations.' });
+    items.push({ name: 'Fibres végétales', icon: './assets/material-fibres.png', desc: 'Matériau de construction courant, ramassé en forêt/près de l\u2019eau. Sert aux liens, cordes et toitures légères.' });
+    items.push({ name: 'Résine', icon: './assets/material-resine.png', desc: 'Matériau de construction intermédiaire. Sert de colle et d\u2019étanchéité pour les constructions.' });
+    items.push({ name: 'Ferraille', icon: './assets/material-ferraille.png', desc: 'Matériau de construction intermédiaire. Sert aux pièces avancées (outils, quincaillerie).' });
+    items.push({ name: 'Cristaux', icon: './assets/material-cristaux.png', desc: 'Matériau de construction rare. Réservé aux constructions spéciales liées aux Échos (sanctuaire, dojo...).' });
     // Fruits et légumes
     items.push({ name: 'Pomme', icon: './assets/food-pomme.png', desc: 'Fruit classique sucré-acide. Réduit la faim de 12pt.', price: 2 });
     items.push({ name: 'Mangue', icon: './assets/food-mangue.png', desc: 'Fruit exotique sucré. Réduit la faim de 14pt.', price: 4 });
@@ -343,32 +1063,64 @@ class Component extends DCLogic {
     const BABY_POOL = {
       J: ['Second souffle', 'Rayon sacré'], W: ['Poing incandescent', 'Coup brutal'],
       S: ['Vague apaisante', "Jet haute pression"], F: ['Sphère spectrale', 'Voile fantomatique'],
-      D: ['Spore toxique', 'Peau corrosive'], N: ['Résonance arcanique', 'Barrière magique'],
-      DJ: ['Déchirure', 'Regard funeste'], DW: ['Coup brutal', 'Onde de choc'],
+      D: ['Spores toxiques', 'Peau corrosive'], N: ['Résonance arcanique', 'Barrière magique'],
+      DJ: ['Déchirure', 'Regard funeste'], DW: ['Coup brutal', 'Pluie de cendres'],
       DS: ['Absorption vitale', 'Brume engouffrante'], DF: ['Étreinte sombre', 'Abîme'],
-      DD: ['Peau corrosive', 'Absorption vitale'], DN: ['Déchirure', 'Regard funeste']
+      DD: ['Peau corrosive', 'Absorption vitale'], DN: ['Coup brutal', 'Regard funeste'], N: ['Résonance arcanique', 'Déchirure']
     };
     const ADO_POOL = {
-      J: ['Second souffle', 'Rayon sacré', "Lame de l'aube", 'Onde de choc'],
-      W: ['Poing incandescent', 'Coup brutal', 'Vague solaire', 'Onde de choc'],
-      S: ['Vague apaisante', "Jet haute pression", 'Barrière magique', 'Tourbillon'],
-      F: ['Sphère spectrale', 'Voile fantomatique', 'Résonance arcanique', 'Vague apaisante'],
-      D: ['Spore toxique', 'Peau corrosive', 'Brume engouffrante', 'Orbe de mana'],
-      N: ['Résonance arcanique', 'Barrière magique', "Lame de l'aube", 'Poing incandescent'],
+      J: ['Second souffle', 'Rayon sacré', "Lame de l'aube", 'Châtiment céleste'],
       DJ: ['Déchirure', 'Regard funeste', 'Morsure venimeuse', 'Cri des âmes'],
+      W: ['Poing incandescent', 'Coup brutal', 'Vague solaire', 'Onde de choc'],
       DW: ['Coup brutal', 'Onde de choc', 'Poing incandescent', 'Abîme'],
-      DS: ['Absorption vitale', 'Brume engouffrante', 'Peau corrosive', 'Anticorps'],
-      DF: ['Étreinte sombre', 'Abîme', 'Malédiction', 'Absorption vitale'],
-      DD: ['Peau corrosive', 'Absorption vitale', 'Étreinte sombre', 'Regard funeste'],
-      DN: ['Déchirure', 'Regard funeste', 'Absorption vitale', 'Résonance arcanique']
+      D: ['Spores toxiques', 'Peau corrosive', 'Brume engouffrante', 'Anticorps'],
+      DD: ['Peau corrosive', 'Absorption vitale', 'Étreinte sombre', 'Brume engouffrante'],
+      S: ['Vague apaisante', "Jet haute pression", 'Tourbillon', 'Barrière magique'],
+      DS: ['Absorption vitale', 'Brume engouffrante', 'Peau corrosive', 'Odeur pestilentielle'],
+      F: ['Sphère spectrale', 'Voile fantomatique', 'Ombre rassurante', 'Sanctuaire'],
+      DF: ['Étreinte sombre', 'Abîme', 'Malédiction', 'Flamme noire'],
+      N: ['Résonance arcanique', 'Déchirure', "Lame de l'aube", 'Poing incandescent'],
+      DN: ['Coup brutal', 'Regard funeste', 'Absorption vitale', 'Pacte maléfique']
+    };
+    const ADULTE_POOL = {
+      J: ['Second souffle', 'Rayon sacré', "Lame de l'aube", 'Châtiment céleste', 'Coup brutal', 'Projection', 'Grâce sacrée', 'Protection impénétrable'],
+      DJ: ['Déchirure', 'Regard funeste', 'Morsure venimeuse', 'Cri des âmes', 'Tempête des damnés', 'Ombre rassurante', "Lame de l'aube", 'Projection'],
+      W: ['Poing incandescent', 'Coup brutal', 'Vague solaire', 'Onde de choc', 'Fracas Tellurique', 'Motivation inébranlable', 'Météore', 'Carapace minérale'],
+      DW: ['Coup brutal', 'Onde de choc', 'Poing incandescent', 'Abîme', 'Flamme noire', 'Malédiction', 'Pluie de cendres', 'Météore'],
+      D: ['Spores toxiques', 'Peau corrosive', 'Brume engouffrante', 'Anticorps', 'Odeur pestilentielle', 'Projection', 'Sanctuaire', 'Rayon sacré'],
+      DD: ['Peau corrosive', 'Absorption vitale', 'Étreinte sombre', 'Brume engouffrante', 'Miasmes des ténèbres', 'Odeur pestilentielle', 'Possession malsaine', 'Éruption fongique'],
+      S: ['Vague apaisante', "Jet haute pression", 'Tourbillon', 'Barrière magique', 'Courant ascendant', 'Lame magique venteuse', 'Éclat éthéré', 'Grâce sacrée', 'Sanctuaire'],
+      DS: ['Absorption vitale', 'Brume engouffrante', 'Peau corrosive', 'Odeur pestilentielle', 'Courant ascendant', 'Vase poisseuse', 'Miasmes des ténèbres', 'Offrande'],
+      F: ['Sphère spectrale', 'Voile fantomatique', 'Ombre rassurante', 'Sanctuaire', 'Grâce sacrée', 'Protection impénétrable', 'Tempête des damnés', "Lame de l'aube"],
+      DF: ['Étreinte sombre', 'Abîme', 'Malédiction', 'Flamme noire', 'Miasmes des ténèbres', 'Pacte maléfique', 'Foudre ombrageuse'],
+      N: ['Résonance arcanique', 'Déchirure', "Lame de l'aube", 'Poing incandescent', 'Courant ascendant', 'Foudre divine', 'Arc éthéré foudroyant', 'Projection'],
+      DN: ['Coup brutal', 'Regard funeste', 'Absorption vitale', 'Pacte maléfique', 'Lame magique venteuse', 'Flamme noire', 'Morsure venimeuse', 'Sphère spectrale']
     };
     const BRANCH_POOL = {
-      'J-DD': ["Lame de l'aube", 'Peau corrosive', 'Étreinte sombre', 'Coup brutal', 'Résonance arcanique'],
-      'W-DJ': ['Coup brutal', 'Déchirure', 'Morsure venimeuse', 'Souffle enflammé', 'Regard funeste'],
-      'F-DW': ['Sphère spectrale', 'Protection impénétrable', 'Éclat éthéré', 'Tourbillon', 'Vague solaire'],
-      'S-DF': ['Voile fantomatique', 'Orbe de mana', 'Brume engouffrante', 'Absorption vitale', "Jet haute pression"],
-      'D-DS': ['Morsure venimeuse', 'Coup brutal', 'Abîme', 'Éclat éthéré', 'Peau corrosive'],
-      'N-DN': ['Déchirure', 'Morsure venimeuse', "Lame de l'aube", 'Souffle enflammé', 'Absorption vitale']
+      'J-DD': ["Lame de l'aube", 'Déchirure', 'Peau corrosive', 'Étreinte sombre', 'Anticorps'],
+      'W-DJ': ['Coup brutal', 'Déchirure', 'Pluie de cendres', 'Protection impénétrable', 'Regard funeste'],
+      'F-DW': ['Sphère spectrale', 'Carapace minérale', 'Éclat éthéré', 'Flamme noire', 'Vague solaire'],
+      'S-DF': ['Voile fantomatique', 'Orbe de mana', 'Vase poisseuse', 'Absorption vitale', "Jet haute pression"],
+      'D-DS': ['Vase poisseuse', 'Anticorps', 'Peau corrosive', 'Miasmes des ténèbres', 'Éclat éthéré'],
+      'J-DS': ['Déchirure', 'Morsure venimeuse', 'Vase poisseuse', 'Regard funeste', 'Châtiment céleste'],
+      'W-DD': ['Coup brutal', 'Fracas Tellurique', 'Carapace minérale', 'Vague solaire', 'Miasmes des ténèbres'],
+      'F-DJ': ['Déchirure', 'Possession malsaine', 'Étreinte sombre', 'Tempête des damnés', 'Malédiction'],
+      'S-DW': ['Projection', "Jet haute pression", 'Vague apaisante', 'Intense vapeur', 'Souffle enflammé'],
+      'D-DF': ['Cri des âmes', 'Peau corrosive', 'Spores toxiques', 'Odeur pestilentielle', 'Miasmes des ténèbres'],
+      'N-DN': ['Déchirure', 'Motivation inébranlable', 'Voile fantomatique', "Lame de l'aube", 'Flamme noire']
+    };
+    const BRANCH_ADULTE_POOL = {
+      'S-DF': ['Voile fantomatique', 'Orbe de mana', 'Vase poisseuse', 'Absorption vitale', "Jet haute pression", 'Tempête des damnés', 'Miasmes des ténèbres', 'Tourbillon'],
+      'J-DD': ["Lame de l'aube", 'Déchirure', 'Peau corrosive', 'Étreinte sombre', 'Anticorps', 'Odeur pestilentielle', 'Possession malsaine', 'Protection impénétrable'],
+      'F-DW': ['Sphère spectrale', 'Carapace minérale', 'Éclat éthéré', 'Flamme noire', 'Vague solaire', 'Pluie de cendres', 'Fournaise interne', 'Tempête des damnés'],
+      'W-DJ': ['Coup brutal', 'Déchirure', 'Pluie de cendres', 'Protection impénétrable', 'Regard funeste', 'Châtiment céleste', 'Motivation inébranlable', 'Onde de choc'],
+      'D-DS': ['Vase poisseuse', 'Anticorps', 'Peau corrosive', 'Miasmes des ténèbres', 'Éclat éthéré', 'Déchirure', 'Morsure venimeuse', 'Étreinte sombre'],
+      'J-DS': ['Déchirure', 'Morsure venimeuse', 'Vase poisseuse', 'Regard funeste', 'Châtiment céleste', 'Rayon sacré', 'Lumière aveuglante', 'Second souffle'],
+      'W-DD': ['Coup brutal', 'Fracas Tellurique', 'Carapace minérale', 'Vague solaire', 'Miasmes des ténèbres', 'Peau corrosive', 'Étreinte sombre', 'Vase poisseuse'],
+      'F-DJ': ['Déchirure', 'Possession malsaine', 'Étreinte sombre', 'Tempête des damnés', 'Malédiction', 'Flamme noire', 'Arc éthéré foudroyant', 'Nova éthérée'],
+      'S-DW': ['Projection', "Jet haute pression", 'Vague apaisante', 'Intense vapeur', 'Souffle enflammé', 'Coup brutal', 'Météore', 'Fournaise interne'],
+      'D-DF': ['Cri des âmes', 'Peau corrosive', 'Spores toxiques', 'Odeur pestilentielle', 'Miasmes des ténèbres', 'Nova éthérée', 'Morsure venimeuse', 'Anticorps'],
+      'N-DN': ['Déchirure', 'Motivation inébranlable', 'Voile fantomatique', "Lame de l'aube", 'Flamme noire', 'Arc éthéré foudroyant', 'Ombre rassurante', 'Ouragan']
     };
     const branches = [
       { code: 'S-DF', primaryOf: 'sorrow', darkOf: 'fear' },
@@ -376,9 +1128,14 @@ class Component extends DCLogic {
       { code: 'F-DW', primaryOf: 'fear', darkOf: 'wrath' },
       { code: 'W-DJ', primaryOf: 'wrath', darkOf: 'joy' },
       { code: 'D-DS', primaryOf: 'disgust', darkOf: 'sorrow' },
+      { code: 'J-DS', primaryOf: 'joy', darkOf: 'sorrow' },
+      { code: 'W-DD', primaryOf: 'wrath', darkOf: 'disgust' },
+      { code: 'F-DJ', primaryOf: 'fear', darkOf: 'joy' },
+      { code: 'S-DW', primaryOf: 'sorrow', darkOf: 'wrath' },
+      { code: 'D-DF', primaryOf: 'disgust', darkOf: 'fear' },
       { code: 'N-DN', primaryOf: 'neutral', darkOf: 'neutral' }
     ];
-    const branchForCode = (code) => branches.find(b => primCode[b.primaryOf] === code || darkCode[b.darkOf] === code || (code === 'N' && b.code === 'N-DN') || (code === 'DN' && b.code === 'N-DN'));
+    const branchesForCode = (code) => branches.filter(b => primCode[b.primaryOf] === code || darkCode[b.darkOf] === code || (code === 'N' && b.code === 'N-DN') || (code === 'DN' && b.code === 'N-DN'));
 
     // Lignes : {code, name, key, color, dark(bool)}
     const lines = [];
@@ -403,30 +1160,40 @@ class Component extends DCLogic {
       name: l.name, color: l.color, borderColor: l.color, img: bebeImg(l),
       prevolution: l.seedName ? l.seedName : 'Aucune (choix Neutre au démarrage)',
       evolution: 'Enfant ' + l.name,
-      techniques: techList(BABY_POOL[l.code])
+      techniques: 'Aucune (les bébés n\u2019ont pas de techniques)'
     }));
     const enfants = lines.map(l => {
-      const branch = branchForCode(l.code);
-      const partnerLine = branch ? lines.find(pl => pl.code === (primCode[l.key] === l.code ? darkCode[branch.darkOf] : primCode[branch.primaryOf])) : null;
+      const matchingBranches = branchesForCode(l.code);
       const evoParts = ['Adolescent ' + l.name + ' (directe)'];
-      if (branch && partnerLine) evoParts.push('branche ' + branch.code + ' (fusion avec Enfant ' + partnerLine.name + ')');
+      matchingBranches.forEach(branch => {
+        const partnerLine = lines.find(pl => pl.code === (primCode[l.key] === l.code ? darkCode[branch.darkOf] : primCode[branch.primaryOf]));
+        if (partnerLine) evoParts.push('branche ' + branch.code + ' (fusion avec Enfant ' + partnerLine.name + ')');
+      });
       return {
         name: l.name, color: l.color, borderColor: l.color, img: enfantImg(l),
         prevolution: 'Bébé ' + l.name,
         evolution: evoParts.join(' OU '),
-        techniques: techList(BABY_POOL[l.code]) + ' (identiques au stade Bébé)'
+        techniques: techList(BABY_POOL[l.code])
       };
     });
+    const adulteCondition = (l) => l.key === 'neutre'
+      ? 'si le processus majoritaire fait partie des processus de départ tirés à la naissance'
+      : 'si le processus ' + l.key.charAt(0).toUpperCase() + l.key.slice(1) + ' est majoritaire';
+    const adulteImg = (l) => {
+      if (l.key === 'neutre') return './assets/adulte-' + (l.dark ? 'dark-neutre' : 'neutre') + '.png';
+      const genderSuffix = l.key === 'joy' ? '-m' : '';
+      return './assets/adulte-' + (l.dark ? 'dark-' : '') + l.key + genderSuffix + '.png';
+    };
     const adosDirect = lines.map(l => ({
       name: l.name, color: l.color, borderColor: l.color, img: adoImg(l),
       prevolution: 'Enfant ' + l.name,
-      evolution: 'Stade final actuellement disponible (Adulte à venir)',
+      evolution: 'Adulte ' + l.name + ' (' + adulteCondition(l) + '), ou exceptionnellement une forme mêlée / un écho de souvenir (voir stade Adulte)',
       techniques: techList(ADO_POOL[l.code])
     }));
     const FRAG_POOL = {
-      'PM+': ['Coup brutal', 'Déchirure', 'Onde de choc', 'Morsure venimeuse', 'Absorption vitale', 'Cri des âmes'],
-      'C+': ['Orbe de mana', 'Éclat éthéré', 'Sanctuaire', 'Rayon sacré', 'Vague solaire', 'Malédiction'],
-      'SA+': ['Second souffle', 'Barrière magique', 'Protection impénétrable', 'Vague apaisante', 'Anticorps', 'Rayon sacré']
+      'PM+': ['Coup brutal', 'Déchirure', 'Onde de choc', 'Projection', 'Motivation inébranlable', 'Cri des âmes', 'Abîme', 'Résonance arcanique'],
+      'C+': ['Foudre ombrageuse', 'Orbe de mana', 'Éclat éthéré', 'Sanctuaire', 'Rayon sacré', 'Malédiction', 'Distorsion spatio-temporelle', 'Nova éthérée'],
+      'SA+': ['Second souffle', 'Barrière magique', 'Motivation inébranlable', 'Grâce sacrée', 'Sanctuaire', 'Offrande', 'Ombre rassurante', 'Peau corrosive']
     };
     const fragments = [
       { code: 'C+', name: 'Cognitif+', img: './assets/ado-fragment-cognitif.png', domain: 'l\u2019éducation Cognitive' },
@@ -436,9 +1203,22 @@ class Component extends DCLogic {
     const adosFragment = fragments.map(f => ({
       name: f.name, color: '#a04a3a', borderColor: '#a04a3a', img: f.img,
       prevolution: 'N\u2019importe quel Enfant, si ' + f.domain + ' a représenté 80% ou plus de son éducation totale (forme exceptionnelle, remplace la lignée)',
-      evolution: 'Stade final actuellement disponible (Adulte à venir)',
+      evolution: 'N\u2019évolue jamais : reste Adolescent jusqu\u2019à sa mort',
       techniques: techList(FRAG_POOL[f.code])
     }));
+    const BRANCH_LETTER_TO_EMOTION_LABEL = { J: 'Joy', W: 'Wrath', F: 'Fear', S: 'Sorrow', D: 'Disgust' };
+    const branchAdulteCondition = (code) => {
+      if (code === 'N-DN') return 'si les 5 processus (Joy, Fear, Disgust, Sorrow, Wrath) sont chacun compris entre 16% et 24% (répartition quasi égale)';
+      const [a, bRaw] = code.split('-');
+      const b = bRaw.slice(1);
+      return 'si les processus ' + BRANCH_LETTER_TO_EMOTION_LABEL[a] + ' et ' + BRANCH_LETTER_TO_EMOTION_LABEL[b] + ' sont les deux majoritaires (peu importe l\u2019ordre)';
+    };
+    const crossBranchMeleeText = (code) => {
+      const opts = CROSS_BRANCH_MELEE[code];
+      if (!opts) return '';
+      return ', ou exceptionnellement vers une forme mêlée si un 3\u1d49 processus devient majoritaire : ' +
+        opts.map(o => o.code + ' (majoritaire ' + o.maj + ')').join(', ');
+    };
     const adosBranch = branches.map(b => {
       const primaryLine = lines.find(l => l.code === primCode[b.primaryOf]);
       const darkLine = lines.find(l => l.code === darkCode[b.darkOf]);
@@ -447,15 +1227,95 @@ class Component extends DCLogic {
       return {
         name: 'Branche ' + b.code, color: '#8a5a1f', borderColor: '#c9791f', img: './assets/ado-branch-' + b.code.toLowerCase() + '.png',
         prevolution: 'Enfant ' + pName + ' + Enfant ' + dName + ' (fusion)',
-        evolution: 'Stade final actuellement disponible (Adulte à venir)',
+        evolution: 'Adulte Branche ' + b.code + ' (' + branchAdulteCondition(b.code) + ')' + crossBranchMeleeText(b.code),
         techniques: techList(BRANCH_POOL[b.code])
       };
     });
 
+    // Stade Adulte : lignées principales, branches (fusions Enfant), formes mêlées et échos de souvenir.
+    const adultesPrincipal = lines.map(l => ({
+      name: l.name, color: l.color, borderColor: l.color, img: adulteImg(l),
+      prevolution: 'Adolescent ' + l.name,
+      evolution: 'Stade final (pas d\u2019évolution ultérieure)',
+      techniques: techList(ADULTE_POOL[l.code])
+    }));
+    const adultesBranch = branches.map(b => ({
+      name: 'Branche ' + b.code, color: '#8a5a1f', borderColor: '#c9791f', img: './assets/adulte-branch-' + b.code.toLowerCase() + '.png',
+      prevolution: 'Adolescent Branche ' + b.code + ' (' + branchAdulteCondition(b.code) + ')',
+      evolution: 'Stade final (pas d\u2019évolution ultérieure)',
+      techniques: techList(BRANCH_ADULTE_POOL[b.code])
+    }));
+    const MELEE_TRIADS_LIST = [
+      { code: 'JWF', label: 'Joie / Colère / Peur' }, { code: 'WFS', label: 'Colère / Peur / Tristesse' },
+      { code: 'FSD', label: 'Peur / Tristesse / Dégoût' }, { code: 'SDJ', label: 'Tristesse / Dégoût / Joie' },
+      { code: 'DJW', label: 'Dégoût / Joie / Colère' }, { code: 'JFD', label: 'Joie / Peur / Dégoût' },
+      { code: 'JFS', label: 'Joie / Peur / Tristesse' }, { code: 'JWS', label: 'Joie / Colère / Tristesse' },
+      { code: 'WFD', label: 'Colère / Peur / Dégoût' }, { code: 'WSD', label: 'Colère / Tristesse / Dégoût' }
+    ];
+    const MELEE_POOL = {
+      JWF: ['Déchirure', 'Bourrasque fracassante', 'Foudre ombrageuse', 'Souffle enflammé', 'Boule de feu', 'Flamme noire', 'Sanctuaire', 'Résonance arcanique'],
+      WFS: ['Déchirure', 'Projection', 'Étreinte sombre', 'Tempête des damnés', 'Carapace minérale', 'Jet haute pression', 'Courant ascendant', 'Vague solaire'],
+      FSD: ['Voile fantomatique', 'Possession malsaine', 'Odeur pestilentielle', 'Brume engouffrante', 'Vase poisseuse', 'Miasmes des ténèbres', 'Absorption vitale', 'Éruption fongique'],
+      SDJ: ['Onde de choc', 'Carapace minérale', 'Frappe de ronces', 'Vague apaisante', 'Tourbillon', 'Courant ascendant', 'Barrière magique', 'Orbe de mana'],
+      DJW: ['Déchirure', 'Fracas Tellurique', 'Projection', 'Motivation inébranlable', 'Morsure venimeuse', 'Odeur pestilentielle', 'Lumière aveuglante', 'Poing incandescent'],
+      JFD: ['Bourrasque fracassante', 'Tempête des damnés', 'Ombre rassurante', 'Cri des âmes', 'Spores toxiques', 'Peau corrosive', 'Anticorps', 'Lame magique venteuse'],
+      JFS: ['Motivation inébranlable', 'Foudre ombrageuse', 'Brume engouffrante', 'Ouragan', 'Vague apaisante', 'Lumière aveuglante', 'Sanctuaire', 'Rayon sacré'],
+      JWS: ['Second souffle', 'Brume engouffrante', 'Tourbillon', 'Ouragan', 'Intense vapeur', 'Explosion volcanique', 'Fournaise interne', 'Nova éthérée'],
+      WFD: ['Déchirure', 'Fracas Tellurique', 'Foudre ombrageuse', 'Possession malsaine', 'Étreinte sombre', 'Carapace minérale', 'Flamme noire', 'Abîme'],
+      WSD: ['Morsure venimeuse', 'Spores toxiques', 'Éruption fongique', 'Anticorps', 'Peau corrosive', 'Jet haute pression', 'Intense vapeur', 'Miasmes des ténèbres']
+    };
+    const adultesMelee = MELEE_TRIADS_LIST.map(m => ({
+      name: 'Mêlé ' + m.code, color: '#a15fc9', borderColor: '#a15fc9', img: './assets/adulte-melee-' + m.code.toLowerCase() + '.png',
+      prevolution: 'N\u2019importe quel Adolescent (primaire ou Dark) de l\u2019une des 3 lignées : ' + m.label,
+      evolution: 'Stade final, exceptionnel : si les processus ' + m.label + ' sont chacun compris entre 28% et 38% du total éducatif émotionnel',
+      techniques: MELEE_POOL[m.code] ? techList(MELEE_POOL[m.code]) : 'Identiques au stade Adolescent d\u2019origine (pas de pool dédié)'
+    }));
+    const MEMORY_ECHOES_LIST = [
+      { code: 'J-VENT', seedKey: 'joy', label: 'Souvenir du Vent', stone: 'Pierre de Vent' },
+      { code: 'W-FEU', seedKey: 'wrath', label: 'Souvenir du Feu', stone: 'Pierre de Feu' },
+      { code: 'F-FOUDRE', seedKey: 'fear', label: 'Souvenir de la Foudre', stone: 'Pierre de Foudre' },
+      { code: 'S-EAU', seedKey: 'sorrow', label: 'Souvenir de l\u2019Eau', stone: 'Pierre d\u2019Eau' },
+      { code: 'D-TERRE', seedKey: 'disgust', label: 'Souvenir de la Terre', stone: 'Pierre de Roche' },
+      { code: 'N-ETHER', seedKey: 'neutral', label: 'Souvenir de l\u2019Ether', stone: 'Pierre d\u2019Ether' }
+    ];
+    const ECHO_POOL = {
+      joy: ['D\u00e9chirure', 'Bourrasque fracassante', 'Ouragan', 'Courant ascendant', 'Lame magique venteuse', 'R\u00e9sonance arcanique', 'Second souffle', 'Temp\u00eate des damn\u00e9s'],
+      wrath: ['Poing incandescent', 'Souffle enflamm\u00e9', 'Vague solaire', 'Fournaise interne', 'Explosion volcanique', 'Boule de feu', 'Pluie de cendres', 'M\u00e9t\u00e9ore'],
+      fear: ['Foudre ombrageuse', 'Temp\u00eate des damn\u00e9s', 'Foudre divine', 'Arc \u00e9th\u00e9r\u00e9 foudroyant', 'Lumi\u00e8re aveuglante', 'Barri\u00e8re magique', 'Cri des \u00e2mes', 'Ombre rassurante'],
+      sorrow: ['Vague apaisante', 'Brume engouffrante', 'Tourbillon', 'Jet haute pression', 'Ouragan', 'Courant ascendant', 'Vase poisseuse', 'Intense vapeur'],
+      disgust: ['Fracas Tellurique', 'Onde de choc', '\u00c9ruption fongique', 'Carapace min\u00e9rale', 'Spores toxiques', 'M\u00e9t\u00e9ore', 'Frappe de ronces'],
+      neutral: ['Barri\u00e8re magique', 'R\u00e9sonance arcanique', '\u00c9clat \u00e9th\u00e9r\u00e9', 'Orbe de mana', 'Arc \u00e9th\u00e9r\u00e9 foudroyant', 'Lame magique venteuse', 'Distorsion spatio-temporelle', 'Nova \u00e9th\u00e9r\u00e9e']
+    };
+    const adultesMemoire = MEMORY_ECHOES_LIST.map(m => ({
+      name: m.label, color: '#2f9e7a', borderColor: '#2f9e7a', img: './assets/adulte-memoire-' + m.code.toLowerCase() + '.png',
+      prevolution: m.seedKey === 'neutral' ? 'Adolescent Neutre ou Dark Neutre' : 'Adolescent ' + m.seedKey.charAt(0).toUpperCase() + m.seedKey.slice(1) + ' (primaire ou Dark)',
+      evolution: 'Stade final, prioritaire sur toute autre évolution : nécessite ' + m.label + ' débloqué ET la ' + m.stone + ' en inventaire principal (pas le coffre) au moment de l\u2019évolution (pierre consommée)',
+      techniques: techList(ECHO_POOL[m.seedKey])
+    }));
+
     return [
       { label: 'Stade Bébé', forms: bebes },
       { label: 'Stade Enfant', forms: enfants },
-      { label: 'Stade Adolescent', forms: adosDirect.concat(adosBranch).concat(adosFragment) }
+      { label: 'Stade Adolescent', forms: adosDirect.concat(adosBranch).concat(adosFragment) },
+      { label: 'Stade Adulte', forms: adultesPrincipal.concat(adultesBranch).concat(adultesMelee).concat(adultesMemoire) }
+    ];
+  }
+
+  buildStatusList() {
+    const POS = '#2f6fb0', NEG = '#a04a3a';
+    return [
+      { key: 'saignement', name: 'Saignement', icon: './assets/status-saignement.png', borderColor: NEG, polarity: 'Négatif', desc: 'Perte de PV continue (0,5% max HP/s) pendant 20s.' },
+      { key: 'empoisonnement', name: 'Empoisonnement', icon: './assets/status-empoisonnement.png', borderColor: NEG, polarity: 'Négatif', desc: 'Dégâts périodiques toutes les 10s, jusqu’à guérison ou fin naturelle.' },
+      { key: 'terreur', name: 'Terreur', icon: './assets/status-terreur.png', borderColor: NEG, polarity: 'Négatif', desc: 'L’écho est effrayé pendant 5s (perturbe son comportement en combat).' },
+      { key: 'brulure', name: 'Brûlure', icon: './assets/status-brulure.png', borderColor: NEG, polarity: 'Négatif', desc: 'Dégâts sur la durée, s’empile en plusieurs charges.' },
+      { key: 'etourdissement', name: 'Étourdissement', icon: './assets/status-etourdissement.png', borderColor: NEG, polarity: 'Négatif', desc: 'Empêche d’agir pendant 5s.' },
+      { key: 'ralentissement', name: 'Ralentissement', icon: './assets/status-ralentissement.png', borderColor: NEG, polarity: 'Négatif', desc: 'Réduit la vitesse d’action pendant sa durée.' },
+      { key: 'protection', name: 'Protection', icon: './assets/status-protection.png', borderColor: POS, polarity: 'Positif', desc: 'Réduit les dégâts subis pendant sa durée.' },
+      { key: 'rapidite', name: 'Rapidité', icon: './assets/status-rapidite.png', borderColor: POS, polarity: 'Positif', desc: 'Augmente la vitesse d’action pendant sa durée.' },
+      { key: 'regeneration', name: 'Régénération', icon: './assets/status-regeneration.png', borderColor: POS, polarity: 'Positif', desc: 'Restaure un pourcentage des PV max sur la durée.' },
+      { key: 'immunite', name: 'Immunité', icon: './assets/status-immunite.png', borderColor: POS, polarity: 'Positif', desc: 'Bloque tous les nouveaux effets négatifs pendant sa durée.' },
+      { key: 'renvoiDegats', name: 'Renvoi de dégâts', icon: './assets/status-renvoi.png', borderColor: POS, polarity: 'Positif', desc: 'Renvoie un pourcentage des dégâts subis à l’attaquant, avec une chance de l’empoisonner au contact.' },
+      { key: 'annulation', name: 'Annulation', icon: './assets/status-annulation.png', borderColor: NEG, polarity: 'Négatif', desc: 'Effet instantané (pas d’icône persistante) : dissipe immédiatement tous les états positifs actifs sur la cible.' }
     ];
   }
 
@@ -471,17 +1331,17 @@ class Component extends DCLogic {
       { key: 'ethere', label: 'Éthéré', color: '#3a7a6b', icon: './assets/tech-ethere.png' }
     ];
     const TECHNIQUES = {
-      physique: ['Coup brutal', 'Second souffle', 'Déchirure', 'Onde de choc'],
-      spectral: ['Sphère spectrale', 'Cri des âmes', 'Voile fantômatique', 'Étreinte sombre'],
-      poison: ['Morsure venimeuse', 'Spore toxique', 'Peau corrosive', 'Anticorps'],
-      aquatique: ['Vague apaisante', 'Brume engouffrante', 'Tourbillon', "Jet haute pression"],
-      incendiaire: ['Boule de feu', 'Poing incandescent', 'Vague solaire', 'Souffle enflammé'],
-      malefique: ['Regard funeste', 'Absorption vitale', 'Abîme', 'Malédiction'],
-      lumineux: ['Rayon sacré', 'Protection impénétrable', 'Sanctuaire', "Lame de l'aube"],
-      ethere: ['Barrière magique', 'Résonance arcanique', 'Éclat éthéré', 'Orbe de mana']
+      physique: ['Coup brutal', 'Second souffle', 'Déchirure', 'Onde de choc', 'Fracas Tellurique', 'Projection', 'Bourrasque fracassante', 'Motivation inébranlable'],
+      spectral: ['Sphère spectrale', 'Cri des âmes', 'Voile fantomatique', 'Étreinte sombre', 'Foudre ombrageuse', 'Tempête des damnés', 'Possession malsaine', 'Ombre rassurante'],
+      poison: ['Morsure venimeuse', 'Spores toxiques', 'Peau corrosive', 'Anticorps', 'Éruption fongique', 'Carapace minérale', 'Frappe de ronces', 'Odeur pestilentielle'],
+      aquatique: ['Vague apaisante', 'Brume engouffrante', 'Tourbillon', "Jet haute pression", 'Ouragan', 'Courant ascendant', 'Vase poisseuse', 'Intense vapeur'],
+      incendiaire: ['Boule de feu', 'Poing incandescent', 'Vague solaire', 'Souffle enflammé', 'Explosion volcanique', 'Pluie de cendres', 'Fournaise interne', 'Météore'],
+      malefique: ['Regard funeste', 'Absorption vitale', 'Abîme', 'Malédiction', 'Pacte maléfique', 'Flamme noire', 'Miasmes des ténèbres', 'Offrande'],
+      lumineux: ['Rayon sacré', 'Protection impénétrable', 'Sanctuaire', "Lame de l'aube", 'Foudre divine', 'Châtiment céleste', 'Grâce sacrée', 'Lumière aveuglante'],
+      ethere: ['Barrière magique', 'Résonance arcanique', 'Éclat éthéré', 'Orbe de mana', 'Arc éthéré foudroyant', 'Lame magique venteuse', 'Distorsion spatio-temporelle', 'Nova éthérée']
     };
     const ROLE_LABELS = { aggressive: 'Agressif', defensive: 'Défensif', prevent: 'Préventif' };
-    const PREVENT = ['Second souffle', 'Voile fantômatique', 'Peau corrosive', 'Anticorps', 'Barrière magique', 'Résonance arcanique', 'Malédiction', 'Regard funeste'];
+    const PREVENT = ['Second souffle', 'Voile fantomatique', 'Peau corrosive', 'Anticorps', 'Barrière magique', 'Résonance arcanique', 'Malédiction', 'Regard funeste', 'Motivation inébranlable', 'Ombre rassurante', 'Carapace minérale', 'Courant ascendant', 'Fournaise interne', 'Pacte maléfique', 'Offrande', 'Grâce sacrée'];
     const DEFENSIVE = ['Anticorps', 'Vague apaisante', 'Protection impénétrable', 'Sanctuaire'];
     const roleFor = (name) => DEFENSIVE.includes(name) ? 'defensive' : PREVENT.includes(name) ? 'prevent' : 'aggressive';
     return ELEMENTS.map(el => ({
@@ -495,15 +1355,15 @@ class Component extends DCLogic {
       'Coup brutal': 'Attaque perçant 50% de la résistance adverse, avec 20% de chances d\u2019étourdissement.',
       'Second souffle': 'Régénère 10% des PV sur 15s et applique Immunité 15s sur soi.',
       'Déchirure': 'Attaque perçant 50% de la résistance, 35% de chances de Saignement.',
-      'Onde de choc': 'Attaque de zone, 40% de chances d\u2019étourdissement.',
+      'Onde de choc': 'Attaque de zone, 65% de chances d\u2019étourdissement.',
       'Sphère spectrale': 'Attaque à distance, 25% de chances de Terreur.',
-      'Cri des âmes': 'Applique Terreur et Ralentissement à l\u2019adversaire sans attaquer (80%).',
+      'Cri des âmes': 'Applique en zone Terreur ou Ralentissement (aléatoire), puis 50% de chances d\u2019appliquer l\u2019autre état.',
       'Voile fantomatique': 'Applique Rapidité, Protection et Immunité sur soi (10s).',
       'Étreinte sombre': 'Attaque pouvant provoquer Étourdissement (30%) et Empoisonnement (35%).',
       'Morsure venimeuse': 'Attaque, 60% de chances d\u2019Empoisonnement.',
-      'Spore toxique': 'Attaque de zone, 50% de chances d\u2019Empoisonnement sur les adversaires touchés.',
+      'Spores toxiques': 'Attaque de zone, 40% de chances d\u2019Empoisonnement, 40% de chances d\u2019étourdissement.',
       'Peau corrosive': 'Applique Renvoi de dégâts (20%, 15s) ; chaque coup reçu a 20% de chances d\u2019empoisonner l\u2019attaquant.',
-      'Anticorps': 'Étourdit et régénère 30% des PV sur soi (15s).',
+      'Anticorps': 'Applique Empoisonnement sur soi ; régénère 40% des PV sur soi (15s).',
       'Vague apaisante': 'Régénère 25% des PV sur soi (15s) mais applique Ralentissement (10s).',
       'Brume engouffrante': 'Attaque de zone, 20% de Terreur et 20% de Ralentissement.',
       'Tourbillon': 'Attaque de zone, 60% de chances d\u2019Annulation.',
@@ -515,15 +1375,47 @@ class Component extends DCLogic {
       'Regard funeste': 'Applique Terreur et Annulation à l\u2019adversaire sans attaquer.',
       'Absorption vitale': 'Attaque qui vole 50% des dégâts infligés en PV.',
       'Abîme': 'Attaque de zone perçant 50% de la résistance, applique Annulation.',
-      'Malédiction': 'Applique Annulation, Empoisonnement, Brûlure et Ralentissement à l\u2019adversaire ; le lanceur perd 30% de sa vie restante.',
-      'Rayon sacré': 'Attaque à distance, 50% de chances d\u2019étourdissement.',
+      'Malédiction': 'Applique Annulation, Empoisonnement, Brûlure, Ralentissement et Étourdissement à l\u2019adversaire ; le lanceur perd 30% de sa vie restante.',
+      'Rayon sacré': 'Attaque à distance, 50% de chances d\u2019étourdissement, 30% de chances d\u2019infliger 1 Brûlure.',
       'Protection impénétrable': 'Applique Immunité et Protection sur soi (15s).',
       'Sanctuaire': 'Régénère 20% des PV, applique Protection et Rapidité (20s), mais étourdit le lanceur.',
       "Lame de l'aube": 'Attaque perçant 50% de la résistance, 50% de chances d\u20191 Brûlure.',
-      'Barrière magique': 'Applique Protection sur soi.',
-      'Résonance arcanique': 'Applique Rapidité sur soi.',
+      'Barrière magique': 'Applique Protection sur soi pendant 20s.',
+      'Résonance arcanique': 'Applique Rapidité sur soi pendant 20s.',
       'Éclat éthéré': 'Attaque à distance, 15% pour 1 Brûlure et 15% d\u2019Empoisonnement.',
-      'Orbe de mana': 'Attaque à distance, 40% d\u2019étourdissement, 10% Brûlure et 10% Empoisonnement.'
+      'Orbe de mana': 'Attaque à distance, 40% d\u2019étourdissement, 10% Brûlure et 10% Empoisonnement.',
+      'Fracas Tellurique': 'Attaque de zone, applique Ralentissement (10s).',
+      'Projection': 'Sans dégât : applique Étourdissement et Annulation à l\u2019adversaire.',
+      'Bourrasque fracassante': 'Attaque, 50% de chances de Terreur.',
+      'Motivation inébranlable': 'Applique Protection (20s) et Immunité (10s) sur soi.',
+      'Foudre ombrageuse': 'Attaque à distance, 45% de chances d\u2019étourdissement, 35% de Brûlure.',
+      'Tempête des damnés': 'Attaque de zone, 30% de Terreur, 30% d\u2019Annulation.',
+      'Possession malsaine': 'Sans dégât : applique Saignement et Étourdissement à l\u2019adversaire.',
+      'Ombre rassurante': 'Applique Rapidité et Régénération de 30% sur soi (20s), mais s\u2019inflige un Étourdissement.',
+      'Éruption fongique': 'Attaque de zone, 65% de chances d\u2019Empoisonnement.',
+      'Carapace minérale': 'Applique Protection, Renvoi de dégâts et Ralentissement sur soi.',
+      'Frappe de ronces': 'Attaque, 40% de chances de Saignement, 50% d\u2019Empoisonnement.',
+      'Odeur pestilentielle': 'Attaque de zone, 35% de Terreur, 30% d\u2019Empoisonnement.',
+      'Ouragan': 'Attaque de zone, 65% de chances de Ralentissement.',
+      'Courant ascendant': 'Applique Rapidité et Régénération de 10% des PV sur soi (20s).',
+      'Vase poisseuse': 'Attaque à distance, 40% d\u2019Annulation, 40% de Ralentissement.',
+      'Intense vapeur': 'Attaque à distance, 75% pour 1 Brûlure, 50% de Ralentissement.',
+      'Explosion volcanique': 'Attaque de zone : applique 2 Brûlures et 50% de Ralentissement, mais étourdit le lanceur.',
+      'Pluie de cendres': 'Sans dégâts sur une zone : 50% d\u2019Annulation, 60% d\u2019Empoisonnement, 60% pour 1 Brûlure, applique Ralentissement.',
+      'Fournaise interne': 'Applique Protection et Renvoi de dégâts sur soi (15s) ; 50% de chances d\u2019infliger 1 Brûlure à qui attaque le lanceur.',
+      'Météore': 'Attaque de zone : inflige 1 Brûlure, 50% de chances pour une 2e.',
+      'Pacte maléfique': 'Retire immédiatement 20% de la vie restante du lanceur et lui applique Immunité, Rapidité, Protection et Renvoi de dégâts (20s).',
+      'Flamme noire': 'Attaque à distance, 50% pour 1 Brûlure. Vole 20% des dégâts infligés en PV.',
+      'Miasmes des ténèbres': 'Attaque de zone, 70% de chances d\u2019Empoisonnement, 35% de Terreur.',
+      'Offrande': 'Le lanceur s\u2019inflige Annulation (y compris sur son Immunité) et gagne 7,5% de Régénération (15s) pour chaque effet positif ainsi dissipé.',
+      'Foudre divine': 'Attaque à distance, 65% de chances d\u2019étourdissement.',
+      'Châtiment céleste': 'Attaque de zone, 25% d\u2019étourdissement, 50% de Brûlure.',
+      'Grâce sacrée': 'Retire tous les effets négatifs actifs et applique Immunité (20s) sur soi.',
+      'Lumière aveuglante': 'Sans dégât, en zone : inflige Étourdissement.',
+      'Arc éthéré foudroyant': 'Attaque à distance, 10% d\u2019étourdissement ; 75% de chances de rebondir sur une autre cible, 25% de rebondir une 2e fois (revient sur la première cible s\u2019il n\u2019y a que 2 ennemis).',
+      'Lame magique venteuse': 'Attaque à distance perçant 60% de la résistance adverse.',
+      'Distorsion spatio-temporelle': 'Applique Ralentissement à l\u2019adversaire et Rapidité sur soi, pendant 10s.',
+      'Nova éthérée': 'Attaque de zone, 20% de Terreur, 20% d\u2019Empoisonnement, 20% de Brûlure, 20% de Saignement.'
     };
     return D[name] || '';
   }
