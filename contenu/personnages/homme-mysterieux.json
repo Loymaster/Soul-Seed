@@ -1,0 +1,20 @@
+{
+  "id": "homme-mysterieux",
+  "nom": "Homme mystérieux",
+  "prefixes": [
+    "homme-mysterieux"
+  ],
+  "encre": "#2B2118",
+  "taille": 1.65,
+  "visible": 1,
+  "miroirADroite": true,
+  "voix": {
+    "note": 330,
+    "rythme": 1,
+    "timbre": "doux"
+  },
+  "defaut": "neutre",
+  "expressions": {
+    "neutre": "pnj/homme-mysterieux/neutre.png"
+  }
+}

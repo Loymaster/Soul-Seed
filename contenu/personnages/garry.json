@@ -1,0 +1,22 @@
+{
+  "id": "garry",
+  "nom": "Garry",
+  "prefixes": [
+    "garry"
+  ],
+  "encre": "#2f4a7a",
+  "taille": 1.7,
+  "visible": 1,
+  "miroirADroite": true,
+  "voix": {
+    "note": 196,
+    "rythme": 1.3,
+    "timbre": "grave"
+  },
+  "defaut": "face",
+  "expressions": {
+    "combat": "pnj/garry/combat.png",
+    "face": "pnj/garry/face.png"
+  },
+  "vignette": "pnj/garry/portrait-relations.png"
+}

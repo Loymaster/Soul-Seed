@@ -1,0 +1,20 @@
+{
+  "id": "grimp",
+  "nom": "Grimp",
+  "prefixes": [
+    "grimp"
+  ],
+  "encre": "#2B2118",
+  "taille": 1.65,
+  "visible": 1,
+  "miroirADroite": true,
+  "voix": {
+    "note": 330,
+    "rythme": 1,
+    "timbre": "doux"
+  },
+  "defaut": "neutre",
+  "expressions": {
+    "neutre": "pnj/grimp/neutre.png"
+  }
+}
