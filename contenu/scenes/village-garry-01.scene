@@ -1,0 +1,43 @@
+// Première rencontre avec Garry au village.
+titre: Garry au village
+décor: village/sanctuaire
+musique: intro-mystery
+places: myhra G1, garry D2
+
+garry.vu_au_village = vrai
+
+myhra: Garry… Tu n'as rien à faire ici. Les habitants ont encore peur de toi.
+garry: Je ne fais que passer, Gardienne. Je voulais voir de mes yeux l'écho dont tout le monde parle.
+écho: (anxieux) {echo.nom} se tasse derrière vous.
+
+entre: jumpy G2 [surpris]
+jumpy [surpris]: Hé ! Tu ne t'approches pas de {echo.nom}, compris ?
+garry: Du calme, petit marchand. Et toi… qu'est-ce que tu comptes faire de lui ?
+
+choix: Que répondre ?
+  > résolution « Rien qui te regarde. Laisse-le tranquille. »
+    écho: (fier) {echo.nom} se redresse derrière vous.
+    garry.relation -= 1
+    echo.education.resolution += 1
+    garry: Hm. Il a du caractère… comme son maître.
+  > observation « Pourquoi t'intéresses-tu autant à lui ? »
+    écho: (surpris) {echo.nom} penche la tête, attentif.
+    indices.garry += 1
+    echo.education.observation += 1
+    garry: Parce qu'il me rappelle quelqu'un. Quelqu'un que ce village a oublié.
+    myhra: …
+  > anticipation « {echo.nom}, reste derrière moi. »
+    écho: (joyeux) {echo.nom} se blottit contre vous.
+    echo.confiance += 1
+    echo.education.anticipation += 1
+    garry: Tu le protèges déjà. Bien. Il en aura besoin.
+
+sort: garry
+narration: Garry s'éloigne vers la forêt sans se retourner.
+
+si garry.relation < 0:
+  jumpy [rit]: Bien envoyé ! Il ne reviendra pas de sitôt.
+sinon si indices.garry >= 1:
+  myhra: Ne te laisse pas embobiner. Garry ne dit jamais tout.
+sinon:
+  jumpy: Il a l'air de tenir à {echo.nom}… c'est bizarre, non ?

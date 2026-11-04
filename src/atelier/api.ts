@@ -16,6 +16,7 @@ async function appel<T>(methode: 'GET' | 'POST', route: string, corps?: unknown,
 export interface Deplacement { depuis: string; vers: string; references: string[] }
 export interface Usage { fichier: string; lignes: { ligne: number; texte: string }[] }
 export interface Reglages { rangementAuto: boolean }
+export interface FichierScene { id: string; source: string; modifie: number }
 
 export const api = {
   catalogue: () => appel<Catalogue>('GET', '/catalogue'),
@@ -30,6 +31,11 @@ export const api = {
   mettreDeCote: (chemins: string[]) => appel<{ chemin: string; cible: string; references: string[] }[]>('POST', '/mettre-de-cote', { chemins }),
   enregistrerFiche: (fiche: FichePNJ) => appel<PNJCatalogue>('POST', '/fiche', { id: fiche.id, fiche }),
   nouveauPNJ: (id: string, nom: string, prefixes: string[]) => appel<PNJCatalogue>('POST', '/pnj', { id, nom, prefixes }),
+  scenes: () => appel<FichierScene[]>('GET', '/scenes'),
+  enregistrerScene: (id: string, source: string) => appel<{ id: string; modifie: number }>('POST', '/scene', { id, source }),
+  nouvelleScene: (id: string, source: string) => appel<{ id: string }>('POST', '/scene/nouvelle', { id, source }),
+  renommerScene: (ancien: string, nouveau: string) => appel<{ id: string; modifiees: string[] }>('POST', '/scene/renommer', { ancien, nouveau }),
+  supprimerScene: (id: string) => appel<{ id: string }>('POST', '/scene/supprimer', { id }),
   deposer: (f: File) => appel<{ chemin: string }>('POST', `/deposer?nom=${encodeURIComponent(f.name)}`, undefined, f)
 };
 

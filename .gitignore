@@ -3,3 +3,4 @@ dist
 .DS_Store
 contenu/generes/
 public/assets/_corbeille/
+contenu/.corbeille/

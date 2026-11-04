@@ -5,18 +5,20 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "node outils/assets/catalogue.mjs --strict && tsc --noEmit && vite build",
+    "build": "node outils/assets/catalogue.mjs --strict && tsx outils/scenes/verifier.ts && tsc --noEmit && vite build",
     "catalogue": "node outils/assets/catalogue.mjs",
     "ranger": "node outils/assets/ranger.mjs",
-    "verifier": "node outils/assets/catalogue.mjs --strict && tsc --noEmit",
+    "verifier": "node outils/assets/catalogue.mjs --strict && tsx outils/scenes/verifier.ts && tsc --noEmit",
     "test": "vitest run",
-    "atelier": "vite --open /atelier.html"
+    "atelier": "vite --open /atelier.html",
+    "scenes": "tsx outils/scenes/verifier.ts"
   },
   "dependencies": {
     "@codemirror/autocomplete": "^6.20.4",
     "@codemirror/commands": "^6.11.1",
     "@codemirror/language": "^6.13.1",
     "@codemirror/lint": "^6.9.7",
+    "@codemirror/search": "^6.7.2",
     "@codemirror/state": "^6.7.6",
     "@codemirror/view": "^6.43.15",
     "@fontsource/alegreya": "^5.1.1",

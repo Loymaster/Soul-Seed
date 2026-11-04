@@ -1,0 +1,103 @@
+/* Scène de dialogue plein écran — portage de la maquette « Scène · moteur de dialogue ».
+   Tout est dessiné dans un repère fixe de 1280 × 800, mis à l'échelle de l'écran. */
+.sc-cadre { position: relative; width: 100%; height: 100%; overflow: hidden; background: #0d0a08; display: grid; place-items: center; user-select: none; -webkit-user-select: none; }
+.sc-repere { position: absolute; left: 50%; top: 50%; width: 1280px; height: 800px; transform-origin: 50% 50%; overflow: hidden; font-family: 'Alegreya', Georgia, serif; color: #2b2118; cursor: pointer; }
+
+/* Décor */
+.sc-decor { position: absolute; inset: -20px; background-size: cover; background-position: center 40%; animation: sc-decor-entre 1.2s cubic-bezier(.22,.9,.3,1) both; }
+.sc-decor.sort { animation: sc-decor-sort .9s ease both; }
+@keyframes sc-decor-entre { from { opacity: 0; transform: scale(1.06); filter: blur(10px) brightness(.4); } to { opacity: 1; transform: scale(1.02); filter: blur(1.5px) brightness(.82); } }
+@keyframes sc-decor-sort { from { opacity: 1; filter: blur(1.5px) brightness(.82); } to { opacity: 0; filter: blur(8px) brightness(.4); } }
+.sc-vignettage { position: absolute; inset: 0; background: radial-gradient(ellipse at 50% 40%, transparent 40%, rgba(10,6,4,.7) 100%); pointer-events: none; }
+
+/* Personnages */
+.sc-perso { position: absolute; transform-origin: 50% 100%; transition: opacity .55s ease, filter .45s ease, transform .6s cubic-bezier(.22,.9,.3,1), left .6s cubic-bezier(.22,.9,.3,1); }
+.sc-perso .sc-corps { position: relative; transform-origin: 50% 100%; }
+.sc-perso .sc-rogne { position: relative; overflow: hidden; }
+.sc-perso .sc-rogne img { position: absolute; max-width: none; display: block; transition: opacity .25s ease; }
+.sc-perso.parle .sc-corps { animation: sc-parle .3s ease-in-out infinite alternate; }
+.sc-perso.arrive .sc-corps { animation: sc-arrive .55s cubic-bezier(.3,1.4,.5,1); }
+.sc-perso.miroir .sc-rogne { transform: scaleX(-1); }
+@keyframes sc-parle { from { transform: translateY(0); } to { transform: translateY(-3px); } }
+@keyframes sc-arrive { 0% { transform: translateY(0); } 40% { transform: translateY(-16px); } 100% { transform: translateY(0); } }
+
+/* Zone floue sous le texte, qui remonte doucement vers les personnages */
+.sc-flou { position: absolute; left: 0; right: 0; bottom: 0; height: 340px; z-index: 7; pointer-events: none;
+  backdrop-filter: blur(10px) saturate(.9); -webkit-backdrop-filter: blur(10px) saturate(.9);
+  -webkit-mask-image: linear-gradient(to top, #000 0%, #000 48%, transparent 100%); mask-image: linear-gradient(to top, #000 0%, #000 48%, transparent 100%); }
+.sc-ombre { position: absolute; left: 0; right: 0; bottom: 0; height: 340px; z-index: 7; pointer-events: none; background: linear-gradient(to top, rgba(10,6,4,.7) 0%, rgba(10,6,4,.35) 45%, rgba(10,6,4,0) 100%); }
+
+/* L'écho du joueur : une loupe lumineuse sur son visage */
+.sc-echo { position: absolute; left: 44px; bottom: 44px; width: 150px; z-index: 9; pointer-events: none; }
+.sc-loupe { position: relative; width: 150px; height: 150px; border-radius: 50%; overflow: hidden; background: radial-gradient(circle at 50% 45%, #5b4a3a 0%, #2a1e18 80%);
+  box-shadow: 0 0 0 2px rgba(255,248,230,.95), 0 0 18px 4px rgba(255,236,190,.55), 0 0 46px 10px rgba(255,214,150,.22), 0 14px 30px rgba(0,0,0,.55); animation: sc-flotte 4.5s ease-in-out infinite; }
+.sc-loupe .fond { position: absolute; inset: -30%; background-size: cover; background-position: 40% 70%; filter: blur(6px) brightness(.55) saturate(.8); }
+.sc-loupe .visage { position: absolute; overflow: hidden; transform-origin: 50% 40%; animation: sc-respire 2.8s ease-in-out infinite; }
+.sc-loupe .visage img { position: absolute; max-width: none; }
+.sc-loupe .reflet { position: absolute; left: 18px; top: 12px; width: 70px; height: 40px; border-radius: 50%; border-top: 3px solid rgba(255,255,255,.55); transform: rotate(-28deg); filter: blur(.6px); }
+.sc-loupe .bord { position: absolute; inset: 0; border-radius: 50%; background: radial-gradient(circle at 50% 50%, transparent 58%, rgba(20,12,8,.55) 100%); }
+.sc-echo .perle { position: absolute; border-radius: 50%; background: rgba(255,246,220,.5); box-shadow: 0 0 8px rgba(255,236,190,.8); }
+.sc-echo .nom { margin-top: 8px; text-align: center; font-family: 'Alegreya SC', serif; font-weight: 700; font-size: 14px; letter-spacing: 3px; color: #fbf3e2; text-shadow: 0 1px 4px rgba(0,0,0,.9), 0 0 12px rgba(255,214,150,.5); }
+@keyframes sc-flotte { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
+@keyframes sc-respire { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.025); } }
+
+.sc-bulle { position: absolute; right: -58px; bottom: 118px; width: 86px; height: 86px; transform-origin: 0 100%; animation: sc-bulle .45s cubic-bezier(.2,1.5,.4,1) forwards, sc-bulle-flotte 2s ease-in-out .45s infinite; }
+.sc-bulle img { position: absolute; left: 15px; top: 9px; width: 56px; height: 56px; object-fit: contain; }
+@keyframes sc-bulle { 0% { opacity: 0; transform: translateY(10px) scale(.3); } 60% { opacity: 1; transform: translateY(-4px) scale(1.12); } 100% { opacity: 1; transform: none; } }
+@keyframes sc-bulle-flotte { 0%, 100% { margin-top: 0; } 50% { margin-top: -5px; } }
+.sc-note { position: absolute; left: 30px; bottom: 250px; z-index: 9; max-width: 300px; padding: 8px 16px 6px; border-radius: 10px; background: rgba(18,10,6,.72); box-shadow: 0 0 0 1px rgba(240,214,170,.3);
+  font-family: 'Reenie Beanie', cursive; font-size: 26px; line-height: 1.05; color: #fbf3e2; pointer-events: none; animation: sc-note .5s cubic-bezier(.22,.9,.3,1) .35s both; }
+@keyframes sc-note { from { opacity: 0; transform: translateY(8px) rotate(-2deg); } to { opacity: 1; transform: rotate(-2deg); } }
+
+/* Feuille de dialogue */
+.sc-feuille { position: absolute; left: 250px; width: 790px; bottom: 30px; height: 176px; z-index: 8; border-radius: 6px;
+  background: repeating-linear-gradient(0deg, transparent 0 31px, rgba(122,90,58,.11) 31px 32px), linear-gradient(180deg, #f7eedb, #efe2c6);
+  box-shadow: 0 0 0 1.5px #3a1f0e, 0 18px 40px rgba(0,0,0,.55); animation: sc-feuille .6s cubic-bezier(.22,.9,.3,1) .2s both; }
+.sc-feuille::before { content: ''; position: absolute; inset: 7px; border: 1px solid rgba(122,90,58,.45); border-radius: 3px; pointer-events: none; }
+@keyframes sc-feuille { from { opacity: 0; transform: translateY(40px); } }
+.sc-replique { position: absolute; left: 34px; right: 60px; top: -14px; }
+.sc-etiquette { display: inline-block; padding: 2px 12px 0; background: #f7eedb; border: 2.5px solid currentColor; border-radius: 5px; font-family: 'Alegreya SC', serif; font-weight: 700; font-size: 19px; letter-spacing: 3px; transform: rotate(-3deg); animation: sc-tampon-nom .3s cubic-bezier(.2,1.5,.4,1); }
+@keyframes sc-tampon-nom { from { transform: rotate(-3deg) scale(1.3); opacity: 0; } }
+.sc-etiquette.narration { padding: 0 12px; border: 1.5px dashed #6b4f33; font-family: 'Reenie Beanie', cursive; font-weight: 400; font-size: 24px; letter-spacing: 0; line-height: 1.15; color: #6b4f33; transform: rotate(-2deg); }
+.sc-texte { margin: 14px 0 0; font-size: 20px; line-height: 1.5; min-height: 90px; }
+.sc-texte.narration { font-style: italic; }
+.sc-curseur { display: inline-block; width: 9px; height: 19px; margin-left: 3px; vertical-align: -3px; background: #9c3b2a; animation: sc-curseur 1s steps(1) infinite; }
+@keyframes sc-curseur { 0%, 49% { opacity: 1; } 50%, 100% { opacity: 0; } }
+.sc-suite { position: absolute; right: 20px; bottom: 14px; color: #6b4f33; animation: sc-suite 1.2s ease-in-out infinite; }
+@keyframes sc-suite { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(4px); } }
+
+/* Choix */
+.sc-choix { position: absolute; left: 30px; right: 30px; top: 14px; }
+.sc-question { font-family: 'Reenie Beanie', cursive; font-size: 26px; line-height: 1; color: #6b4f33; }
+.sc-options { display: flex; flex-direction: column; gap: 1px; margin-top: 4px; width: 720px; }
+.sc-option { position: relative; display: flex; align-items: center; gap: 12px; width: 100%; padding: 5px 10px; border: none; border-radius: 4px; background: transparent; text-align: left;
+  font-family: 'Alegreya', serif; font-size: 16.5px; color: #2b2118; cursor: pointer; transform-origin: 0 50%; transition: transform .3s cubic-bezier(.22,.9,.3,1), background .3s, opacity .3s;
+  animation: sc-option-entre .4s cubic-bezier(.22,.9,.3,1) both; }
+@keyframes sc-option-entre { from { opacity: 0; transform: translateX(-10px); } }
+.sc-option.active, .sc-option.choisie { transform: scale(1.03) translateX(4px); background: rgba(201,160,80,.16); }
+.sc-option.estompee { opacity: .38; }
+.sc-option .pastille { flex: none; width: 28px; height: 28px; box-sizing: border-box; border-radius: 50%; border: 2.5px solid currentColor; display: flex; align-items: center; justify-content: center; }
+.sc-option .pastille.pointilles { border-style: dashed; }
+.sc-option .type { flex: none; width: 110px; font-family: 'Alegreya SC', serif; font-weight: 700; font-size: 12px; letter-spacing: 1px; }
+.sc-option .touche { flex: none; margin-left: auto; font-size: 12px; color: #9a8668; opacity: .7; }
+.sc-tampon-ok { position: absolute; right: 6px; top: 50%; width: 38px; height: 38px; margin-top: -19px; animation: sc-tampon .42s cubic-bezier(.2,1.5,.4,1) .05s both; }
+@keyframes sc-tampon { 0% { opacity: 0; transform: scale(1.9) rotate(-24deg); } 55% { opacity: 1; transform: scale(.92) rotate(-12deg); } 100% { opacity: .95; transform: scale(1) rotate(-12deg); } }
+
+.sc-fin { position: absolute; left: 34px; right: 30px; top: 56px; display: flex; align-items: center; gap: 20px; }
+.sc-fin .mot { font-family: 'Reenie Beanie', cursive; font-size: 30px; color: #6b4f33; }
+.sc-bouton-cuir { display: inline-flex; align-items: center; gap: 8px; padding: 8px 14px; border: none; border-radius: 6px; background: #6e3f22; color: #f6ecd6; font-family: 'Alegreya SC', serif; font-size: 14px; letter-spacing: 1px; cursor: pointer;
+  box-shadow: inset 0 0 0 2px #3a1f0e, inset 0 0 0 4px #6e3f22, inset 0 0 0 5px rgba(240,214,170,.5); }
+
+/* Carte du joueur */
+.sc-carte { position: absolute; left: 1070px; bottom: 34px; width: 150px; height: 186px; z-index: 9; padding: 8px; box-sizing: border-box; background: #fbf4e3; box-shadow: 0 0 0 1.5px #3a1f0e, 0 10px 24px rgba(0,0,0,.45); pointer-events: none;
+  animation: sc-carte .55s cubic-bezier(.22,.9,.3,1) both; }
+.sc-carte img { display: block; width: 134px; height: 150px; object-fit: cover; object-position: 50% 20%; }
+.sc-carte div { font-family: 'Reenie Beanie', cursive; font-size: 22px; line-height: 1; text-align: center; color: #6b4f33; margin-top: 2px; }
+@keyframes sc-carte { from { opacity: 0; transform: translateY(60px) rotate(-6deg); } to { opacity: 1; transform: rotate(-3deg); } }
+
+/* Panneau des variables (aperçu de l'atelier) */
+.sc-variables { position: absolute; right: 22px; top: 22px; width: 280px; max-height: 300px; overflow: hidden; padding: 12px 14px; border-radius: 12px; background: rgba(20,12,6,.72); box-shadow: inset 0 0 0 1px rgba(240,214,170,.35); color: #f1e2c4; font-size: 13px; pointer-events: none; z-index: 10; }
+.sc-variables .titre { font-family: 'Alegreya SC', serif; font-weight: 700; font-size: 11px; letter-spacing: 2px; color: #d9b77e; margin-bottom: 6px; }
+.sc-variables .ligne { display: flex; justify-content: space-between; gap: 8px; padding: 2px 4px; border-radius: 4px; font-family: ui-monospace, Menlo, monospace; font-size: 12px; animation: sc-var .8s ease-out both; }
+.sc-variables .ligne b { font-weight: 400; color: #f2c27a; }
+@keyframes sc-var { from { opacity: 0; transform: translateX(12px); background: rgba(255,220,140,.5); } to { opacity: 1; transform: none; background: transparent; } }

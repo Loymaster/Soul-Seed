@@ -15,6 +15,21 @@ import { deplacer, mettreDeCote, deposer, usages, RACINE_PROJET, RACINE_ASSETS, 
 import { normaliserNom, DOSSIER_FICHES } from '../assets/regles.mjs';
 
 const FICHIER_REGLAGES = path.join(RACINE_PROJET, 'contenu/atelier.json');
+const DOSSIER_SCENES = path.join(RACINE_PROJET, 'contenu/scenes');
+const CORBEILLE_SCENES = path.join(RACINE_PROJET, 'contenu/.corbeille');
+
+/** Liste des scènes : identifiant (nom du fichier), source et date de modification. */
+function lireScenes() {
+  if (!fs.existsSync(DOSSIER_SCENES)) return [];
+  return fs.readdirSync(DOSSIER_SCENES).filter((f) => f.endsWith('.scene')).sort().map((f) => {
+    const abs = path.join(DOSSIER_SCENES, f);
+    return { id: f.slice(0, -6), source: fs.readFileSync(abs, 'utf8'), modifie: Math.round(fs.statSync(abs).mtimeMs) };
+  });
+}
+function fichierScene(id) {
+  if (!ID_VALIDE.test(id)) throw new Error(`Nom de scène invalide « ${id} » : minuscules, chiffres et tirets uniquement.`);
+  return path.join(DOSSIER_SCENES, `${id}.scene`);
+}
 const REGLAGES_PAR_DEFAUT = { rangementAuto: false };
 
 function lireReglages() {
@@ -134,6 +149,38 @@ export default function atelier() {
       await regenerer('nouveau PNJ');
       return catalogue.pnj[id];
     },
+    'GET /scenes': async () => lireScenes(),
+    'POST /scene': async ({ id, source }) => {
+      fs.mkdirSync(DOSSIER_SCENES, { recursive: true });
+      const f = fichierScene(id);
+      if (!fs.existsSync(f) || fs.readFileSync(f, 'utf8') !== source) fs.writeFileSync(f, source);
+      return { id, modifie: Math.round(fs.statSync(f).mtimeMs) };
+    },
+    'POST /scene/nouvelle': async ({ id, source }) => {
+      fs.mkdirSync(DOSSIER_SCENES, { recursive: true });
+      const f = fichierScene(id);
+      if (fs.existsSync(f)) throw new Error(`La scène « ${id} » existe déjà.`);
+      fs.writeFileSync(f, source || '');
+      return { id };
+    },
+    'POST /scene/renommer': async ({ ancien, nouveau }) => {
+      const de = fichierScene(ancien), vers = fichierScene(nouveau);
+      if (fs.existsSync(vers)) throw new Error(`La scène « ${nouveau} » existe déjà.`);
+      fs.renameSync(de, vers);
+      // Les « aller: ancien » des autres scènes suivent le changement de nom.
+      const modifiees = [];
+      for (const sc of lireScenes()) {
+        const remplace = sc.source.replace(new RegExp(`^(\\s*aller\\s*(?:à|a)?\\s*:\\s*)${ancien}\\s*$`, 'gmi'), `$1${nouveau}`);
+        if (remplace !== sc.source) { fs.writeFileSync(fichierScene(sc.id), remplace); modifiees.push(sc.id); }
+      }
+      return { id: nouveau, modifiees };
+    },
+    'POST /scene/supprimer': async ({ id }) => {
+      fs.mkdirSync(CORBEILLE_SCENES, { recursive: true });
+      const horodatage = new Date().toISOString().slice(0, 19).replace(/[:T]/g, '-');
+      fs.renameSync(fichierScene(id), path.join(CORBEILLE_SCENES, `${horodatage}--${id}.scene`));
+      return { id };
+    },
     'POST /deposer': async (_c, url, req) => {
       const nom = url.searchParams.get('nom');
       if (!nom) throw new Error('Nom de fichier manquant');
@@ -157,6 +204,14 @@ export default function atelier() {
         server.watcher.on(ev, (f) => { if (pertinent(f)) planifier(`${ev} ${path.relative(RACINE_PROJET, f)}`); });
       }
       regenerer('démarrage');
+
+      // Scènes : l'éditeur ouvert est prévenu quand un fichier change hors de l'atelier.
+      server.watcher.add(DOSSIER_SCENES);
+      for (const ev of ['add', 'unlink', 'change']) {
+        server.watcher.on(ev, (f) => {
+          if (f.startsWith(DOSSIER_SCENES + path.sep) && f.endsWith('.scene')) server.ws.send({ type: 'custom', event: 'atelier:scenes', data: { evenement: ev, id: path.basename(f, '.scene') } });
+        });
+      }
 
       server.middlewares.use('/__atelier', async (req, res) => {
         const url = new URL(req.url, 'http://local');

@@ -1,0 +1,51 @@
+/* Vue « Scènes » de l'atelier */
+.vue-scenes { display: grid; grid-template-columns: 210px 1fr; height: 100%; min-height: 0; }
+.liste-scenes { border-right: 1px solid var(--papier-3); overflow: auto; padding: 12px 10px; background: #f1e6cf; display: flex; flex-direction: column; gap: 4px; }
+.scene-ligne { display: grid; grid-template-columns: 1fr auto; gap: 0 6px; text-align: left; padding: 7px 9px; border-radius: 6px; border: 1px solid transparent; background: transparent; cursor: pointer; }
+.scene-ligne:hover { background: rgba(255, 255, 255, 0.45); }
+.scene-ligne.actif { background: #fbf6ea; border-color: #e2d3b3; box-shadow: var(--ombre); }
+.scene-ligne .titre { font-weight: 700; font-size: 14.5px; }
+.scene-ligne .code { grid-column: 1; font-size: 11.5px; }
+.scene-ligne .pastille { grid-row: 1 / span 2; grid-column: 2; align-self: center; }
+
+.atelier-scene { display: grid; grid-template-columns: minmax(380px, 1fr) minmax(420px, 1.05fr); min-height: 0; height: 100%; }
+.colonne-texte { display: flex; flex-direction: column; min-height: 0; border-right: 1px solid var(--papier-3); }
+.barre-scene { display: flex; align-items: center; gap: 8px; padding: 8px 12px; border-bottom: 1px solid var(--papier-3); }
+.titre-scene { font-family: var(--titre); font-size: 19px; padding: 2px 6px; }
+.titre-scene .code { font-size: 12px; margin-left: 6px; }
+.etat-enregistrement { font-size: 13px; color: var(--encre-3); }
+.etat-enregistrement.enregistre { color: var(--valide); }
+.palette { display: flex; flex-wrap: wrap; gap: 5px; align-items: center; padding: 7px 12px; border-bottom: 1px solid var(--papier-3); background: #f8f1e1; }
+.palette .puce { font-size: 12.5px; padding: 2px 9px; background: #fffaf0; }
+.palette-titre { font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--encre-3); margin-right: 2px; }
+.zone-editeur { flex: 1; min-height: 0; }
+.problemes { border-top: 1px solid var(--papier-3); background: #f8f1e1; max-height: 30%; display: flex; flex-direction: column; min-height: 38px; }
+.problemes-titre { display: flex; align-items: center; gap: 6px; padding: 7px 12px; font-size: 13.5px; }
+.problemes-liste { overflow: auto; padding: 0 6px 6px; }
+.probleme { display: flex; gap: 10px; width: 100%; text-align: left; border: 0; background: transparent; padding: 4px 8px; border-radius: 4px; font-size: 13.5px; cursor: pointer; border-left: 3px solid transparent; }
+.probleme:hover { background: rgba(43, 33, 24, 0.06); }
+.probleme.erreur { border-left-color: var(--tampon); }
+.probleme.alerte { border-left-color: var(--laiton); }
+.probleme.info { border-left-color: #2f5a7a; color: var(--encre-2); }
+.probleme .numero { flex: none; width: 34px; color: var(--encre-3); font-variant-numeric: tabular-nums; }
+
+.memo { max-height: 42%; overflow: auto; padding: 10px 14px; border-bottom: 1px solid var(--papier-3); background: #fbf6ea; display: grid; gap: 4px; font-size: 13px; }
+.memo div { display: grid; grid-template-columns: minmax(190px, 40%) 1fr; gap: 10px; align-items: baseline; }
+.memo code { font-family: ui-monospace, Menlo, monospace; font-size: 12px; color: var(--cuir); white-space: pre-wrap; }
+
+.colonne-apercu { min-width: 0; overflow: auto; padding: 14px; display: flex; flex-direction: column; gap: 10px; background: #efe5cf; }
+.apercu-cadre { width: 100%; aspect-ratio: 1280 / 800; border-radius: 8px; overflow: hidden; box-shadow: 0 16px 40px -18px rgba(0, 0, 0, 0.6); background: #0d0a08; flex: none; }
+.commandes-apercu { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.reglages-apercu { display: flex; flex-direction: column; gap: 10px; }
+.table-variables { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 6px; }
+.table-variables label { display: grid; grid-template-columns: 1fr 80px; align-items: center; gap: 8px; }
+
+@media (max-width: 1250px) {
+  .atelier-scene { grid-template-columns: 1fr; overflow: auto; }
+  .colonne-texte { min-height: 70vh; border-right: 0; }
+}
+@media (max-width: 900px) {
+  .vue-scenes { grid-template-columns: 1fr; }
+  .liste-scenes { flex-direction: row; overflow-x: auto; }
+}
+.apercu-cadre:fullscreen { border-radius: 0; aspect-ratio: auto; width: 100vw; height: 100vh; }

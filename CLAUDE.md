@@ -8,17 +8,21 @@ L'ancien prototype (un seul fichier de 15 700 lignes) est conservé tel quel dan
 - `npm run catalogue` — régénère le catalogue d'assets à la main (le serveur de dev le fait tout seul)
 - `npm run ranger [-- --essai]` — range les fichiers posés en vrac dans `public/assets/` ou `public/assets/_a-trier/`
 - `npm run verifier` — catalogue strict + vérification des types
+- `npm run scenes` — vérifie toutes les scènes (même moteur que le jeu)
 - `npm test` — tests (vitest)
 - `npm run build` — échoue si le catalogue contient des erreurs (fichier manquant, fiche invalide…)
 
 ## Organisation
 - `public/assets/` — images et sons, un dossier par catégorie : `echos/` (l'écho jouable : `graines`, `bebe`, `enfant`, `adolescent`, `adulte`), `pnj/<id>/`, `joueur/`, `decors/`, `interface/`, `objets/`, `emotions/`, `activites/`, `animations/`, `sons/`.
   - `_a-trier/` : boîte de réception ; `_corbeille/` : fichiers mis de côté (ignorée par git, jamais livrée).
-- `contenu/` — tout ce qui s'écrit à la main ou dans l'atelier : `personnages/<id>.json` (fiches PNJ), bientôt `scenes/` et `variables.json`.
+- `contenu/` — tout ce qui s'écrit à la main ou dans l'atelier : `personnages/<id>.json` (fiches PNJ), `scenes/<id>.scene` (dialogues, format décrit dans `contenu/scenes/LISEZMOI.md`).
   - `contenu/generes/` — produit automatiquement (catalogue `assets.json`), ignoré par git.
 - `outils/assets/` — `regles.mjs` (règles de classement : seule source de vérité), `catalogue.mjs`, `ranger.mjs`, `fichiers.mjs` (déplacements qui mettent à jour les références).
 - `outils/atelier/plugin.mjs` — plugin Vite : surveillance des assets, API `/__atelier/*`, contrôles au build.
-- `src/atelier/` — l'atelier (outil de dev). `src/moteur/` — sons synthétisés (`sfx.ts`), placement des personnages en scène (`scene/placement.ts`). `src/jeu/` — le jeu.
+- `src/moteur/scene/` — moteur de scènes, indépendant de l'affichage : `analyseur.ts` (format texte → arbre), `valider.ts` (vérification contre fiches et assets), `lecteur.ts` (exécution pas à pas, « jouer depuis une ligne »), `expressions.ts`, `placement.ts`.
+- `src/jeu/scene/SceneDialogue.tsx` — la scène de dialogue plein écran (portage de la maquette validée). `src/moteur/sfx.ts` — sons synthétisés.
+- `src/atelier/` — l'atelier (outil de dev) ; `src/atelier/scenes/` — l'éditeur de scènes (CodeMirror + aperçu).
+- `outils/scenes/verifier.ts` — vérification des scènes en ligne de commande.
 
 ## Conventions
 - Code, commentaires, noms et textes en français.

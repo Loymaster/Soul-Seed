@@ -7,16 +7,17 @@ import { VueAssets, type Filtre } from './VueAssets';
 import { VuePersonnages } from './VuePersonnages';
 import { VueEchos } from './VueEchos';
 import { VueDiagnostics } from './VueDiagnostics';
+import { VueScenes } from './scenes/VueScenes';
 import { SFX } from '@/moteur/sfx';
 
-type Vue = 'assets' | 'personnages' | 'echos' | 'diagnostics';
+type Vue = 'assets' | 'personnages' | 'echos' | 'scenes' | 'diagnostics';
 interface Note { id: number; message: string; details?: string; genre?: 'ok' | 'erreur' }
 
 /** L'adresse garde la vue et l'élément ouverts : on retrouve sa place après un rechargement. */
 function lireAdresse(): { vue: Vue; arg: string | null; filtre: Filtre } {
   const [vue, ...reste] = location.hash.replace(/^#\/?/, '').split('/');
   const arg = reste.length ? decodeURIComponent(reste.join('/')) : null;
-  const v = (['assets', 'personnages', 'echos', 'diagnostics'] as Vue[]).includes(vue as Vue) ? (vue as Vue) : 'assets';
+  const v = (['assets', 'personnages', 'echos', 'scenes', 'diagnostics'] as Vue[]).includes(vue as Vue) ? (vue as Vue) : 'assets';
   const filtre: Filtre = v === 'assets' && arg && !arg.includes('.') ? { categorie: arg.split('/')[0], sous: arg.split('/')[1] || null } : { categorie: null, sous: null };
   return { vue: v, arg, filtre };
 }
@@ -27,6 +28,7 @@ export function Atelier() {
   const [filtre, setFiltre] = useState<Filtre>(depart.filtre);
   const [assetChoisi, setAssetChoisi] = useState<string | null>(depart.vue === 'assets' && depart.arg?.includes('.') ? depart.arg : null);
   const [pnjChoisi, setPnjChoisi] = useState<string | null>(depart.vue === 'personnages' ? depart.arg : null);
+  const [sceneChoisie, setSceneChoisie] = useState<string | null>(depart.vue === 'scenes' ? depart.arg : null);
   const [notes, setNotes] = useState<Note[]>([]);
   const [recents, setRecents] = useState<Set<string>>(new Set());
   const [depot, setDepot] = useState(false);
@@ -60,9 +62,9 @@ export function Atelier() {
   useEffect(() => { api.reglages().then(setReglages).catch(() => {}); }, []);
 
   useEffect(() => {
-    const arg = vue === 'assets' ? assetChoisi || (filtre.categorie ? [filtre.categorie, filtre.sous].filter(Boolean).join('/') : '') : vue === 'personnages' ? pnjChoisi || '' : '';
+    const arg = vue === 'assets' ? assetChoisi || (filtre.categorie ? [filtre.categorie, filtre.sous].filter(Boolean).join('/') : '') : vue === 'personnages' ? pnjChoisi || '' : vue === 'scenes' ? sceneChoisie || '' : '';
     history.replaceState(null, '', `#/${vue}${arg ? '/' + arg : ''}`);
-  }, [vue, assetChoisi, pnjChoisi, filtre]);
+  }, [vue, assetChoisi, pnjChoisi, sceneChoisie, filtre]);
 
   // Dépôt de fichiers n'importe où dans l'atelier → boîte à trier.
   useEffect(() => {
@@ -104,12 +106,14 @@ export function Atelier() {
     { id: 'assets', libelle: 'Assets', icone: 'assets', pastille: aTrier || undefined, genre: 'alerte' },
     { id: 'personnages', libelle: 'Personnages', icone: 'personnages', pastille: catalogue ? Object.keys(catalogue.pnj).length : undefined },
     { id: 'echos', libelle: 'Échos', icone: 'echos' },
+    { id: 'scenes', libelle: 'Scènes', icone: 'scenes' },
     { id: 'diagnostics', libelle: 'Diagnostics', icone: 'diagnostics', pastille: problemes || undefined, genre: erreurs ? 'erreur' : 'alerte' }
   ];
   const titres: Record<Vue, [string, string]> = {
     assets: ['Assets', "Tout ce qui se voit et s'entend dans le jeu, rangé et analysé automatiquement"],
     personnages: ['Personnages', 'Les PNJ que l’on croise en dialogue : expressions, taille, voix'],
     echos: ['Échos', 'Toutes les formes de l’écho jouable, de la graine à l’adulte'],
+    scenes: ['Scènes', 'Écrire les dialogues et les voir jouer aussitôt, avec le vrai moteur du jeu'],
     diagnostics: ['Diagnostics', 'Ce qui manque ou cloche, et comment le réparer']
   };
 
@@ -124,9 +128,6 @@ export function Atelier() {
               {l.pastille ? <span className={`pastille ${l.genre || ''}`}>{l.pastille}</span> : null}
             </button>
           ))}
-          <button className="rail-lien" disabled title="Prochaine étape : l'éditeur de scènes branché sur le vrai moteur">
-            <Icone nom="scenes" /> <span className="libelle">Scènes</span> <span className="pastille" style={{ fontWeight: 400 }}>bientôt</span>
-          </button>
         </nav>
         <div className="rail-pied">
           <div className={`etat-direct ${erreur ? 'hors' : chargement ? 'travail' : ''}`}>
@@ -159,6 +160,8 @@ export function Atelier() {
             <VueAssets catalogue={catalogue} filtre={filtre} setFiltre={(f) => { setFiltre(f); setAssetChoisi(null); }} choisi={assetChoisi} setChoisi={setAssetChoisi} recents={recents} notifier={notifier} ouvrirPNJ={ouvrirPNJ} />
           ) : vue === 'personnages' ? (
             <VuePersonnages catalogue={catalogue} choisi={pnjChoisi} setChoisi={setPnjChoisi} notifier={notifier} ouvrirAsset={ouvrirAsset} />
+          ) : vue === 'scenes' ? (
+            <VueScenes catalogue={catalogue} choisie={sceneChoisie} setChoisie={setSceneChoisie} notifier={notifier} />
           ) : vue === 'echos' ? (
             <VueEchos catalogue={catalogue} ouvrirAsset={ouvrirAsset} />
           ) : (
