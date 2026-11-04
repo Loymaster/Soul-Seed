@@ -131,6 +131,46 @@ export const SFX = {
   bookArrive() { const c = this.get(); if (!c) return;
     this.woosh();
     setTimeout(() => this.page(0.8), 700); setTimeout(() => this.page(1), 900); setTimeout(() => this.page(0.9), 1040); setTimeout(() => this.page(0.8), 1180); },
+  // Ranch — caresse : deux passages de main dans le pelage, et un petit « mmh » content
+  caresse() { const c = this.get(); if (!c) return; const t = c.currentTime;
+    [0, 0.44].forEach((d) => {
+      this.noise(t + d, 0.42, { f: 650, fTo: 1250, q: 0.7, gain: 0.075, attack: 0.15, grain: 0.004, soft: 2400 });
+      this.noise(t + d + 0.04, 0.34, { f: 2600, fTo: 3300, q: 1.3, gain: 0.012, attack: 0.13, grain: 0.0022 });
+    });
+    this.tone(233, t + 0.55, 0.5, { type: 'sine', to: 208, gain: 0.022, attack: 0.09, lp: 700 }); },
+  // refus : un « hm-hm » nasal qui descend
+  refus() { const c = this.get(); if (!c) return; const t = c.currentTime;
+    this.tone(311, t, 0.17, { type: 'triangle', to: 285, gain: 0.05, attack: 0.02, lp: 1100 });
+    this.tone(247, t + 0.21, 0.3, { type: 'triangle', to: 208, gain: 0.05, attack: 0.02, lp: 1000 });
+    this.noise(t, 0.12, { f: 900, q: 2, gain: 0.006, attack: 0.01 }); },
+  // Foulée : le son d'un appui, calculé d'après la taille, le poids et la façon de se déplacer.
+  //   petit et léger → choc bref et aigu ; grand et lourd → choc grave, plus long, avec une basse qui résonne
+  foulee(p, v, patte) { const c = this.get(); if (!c) return; const t = c.currentTime; v = v || 1;
+    const lourdeur = Math.pow(Math.max(1, p.poids) / 20, 0.35);          // 1 pour un écho de 20 kg
+    const grandeur = Math.sqrt(Math.max(0.2, p.taille) / 0.9);           // 1 pour 90 cm
+    const f = Math.max(90, Math.min(900, 470 / grandeur / Math.pow(lourdeur, 0.8))) * (patte % 2 ? 1.07 : 1);
+    const g = Math.min(0.16, 0.06 * lourdeur) * v * (p.demarche === 'quadrupede' ? 0.72 : 1) * (p.demarche === 'sautillant' ? 1.35 : 1);
+    const d = Math.min(0.28, 0.06 + 0.03 * Math.log2(1 + p.poids / 10));
+    this.noise(t, d, { type: 'lowpass', f: f * (0.9 + Math.random() * 0.2), q: 0.8, gain: g, attack: 0.004 });
+    if (p.poids > 60) this.tone(Math.max(38, 95 / lourdeur), t, d * 1.6, { type: 'sine', gain: Math.min(0.12, 0.025 * lourdeur) * v, attack: 0.006 });
+    this.noise(t + 0.006, 0.06, { f: 2400 + Math.random() * 900, q: 1.4, gain: 0.009 * v / Math.sqrt(lourdeur), attack: 0.003, grain: 0.003 }); },
+  // déplacement sans appui : souffle (flottant) ou frottement (rampant)
+  glisse(p, v, duree) { const c = this.get(); if (!c) return; const t = c.currentTime; v = v || 1;
+    if (p.demarche === 'flottant') {
+      this.noise(t, duree, { f: 520, fTo: 880, q: 0.9, gain: 0.022 * v, attack: duree * 0.4 });
+      this.tone(1180 + Math.random() * 300, t + duree * 0.3, 0.6, { gain: 0.004 * v, attack: 0.05, send: this.bright, sendGain: 0.4 });
+    } else {
+      const lourdeur = Math.pow(Math.max(1, p.poids) / 20, 0.35);
+      this.noise(t, duree, { type: 'lowpass', f: 900 / lourdeur, q: 0.7, gain: 0.035 * v * Math.min(2, lourdeur), attack: duree * 0.35, grain: 0.004 });
+    } },
+  // gargouillis : un ventre vide qui se plaint (indice de faim, très discret)
+  gargouille(v) { const c = this.get(); if (!c) return; const t = c.currentTime; v = v || 1;
+    this.tone(110, t, 0.5, { type: 'sine', to: 70, gain: 0.03 * v, attack: 0.08, lp: 300 });
+    this.noise(t + 0.1, 0.45, { type: 'lowpass', f: 260, fTo: 160, q: 2, gain: 0.04 * v, attack: 0.1, grain: 0.01 }); },
+  // bâillement : un souffle qui monte puis retombe
+  baille(v) { const c = this.get(); if (!c) return; const t = c.currentTime; v = v || 1;
+    this.noise(t, 1.1, { f: 500, fTo: 900, q: 0.7, gain: 0.03 * v, attack: 0.4, soft: 2000 });
+    this.tone(260, t + 0.15, 0.9, { type: 'triangle', to: 180, gain: 0.018 * v, attack: 0.3, lp: 900 }); },
   // écriture d'une réplique : une petite note feutrée par lettre, hauteur légèrement variable, accordée sur une gamme douce
   typeTick(ch, voice, tb) { if (!ch || ch === ' ' || /[,.;:!?…«»'’"-]/.test(ch)) return; const c = this.get(); if (!c) return; const t = c.currentTime;
     const base = voice || 392; const steps = [0, 2, 4, 7, 9]; const st = steps[(ch.charCodeAt(0) * 7) % steps.length];

@@ -20,6 +20,8 @@ L'ancien prototype (un seul fichier de 15 700 lignes) est conservé tel quel dan
 - `outils/assets/` — `regles.mjs` (règles de classement : seule source de vérité), `catalogue.mjs`, `ranger.mjs`, `fichiers.mjs` (déplacements qui mettent à jour les références).
 - `outils/atelier/plugin.mjs` — plugin Vite : surveillance des assets, API `/__atelier/*`, contrôles au build.
 - `src/moteur/scene/` — moteur de scènes, indépendant de l'affichage : `analyseur.ts` (format texte → arbre), `valider.ts` (vérification contre fiches et assets), `lecteur.ts` (exécution pas à pas, « jouer depuis une ligne »), `expressions.ts`, `placement.ts`.
+- `src/moteur/simulation/` — simulation de l'écho, sans affichage : `simulation.ts` (règles horaires et actions reprises du prototype), `signes.ts` (ce que le joueur perçoit : expression, attitude, indices, bulles — jamais de chiffre), `creation.ts`, `evolution.ts`, `donnees/` (aliments, interactions, entraînements, corvées extraits du prototype).
+- `src/jeu/ranch/` — l'écran du ranch (portage de la maquette validée) : `Ranch.tsx`, `Carnet.tsx` (le menu du jeu), `Sac.tsx`, `lumiere.ts`, `demarche.ts` (pas de l'écho), `sauvegarde.ts`.
 - `src/jeu/scene/SceneDialogue.tsx` — la scène de dialogue plein écran (portage de la maquette validée). `src/moteur/sfx.ts` — sons synthétisés.
 - `src/atelier/` — l'atelier (outil de dev) ; `src/atelier/scenes/` — l'éditeur de scènes (CodeMirror + aperçu).
 - `outils/scenes/verifier.ts` — vérification des scènes en ligne de commande.
@@ -31,4 +33,6 @@ L'ancien prototype (un seul fichier de 15 700 lignes) est conservé tel quel dan
 - Formes d'écho : `joy|wrath|sorrow|fear|disgust|neutre`, préfixe `dark-` pour la forme sombre, suffixe `-f`/`-m` pour le genre, `branch-<a>-d<b>`, `melee-<abc>`, `memoire-<a>-<element>`, `fragment-<type>`.
 - Les PNJ ont une taille réelle (m) et une part visible : tous les personnages ont les pieds sur la même ligne de scène (`placer()`), 245 px par mètre dans un repère 1280 × 800.
 - Ne jamais déplacer un asset à la main sans mettre à jour les références : passer par l'atelier ou `deplacer()`.
+- Temps : 1 seconde réelle = 1 minute de jeu ; les règles de la simulation s'appliquent à chaque heure pleine.
+- Le joueur ne voit jamais l'état chiffré de son écho : tout passe par `lireSignes()`.
 - Identité visuelle et sonore : voir le document « Soul Seed — Référence d'identité » (cuir, carnet, lueurs ; trois registres ranch / magie sainte / corruption).

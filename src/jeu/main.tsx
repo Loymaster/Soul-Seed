@@ -7,6 +7,9 @@ import type { Catalogue } from '@/contenu/types';
 import { SCENES } from '@/contenu/scenes';
 import { analyserScene } from '@/moteur/scene/analyseur';
 import { SceneDialogue } from './scene/SceneDialogue';
+import { Ranch } from './ranch/Ranch';
+import { charger, effacer, nouvellePartie } from './ranch/sauvegarde';
+import type { Etat } from '@/moteur/simulation';
 import '@/styles/polices';
 import '../atelier/atelier.css';
 
@@ -15,11 +18,17 @@ const ECHO_DEMO = { nom: 'Filo', chemin: 'echos/enfant/wrath.png' };
 
 function Jeu() {
   const [sceneId, setSceneId] = useState<string | null>(null);
+  const [partie, setPartie] = useState<Etat | null>(null);
+  const [sauvegarde, setSauvegarde] = useState(() => charger());
   const scene = useMemo(() => {
     const s = SCENES.find((x) => x.id === sceneId);
     return s ? analyserScene(s.source, s.id).scene : null;
   }, [sceneId]);
   const variables = useMemo(() => ({}), [sceneId]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  if (partie) {
+    return <Ranch key={partie.nom + partie.naissance + partie.graine} etat={partie} surQuitter={() => { setPartie(null); setSauvegarde(charger()); }} />;
+  }
 
   if (scene) {
     return (
@@ -38,6 +47,8 @@ function Jeu() {
         <div style={{ fontFamily: 'var(--titre)', fontSize: 'clamp(34px, 7vw, 64px)', letterSpacing: '.04em' }}>Soul Seed</div>
         <div className="manuscrit" style={{ color: 'var(--laiton-clair)', fontSize: 30 }}>refonte en cours</div>
         <div style={{ marginTop: 26, display: 'flex', flexDirection: 'column', gap: 8, alignItems: 'center' }}>
+          {sauvegarde && !sauvegarde.mort && <button className="bouton" onClick={() => setPartie(charger())}>Retourner au ranch ({sauvegarde.nom}, jour {sauvegarde.jour})</button>}
+          <button className="bouton" onClick={() => { effacer(); setPartie(nouvellePartie()); }}>Nouvelle partie au ranch</button>
           {SCENES.map((s) => (
             <button key={s.id} className="bouton" onClick={() => setSceneId(s.id)}>
               Jouer « {analyserScene(s.source, s.id).scene.titre || s.id} »

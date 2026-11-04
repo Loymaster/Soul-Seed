@@ -36,6 +36,10 @@ export interface MoteurSons {
   holyHover: Son; holyClick: Son; reveal: Son; darkHover: Son; darkClick: Son;
   stamp: Son; leather: Son; page: (volume?: number) => void; woosh: Son; bookArrive: Son;
   pencil: Son; paperTick: Son; slide: Son; pop: Son;
+  caresse: Son; refus: Son;
+  foulee: (profil: { demarche: string; taille: number; poids: number }, volume: number, patte: number) => void;
+  glisse: (profil: { demarche: string; taille: number; poids: number }, volume: number, duree: number) => void;
+  gargouille: (volume?: number) => void; baille: (volume?: number) => void;
   typeTick: (lettre: string, note?: number, timbre?: Timbre) => void;
 }
 
