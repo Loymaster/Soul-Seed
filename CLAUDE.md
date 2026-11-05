@@ -23,6 +23,7 @@ L'ancien prototype (un seul fichier de 15 700 lignes) est conservé tel quel dan
 - `src/moteur/simulation/` — simulation de l'écho, sans affichage : `simulation.ts` (règles horaires et actions reprises du prototype), `signes.ts` (ce que le joueur perçoit : expression, attitude, indices, bulles — jamais de chiffre), `creation.ts`, `evolution.ts`, `donnees/` (aliments, interactions, entraînements, corvées extraits du prototype).
 - `src/jeu/ranch/` — l'écran du ranch (portage de la maquette validée) : `Ranch.tsx`, `Carnet.tsx` (le menu du jeu), `Sac.tsx`, `lumiere.ts`, `demarche.ts` (pas de l'écho), `sauvegarde.ts`.
 - `src/jeu/profils.ts` — profils (nom, avatar, pronom il/elle/iel, réglages, mémoire des échos) et 3 emplacements de partie par profil, dans le navigateur. `src/jeu/menu/` — introduction (création du profil) et menu principal (magie sainte).
+- `src/jeu/graines/glyphes/<graine>.svg` — emblèmes des cinq tempéraments, vectorisés (`fill="currentColor"` : couleur et halo réglables en CSS).
 - Avatars du joueur : `public/assets/joueur/{garcon-1,garcon-2,fille-1,fille-2,nb-1,nb-2}.png` (déposer `avatar-<id>.png` pour qu'il soit rangé) ; en leur absence, portrait de repli ou silhouette.
 - `src/jeu/scene/SceneDialogue.tsx` — la scène de dialogue plein écran (portage de la maquette validée). `src/moteur/sfx.ts` — sons synthétisés.
 - `src/atelier/` — l'atelier (outil de dev) ; `src/atelier/scenes/` — l'éditeur de scènes (CodeMirror + aperçu).
