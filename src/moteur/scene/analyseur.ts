@@ -43,7 +43,15 @@ const PLACES_ALIAS: Record<string, Place> = {
   droite: 'D2', 'droite-centre': 'D2', 'droite-bord': 'D1', 'bord-droit': 'D1', 'bord-droite': 'D1'
 };
 
-export const MOTS_CLES = ['titre', 'scène', 'places', 'décor', 'musique', 'entre', 'sort', 'déplace', 'pause', 'choix', 'si', 'sinon', 'aller', 'fin', 'écho', 'narration', 'vous'];
+export const MOTS_CLES = ['titre', 'scène', 'places', 'décor', 'musique', 'entre', 'sort', 'déplace', 'pause', 'action', 'choix', 'si', 'sinon', 'aller', 'fin', 'écho', 'narration', 'vous'];
+
+/** Actions mises en scène par le jeu (« action: eclosion »), avec ce qu'elles font. */
+export const ACTIONS: Record<string, string> = {
+  graine: 'la graine de la partie apparaît, flottant au centre',
+  eclosion: 'la graine tremble, s’ouvre dans un éclair et l’écho naît',
+  'nommer-echo': 'le joueur donne un nom à son écho ({echo.nom} ensuite)',
+  image: 'épingle une image au-dessus de la scène (« action: image pnj/garry/attaque-jumpy », « action: image aucune »)',
+};
 
 /** Identifiant canonique : minuscules, sans accents, tirets (comme les fichiers). */
 export function identifiant(texte: string) {
@@ -222,6 +230,11 @@ export function analyserScene(source: string, id: string): ResultatAnalyse {
       if (pr && !pr.place) { signaler(l, 'Indiquez la nouvelle place (G1, G2, D2, D1).'); return null; }
       return pr ? { type: 'deplace', ligne: l.n, qui: pr.qui, place: pr.place! } : null;
     }
+    if ((m = t.match(/^action\s*:\s*([\p{L}\p{N}-]+)\s*(.*)$/iu))) {
+      const nom = identifiant(m[1]);
+      if (!ACTIONS[nom]) signaler(l, `Action inconnue « ${m[1]} ». Possibles : ${Object.keys(ACTIONS).join(', ')}.`);
+      return { type: 'action', ligne: l.n, nom, argument: m[2].trim() || undefined };
+    }
     if ((m = t.match(/^pause\s*:\s*([\d.,]+)\s*s?$/i))) return { type: 'pause', ligne: l.n, secondes: parseFloat(m[1].replace(',', '.')) };
     if ((m = t.match(/^aller\s*(?:à|a)?\s*:\s*(.+)$/i))) return { type: 'aller', ligne: l.n, scene: identifiant(m[1]) };
     if (/^fin\.?$/i.test(t)) return { type: 'fin', ligne: l.n };
@@ -278,6 +291,6 @@ export function analyserScene(source: string, id: string): ResultatAnalyse {
 }
 
 function estInstruction(t: string) {
-  return /^(si\s|sinon|choix|>|entre\s*:|sort\s*:|sortent\s*:|d[ée]place\s*:|d[ée]cor\s*:|musique\s*:|pause\s*:|aller|fin\.?$|[ée]cho\s*:)/i.test(t) ||
+  return /^(si\s|sinon|choix|>|entre\s*:|sort\s*:|sortent\s*:|d[ée]place\s*:|d[ée]cor\s*:|musique\s*:|pause\s*:|action\s*:|aller|fin\.?$|[ée]cho\s*:)/i.test(t) ||
     /^[\p{L}][\p{L}\p{N} '’-]*?\s*(\[[^\]]*\])?\s*:/u.test(t) || /^[\p{L}_][\p{L}\p{N}_.-]*\s*(\+=|-=|=)/u.test(t);
 }

@@ -37,10 +37,21 @@ export interface Profil {
 
 export const NB_EMPLACEMENTS = 3;
 
+/**
+ * Le personnage que l'on incarne dans une partie (distinct du profil : un profil peut jouer
+ * plusieurs personnages, un par emplacement). Il survit à la disparition de ses échos.
+ */
+export interface Personnage { nom: string; pronom: Pronom; avatar: IdAvatar }
+
+/** Image du personnage selon son pronom et l'astre choisi dans l'introduction (Soleil → 1, Lune → 2). */
+export const avatarDe = (pronom: Pronom, astre: 'soleil' | 'lune'): IdAvatar =>
+  `${pronom === 'elle' ? 'fille' : pronom === 'iel' ? 'nb' : 'garcon'}-${astre === 'lune' ? 2 : 1}` as IdAvatar;
+
 interface Registre { version: 1; actif: string | null; profils: Profil[] }
 
 const CLE_REGISTRE = 'soulseed:profils';
 const clePartie = (profil: string, emplacement: number) => `soulseed:partie:${profil}:${emplacement}`;
+const clePersonnage = (profil: string, emplacement: number) => `soulseed:personnage:${profil}:${emplacement}`;
 /** Ancienne sauvegarde unique (avant les profils). */
 const CLE_ANCIENNE = 'soulseed:partie';
 
@@ -106,7 +117,7 @@ export function supprimerProfil(id: string) {
   r.profils = r.profils.filter((p) => p.id !== id);
   if (r.actif === id) r.actif = r.profils[0]?.id ?? null;
   enregistrer(r);
-  for (let i = 0; i < NB_EMPLACEMENTS; i++) retirer(clePartie(id, i));
+  for (let i = 0; i < NB_EMPLACEMENTS; i++) { retirer(clePartie(id, i)); retirer(clePersonnage(id, i)); }
 }
 
 /** Note les formes rencontrées (une seule fois chacune). */
@@ -129,16 +140,29 @@ export function sauverPartie(profil: string, emplacement: number, e: Etat) {
 }
 export function effacerPartie(profil: string, emplacement: number) {
   retirer(clePartie(profil, emplacement));
+  retirer(clePersonnage(profil, emplacement));
+}
+
+/** Le personnage d'un emplacement ; pour les parties d'avant les personnages, celui du profil. */
+export function chargerPersonnage(profil: Profil, emplacement: number): Personnage {
+  const p = lire<Personnage>(clePersonnage(profil.id, emplacement));
+  return p && p.nom ? p : { nom: profil.nom, pronom: profil.pronom, avatar: profil.avatar };
+}
+export function sauverPersonnage(profil: string, emplacement: number, p: Personnage) {
+  return ecrire(clePersonnage(profil, emplacement), p);
 }
 export function parties(profil: string): (Etat | null)[] {
   return Array.from({ length: NB_EMPLACEMENTS }, (_, i) => chargerPartie(profil, i));
 }
-/** L'emplacement joué le plus récemment (partie en cours), s'il y en a un. */
+/**
+ * L'emplacement joué le plus récemment, s'il y en a un. Une partie dont l'écho s'est éteint
+ * reste une partie en cours : une nouvelle graine attend le joueur.
+ */
 export function dernierePartie(profil: string): { emplacement: number; etat: Etat } | null {
   const marque = lire<{ emplacement: number }>(`soulseed:derniere:${profil}`);
-  if (marque) { const e = chargerPartie(profil, marque.emplacement); if (e && !e.mort) return { emplacement: marque.emplacement, etat: e }; }
+  if (marque) { const e = chargerPartie(profil, marque.emplacement); if (e) return { emplacement: marque.emplacement, etat: e }; }
   const liste = parties(profil);
-  const i = liste.findIndex((e) => e && !e.mort);
+  const i = liste.findIndex((e) => !!e);
   return i >= 0 ? { emplacement: i, etat: liste[i]! } : null;
 }
 export function marquerDernierePartie(profil: string, emplacement: number) {

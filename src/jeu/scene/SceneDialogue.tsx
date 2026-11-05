@@ -1,12 +1,12 @@
 // Scène de dialogue plein écran : décor, personnages sur la ligne des pieds, loupe de l'écho,
 // feuille de dialogue écrite lettre à lettre avec la voix de chacun, choix colorés par leur résonance.
 // L'action en cours est en pause derrière ; la scène rend la main à la fin (surFin).
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import type { Asset, Catalogue, FichePNJ } from '@/contenu/types';
 import { SFX, TIMBRES, timbre } from '@/moteur/sfx';
 import { LecteurScene, type Changement, type Evenement } from '@/moteur/scene/lecteur';
 import { PLACES, placer, rogner, type Place } from '@/moteur/scene/placement';
-import { cheminDecor, cheminMusique } from '@/moteur/scene/valider';
+import { cheminDecor, cheminImage, cheminMusique } from '@/moteur/scene/valider';
 import { afficherValeur } from '@/moteur/scene/expressions';
 import { JOUEUR, NARRATION, type Resonance, type Scene, type Valeur } from '@/moteur/scene/types';
 import { APPARENCE_RESONANCES } from './resonances';
@@ -19,8 +19,8 @@ export interface PropsSceneDialogue {
   variables?: Record<string, Valeur>;
   /** démarrer à cette ligne du fichier (aperçu de l'atelier) */
   depuisLigne?: number;
-  /** l'écho du joueur : son nom et l'image de sa forme actuelle */
-  echo: { nom: string; chemin: string };
+  /** l'écho du joueur : son nom et l'image de sa forme actuelle (absent : pas de loupe, l'écho n'est pas encore né) */
+  echo: { nom: string; chemin: string } | null;
   /** portrait du joueur (carte qui apparaît au moment de choisir) */
   joueur?: string;
   /** mode aperçu : panneau des variables, bouton « Rejouer » */
@@ -30,6 +30,13 @@ export interface PropsSceneDialogue {
   /** appelé à chaque instruction jouée (pour suivre la lecture dans l'éditeur) */
   surLigne?: (ligne: number) => void;
   surFin?: (resultat: { suite?: string; variables: Record<string, Valeur> }) => void;
+  /**
+   * Une action mise en scène par le jeu (« action: eclosion ») : le jeu la joue, puis appelle `reprendre`
+   * (en donnant au besoin des valeurs de variables, ex. { 'echo.nom': 'Filo' }). Sans gestionnaire, la scène continue.
+   */
+  surAction?: (nom: string, argument: string | undefined, reprendre: (variables?: Record<string, Valeur>) => void) => void;
+  /** ce que le jeu dessine par-dessus la scène pendant ses actions (repère 1280 × 800) */
+  calque?: ReactNode;
 }
 
 interface PersoAffiche { qui: string; place: Place; expression?: string; etat: 'dehors' | 'la' | 'sort'; arrive: boolean }
@@ -37,6 +44,7 @@ type Affichage =
   | { type: 'replique'; qui: string; texte: string; tape: number; fini: boolean }
   | { type: 'choix'; question?: string; options: { index: number; resonance: Resonance; texte: string }[]; active: number; choisie: number }
   | { type: 'fin'; suite?: string }
+  | { type: 'action'; nom: string }
   | null;
 
 const VOIX_NARRATION = { note: 330, rythme: 1.05, timbre: TIMBRES.narration.reglages };
@@ -59,6 +67,7 @@ export function SceneDialogue(props: PropsSceneDialogue) {
   const [bulle, setBulle] = useState(false);
   const [vars, setVars] = useState<{ nom: string; valeur: string; cle: number }[]>([]);
   const [carte, setCarte] = useState(false);
+  const [image, setImage] = useState<{ chemin: string; cle: number } | null>(null);
 
   const lecteur = useRef<LecteurScene | null>(null);
   const minuteurs = useRef<ReturnType<typeof setTimeout>[]>([]);
@@ -195,6 +204,28 @@ export function SceneDialogue(props: PropsSceneDialogue) {
         setCarte(true);
         setAff({ type: 'choix', question: ev.question, options: ev.options, active: -1, choisie: -1 });
         break;
+      case 'action': {
+        setCarte(false);
+        if (ev.nom === 'image') {
+          // une image épinglée au-dessus de la scène, jusqu'à « action: image aucune »
+          const a = ev.argument && !/^(aucune|rien)$/i.test(ev.argument) ? cheminImage(ev.argument) : null;
+          if (a) sfx('woosh');
+          setImage(a ? { chemin: a, cle: ++compteur.current } : null);
+          avancer();
+          break;
+        }
+        const a: Affichage = { type: 'action', nom: ev.nom };
+        affRef.current = a; setAff(a);
+        const gestion = propsRef.current.surAction;
+        if (!gestion) { attendrePuis(avancer, 600); break; }
+        let repris = false;
+        gestion(ev.nom, ev.argument, (variables) => {
+          if (repris) return; repris = true;
+          for (const [k, v] of Object.entries(variables || {})) { lecteur.current?.definir(k, v); montrerVariable(k, v); }
+          avancer();
+        });
+        break;
+      }
       case 'fin':
         setCarte(false);
         setAff({ type: 'fin', suite: ev.suite });
@@ -216,9 +247,9 @@ export function SceneDialogue(props: PropsSceneDialogue) {
   const demarrer = useCallback(() => {
     toutArreter();
     const p = propsRef.current;
-    const l = new LecteurScene(p.scene, { variables: { 'echo.nom': p.echo.nom, ...(p.variables || {}) }, depuisLigne: p.depuisLigne });
+    const l = new LecteurScene(p.scene, { variables: { ...(p.echo ? { 'echo.nom': p.echo.nom } : {}), ...(p.variables || {}) }, depuisLigne: p.depuisLigne });
     lecteur.current = l;
-    setAff(null); affRef.current = null; setEmotion(null); setBulle(false); setCarte(false);
+    setAff(null); affRef.current = null; setEmotion(null); setBulle(false); setCarte(false); setImage(null);
     setVars(Object.entries(p.variables || {}).filter(([k]) => k !== 'echo.nom').map(([nom, v]) => ({ nom, valeur: afficherValeur(v), cle: ++compteur.current })));
     setDecor((d) => ({ chemin: l.etat.decor ? cheminDecor(l.etat.decor, decors) : undefined, cle: d.cle + 1 }));
     setAncienDecor(null);
@@ -251,7 +282,7 @@ export function SceneDialogue(props: PropsSceneDialogue) {
   const cliquer = () => {
     const a = affRef.current;
     if (attente.current) { const { id, f } = attente.current; clearTimeout(id); attente.current = null; f(); return; }
-    if (!a) return;
+    if (!a || a.type === 'action') return; // le jeu joue son action : il reprendra la main
     if (a.type === 'replique') {
       if (!a.fini) {
         toutArreter();
@@ -295,7 +326,8 @@ export function SceneDialogue(props: PropsSceneDialogue) {
   const unPNJParle = !!parleur && parleur !== NARRATION && parleur !== JOUEUR;
   const assetDecor = decor.chemin ? assets.get(decor.chemin) : undefined;
   const assetAncien = ancienDecor?.chemin ? assets.get(ancienDecor.chemin) : undefined;
-  const assetEcho = assets.get(echo.chemin);
+  const assetEcho = echo ? assets.get(echo.chemin) : undefined;
+  const assetImage = image ? assets.get(image.chemin) : undefined;
   const assetJoueur = assets.get(props.joueur || 'joueur/joueur.png');
   const nomParleur = parleur === JOUEUR ? 'Vous' : parleur && parleur !== NARRATION ? catalogue.pnj[parleur]?.nom || parleur : '';
   const encreParleur = parleur && catalogue.pnj[parleur] ? catalogue.pnj[parleur].encre : '#6b4f33';
@@ -311,6 +343,9 @@ export function SceneDialogue(props: PropsSceneDialogue) {
           <Personnage key={p.qui} perso={p} fiche={catalogue.pnj[p.qui]} assets={assets} parle={parleur === p.qui} tape={aff?.type === 'replique' && !aff.fini && parleur === p.qui} estompe={unPNJParle && parleur !== p.qui} />
         ))}
 
+        {props.calque}
+        {assetImage && <div key={image!.cle} className="sc-photo"><img src={assetImage.url} alt="" /></div>}
+
         {apercu && vars.length > 0 && (
           <div className="sc-variables">
             <div className="titre">Variables</div>
@@ -321,7 +356,7 @@ export function SceneDialogue(props: PropsSceneDialogue) {
         <div className="sc-flou" />
         <div className="sc-ombre" />
 
-        <Loupe echo={assetEcho} nom={echo.nom} decor={assetDecor} emotion={bulle && emotion ? assets.get(`emotions/${emotion.emotion}.png`) : undefined} cleEmotion={emotion?.cle} />
+        {echo && <Loupe echo={assetEcho} nom={echo.nom} decor={assetDecor} emotion={bulle && emotion ? assets.get(`emotions/${emotion.emotion}.png`) : undefined} cleEmotion={emotion?.cle} />}
         {emotion?.note && <div key={emotion.cle} className="sc-note">{emotion.note}</div>}
 
         <div className="sc-feuille">

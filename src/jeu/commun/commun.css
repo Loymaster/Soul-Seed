@@ -1,0 +1,3 @@
+/* Repère commun des écrans plein cadre (1280 × 800 mis à l'échelle). */
+.repere-cadre { position: fixed; inset: 0; overflow: hidden; user-select: none; -webkit-user-select: none; }
+.repere { position: absolute; left: 50%; top: 50%; width: 1280px; height: 800px; transform-origin: 50% 50%; overflow: hidden; font-family: 'Alegreya', Georgia, serif; color: #ece5d6; }

@@ -41,6 +41,10 @@ export interface MoteurSons {
   glisse: (profil: { demarche: string; taille: number; poids: number }, volume: number, duree: number) => void;
   gargouille: (volume?: number) => void; baille: (volume?: number) => void;
   typeTick: (lettre: string, note?: number, timbre?: Timbre) => void;
+  // cycle de l'écho (magie sainte)
+  chant: (i: number) => void; pose: Son; eveil: Son; ouverture: Son; cri: Son;
+  pouls: Son; secousse: Son; vent: (duree: number) => void; repli: Son; formeGraine: Son; survolDoux: Son;
+  motVoix: (i: number) => void; sceau: (i: number) => void; aube: Son;
 }
 
 export const SFX = brut as unknown as MoteurSons;

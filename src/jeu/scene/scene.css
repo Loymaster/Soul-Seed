@@ -101,3 +101,9 @@
 .sc-variables .ligne { display: flex; justify-content: space-between; gap: 8px; padding: 2px 4px; border-radius: 4px; font-family: ui-monospace, Menlo, monospace; font-size: 12px; animation: sc-var .8s ease-out both; }
 .sc-variables .ligne b { font-weight: 400; color: #f2c27a; }
 @keyframes sc-var { from { opacity: 0; transform: translateX(12px); background: rgba(255,220,140,.5); } to { opacity: 1; transform: none; background: transparent; } }
+
+/* Image épinglée au-dessus de la scène (« action: image … ») */
+.sc-photo { position: absolute; left: 640px; top: 58px; width: 560px; margin-left: -280px; padding: 12px 12px 40px; background: #fbf4e3; box-shadow: 0 0 0 1.5px #3a1f0e, 0 18px 40px rgba(0,0,0,.55); transform: rotate(-2.5deg); z-index: 6; pointer-events: none; animation: sc-photo-entre .6s cubic-bezier(.22,.9,.3,1) both; }
+.sc-photo img { display: block; width: 100%; height: auto; }
+.sc-photo::before { content: ""; position: absolute; left: 50%; top: -12px; width: 22px; height: 22px; margin-left: -11px; border-radius: 50%; background: radial-gradient(circle at 35% 35%, #e96a4a, #9c3b2a 70%); box-shadow: 0 3px 6px rgba(0,0,0,.4); }
+@keyframes sc-photo-entre { from { opacity: 0; transform: translateY(-30px) rotate(-8deg); } to { opacity: 1; transform: rotate(-2.5deg); } }

@@ -1,0 +1,76 @@
+/* Le dernier souffle — portage de la maquette validée (canevas, page Soul Seed). */
+.ecran-mort .ecran{width:1280px;height:800px;position:relative;overflow:hidden;background:#000;font-family:'Alegreya',Georgia,serif;color:#ece5d6;user-select:none}
+.ecran-mort .cosmos{position:absolute;inset:-30px;background:url(/assets/decors/fonds/mort.png) center / cover no-repeat;opacity:0;transform:scale(1.12);transition:opacity 3.5s ease,transform 40s linear,filter 6s ease}
+.ecran-mort .cosmos.on{opacity:1;transform:scale(1.02)}
+.ecran-mort .cosmos.lumiere{filter:brightness(1.25) saturate(1.1)}
+.ecran-mort .mo-voile{position:absolute;inset:0;background:radial-gradient(ellipse at 50% 46%,transparent 30%,rgba(0,0,0,.8) 100%);pointer-events:none}
+.ecran-mort .etoiles{position:absolute;inset:0;pointer-events:none}
+.ecran-mort .etoile{position:absolute;border-radius:50%;background:#fff;animation:mo-scintille 3s ease-in-out infinite}
+@keyframes mo-scintille{0%,100%{opacity:.25}50%{opacity:1}}
+.ecran-mort .signe{position:absolute;left:0;right:0;top:372px;text-align:center;font-family:'Alegreya SC',serif;font-size:24px;letter-spacing:6px;color:#d8e4f2;opacity:0;transition:opacity 1.2s ease;pointer-events:none}
+.ecran-mort .signe.on{opacity:1;animation:mo-pouls 2s ease-in-out infinite}
+@keyframes mo-pouls{0%,100%{opacity:.55}50%{opacity:1}}
+.ecran-mort .echo{position:absolute;left:640px;top:400px;width:300px;height:300px;margin:-190px 0 0 -150px;display:flex;align-items:flex-end;justify-content:center;pointer-events:none;opacity:0;transition:opacity 2.5s ease}
+.ecran-mort .echo.on{opacity:1}
+.ecran-mort .echo .halo{position:absolute;left:50%;top:50%;width:360px;height:360px;margin:-180px 0 0 -180px;border-radius:50%;background:radial-gradient(circle,rgba(168,200,255,.28),rgba(120,110,200,.12) 45%,transparent 70%);animation:mo-respire 4s ease-in-out infinite}
+.ecran-mort .echo .corps{position:relative;display:block;line-height:0;filter:drop-shadow(0 0 14px rgba(170,190,255,.35))}
+.ecran-mort .echo img{position:relative;display:block;max-height:250px;max-width:260px;animation:mo-flotte 5s ease-in-out infinite}
+@keyframes mo-flotte{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+@keyframes mo-respire{0%,100%{transform:scale(1);opacity:.8}50%{transform:scale(1.07);opacity:1}}
+.ecran-mort .echo.tremble .corps{animation:mo-tremble .22s ease-in-out infinite}
+@keyframes mo-tremble{0%,100%{transform:translate(0,0)}20%{transform:translate(-6px,3px)}40%{transform:translate(6px,-4px)}60%{transform:translate(-5px,5px)}80%{transform:translate(4px,-5px)}}
+.ecran-mort .echo.dissout .halo{opacity:0;transition:opacity 7s ease 1s}
+.ecran-mort .poussiere{position:absolute;left:0;top:0;width:1280px;height:800px;pointer-events:none}
+.ecran-mort .eclair{position:absolute;inset:0;background:radial-gradient(circle at 50% 44%,#fff 0%,rgba(230,240,255,.85) 30%,rgba(200,220,255,0) 70%);opacity:0;pointer-events:none;animation:mo-eclair .6s ease-out}
+@keyframes mo-eclair{0%{opacity:0}12%{opacity:.95}100%{opacity:0}}
+.ecran-mort .ame{position:absolute;left:640px;top:330px;width:240px;height:360px;margin:-180px 0 0 -120px;pointer-events:none;opacity:0;filter:blur(10px);transition:opacity 7s ease-in-out,filter 7s ease-in-out,transform 4.5s cubic-bezier(.55,0,.3,1)}
+.ecran-mort .ame.on{opacity:1;filter:blur(0)}
+.ecran-mort .ame .lueur{position:absolute;left:50%;top:50%;width:520px;height:520px;margin:-260px 0 0 -260px;border-radius:50%;background:radial-gradient(circle,rgba(255,255,255,.75) 0%,rgba(220,235,255,.32) 38%,rgba(255,220,170,.08) 58%,transparent 72%);animation:mo-respire 4.4s ease-in-out infinite;transition:opacity 3s ease}
+.ecran-mort .ame img{position:relative;width:100%;height:100%;object-fit:contain;animation:mo-ondule 6s ease-in-out infinite;filter:drop-shadow(0 0 18px rgba(255,255,255,.7))}
+@keyframes mo-ondule{0%,100%{transform:translateY(0) rotate(-1.5deg)}50%{transform:translateY(-10px) rotate(1.5deg)}}
+.ecran-mort .ame.repli{transform:scale(.42) rotate(-8deg);opacity:0;filter:blur(3px) brightness(2);transition:transform 2.6s cubic-bezier(.55,0,.3,1),opacity 1.4s ease 1.3s,filter 2s ease}
+.ecran-mort .ame.repli .lueur{opacity:.4}
+.ecran-mort .oeuf{position:absolute;left:640px;top:330px;width:132px;height:174px;margin:-87px 0 0 -66px;pointer-events:none;opacity:0;transform:scale(.2);transition:opacity 1.6s ease,transform 2.2s cubic-bezier(.3,1.35,.5,1)}
+.ecran-mort .oeuf.on{opacity:1;transform:scale(1)}
+.ecran-mort .oeuf .halo{position:absolute;left:50%;top:50%;width:420px;height:420px;margin:-210px 0 0 -210px;border-radius:50%;background:radial-gradient(circle,var(--teinte) 0%,transparent 62%);opacity:.42;mix-blend-mode:screen;animation:mo-teinte 7.5s linear infinite,mo-respire 3.4s ease-in-out infinite}
+.ecran-mort .oeuf .coque{position:absolute;inset:0;border-radius:50% 50% 50% 50% / 60% 60% 40% 40%;background:radial-gradient(ellipse at 36% 28%,#ffffff 0%,#f4f1ff 22%,#dcd6f0 55%,#b9b2d6 100%);box-shadow:inset -14px -18px 30px rgba(80,70,140,.35),inset 10px 10px 24px rgba(255,255,255,.8),0 0 26px var(--teinte),0 0 60px var(--teinte);animation:mo-teinte 7.5s linear infinite,mo-ondule 6s ease-in-out infinite;overflow:hidden}
+.ecran-mort .oeuf .coque::before{content:"";position:absolute;inset:-30%;background:conic-gradient(from 0deg,#ffc65a,#ff7a55,#c79bff,#7fd0ff,#cfdc62,#ffc65a);opacity:.28;mix-blend-mode:color;filter:blur(14px);animation:mo-tourne 7.5s linear infinite}
+.ecran-mort .oeuf .coque::after{content:"";position:absolute;left:22%;top:12%;width:26%;height:18%;border-radius:50%;background:radial-gradient(ellipse,rgba(255,255,255,.95),transparent 70%);transform:rotate(-24deg)}
+@keyframes mo-tourne{to{transform:rotate(360deg)}}
+@keyframes mo-teinte{0%,100%{--teinte:rgba(255,198,90,.75)}20%{--teinte:rgba(255,122,85,.75)}40%{--teinte:rgba(199,155,255,.75)}60%{--teinte:rgba(127,208,255,.75)}80%{--teinte:rgba(207,220,98,.75)}}
+@property --teinte{syntax:'<color>';inherits:true;initial-value:rgba(255,255,255,.7)}
+.ecran-mort .astre{position:absolute;left:268px;top:48px;width:10px;height:10px;margin:-5px 0 0 -5px;border-radius:50%;background:#fff;box-shadow:0 0 12px #fff,0 0 30px #cfe6ff,0 0 60px rgba(255,214,160,.6);opacity:0;transition:opacity 1.5s ease;pointer-events:none}
+.ecran-mort .astre.on{opacity:1;animation:mo-astre 2.4s ease-in-out infinite}
+.ecran-mort .astre::before,.ecran-mort .astre::after{content:"";position:absolute;left:50%;top:50%;width:60px;height:1.5px;margin:-.75px 0 0 -30px;background:linear-gradient(90deg,transparent,#fff,transparent)}
+.ecran-mort .astre::after{transform:rotate(90deg)}
+@keyframes mo-astre{0%,100%{transform:scale(1)}50%{transform:scale(1.4)}}
+.ecran-mort .parole{position:absolute;left:140px;right:140px;top:600px;text-align:center;pointer-events:none}
+.ecran-mort .parole .ligne{font-style:italic;font-size:31px;line-height:1.3;color:#f4f8ff;text-shadow:0 0 18px rgba(170,200,255,.55),0 2px 10px rgba(0,0,0,.85)}
+.ecran-mort .parole .mot{display:inline-block;opacity:0;filter:blur(6px);transform:translateY(6px);animation:mo-mot .9s ease forwards;animation-delay:var(--d)}
+@keyframes mo-mot{to{opacity:1;filter:blur(0);transform:none}}
+.ecran-mort .suite{display:inline-flex;align-items:center;gap:10px;margin-top:20px;font-family:'Alegreya SC',serif;font-size:13px;letter-spacing:3px;color:#bcd3e6;opacity:0;animation:mo-apparait .8s ease forwards;animation-delay:var(--d)}
+.ecran-mort .suite i{width:8px;height:8px;transform:rotate(45deg);background:linear-gradient(135deg,#fff,#a8dcff 50%,#ffb86b);box-shadow:0 0 10px rgba(190,230,255,.9);animation:mo-gemme 1.6s ease-in-out infinite}
+@keyframes mo-gemme{0%,100%{transform:rotate(45deg) scale(1)}50%{transform:rotate(45deg) scale(1.3)}}
+@keyframes mo-apparait{to{opacity:1}}
+.ecran-mort .cliquable{position:absolute;inset:0;border:none;padding:0;background:transparent;cursor:pointer}
+.ecran-mort .souvenir{position:absolute;left:50%;top:498px;width:620px;margin-left:-310px;padding:20px 28px 22px;box-sizing:border-box;border-radius:18px;background:linear-gradient(180deg,rgba(15,24,48,.82),rgba(28,34,70,.8) 60%,rgba(52,42,78,.86));box-shadow:0 0 0 1px rgba(210,225,255,.45),0 0 40px rgba(150,170,255,.22),0 24px 50px rgba(0,0,0,.6);backdrop-filter:blur(6px);display:grid;grid-template-columns:96px minmax(0,1fr);gap:4px 22px;align-items:center;animation:mo-carteIn 1s cubic-bezier(.22,.9,.3,1) both}
+@keyframes mo-carteIn{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
+.ecran-mort .souvenir .portrait{width:96px;height:118px;border-radius:12px;background:radial-gradient(circle at 50% 40%,rgba(220,232,255,.28),rgba(232,246,255,.04) 70%);box-shadow:inset 0 0 0 1px rgba(210,225,255,.35);display:flex;align-items:flex-end;justify-content:center;overflow:hidden}
+.ecran-mort .souvenir .portrait img{max-height:104px;max-width:90px;filter:grayscale(.35) brightness(1.1) drop-shadow(0 0 8px rgba(200,220,255,.6))}
+.ecran-mort .souvenir .sur{font-family:'Alegreya SC',serif;font-size:12px;letter-spacing:4px;color:#bfd2f0}
+.ecran-mort .souvenir h2{margin:0 0 2px;font-family:'Alegreya SC',serif;font-weight:700;font-size:30px;letter-spacing:4px;color:#f4f8ff;text-shadow:0 0 18px rgba(170,200,255,.6)}
+.ecran-mort .souvenir .vie{font-size:16px;color:#dfe8f6}
+.ecran-mort .souvenir .epitaphe{grid-column:1 / -1;margin-top:10px;font-style:italic;font-size:15.5px;color:#c4d2ea;text-align:center}
+.ecran-mort .souvenir .actions{grid-column:1 / -1;display:flex;justify-content:center;margin-top:12px}
+.ecran-mort .bouton-saint{display:inline-flex;align-items:center;justify-content:center;gap:10px;padding:12px 28px;border:none;border-radius:24px;cursor:pointer;font-family:'Alegreya SC',serif;font-weight:700;font-size:16px;letter-spacing:2px;color:#13213a;background:linear-gradient(135deg,#ffffff,#cdeaff 45%,#ffd9a0);box-shadow:0 0 0 1px rgba(255,255,255,.8),0 0 22px rgba(168,220,255,.45);transition:transform .35s cubic-bezier(.22,.9,.3,1),box-shadow .3s}
+.ecran-mort .bouton-saint:hover{transform:translateY(-2px);box-shadow:0 0 0 1px #fff,0 0 30px rgba(190,230,255,.8)}
+.ecran-mort .bouton-saint.discret{color:#e8f6ff;background:rgba(232,246,255,.06);box-shadow:inset 0 0 0 1px rgba(200,230,255,.45)}
+.ecran-mort .final{position:absolute;left:0;right:0;top:640px;text-align:center;pointer-events:none;animation:mo-apparait 1.6s ease 1.5s both;opacity:0}
+.ecran-mort .final i{font-size:22px;color:#e4ecfa;text-shadow:0 0 14px rgba(170,200,255,.5),0 2px 8px rgba(0,0,0,.9)}
+.ecran-mort .blanc{position:absolute;inset:0;background:radial-gradient(circle at 50% 50%,#fff,#eef4ff 60%,#dfe8ff);opacity:0;pointer-events:none;animation:mo-blanc 3.6s ease forwards;z-index:30}
+@keyframes mo-blanc{0%{opacity:0}45%{opacity:1}100%{opacity:1}}
+.ecran-mort .relais{position:absolute;inset:0;z-index:31;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;animation:mo-apparait 1.2s ease 1.8s both;opacity:0}
+.ecran-mort .relais b{font-family:'Alegreya SC',serif;font-weight:700;font-size:40px;letter-spacing:6px;color:#2a3a5c;text-shadow:0 0 18px rgba(255,255,255,.9)}
+.ecran-mort .relais span{font-style:italic;font-size:17px;color:#4a5d82}
+.ecran-mort .coin{position:absolute;top:22px;right:24px;z-index:40;padding:7px 14px;border:none;border-radius:18px;background:rgba(6,8,18,.55);color:#e2ecf5;font-family:'Alegreya SC',serif;font-size:13px;letter-spacing:1px;cursor:pointer;box-shadow:inset 0 0 0 1px rgba(236,229,214,.3);display:flex;align-items:center;gap:8px}
+.ecran-mort .coin:hover{box-shadow:inset 0 0 0 1px rgba(168,220,255,.8),0 0 12px rgba(168,220,255,.4)}

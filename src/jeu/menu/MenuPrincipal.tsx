@@ -8,7 +8,7 @@ import './menu.css';
 
 const asset = (chemin: string) => `${import.meta.env.BASE_URL}assets/${chemin}`;
 
-type Panneau = null | 'profils' | 'charger' | 'nouvelle' | 'options' | 'memoire' | 'notes';
+type Panneau = null | 'profils' | 'charger' | 'nouvelle' | 'debut' | 'options' | 'memoire' | 'notes';
 
 export interface ProprietesMenu {
   profil: Profil;
@@ -18,7 +18,8 @@ export interface ProprietesMenu {
   disponibles: Set<string>;
   surContinuer: () => void;
   surCharger: (emplacement: number) => void;
-  surNouvellePartie: (emplacement: number) => void;
+  /** avec ou sans l'introduction (sans : création du personnage, puis choix de la Soul Seed) */
+  surNouvellePartie: (emplacement: number, avecIntroduction: boolean) => void;
   surEffacerPartie: (emplacement: number) => void;
   surChoisirProfil: (id: string) => void;
   surNouveauProfil: () => void;
@@ -28,7 +29,7 @@ export interface ProprietesMenu {
   outilsDev?: ReactNode;
 }
 
-const resume = (e: Etat) => `${e.nom} · ${NOM_STADE[e.stade]} · Jour ${ageJours(e)}`;
+const resume = (e: Etat) => (e.mort ? `${e.nom} s’est ${e.genre === 'f' ? 'éteinte' : 'éteint'} · une nouvelle graine attend` : `${e.nom} · ${NOM_STADE[e.stade]} · Jour ${ageJours(e)}`);
 const dateCourte = (iso: string) => {
   try { return new Date(iso).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' }); } catch { return ''; }
 };
@@ -37,6 +38,7 @@ export function MenuPrincipal(p: ProprietesMenu) {
   const [actif, setActif] = useState(-1);
   const [panneau, setPanneau] = useState<Panneau>(null);
   const [aConfirmer, setAConfirmer] = useState<string | null>(null);
+  const [emplacement, setEmplacement] = useState(0);
   const { profil, parties } = p;
   const musique = profil.reglages.musique, sons = profil.reglages.sons;
   SFX.on = sons;
@@ -49,7 +51,7 @@ export function MenuPrincipal(p: ProprietesMenu) {
   const items: { nom: string; sous?: string; off?: boolean; agir: () => void }[] = [
     { nom: 'Continuer', sous: p.derniere ? resume(p.derniere.etat) : 'aucune partie en cours', off: !p.derniere, agir: () => { SFX.holyClick(); p.surContinuer(); } },
     { nom: 'Charger', sous: nbParties ? `${nbParties} partie${nbParties > 1 ? 's' : ''} sur ce profil` : 'aucune partie enregistrée', off: !nbParties, agir: () => ouvrir('charger') },
-    { nom: 'Nouvelle partie', sous: 'Une nouvelle Soul Seed', agir: () => { if (libre >= 0) { SFX.holyClick(); p.surNouvellePartie(libre); } else ouvrir('nouvelle'); } },
+    { nom: 'Nouvelle partie', sous: 'Une nouvelle Soul Seed', agir: () => { if (libre >= 0) { setEmplacement(libre); ouvrir('debut'); } else ouvrir('nouvelle'); } },
     { nom: 'Mode Arène', sous: 'bientôt', off: true, agir: () => {} },
     { nom: 'Mémoire des échos', sous: `${profil.memoire.length} forme${profil.memoire.length > 1 ? 's' : ''} sur ${formesTotales} découvertes`, agir: () => ouvrir('memoire') },
     { nom: 'Options', agir: () => ouvrir('options') },
@@ -134,21 +136,21 @@ export function MenuPrincipal(p: ProprietesMenu) {
               {Array.from({ length: NB_EMPLACEMENTS }, (_, i) => {
                 const e = parties[i];
                 const cle = `emp-${i}`;
-                const enJeu = panneau === 'charger' ? !!e && !e.mort : true;
+                const enJeu = panneau === 'charger' ? !!e : true;
                 return (
                   <div key={i} style={{ position: 'relative' }}>
                     <button className="ligne-verre" disabled={!enJeu} onMouseEnter={() => enJeu && SFX.holyHover()}
                       onClick={() => {
                         if (panneau === 'charger') { SFX.holyClick(); p.surCharger(i); return; }
                         if (aConfirmer !== cle) { setAConfirmer(cle); return; }
-                        SFX.holyClick(); p.surNouvellePartie(i);
+                        setEmplacement(i); ouvrir('debut');
                       }}>
                       {e
                         ? <img src={asset(apparence(e))} alt="" style={{ width: 52, height: 52, objectFit: 'contain', filter: e.mort ? 'grayscale(1) brightness(.7)' : 'drop-shadow(0 0 8px rgba(168,220,255,.5))' }} />
                         : <span style={{ width: 52, height: 52, borderRadius: 12, boxShadow: 'inset 0 0 0 1px rgba(200,230,255,.3)', display: 'block' }} />}
                       <span>
                         <span className="nom">{e ? e.nom : 'Emplacement libre'}</span><br />
-                        <span className="det">{e ? (e.mort ? `${NOM_STADE[e.stade]} · s’est éteint${e.genre === 'f' ? 'e' : ''} au jour ${ageJours(e)}` : resume(e)) : `emplacement ${i + 1}`}</span>
+                        <span className="det">{e ? (e.mort ? `${NOM_STADE[e.stade]} · s’est éteint${e.genre === 'f' ? 'e' : ''} au jour ${ageJours(e)} · une nouvelle graine attend` : resume(e)) : `emplacement ${i + 1}`}</span>
                       </span>
                       {panneau === 'nouvelle' && aConfirmer === cle && <span className="droite det" style={{ color: '#ffd9a0' }}>Remplacer ? cliquez encore</span>}
                     </button>
@@ -162,6 +164,17 @@ export function MenuPrincipal(p: ProprietesMenu) {
                   </div>
                 );
               })}
+            </>}
+
+            {panneau === 'debut' && <>
+              <h2>Nouvelle partie</h2>
+              <div className="chapeau">Comment voulez-vous commencer ?</div>
+              <button className="ligne-verre" onMouseEnter={() => SFX.holyHover()} onClick={() => { SFX.holyClick(); p.surNouvellePartie(emplacement, true); }}>
+                <span><span className="nom">Avec l’introduction</span><br /><span className="det">Le réveil entre deux mondes, puis l’arrivée au Sanctuaire</span></span>
+              </button>
+              <button className="ligne-verre" onMouseEnter={() => SFX.holyHover()} onClick={() => { SFX.holyClick(); p.surNouvellePartie(emplacement, false); }}>
+                <span><span className="nom">Sans l’introduction</span><br /><span className="det">Créer votre personnage, puis choisir votre Soul Seed</span></span>
+              </button>
             </>}
 
             {panneau === 'options' && <>

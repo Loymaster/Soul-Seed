@@ -15,6 +15,7 @@ export function contexteScenes(catalogue: Catalogue, scenes: { id: string; sourc
     emotions: catalogue.assets.filter((a) => a.categorie === 'emotions').map((a) => a.chemin.slice('emotions/'.length).replace(/\.[^.]+$/, '')),
     decors: catalogue.assets.filter((a) => a.categorie === 'decors').map((a) => a.chemin),
     musiques: catalogue.assets.filter((a) => a.type === 'son').map((a) => a.chemin),
+    images: catalogue.assets.filter((a) => a.type === 'image').map((a) => a.chemin),
     scenes: scenes.map((s) => s.id),
     variablesEcrites
   };

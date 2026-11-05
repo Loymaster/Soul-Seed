@@ -1,0 +1,32 @@
+/* Introduction, seconde partie : ce que le jeu dessine par-dessus la scène du Sanctuaire
+   (la graine, l'éclosion, le nom de l'écho) — d'après la maquette validée. */
+.sa-reveil { position: absolute; inset: 0; z-index: 20; background: radial-gradient(circle at 50% 42%, #fff 0%, #fff6e6 30%, #eaf4ff 62%, #dfeaff 100%); pointer-events: none; animation: sa-reveil 3.2s ease-out .2s both; }
+@keyframes sa-reveil { from { opacity: 1; } to { opacity: 0; } }
+
+.sa-relique { position: absolute; left: 640px; top: 250px; width: 300px; height: 330px; margin-left: -150px; display: flex; align-items: flex-end; justify-content: center; pointer-events: none; z-index: 6; opacity: 0; transform: translateY(20px) scale(.9); transition: opacity 1.2s ease, transform 1.4s cubic-bezier(.22,.9,.3,1); }
+.sa-relique.on { opacity: 1; transform: none; }
+.sa-relique .aura { position: absolute; left: 50%; top: 52%; width: 360px; height: 360px; margin: -180px 0 0 -180px; border-radius: 50%; background: radial-gradient(circle, rgba(255,255,255,.55), var(--c) 28%, transparent 66%); opacity: .5; mix-blend-mode: screen; animation: sa-aura 3.4s ease-in-out infinite; }
+@keyframes sa-aura { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.08); } }
+.sa-relique .sa-sceau { position: absolute; left: 50%; bottom: -6px; width: 260px; height: 260px; margin-left: -130px; color: var(--c); transform: scaleY(.32); transform-origin: 50% 100%; opacity: .55; mix-blend-mode: screen; filter: drop-shadow(0 0 8px var(--c)) drop-shadow(0 0 22px var(--c)); }
+.sa-relique .sa-sceau svg { width: 100%; height: 100%; display: block; }
+.sa-relique .graine { position: relative; width: 150px; height: 214px; object-fit: contain; filter: drop-shadow(0 0 22px var(--c)) drop-shadow(0 12px 16px rgba(0,0,0,.45)); animation: sa-flotte 4.6s ease-in-out infinite; margin-bottom: 40px; }
+@keyframes sa-flotte { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
+.sa-relique.tremble .graine { animation: sa-tremble 2.2s ease-in forwards; filter: drop-shadow(0 0 30px var(--c)) drop-shadow(0 0 12px #fff) brightness(1.3); }
+@keyframes sa-tremble { 0% { transform: translate(0,0) rotate(0); } 10% { transform: translate(-1px,0) rotate(-1deg); } 20% { transform: translate(1px,0) rotate(1deg); } 30% { transform: translate(-2px,0) rotate(-2deg); } 40% { transform: translate(2px,0) rotate(2deg); } 50% { transform: translate(-3px,0) rotate(-3deg); } 60% { transform: translate(3px,-1px) rotate(3deg); } 70% { transform: translate(-4px,0) rotate(-4deg); } 80% { transform: translate(4px,-1px) rotate(4deg); } 90% { transform: translate(-5px,0) rotate(-5deg) scale(1.04); } 100% { transform: translate(0,0) rotate(0) scale(1.1); } }
+.sa-relique .bebe { position: relative; max-height: 230px; max-width: 250px; margin-bottom: 24px; filter: drop-shadow(0 0 14px rgba(255,255,255,.55)) drop-shadow(0 10px 14px rgba(0,0,0,.4)); animation: sa-naitre 1.4s cubic-bezier(.3,1.4,.5,1) both, sa-respire 3s ease-in-out 1.4s infinite; transform-origin: 50% 100%; }
+@keyframes sa-naitre { 0% { opacity: 0; transform: scale(.4); filter: brightness(5) drop-shadow(0 0 40px #fff); } 60% { opacity: 1; } 100% { opacity: 1; transform: none; } }
+@keyframes sa-respire { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.025, .985); } }
+.sa-flash { position: absolute; inset: 0; z-index: 12; background: radial-gradient(circle at 50% 50%, #ffffff 0%, rgba(255,244,220,.96) 26%, rgba(232,246,255,.7) 55%, rgba(232,246,255,0) 100%); opacity: 0; pointer-events: none; animation: sa-flash 1.8s ease both; }
+@keyframes sa-flash { 0% { opacity: 0; } 22% { opacity: 1; } 55% { opacity: 1; } 100% { opacity: 0; } }
+
+/* Nommer l'écho, à même la feuille de dialogue */
+.sa-nommer { position: absolute; left: 250px; width: 790px; bottom: 30px; height: 176px; z-index: 10; padding: 22px 30px 0 34px; cursor: default; }
+.sa-nommer .question { font-family: 'Reenie Beanie', cursive; font-size: 28px; line-height: 1; color: #6b4f33; }
+.sa-nommer .question span { font-size: 22px; }
+.sa-nommer .ligne { display: flex; align-items: center; gap: 16px; margin-top: 14px; }
+.sa-nommer .champ { width: 300px; padding: 2px 4px; border: none; border-bottom: 2px solid #6b4f33; background: transparent; color: #2b2118; font-family: 'Alegreya SC', serif; font-weight: 700; font-size: 28px; letter-spacing: 3px; outline: none; }
+.sa-nommer .champ::placeholder { color: rgba(107,79,51,.35); }
+.sa-nommer .de { width: 38px; height: 38px; border: none; border-radius: 50%; background: transparent; color: #6b4f33; cursor: pointer; box-shadow: inset 0 0 0 2px #6b4f33; display: flex; align-items: center; justify-content: center; transition: transform .35s cubic-bezier(.3,1.4,.5,1); }
+.sa-nommer .de:hover { transform: rotate(-18deg) scale(1.06); }
+.sa-nommer .cuir { display: inline-flex; align-items: center; gap: 8px; padding: 8px 16px; border: none; border-radius: 6px; background: #6e3f22; color: #f6ecd6; font-family: 'Alegreya SC', serif; font-size: 15px; letter-spacing: 1px; cursor: pointer; box-shadow: inset 0 0 0 2px #3a1f0e, inset 0 0 0 4px #6e3f22, inset 0 0 0 5px rgba(240,214,170,.5); }
+.sa-nommer .cuir[disabled] { opacity: .45; cursor: default; }

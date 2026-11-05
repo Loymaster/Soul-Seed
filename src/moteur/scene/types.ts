@@ -34,6 +34,8 @@ export type Noeud =
   | { type: 'decor'; ligne: number; decor: string }
   | { type: 'musique'; ligne: number; musique: string | null }
   | { type: 'pause'; ligne: number; secondes: number }
+  /** Un moment mis en scène par le jeu lui-même (une graine qui éclot, un nom à donner, une image…). */
+  | { type: 'action'; ligne: number; nom: string; argument?: string }
   | { type: 'affecte'; ligne: number; variable: string; op: '=' | '+=' | '-='; valeur: Expr }
   | { type: 'si'; ligne: number; branches: Branche[] }
   | { type: 'choix'; ligne: number; question?: string; options: OptionChoix[] }

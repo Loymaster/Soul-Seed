@@ -1,0 +1,56 @@
+// Introduction, seconde partie : le réveil au Sanctuaire, la graine, l'éclosion et l'arrivée de Jumpy.
+// Jouée juste après « entre deux mondes » ; la graine est celle de la priorité choisie face à l'homme mystérieux.
+// Les actions (graine, éclosion, nommer-echo) sont mises en scène par le jeu.
+titre: L'arrivée au Sanctuaire
+décor: village/sanctuaire
+musique: legend-alcana
+
+narration: Vous ouvrez les yeux. Une lumière douce filtre entre les arbres ; sous vos mains, la pierre tiède d'un cercle ancien.
+entre: myhra G1 [inquiete]
+myhra [inquiete]: Vous êtes enfin {joueur:réveillé|réveillée|réveillé·e} ! Comment allez-vous ? Vous vous sentez bien ?
+myhra [inquiete]: Je me suis inquiétée… Il y a eu comme un éclair dans le sanctuaire, et vous êtes {joueur:apparu|apparue|apparu·e}, là, sur le sol.
+myhra [neutre]: Vous souvenez-vous de qui vous êtes ? Vous ne ressemblez à aucun écho que je connaisse…
+
+choix: Que répondre ?
+  > neutre « Je sais juste que je ne viens pas d'ici. »
+    myhra [compassion]: Pas d'ici… ? Voilà qui est curieux. Mais je crains que votre mémoire ne vous fasse défaut, à vous aussi : la perdre est devenu monnaie courante, par ici.
+  > neutre « Non… je ne me souviens de rien. »
+    myhra [compassion]: Oh… j'en suis désolée. Malheureusement, perdre la mémoire est devenu monnaie courante, par ici.
+
+myhra [neutre]: Les habitants de notre village ont commencé à la perdre, eux aussi… Ils nous ont quittés l'un après l'autre, pour se perdre au fin fond de la nature.
+myhra [inquiete]: Notre communauté s'en retrouve réduite au minimum… Nous ne sommes plus que deux.
+myhra [inquiete]: Et Garry… Avant de partir, il est entré dans une frénésie incontrôlable. Il a détruit le village, puis s'est terré dans une forêt non loin d'ici. Il n'y avait plus personne pour l'arrêter…
+
+action: graine
+myhra [compassion]: Oh, mais c'est vrai ! Lorsque vous êtes {joueur:apparu|apparue|apparu·e}, vous teniez cette graine contre vous.
+myhra [compassion]: Il s'agit d'une {graine.nom}. Prenez-en bien soin : elle contient l'âme d'un puissant Écho… l'une des créatures qui peuplent notre monde.
+myhra [neutre]: Les rares Échos qui naissent d'une graine ont la faculté d'entrer en résonance avec la mémoire de l'univers.
+myhra [compassion]: Même si je ne sais plus très bien comment cela fonctionne… J'ai, pour ainsi dire… oublié.
+myhra [compassion]: Mais c'est tout à fait curieux : votre présence relève déjà du mystère… Comment se fait-il que vous possédiez pareille relique ?
+myhra [inquiete]: Oh, regardez ! Votre graine… elle est déjà en train d'éclore !
+
+action: eclosion
+myhra [compassion]: C'est incroyable ! Un écho vient de naître sous nos yeux. Quel spectacle magnifique, n'est-ce pas ? Et il s'agit {echo:d'un mâle|d'une femelle}.
+myhra [neutre]: C'est à vous qu'il revient de vous en occuper. Comment allez-vous l'appeler ?
+
+action: nommer-echo
+myhra [neutre]: {echo.nom}… Si c'est votre choix, je ne vais pas m'y opposer.
+myhra [neutre]: Comprenez que les Échos issus d'une graine sont les seuls êtres à pouvoir naître… mais aussi nous quitter. Ils renaissent alors dans une nouvelle graine, en emportant avec eux un fragment de leur mémoire. C'est, pour eux, un cycle infini.
+myhra [compassion]: Leur vie est aussi courte qu'éternelle.
+myhra [compassion]: J'espère que vous en prendrez bien soin : les Échos peuvent être des partenaires profondément dévoués.
+myhra [inquiete]: Malheureusement, vous ne pouvez pas rester ici… Ce sanctuaire n'a pas vraiment les commodités pour élever un nouveau-né…
+
+entre: jumpy D1 [rit]
+jumpy [rit]: Salut la compagnie ! Oh, ça y est, {joueur.nom} est {joueur:réveillé|réveillée|réveillé·e} ? Moi, c'est Jumpy ! Tiens… Comment je connais ce nom, moi ?
+jumpy [daccord]: Bref ! Je viens régler le problème de l'hébergement, héhé !
+jumpy [daccord]: Le vieux ranch ! Son propriétaire l'a laissé à l'abandon il y a un moment, mais c'est bon : je l'ai un peu retapé. Il devrait être utilisable en l'état.
+jumpy [pensif]: Ce qui nous amène à notre deuxième problème non réglé : Garry !
+jumpy [pleurs]: En allant chercher des ingrédients dans la forêt, j'ai cru qu'il allait m'étriper…
+action: image pnj/garry/attaque-jumpy
+jumpy [pleurs]: J'en ai encore des frissons rien que d'y penser… Brrr.
+action: image aucune
+jumpy [rit]: Bref, le ranch se trouve au fond de la vallée, vous ne pouvez pas le louper ! Allez-y, installez-vous tranquillement, et venez me voir à la boutique. On parlera affaires… Héhéhé…
+sort: jumpy
+
+myhra [compassion]: Jumpy… On ne dirait pas comme ça, mais il est très valeureux. Ce n'est pas étonnant qu'il soit le dernier à ne pas avoir perdu la mémoire.
+myhra [neutre]: Je ne vous retiens pas plus longtemps. Bon courage pour les épreuves qui vous attendent. Revenez me voir si vous avez des questions sur notre monde !

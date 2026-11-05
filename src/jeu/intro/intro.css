@@ -1,0 +1,88 @@
+/* Introduction, première partie : entre deux mondes — portage de la maquette validée (canevas, page Introduction). */
+.ecran-intro .glyphe{display:block}
+.ecran-intro .glyphe svg{width:100%;height:100%;display:block}
+.ecran-intro .ecran{width:1280px;height:800px;position:relative;overflow:hidden;background:#04060d;font-family:'Alegreya',Georgia,serif;color:#ece5d6;user-select:none}
+.ecran-intro .nappe{position:absolute;border-radius:50%;filter:blur(60px);mix-blend-mode:screen;opacity:0;transition:opacity 4s ease}
+.ecran-intro .ecran.ouvert .nappe{opacity:1}
+.ecran-intro .nappe.givre{left:-200px;top:120px;width:820px;height:520px;background:radial-gradient(ellipse,rgba(110,170,255,.32),transparent 70%);animation:ed-derive1 26s ease-in-out infinite}
+.ecran-intro .nappe.aube{right:-220px;top:260px;width:860px;height:560px;background:radial-gradient(ellipse,rgba(255,196,130,.2),transparent 70%);animation:ed-derive2 31s ease-in-out infinite}
+.ecran-intro .nappe.voute{left:240px;top:-260px;width:800px;height:520px;background:radial-gradient(ellipse,rgba(200,226,255,.22),transparent 70%);animation:ed-derive1 37s ease-in-out infinite reverse}
+@keyframes ed-derive1{0%,100%{transform:translate(0,0) scale(1)}50%{transform:translate(90px,-40px) scale(1.12)}}
+@keyframes ed-derive2{0%,100%{transform:translate(0,0) scale(1.05)}50%{transform:translate(-80px,30px) scale(.95)}}
+.ecran-intro .teinte{position:absolute;left:640px;top:300px;width:900px;height:700px;margin:-350px 0 0 -450px;border-radius:50%;background:radial-gradient(ellipse,var(--c),transparent 66%);opacity:0;mix-blend-mode:screen;transition:opacity 2.5s ease,background 1.5s ease;pointer-events:none}
+.ecran-intro .teinte.on{opacity:.16}
+.ecran-intro .poussiere{position:absolute;inset:0;pointer-events:none}
+.ecran-intro .grain{position:absolute;border-radius:50%;background:#fff;opacity:0;animation:ed-grain var(--t) linear infinite;animation-delay:var(--d)}
+@keyframes ed-grain{0%{opacity:0;transform:translate(0,0)}15%{opacity:var(--o)}85%{opacity:var(--o)}100%{opacity:0;transform:translate(var(--dx),-180px)}}
+.ecran-intro .homme{position:absolute;left:640px;top:28px;width:520px;height:536px;margin-left:-260px;pointer-events:none;opacity:0;filter:blur(8px) brightness(.6);transition:opacity 5s ease,filter 4s ease;-webkit-mask-image:radial-gradient(ellipse 50% 52% at 50% 44%,#000 46%,rgba(0,0,0,.55) 66%,transparent 84%);mask-image:radial-gradient(ellipse 50% 52% at 50% 44%,#000 46%,rgba(0,0,0,.55) 66%,transparent 84%)}
+.ecran-intro .homme img{width:100%;height:100%;object-fit:contain;animation:ed-respire 7s ease-in-out infinite}
+.ecran-intro .homme.on{opacity:.62;filter:blur(2.2px) brightness(.82) saturate(.8)}
+.ecran-intro .homme.parle{opacity:.74;filter:blur(1.4px) brightness(.95) saturate(.85)}
+.ecran-intro .homme.efface{opacity:0;filter:blur(14px) brightness(2);transition:opacity 2.4s ease,filter 2.4s ease}
+@keyframes ed-respire{0%,100%{transform:translateY(0) scale(1)}50%{transform:translateY(-6px) scale(1.012)}}
+.ecran-intro .aureole{position:absolute;left:640px;top:250px;width:620px;height:620px;margin:-310px 0 0 -310px;border-radius:50%;background:radial-gradient(circle,rgba(220,236,255,.16),rgba(255,214,160,.06) 40%,transparent 66%);opacity:0;transition:opacity 4s ease;animation:ed-pulse 6s ease-in-out infinite;pointer-events:none}
+.ecran-intro .ecran.ouvert .aureole{opacity:1}
+@keyframes ed-pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.06)}}
+.ecran-intro .parole{position:absolute;left:130px;right:130px;top:572px;text-align:center;transition:top .7s cubic-bezier(.22,.9,.3,1)}
+.ecran-intro .parole.haut{top:470px}
+.ecran-intro .ligne{font-style:italic;font-size:27px;line-height:1.42;color:#f2f7ff;text-shadow:0 0 18px rgba(160,200,255,.45),0 2px 10px rgba(0,0,0,.9)}
+.ecran-intro .mot{display:inline-block;opacity:0;filter:blur(6px);transform:translateY(5px);animation:ed-mot .8s ease forwards;animation-delay:var(--d)}
+.ecran-intro .ligne.tout .mot{animation-delay:0s!important;animation-duration:.25s}
+@keyframes ed-mot{to{opacity:1;filter:blur(0);transform:none}}
+.ecran-intro .suite{display:inline-flex;align-items:center;gap:10px;margin-top:18px;font-family:'Alegreya SC',serif;font-size:13px;letter-spacing:3px;color:#bcd3e6;opacity:0;animation:ed-apparait .8s ease forwards}
+.ecran-intro .suite i{width:8px;height:8px;transform:rotate(45deg);background:linear-gradient(135deg,#fff,#a8dcff 50%,#ffb86b);box-shadow:0 0 10px rgba(190,230,255,.9);animation:ed-gemme 1.6s ease-in-out infinite}
+@keyframes ed-gemme{0%,100%{transform:rotate(45deg) scale(1)}50%{transform:rotate(45deg) scale(1.3)}}
+@keyframes ed-apparait{to{opacity:1}}
+.ecran-intro .cliquable{position:absolute;inset:0;border:none;padding:0;background:transparent;cursor:pointer}
+.ecran-intro .reponse{position:absolute;left:0;right:0;top:600px;display:flex;justify-content:center;gap:16px;opacity:0;animation:ed-monteIn .7s cubic-bezier(.22,.9,.3,1) forwards;animation-delay:var(--d,0s)}
+@keyframes ed-monteIn{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+.ecran-intro .champ-ligne{display:flex;align-items:center;gap:16px}
+.ecran-intro .champ{width:320px;padding:6px 4px;border:none;border-bottom:1.5px solid rgba(200,230,255,.6);background:transparent;color:#fff;text-align:center;font-family:'Alegreya SC',serif;font-size:28px;letter-spacing:3px;outline:none;transition:border-color .3s,box-shadow .3s}
+.ecran-intro .champ:focus{border-bottom-color:#fff;box-shadow:0 10px 20px -14px rgba(168,220,255,.9)}
+.ecran-intro .champ::placeholder{color:rgba(200,230,255,.35)}
+.ecran-intro .bouton-saint{position:relative;display:inline-flex;align-items:center;justify-content:center;gap:10px;padding:12px 26px;border:none;border-radius:24px;cursor:pointer;font-family:'Alegreya SC',serif;font-weight:700;font-size:16px;letter-spacing:2px;color:#13213a;background:linear-gradient(135deg,#ffffff,#cdeaff 45%,#ffd9a0);box-shadow:0 0 0 1px rgba(255,255,255,.8),0 0 22px rgba(168,220,255,.45);transition:transform .35s cubic-bezier(.22,.9,.3,1),box-shadow .3s,opacity .3s}
+.ecran-intro .bouton-saint:hover{transform:translateY(-2px);box-shadow:0 0 0 1px #fff,0 0 30px rgba(190,230,255,.8)}
+.ecran-intro .bouton-saint[disabled]{opacity:.4;cursor:default;transform:none}
+.ecran-intro .bouton-saint.discret{color:#e8f6ff;background:rgba(232,246,255,.06);box-shadow:inset 0 0 0 1px rgba(200,230,255,.45)}
+.ecran-intro .eclat{width:190px;padding:16px 10px 14px;border:none;border-radius:16px;cursor:pointer;background:linear-gradient(180deg,rgba(20,36,62,.72),rgba(36,52,86,.66));box-shadow:inset 0 0 0 1px rgba(200,230,255,.38),0 14px 30px rgba(0,0,0,.4);color:#eef6ff;text-align:center;transition:transform .4s cubic-bezier(.22,.9,.3,1),box-shadow .3s,background .3s}
+.ecran-intro .eclat b{display:block;font-family:'Alegreya SC',serif;font-weight:700;font-size:24px;letter-spacing:4px;text-shadow:0 0 14px rgba(170,220,255,.6)}
+.ecran-intro .eclat i{display:block;margin-top:4px;font-size:15px;color:#bcd3e6}
+.ecran-intro .eclat:hover,.ecran-intro .eclat.sur{transform:translateY(-5px);box-shadow:inset 0 0 0 1px #fff,0 0 26px rgba(168,220,255,.5),0 18px 34px rgba(0,0,0,.45);background:linear-gradient(180deg,rgba(34,58,94,.8),rgba(58,72,110,.74))}
+.ecran-intro .astre{position:relative;width:250px;padding:18px 14px 16px;border:none;border-radius:18px;cursor:pointer;background-color:rgba(24,37,65,.74);box-shadow:inset 0 0 0 1px rgba(200,230,255,.34),0 14px 30px rgba(0,0,0,.4);color:#eef6ff;text-align:center;transition:transform .45s cubic-bezier(.22,.9,.3,1),box-shadow .35s,opacity .6s,filter .6s}
+.ecran-intro .astre svg{display:block;width:64px;height:64px;margin:0 auto 8px;color:var(--c);filter:drop-shadow(0 0 8px var(--c));transition:transform 1.2s cubic-bezier(.22,.9,.3,1),filter .5s}
+.ecran-intro .astre{padding-bottom:18px}
+.ecran-intro .astre b{display:block;font-family:'Alegreya SC',serif;font-weight:700;font-size:22px;letter-spacing:4px;text-shadow:0 0 14px var(--c)}
+.ecran-intro .astre i{display:block;margin-top:4px;font-size:14.5px;color:#bcd3e6}
+.ecran-intro .astre:hover,.ecran-intro .astre.sur{transform:translateY(-6px);box-shadow:inset 0 0 0 1px rgba(255,255,255,.9),0 0 28px var(--c),0 18px 34px rgba(0,0,0,.45)}
+.ecran-intro .astre:hover svg,.ecran-intro .astre.sur svg{transform:rotate(-8deg) scale(1.08);filter:drop-shadow(0 0 14px var(--c)) drop-shadow(0 0 30px var(--c))}
+.ecran-intro .astre.pris{transform:translateY(-8px) scale(1.04);box-shadow:inset 0 0 0 1px #fff,0 0 44px var(--c);pointer-events:none;animation:ed-evapore 1.3s ease-in-out .45s forwards}
+@keyframes ed-evapore{0%{opacity:1;filter:blur(0)}100%{opacity:0;filter:blur(6px) brightness(1.4);transform:translateY(-22px) scale(1.08)}}
+.ecran-intro .astre.pris svg{transform:rotate(12deg) scale(1.18);filter:drop-shadow(0 0 18px var(--c)) drop-shadow(0 0 44px var(--c))}
+.ecran-intro .astre.ecarte{opacity:0;filter:blur(4px);transform:translateY(6px);pointer-events:none;transition:opacity .8s ease,filter .8s ease,transform .8s ease}
+.ecran-intro .lame{position:relative;width:196px;min-height:84px;padding:12px 14px;box-sizing:border-box;border:none;border-radius:14px;cursor:pointer;background-color:rgba(24,37,65,.74);box-shadow:inset 0 0 0 1px rgba(200,230,255,.32),0 14px 30px rgba(0,0,0,.4);color:#eef6ff;font-family:'Alegreya',serif;font-size:17px;line-height:1.3;transition:transform .45s cubic-bezier(.22,.9,.3,1),box-shadow .35s,opacity .4s;overflow:hidden}
+.ecran-intro .lame::before{content:"";position:absolute;inset:0;background:radial-gradient(ellipse at 50% 120%,var(--c),transparent 70%);opacity:0;transition:opacity .45s ease}
+.ecran-intro .lame .texte{position:relative}
+.ecran-intro .lame:hover,.ecran-intro .lame.sur{transform:translateY(-6px);box-shadow:inset 0 0 0 1px rgba(255,255,255,.9),0 0 24px var(--c),0 18px 34px rgba(0,0,0,.45)}
+.ecran-intro .lame:hover::before,.ecran-intro .lame.sur::before{opacity:.42}
+.ecran-intro .lame.ecarte{opacity:.18;pointer-events:none}
+.ecran-intro .lame.ecarte.loin{opacity:0;transition:opacity 1.4s ease}
+.ecran-intro .lame.pris{overflow:visible;cursor:default;transform:translateY(-6px);animation:ed-dissipe 1.5s ease .15s forwards}
+@keyframes ed-dissipe{0%{background-color:rgba(24,37,65,.74);box-shadow:inset 0 0 0 1px #fff,0 0 34px var(--c)}35%{box-shadow:inset 0 0 0 1px rgba(255,255,255,.7),0 0 46px var(--c)}100%{background-color:rgba(24,37,65,0);box-shadow:inset 0 0 0 1px rgba(255,255,255,0),0 0 0 rgba(0,0,0,0)}}
+.ecran-intro .lame.pris::before{opacity:.7;animation:ed-voile 1.5s ease .15s forwards}
+@keyframes ed-voile{to{opacity:0}}
+.ecran-intro .lame.pris .texte{animation:ed-texte 1s ease .1s forwards}
+@keyframes ed-texte{40%{opacity:.8;filter:blur(1px);letter-spacing:.5px}100%{opacity:0;filter:blur(8px);letter-spacing:3px;transform:translateY(-8px)}}
+.ecran-intro .lame .etincelles{position:absolute;inset:0;pointer-events:none}
+.ecran-intro .lame .etincelle{position:absolute;left:var(--x);top:var(--y);width:var(--t);height:var(--t);border-radius:50%;background:#fff;box-shadow:0 0 6px var(--c),0 0 2px #fff;opacity:0}
+.ecran-intro .lame.pris .etincelle{animation:ed-etincelle var(--du) cubic-bezier(.2,.7,.3,1) var(--de) forwards}
+@keyframes ed-etincelle{0%{opacity:0;transform:translate(0,0) scale(1)}12%{opacity:1}100%{opacity:0;transform:translate(var(--dx),var(--dy)) scale(.3)}}
+.ecran-intro .lame .embleme{position:absolute;left:50%;top:50%;width:62px;height:62px;margin:-31px 0 0 -31px;color:var(--c);opacity:0;pointer-events:none;filter:blur(8px)}
+.ecran-intro .lame .embleme svg{width:100%;height:100%;display:block}
+.ecran-intro .lame.pris .embleme{animation:ed-embleme 2s cubic-bezier(.22,.9,.3,1) .9s forwards,ed-emblemePouls 4s ease-in-out 2.9s infinite}
+@keyframes ed-embleme{0%{opacity:0;filter:blur(8px) drop-shadow(0 0 0 var(--c));transform:scale(.7)}100%{opacity:.5;filter:blur(0) drop-shadow(0 0 10px var(--c));transform:scale(1)}}
+@keyframes ed-emblemePouls{0%,100%{opacity:.5;transform:scale(1)}50%{opacity:.66;transform:scale(1.05)}}
+.ecran-intro .reponse.verrou{pointer-events:none}
+.ecran-intro .reponse.part{pointer-events:none;animation:ed-partir 2.6s ease-in-out forwards}
+@keyframes ed-partir{from{opacity:1;filter:blur(0);transform:none}to{opacity:0;filter:blur(4px);transform:translateY(-12px)}}
+.ecran-intro .aube{position:absolute;inset:0;z-index:30;background:radial-gradient(circle at 50% 42%,#fff 0%,#fff6e6 30%,#eaf4ff 62%,#dfeaff 100%);opacity:0;pointer-events:none;animation:ed-aube 4.2s ease-in forwards}
+@keyframes ed-aube{0%{opacity:0}70%{opacity:1}100%{opacity:1}}

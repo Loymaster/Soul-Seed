@@ -65,6 +65,7 @@ export type Evenement =
   | { type: 'emotion'; ligne: number; emotion: string; note?: string }
   | { type: 'choix'; ligne: number; question?: string; options: { index: number; resonance: Resonance; texte: string; ligne: number }[] }
   | { type: 'pause'; ligne: number; secondes: number }
+  | { type: 'action'; ligne: number; nom: string; argument?: string }
   | { type: 'fin'; ligne?: number; suite?: string };
 
 export interface Pas { changements: Changement[]; evenement: Evenement }
@@ -150,6 +151,9 @@ export class LecteurScene {
 
   get enAttenteDeChoix() { return !!this.attenteChoix; }
 
+  /** Le jeu donne une valeur à une variable (par exemple le nom choisi pendant une action). */
+  definir(nom: string, valeur: Valeur) { this.etat.variables[nom] = valeur; }
+
   private placeLibre(preferee?: Place): Place {
     const prises = new Set(Object.values(this.etat.presents).map((p) => p.place));
     if (preferee && !prises.has(preferee)) return preferee;
@@ -220,6 +224,8 @@ export class LecteurScene {
       }
       case 'pause':
         return { type: 'pause', ligne: n.ligne, secondes: n.secondes };
+      case 'action':
+        return { type: 'action', ligne: n.ligne, nom: n.nom, argument: n.argument };
       case 'aller':
         return { type: 'fin', ligne: n.ligne, suite: n.scene };
       case 'fin':
@@ -248,7 +254,7 @@ export class LecteurScene {
       this.pc++;
       const n = i.noeud;
       if (n.type === 'fin' || n.type === 'aller') { this.pc = cibleIndex; break; }
-      if (n.type === 'replique' || n.type === 'emotion' || n.type === 'pause') {
+      if (n.type === 'replique' || n.type === 'emotion' || n.type === 'pause' || n.type === 'action') {
         if (n.type === 'replique') this.executer(n, []); // garde les entrées automatiques et les expressions
         continue;
       }

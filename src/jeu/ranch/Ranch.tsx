@@ -67,10 +67,13 @@ export interface ProprietesRanch {
   surQuitter: () => void;
   reglages?: { sons: boolean; musique: boolean };
   surReglages?: (r: { sons: boolean; musique: boolean }) => void;
+  /** L'écho s'est éteint : la séquence du « dernier souffle » prend le relais. */
+  surMort?: (e: Etat) => void;
 }
 
-export function Ranch({ etat, sauver: sauverProp, surQuitter, reglages, surReglages }: ProprietesRanch) {
+export function Ranch({ etat, sauver: sauverProp, surQuitter, reglages, surReglages, surMort }: ProprietesRanch) {
   const sauverRef = useRef(sauverProp); sauverRef.current = sauverProp;
+  const surMortRef = useRef(surMort); surMortRef.current = surMort;
   const sauver = useCallback((x: Etat) => sauverRef.current(x), []);
   const sim = useRef<Simulation>(null as unknown as Simulation);
   if (!sim.current) sim.current = new Simulation(etat);
@@ -206,13 +209,16 @@ export function Ranch({ etat, sauver: sauverProp, surQuitter, reglages, surRegla
           montrerPassage({ titre: 'Il se passe quelque chose !', sous: `${s.etat.nom} a atteint le stade ${NOM_STADE[x.vers]}`, image: asset(apparence(s.etat)) }, 4200);
           break;
         case 'mort':
+          sauver(s.etat);
+          // « Il se passe quelque chose… » : la séquence de mort prend le relais, sans annonce au ranch
+          if (surMortRef.current) { const fin = s.etat; window.setTimeout(() => surMortRef.current?.(fin), 1500); break; }
           son('darkClick');
           montrerPassage({ titre: `${s.etat.nom} s’est ${accord(s.etat, 'éteint', 'éteinte')}…`, sous: CAUSES[x.cause], image: asset(apparence(s.etat)), bloquant: true });
           break;
         default: break;
       }
     }
-  }, [flotter, montrerPassage, reagir, son]);
+  }, [flotter, montrerPassage, reagir, son, sauver]);
 
   // ——— le temps s'écoule
   useEffect(() => {

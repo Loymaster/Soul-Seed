@@ -178,5 +178,103 @@ export const SFX = {
     tb = tb || {};
     this.tone(f, t, tb.dur || 0.07, { type: tb.type || 'triangle', gain: tb.gain || 0.022, attack: tb.attack || 0.003, lp: tb.lp || 2200, detune: tb.detune || 0 });
     if (tb.body) this.tone(f / 2, t, (tb.dur || 0.07) * 1.2, { type: 'sine', gain: tb.body, attack: 0.004 });
-    this.noise(t, 0.02, { f: tb.air || 3000, q: 1, gain: tb.airGain ?? 0.006, attack: 0.001 }); }
+    this.noise(t, 0.02, { f: tb.air || 3000, q: 1, gain: tb.airGain ?? 0.006, attack: 0.001 }); },
+  // ——— Cycle de l'écho (registre « magie sainte ») : choix de la graine, éclosion, mort, introduction ———
+  // chaque graine chante sa propre note quand on la survole (gamme pentatonique)
+  chant(i) { const c = this.get(); if (!c) return; const t = c.currentTime;
+    const f = [523.25, 587.33, 659.25, 783.99, 880][i] || 659.25;
+    this.tone(f, t, 1.4, { gain: 0.05, attack: 0.03, lp: 4000, send: this.bright, sendGain: 0.7 });
+    this.tone(f * 1.5, t + 0.06, 1.1, { gain: 0.018, attack: 0.05, send: this.bright, sendGain: 0.6 });
+    this.noise(t, 0.5, { type: 'highpass', f: 7000, gain: 0.012, attack: 0.12 }); },
+  // la graine se pose : un souffle qui monte et une note tenue
+  pose() { const c = this.get(); if (!c) return; const t = c.currentTime;
+    this.noise(t, 0.9, { f: 600, fTo: 2600, q: 0.8, gain: 0.05, attack: 0.4, send: this.bright, sendGain: 0.5 });
+    this.tone(392, t + 0.3, 2.4, { gain: 0.04, attack: 0.3, send: this.bright, sendGain: 0.6 });
+    this.tone(587.33, t + 0.45, 2.2, { gain: 0.03, attack: 0.3, send: this.bright, sendGain: 0.6 }); },
+  // l'éveil de la graine : une nappe qui enfle et un arpège qui monte pendant qu'elle tremble
+  eveil() { const c = this.get(); if (!c) return; const t = c.currentTime;
+    [261.63, 329.63, 392, 523.25, 659.25, 783.99, 1046.5, 1318.5].forEach((f, i) => this.tone(f, t + i * 0.26, 1.6, { gain: 0.04, attack: 0.02, lp: 5000, send: this.bright, sendGain: 0.6 }));
+    this.noise(t, 2.3, { f: 700, fTo: 5500, q: 0.6, gain: 0.05, attack: 2, send: this.bright, sendGain: 0.6 }); },
+  // l'ouverture : un éclat de cristal, puis un grand accord clair
+  ouverture() { const c = this.get(); if (!c) return; const t = c.currentTime;
+    this.noise(t, 0.25, { f: 4200, q: 2, gain: 0.08, attack: 0.002, send: this.bright, sendGain: 0.8 });
+    [523.25, 659.25, 783.99, 1046.5, 1567.98].forEach((f, i) => this.tone(f, t + 0.02 + i * 0.03, 3.6, { gain: 0.042, attack: 0.04, detune: i * 3 - 6, send: this.bright, sendGain: 0.7 }));
+    this.tone(130.81, t, 3, { gain: 0.05, attack: 0.08, send: this.bright, sendGain: 0.4 }); },
+  // premier cri de l'écho : deux petites notes rondes, joyeuses
+  cri() { const c = this.get(); if (!c) return; const t = c.currentTime;
+    this.tone(880, t, 0.18, { type: 'triangle', to: 1175, gain: 0.05, attack: 0.01, lp: 3000 });
+    this.tone(1046.5, t + 0.2, 0.3, { type: 'triangle', to: 1396.9, gain: 0.05, attack: 0.01, lp: 3200 }); },
+
+  // bruit brun (grave, sans souffle aigu) et bruit blanc, créés une fois
+  brun() {
+    const c = this.ctx; if (this._brun) return this._brun;
+    const len = c.sampleRate * 4, b = c.createBuffer(1, len, c.sampleRate), d = b.getChannelData(0); let y = 0;
+    for (let i = 0; i < len; i++) { y = (y + 0.02 * (Math.random() * 2 - 1)) / 1.02; d[i] = y * 3.5; }
+    return (this._brun = b);
+  },
+  blanc() {
+    const c = this.ctx; if (this._blanc) return this._blanc;
+    const len = c.sampleRate * 4, b = c.createBuffer(2, len, c.sampleRate);
+    for (let ch = 0; ch < 2; ch++) { const d = b.getChannelData(ch); for (let i = 0; i < len; i++) d[i] = Math.random() * 2 - 1; }
+    return (this._blanc = b);
+  },
+  // frottement sourd : bruit brun filtré très bas, grain irrégulier (comme une masse qui racle), sous-grave
+  frottement(t, dur, o) {
+    const c = this.ctx; o = o || {};
+    const src = c.createBufferSource(); src.buffer = this.brun(); src.loop = true;
+    const lp = c.createBiquadFilter(); lp.type = 'lowpass'; lp.Q.value = 0.9;
+    const f0 = o.f || 170; lp.frequency.setValueAtTime(f0 * 0.6, t); lp.frequency.linearRampToValueAtTime(f0 * 1.5, t + dur * 0.35); lp.frequency.exponentialRampToValueAtTime(f0 * 0.5, t + dur);
+    const lp2 = c.createBiquadFilter(); lp2.type = 'lowpass'; lp2.frequency.value = 420;
+    const grain = c.createGain(); grain.gain.value = 0.65;
+    const lfo = c.createOscillator(); lfo.type = 'triangle'; lfo.frequency.setValueAtTime(o.grain || 7, t); lfo.frequency.linearRampToValueAtTime((o.grain || 7) * 0.6, t + dur);
+    const prof = c.createGain(); prof.gain.value = 0.35; lfo.connect(prof); prof.connect(grain.gain);
+    const g = c.createGain(); const v = o.gain || 0.5, a = o.attack || 0.12;
+    g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(v, t + a); g.gain.setValueAtTime(v, t + Math.max(a, dur * 0.45)); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    src.connect(lp); lp.connect(lp2); lp2.connect(grain); grain.connect(g); g.connect(this.master);
+    const r = c.createGain(); r.gain.value = 0.25; g.connect(r); r.connect(this.bright);
+    src.start(t, Math.random() * 3); src.stop(t + dur + 0.1); lfo.start(t); lfo.stop(t + dur + 0.1);
+    this.tone(o.sub || 48, t, Math.min(dur, 1.4), { gain: o.subGain || 0.14, to: (o.sub || 48) * 0.7, attack: 0.06, send: this.bright, sendGain: 0.5 });
+  },
+  // la mort : chaque secousse est un frottement sourd ; la longue secousse du passage s'épuise lentement
+  pouls() { const c = this.get(); if (!c) return; this.frottement(c.currentTime, 1.3, { f: 160, gain: 0.55, attack: 0.05, grain: 9, sub: 46, subGain: 0.16 }); },
+  secousse() { const c = this.get(); if (!c) return; this.frottement(c.currentTime, 3.4, { f: 190, gain: 0.45, attack: 0.25, grain: 6, sub: 40, subGain: 0.12 }); },
+  // la disparition : un léger vent magique qui monte avec le voile, et quelques scintillements
+  vent(dur) {
+    const c = this.get(); if (!c) return; const t = c.currentTime;
+    const src = c.createBufferSource(); src.buffer = this.blanc(); src.loop = true;
+    const bp = c.createBiquadFilter(); bp.type = 'bandpass'; bp.Q.value = 2.2;
+    bp.frequency.setValueAtTime(420, t); bp.frequency.exponentialRampToValueAtTime(1500, t + dur * 0.6); bp.frequency.exponentialRampToValueAtTime(2600, t + dur);
+    const raf = c.createGain(); raf.gain.value = 0.7;
+    const lfo = c.createOscillator(); lfo.frequency.value = 0.55; const pr = c.createGain(); pr.gain.value = 0.3; lfo.connect(pr); pr.connect(raf.gain);
+    const lfo2 = c.createOscillator(); lfo2.frequency.value = 0.23; const pr2 = c.createGain(); pr2.gain.value = 500; lfo2.connect(pr2); pr2.connect(bp.frequency);
+    const g = c.createGain(); g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.16, t + dur * 0.35); g.gain.setValueAtTime(0.16, t + dur * 0.7); g.gain.exponentialRampToValueAtTime(0.0001, t + dur + 1.6);
+    src.connect(bp); bp.connect(raf); raf.connect(g);
+    if (c.createStereoPanner) {
+      const pan = c.createStereoPanner(); const lp = c.createOscillator(); lp.frequency.value = 0.18; const pp = c.createGain(); pp.gain.value = 0.5;
+      lp.connect(pp); pp.connect(pan.pan); lp.start(t); lp.stop(t + dur + 2); g.connect(pan); pan.connect(this.master);
+    } else g.connect(this.master);
+    const r = c.createGain(); r.gain.value = 0.5; g.connect(r); r.connect(this.bright);
+    src.start(t); src.stop(t + dur + 2); lfo.start(t); lfo.stop(t + dur + 2); lfo2.start(t); lfo2.stop(t + dur + 2);
+    const notes = [1568, 1760, 2093, 2349, 2637, 3136, 3520];
+    for (let i = 0; i < 16; i++) { const u = i / 15, k = Math.min(notes.length - 1, Math.floor(u * notes.length * 0.8 + Math.random() * 2)); this.tone(notes[k], t + 0.4 + u * dur * 0.95 + Math.random() * 0.2, 1.2, { gain: 0.012 + 0.008 * Math.sin(Math.PI * u), attack: 0.02, send: this.bright, sendGain: 0.7 }); }
+  },
+  // l'âme se resserre : quelques notes qui descendent ; puis la graine se forme : un accord clair qui scintille
+  repli() { const c = this.get(); if (!c) return; const t = c.currentTime; [1567.98, 1318.5, 1046.5, 783.99, 659.25].forEach((f, i) => this.tone(f, t + i * 0.28, 1.8, { gain: 0.03, attack: 0.12, send: this.bright, sendGain: 0.7 })); },
+  formeGraine() { const c = this.get(); if (!c) return; const t = c.currentTime; [523.25, 659.25, 783.99, 1046.5].forEach((f, i) => this.tone(f, t + i * 0.05, 3.4, { gain: 0.035, attack: 0.3, send: this.bright, sendGain: 0.7 })); this.tone(2093, t + 0.4, 2.6, { gain: 0.02, send: this.bright, sendGain: 0.7 }); },
+  // une parole qui s'écrit mot à mot (mort) : un tintement très doux
+  survolDoux() { const c = this.get(); if (!c) return; this.tone(784, c.currentTime, 0.5, { to: 770, gain: 0.05, send: this.bright, sendGain: 0.7 }); },
+  // la voix de l'homme mystérieux : une note feutrée, grave et lointaine par mot
+  motVoix(i) { const c = this.get(); if (!c) return; const t = c.currentTime;
+    const gamme = [196, 220, 246.94, 293.66, 329.63]; const f = gamme[(i * 3) % gamme.length];
+    this.tone(f, t, 0.9, { gain: 0.016, attack: 0.05, lp: 1400, send: this.bright, sendGain: 0.9 }); },
+  // la réponse qui décide de la graine se dissipe : un souffle cristallin, puis l'emblème qui se révèle
+  sceau(i) { const c = this.get(); if (!c) return; const t = c.currentTime;
+    const f = [523.25, 587.33, 659.25, 783.99, 880][i] || 659.25;
+    this.noise(t, 1.2, { f: 500, fTo: 3000, q: 0.7, gain: 0.04, attack: 0.5, send: this.bright, sendGain: 0.6 });
+    [f / 2, f, f * 1.5].forEach((x, k) => this.tone(x, t + 0.1 + k * 0.12, 3.2, { gain: 0.03, attack: 0.3, send: this.bright, sendGain: 0.6 })); },
+  // le réveil : tout s'ouvre vers la lumière
+  aube() { const c = this.get(); if (!c) return; const t = c.currentTime;
+    this.noise(t, 4, { f: 400, fTo: 6000, q: 0.5, gain: 0.07, attack: 3.2, send: this.bright, sendGain: 0.6 });
+    [261.63, 329.63, 392, 523.25, 659.25, 783.99, 1046.5, 1318.5, 1567.98].forEach((f, i) => this.tone(f, t + 0.6 + i * 0.32, 2.6, { gain: 0.035, attack: 0.08, lp: 5000, send: this.bright, sendGain: 0.6 }));
+    [130.81, 196, 261.63].forEach((f) => this.tone(f, t + 2.4, 4.5, { gain: 0.04, attack: 1.2, send: this.bright, sendGain: 0.6 })); }
 };

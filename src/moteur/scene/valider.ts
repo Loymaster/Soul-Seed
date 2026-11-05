@@ -12,6 +12,8 @@ export interface ContexteScene {
   musiques: string[];
   /** identifiants des scènes existantes */
   scenes: string[];
+  /** toutes les images du catalogue (pour « action: image … ») */
+  images?: string[];
   /** variables modifiées quelque part (autres scènes, registre, moteur du jeu) */
   variablesEcrites?: Set<string>;
 }
@@ -24,6 +26,12 @@ export function cheminDecor(valeur: string, decors?: string[]): string {
   if (!decors || decors.includes(candidat)) return candidat;
   const sansExt = candidat.replace(/\.[a-z0-9]+$/i, '');
   return decors.find((d) => d.replace(/\.[a-z0-9]+$/i, '') === sansExt) || candidat;
+}
+
+/** « pnj/garry/attaque-jumpy » → « pnj/garry/attaque-jumpy.png ». */
+export function cheminImage(valeur: string): string {
+  const v = valeur.trim().replace(/^\/?(assets\/)?/, '');
+  return /\.[a-z0-9]+$/i.test(v) ? v : `${v}.png`;
 }
 
 export function cheminMusique(valeur: string, musiques?: string[]): string {
@@ -68,7 +76,7 @@ export function variablesDeScene(scene: Scene) {
 }
 
 /** Variables fournies par le jeu lui-même (jamais écrites dans une scène, mais toujours définies). */
-export const VARIABLES_DU_JEU = new Set(['echo.nom', 'echo.stade', 'echo.lignee', 'joueur.nom', 'joueur.pronom', 'echo.genre', 'jour', 'heure', 'saison']);
+export const VARIABLES_DU_JEU = new Set(['echo.nom', 'echo.stade', 'echo.lignee', 'joueur.nom', 'joueur.pronom', 'echo.genre', 'graine.nom', 'jour', 'heure', 'saison']);
 
 export function validerScene(scene: Scene, ctx: ContexteScene): Probleme[] {
   const pb: Probleme[] = [];
@@ -140,6 +148,13 @@ export function validerScene(scene: Scene, ctx: ContexteScene): Probleme[] {
           if (verifierPNJ(n.qui, n.ligne) && !dedans.has(n.qui)) pb.push({ niveau: 'alerte', ligne: n.ligne, message: `${ctx.pnj[n.qui]?.nom || n.qui} n'est pas en scène.` });
           break;
         case 'decor': verifierDecor(n.decor, n.ligne); break;
+        case 'action':
+          if (n.nom === 'image') {
+            if (!n.argument) pb.push({ niveau: 'erreur', ligne: n.ligne, message: 'Image manquante : « action: image pnj/garry/attaque-jumpy » (ou « aucune » pour la retirer).' });
+            else if (ctx.images && !/^(aucune|rien)$/i.test(n.argument) && !ctx.images.includes(cheminImage(n.argument)))
+              pb.push({ niveau: 'erreur', ligne: n.ligne, message: `Image introuvable « ${n.argument} ».` });
+          }
+          break;
         case 'musique': verifierMusique(n.musique, n.ligne); break;
         case 'aller':
           if (!ctx.scenes.includes(n.scene)) pb.push({ niveau: 'erreur', ligne: n.ligne, message: `Scène inconnue « ${n.scene} ».${suggestion(n.scene, ctx.scenes)}` });
