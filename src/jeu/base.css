@@ -1,0 +1,5 @@
+/* Base commune du jeu (indépendante de l'atelier). */
+* { box-sizing: border-box; }
+html, body, #racine { height: 100%; margin: 0; }
+body { background: #0d0906; color: #2b2118; font: 15px/1.4 'Alegreya', Georgia, serif; -webkit-font-smoothing: antialiased; }
+button, input, select, textarea { font: inherit; color: inherit; }

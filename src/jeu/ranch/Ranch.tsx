@@ -12,7 +12,6 @@ import { IC } from './icones';
 import { TAILLE_STADE, profilEcho, volumePas } from './demarche';
 import { Carnet } from './Carnet';
 import { Sac } from './Sac';
-import { sauver } from './sauvegarde';
 import './ranch.css';
 
 export const asset = (chemin: string) => `${import.meta.env.BASE_URL}assets/${chemin}`;
@@ -61,7 +60,18 @@ interface Choix {
 interface Flottant { id: number; texte: string; couleur: string; x: number; y: number; long: boolean }
 interface Passage { cle: number; titre: string; sous?: string; image?: string; bloquant?: boolean; part?: boolean }
 
-export function Ranch({ etat, surQuitter }: { etat: Etat; surQuitter: () => void }) {
+export interface ProprietesRanch {
+  etat: Etat;
+  /** Enregistre la partie (appelé à chaque heure de jeu et après chaque action). */
+  sauver: (e: Etat) => void;
+  surQuitter: () => void;
+  reglages?: { sons: boolean; musique: boolean };
+  surReglages?: (r: { sons: boolean; musique: boolean }) => void;
+}
+
+export function Ranch({ etat, sauver: sauverProp, surQuitter, reglages, surReglages }: ProprietesRanch) {
+  const sauverRef = useRef(sauverProp); sauverRef.current = sauverProp;
+  const sauver = useCallback((x: Etat) => sauverRef.current(x), []);
   const sim = useRef<Simulation>(null as unknown as Simulation);
   if (!sim.current) sim.current = new Simulation(etat);
   const e = sim.current.etat;
@@ -85,8 +95,10 @@ export function Ranch({ etat, surQuitter }: { etat: Etat; surQuitter: () => void
   const n = useRef(0);
 
   // ——— état de l'interface
-  const [sons, setSons] = useState(true);
-  const [musique, setMusique] = useState(true);
+  const [sons, setSons] = useState(reglages?.sons ?? true);
+  const [musique, setMusique] = useState(reglages?.musique ?? true);
+  const reglagesRef = useRef(surReglages); reglagesRef.current = surReglages;
+  useEffect(() => { reglagesRef.current?.({ sons, musique }); }, [sons, musique]);
   const son = useCallback(<K extends keyof typeof SFX>(nom: K, ...args: unknown[]) => {
     if (!sonsRef.current) return;
     const f = SFX[nom] as unknown as (...a: unknown[]) => void;

@@ -110,7 +110,8 @@ const PREFIXES = [
   ['corvee-', 'activites/corvees'],
   ['entrainement-', 'activites/entrainement'],
   ['music-', 'sons/musiques'],
-  ['anim-', 'animations']
+  ['anim-', 'animations'],
+  ['avatar-', 'joueur']
 ];
 
 /** Fichiers isolés, nommés explicitement. */

@@ -41,7 +41,9 @@ aller: foret-rencontre             ← enchaîne sur une autre scène (ou « fin
 - **Places** : `G1` (bord gauche), `G2` (gauche, centre), `D2` (droite, centre), `D1` (bord droit). Quatre personnages au plus. Un PNJ qui parle sans être là entre tout seul.
 - **Résonances** des réponses : curiosité, résolution, discernement, observation, anticipation, neutre, indéterminée (abréviations : cur, res, dis, obs, ant, neu, ind). Quatre réponses au plus à l'écran.
 - **Variables** : `=`, `+=`, `-=` ; valeurs : nombres, `vrai`, `faux`, `"texte"`. Une variable jamais définie vaut 0. Conditions : `== != < > <= >=`, `et`, `ou`, `non`, parenthèses. Mettre des espaces autour du moins (`a - 1`) : un tiret collé fait partie du nom (`lady-roger.relation`).
-- `{variable}` dans un texte affiche sa valeur. Fournies par le jeu : `echo.nom`, `echo.stade`, `echo.lignee`, `joueur.nom`, `jour`, `heure`, `saison`.
+- `{variable}` dans un texte affiche sa valeur. Fournies par le jeu : `echo.nom`, `echo.stade`, `echo.lignee`, `joueur.nom`, `joueur.pronom` (il, elle, iel), `echo.genre` (m, f), `jour`, `heure`, `saison`.
+- Accorder selon le joueur : `{joueur:prêt|prête|prêt·e}` (formes pour il | elle | iel ; sans troisième forme, iel reçoit « prêt·prête »). Selon l'écho : `{echo:content|contente}`.
+  Exemple : `myhra: Te voilà enfin, {joueur.nom}. Tu es {joueur:prêt|prête|prêt·e} ?`
 - Les blocs (réponses, « si », « sinon ») se reconnaissent à leur **décalage** (deux espaces).
 - Une réplique trop longue peut continuer sur les lignes suivantes, décalées.
 

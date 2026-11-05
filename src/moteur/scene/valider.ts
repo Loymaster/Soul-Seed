@@ -68,7 +68,7 @@ export function variablesDeScene(scene: Scene) {
 }
 
 /** Variables fournies par le jeu lui-même (jamais écrites dans une scène, mais toujours définies). */
-export const VARIABLES_DU_JEU = new Set(['echo.nom', 'echo.stade', 'echo.lignee', 'joueur.nom', 'jour', 'heure', 'saison']);
+export const VARIABLES_DU_JEU = new Set(['echo.nom', 'echo.stade', 'echo.lignee', 'joueur.nom', 'joueur.pronom', 'echo.genre', 'jour', 'heure', 'saison']);
 
 export function validerScene(scene: Scene, ctx: ContexteScene): Probleme[] {
   const pb: Probleme[] = [];

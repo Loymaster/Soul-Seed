@@ -1,63 +1,106 @@
-// Point d'entrée du jeu. La refonte avance par étapes : pour l'instant, une page d'accueil
-// qui permet de jouer les scènes de dialogue écrites dans contenu/scenes.
+// Point d'entrée du jeu : introduction (création du profil) → menu principal → ranch.
 import { StrictMode, useMemo, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import donnees from '@contenu/generes/assets.json';
 import type { Catalogue } from '@/contenu/types';
 import { SCENES } from '@/contenu/scenes';
 import { analyserScene } from '@/moteur/scene/analyseur';
+import { apparence, type Etat } from '@/moteur/simulation';
 import { SceneDialogue } from './scene/SceneDialogue';
 import { Ranch } from './ranch/Ranch';
-import { charger, effacer, nouvellePartie } from './ranch/sauvegarde';
-import type { Etat } from '@/moteur/simulation';
+import { nouvellePartie } from './ranch/sauvegarde';
+import { MenuPrincipal } from './menu/MenuPrincipal';
+import { Introduction } from './menu/Introduction';
+import * as P from './profils';
 import '@/styles/polices';
-import '../atelier/atelier.css';
+import './base.css';
 
 const catalogue = donnees as unknown as Catalogue;
-const ECHO_DEMO = { nom: 'Filo', chemin: 'echos/enfant/wrath.png' };
+const DISPONIBLES = new Set(catalogue.assets.map((a) => a.chemin));
+
+type Ecran =
+  | { nom: 'intro'; premier: boolean }
+  | { nom: 'menu' }
+  | { nom: 'ranch'; emplacement: number; etat: Etat }
+  | { nom: 'scene'; id: string };
 
 function Jeu() {
-  const [sceneId, setSceneId] = useState<string | null>(null);
-  const [partie, setPartie] = useState<Etat | null>(null);
-  const [sauvegarde, setSauvegarde] = useState(() => charger());
-  const scene = useMemo(() => {
-    const s = SCENES.find((x) => x.id === sceneId);
-    return s ? analyserScene(s.source, s.id).scene : null;
-  }, [sceneId]);
-  const variables = useMemo(() => ({}), [sceneId]); // eslint-disable-line react-hooks/exhaustive-deps
+  const [version, setVersion] = useState(0); // relit les profils après chaque modification
+  const rafraichir = () => setVersion((v) => v + 1);
+  const profil = useMemo(() => P.profilActif(), [version]); // eslint-disable-line react-hooks/exhaustive-deps
+  const profils = useMemo(() => P.registre().profils, [version]); // eslint-disable-line react-hooks/exhaustive-deps
+  const [ecran, setEcran] = useState<Ecran>(() => (P.profilActif() ? { nom: 'menu' } : { nom: 'intro', premier: true }));
 
-  if (partie) {
-    return <Ranch key={partie.nom + partie.naissance + partie.graine} etat={partie} surQuitter={() => { setPartie(null); setSauvegarde(charger()); }} />;
-  }
-
-  if (scene) {
+  if (ecran.nom === 'intro' || !profil) {
+    const premier = !profil || (ecran.nom === 'intro' && ecran.premier);
     return (
-      <div style={{ position: 'fixed', inset: 0 }}>
-        <SceneDialogue scene={scene} catalogue={catalogue} echo={ECHO_DEMO} variables={variables}
-          surFin={({ suite }) => setTimeout(() => setSceneId(suite && SCENES.some((s) => s.id === suite) ? suite : null), 1800)} />
-      </div>
+      <Introduction disponibles={DISPONIBLES}
+        surAnnuler={premier ? undefined : () => setEcran({ nom: 'menu' })}
+        surFin={(nom, avatar, pronom) => { P.creerProfil(nom, avatar, pronom); rafraichir(); setEcran({ nom: 'menu' }); }} />
     );
   }
 
-  const affiche = catalogue.assets.find((a) => a.chemin === 'decors/menu/affiche.png');
-  return (
-    <div style={{ position: 'fixed', inset: 0, display: 'grid', placeItems: 'center', background: '#1b100a', color: 'var(--papier)' }}>
-      {affiche && <img src={affiche.url} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', opacity: 0.55 }} />}
-      <div style={{ position: 'relative', textAlign: 'center', padding: 24 }}>
-        <div style={{ fontFamily: 'var(--titre)', fontSize: 'clamp(34px, 7vw, 64px)', letterSpacing: '.04em' }}>Soul Seed</div>
-        <div className="manuscrit" style={{ color: 'var(--laiton-clair)', fontSize: 30 }}>refonte en cours</div>
-        <div style={{ marginTop: 26, display: 'flex', flexDirection: 'column', gap: 8, alignItems: 'center' }}>
-          {sauvegarde && !sauvegarde.mort && <button className="bouton" onClick={() => setPartie(charger())}>Retourner au ranch ({sauvegarde.nom}, jour {sauvegarde.jour})</button>}
-          <button className="bouton" onClick={() => { effacer(); setPartie(nouvellePartie()); }}>Nouvelle partie au ranch</button>
-          {SCENES.map((s) => (
-            <button key={s.id} className="bouton" onClick={() => setSceneId(s.id)}>
-              Jouer « {analyserScene(s.source, s.id).scene.titre || s.id} »
-            </button>
-          ))}
-          {import.meta.env.DEV && <a className="bouton discret" href="/atelier.html" style={{ color: 'var(--papier)', textDecoration: 'none' }}>Ouvrir l'atelier</a>}
+  if (ecran.nom === 'ranch') {
+    const { emplacement } = ecran;
+    return (
+      <Ranch key={`${profil.id}-${emplacement}-${ecran.etat.naissance}-${ecran.etat.graine}`} etat={ecran.etat}
+        reglages={profil.reglages}
+        surReglages={(r) => P.modifierProfil(profil.id, { reglages: r })}
+        sauver={(e) => { P.sauverPartie(profil.id, emplacement, e); P.noterForme(profil.id, apparence(e)); }}
+        surQuitter={() => { rafraichir(); setEcran({ nom: 'menu' }); }} />
+    );
+  }
+
+  if (ecran.nom === 'scene') {
+    const s = SCENES.find((x) => x.id === ecran.id);
+    const scene = s ? analyserScene(s.source, s.id).scene : null;
+    if (scene) {
+      const echo = P.dernierePartie(profil.id)?.etat;
+      return (
+        <div style={{ position: 'fixed', inset: 0 }}>
+          <SceneDialogue scene={scene} catalogue={catalogue}
+            echo={{ nom: echo?.nom ?? 'Filo', chemin: echo ? apparence(echo) : 'echos/enfant/wrath.png' }}
+            joueur={DISPONIBLES.has(P.cheminAvatar(profil.avatar)) ? P.cheminAvatar(profil.avatar) : undefined}
+            variables={{ 'joueur.nom': profil.nom, 'joueur.pronom': profil.pronom, 'echo.genre': echo?.genre ?? 'm' }}
+            surFin={({ suite }) => setTimeout(() => setEcran(suite && SCENES.some((x) => x.id === suite) ? { nom: 'scene', id: suite } : { nom: 'menu' }), 1800)} />
         </div>
-      </div>
-    </div>
+      );
+    }
+  }
+
+  const lancer = (emplacement: number, etat: Etat) => {
+    P.marquerDernierePartie(profil.id, emplacement);
+    setEcran({ nom: 'ranch', emplacement, etat });
+  };
+  const parties = P.parties(profil.id);
+  return (
+    <MenuPrincipal profil={profil} profils={profils} parties={parties} derniere={P.dernierePartie(profil.id)} disponibles={DISPONIBLES}
+      surContinuer={() => { const d = P.dernierePartie(profil.id); if (d) lancer(d.emplacement, d.etat); }}
+      surCharger={(i) => { const e = P.chargerPartie(profil.id, i); if (e) lancer(i, e); }}
+      surNouvellePartie={(i) => {
+        // En attendant le nouvel écran de sélection de la Soul Seed : graine tirée au hasard.
+        const e = nouvellePartie();
+        P.sauverPartie(profil.id, i, e);
+        lancer(i, e);
+      }}
+      surEffacerPartie={(i) => { P.effacerPartie(profil.id, i); rafraichir(); }}
+      surChoisirProfil={(id) => { P.choisirProfil(id); rafraichir(); }}
+      surNouveauProfil={() => setEcran({ nom: 'intro', premier: false })}
+      surSupprimerProfil={(id) => { P.supprimerProfil(id); rafraichir(); if (!P.profilActif()) setEcran({ nom: 'intro', premier: true }); }}
+      surModifierProfil={(m) => { P.modifierProfil(profil.id, m); rafraichir(); }}
+      outilsDev={import.meta.env.DEV ? (
+        <>
+          <div style={{ fontFamily: "'Alegreya SC',serif", letterSpacing: 2, color: '#bfe6ff', fontSize: 13, marginBottom: 8 }}>Développement</div>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+            {SCENES.map((s) => (
+              <button key={s.id} className="bouton-saint discret" style={{ fontSize: 13, padding: '7px 14px' }} onClick={() => setEcran({ nom: 'scene', id: s.id })}>
+                Scène « {analyserScene(s.source, s.id).scene.titre || s.id} »
+              </button>
+            ))}
+            <a className="bouton-saint discret" style={{ fontSize: 13, padding: '7px 14px', textDecoration: 'none' }} href="/atelier.html">Ouvrir l’atelier</a>
+          </div>
+        </>
+      ) : undefined} />
   );
 }
 

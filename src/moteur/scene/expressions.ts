@@ -126,6 +126,16 @@ export function afficherValeur(v: Valeur | undefined): string {
 
 /** Remplace {variable} dans un texte par sa valeur (ex. « {echo.nom} te regarde. »). */
 export function interpoler(texte: string, lire: (nom: string) => Valeur | undefined): string {
+  // Accords : {joueur:prêt|prête|prêt·e} suit le pronom du joueur (il | elle | iel),
+  // {echo:content|contente} suit le genre de l'écho (m | f).
+  texte = texte.replace(/\{(joueur|echo):([^{}]*)\}/gu, (_, qui: string, formes: string) => {
+    const f = formes.split('|');
+    if (qui === 'echo') return lire('echo.genre') === 'f' ? (f[1] ?? f[0]) : f[0];
+    const p = lire('joueur.pronom');
+    if (p === 'elle') return f[1] ?? f[0];
+    if (p === 'iel') return f[2] ?? (f[1] !== undefined ? `${f[0]}·${f[1]}` : f[0]);
+    return f[0];
+  });
   return texte.replace(/\{([\p{L}_][\p{L}\p{N}_.]*)\}/gu, (_, nom) => {
     const v = lire(nom);
     return v === undefined ? `{${nom}}` : typeof v === 'boolean' ? (v ? 'vrai' : 'faux') : String(v);
