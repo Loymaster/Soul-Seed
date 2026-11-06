@@ -263,6 +263,10 @@ export interface Etat {
 
   inventaire: (CaseInventaire | null)[];
   or: number;
+  /** Combat : PV restants depuis le dernier combat (null ou absent : pleine forme, rendue par le sommeil). */
+  pvCombat?: number | null;
+  /** Techniques de combat : apprises, équipées (trois au plus), seuils d'intelligence déjà franchis. */
+  techniques?: { connues: string[]; equipees: string[]; seuils: number[] };
   journal: EntreeJournal[];
   mort: CauseMort | null;
   /** Compteur pour les identifiants (déjections…). */
@@ -286,6 +290,7 @@ export type Sortie =
   | { type: 'maladie' }
   | { type: 'guerison' }
   | { type: 'blessure' }
+  | { type: 'technique'; nom: string }
   | { type: 'nouveau-jour'; jour: number }
   | { type: 'mort'; cause: CauseMort };
 

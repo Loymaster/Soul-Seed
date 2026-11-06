@@ -20,6 +20,8 @@ import { determinerAdolescent, determinerAdulte } from './evolution';
 import { INTERACTIONS } from './donnees/interactions';
 import { CORVEES, ENTRAINEMENTS } from './donnees/activites';
 import { ALIMENTS } from './donnees/aliments';
+import type { BilanCombat } from '../combat/issue';
+import { apprendreTechniques, poolTechniques } from '../combat/pools';
 
 /** Options d'une heure de simulation (paramètres de tickHour dans le prototype). */
 export interface OptionsHeure {
@@ -517,6 +519,7 @@ export class Simulation {
     this.enSommeil = false;
     this.effondrementEnAttente = false;
     if (e.mort) return heures;
+    e.pvCombat = null;
     const mot = `heure${heures > 1 ? 's' : ''}`;
     this.noter(effondrement
       ? `${this.Nom} était si ${this.a('fatigué', 'fatiguée')} qu’${this.a('il', 'elle')} s’est ${this.a('écroulé', 'écroulée')} et a dormi ${heures} ${mot}.`
@@ -882,6 +885,41 @@ export class Simulation {
       this.avancer(1, { message: texte, emotions: { tristesse: 20, peur: 10, colere: 10 } });
     }
     return { ok: true, texte, succes };
+  }
+
+  // ————————————————————————————————————————— combat
+
+  /**
+   * Seuils d'intelligence (150, 350, 550, 750) : chaque seuil franchi pour la première fois apprend une technique
+   * du pool de l'écho (checkTechniqueUnlocks). Les trois premières apprises sont équipées d'office.
+   */
+  apprendreTechniques(): string[] {
+    const e = this.etat;
+    const t = e.techniques ?? { connues: [], equipees: [], seuils: [] };
+    const r = apprendreTechniques(e.caracs.intelligence, t.seuils, t.connues, poolTechniques(e), this.rng);
+    const equipees = t.equipees.slice();
+    for (const n of r.apprises) if (equipees.length < 3) equipees.push(n);
+    e.techniques = { connues: r.connues, equipees, seuils: r.seuilsPasses };
+    for (const n of r.apprises) {
+      this.noter(`${this.Nom} a appris une technique : ${n}.`);
+      this.emettre({ type: 'technique', nom: n });
+    }
+    return r.apprises;
+  }
+
+  /** Après un combat gagné ou perdu (applyCombatOutcome) : progrès, or, éducation, émotions, une heure qui passe. */
+  terminerCombat(b: BilanCombat, adversaire?: string) {
+    const e = this.etat;
+    if (e.mort) return;
+    for (const k of CLES_CARACS) e.caracs[k] = Math.min(999, dixieme((e.caracs[k] || 0) + b.progres[k]));
+    e.or += b.or;
+    e.pvCombat = b.pv;
+    this.eduquer('moteur', 'wrath');
+    this.eduquer(null, 'fear');
+    this.apprendreTechniques();
+    const contre = adversaire ? ` contre ${adversaire}` : '';
+    const texte = b.resultat === 'victoire' ? `${this.Nom} a remporté un combat${contre}.` : `${this.Nom} a perdu un combat${contre}.`;
+    this.avancer(1, { gainHumeur: b.humeur, emotions: b.emotions, debutBlessure: b.blessure, message: texte });
   }
 }
 

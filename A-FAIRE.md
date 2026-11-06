@@ -41,6 +41,15 @@ Laver, brosser, coucher, manger, jeux, entraînements et corvées se jouent dans
 - [ ] Remplacer les accessoires dessinés provisoires (seau, brosse, balle, buissons, livre, bûche, marteau…) par des visuels définitifs.
 - [ ] Jeux proposés en plus de la balle, du cache-cache et de l'histoire : bulles de savon, chasse aux lucioles (à la nuit tombée), tir à la corde (dans la maquette) ; à étudier : tas de feuilles (automne), ricochets (près d'un point d'eau), imitation de cris, course-poursuite.
 
+## Combat
+Moteur prêt dans `src/moteur/combat/` (règles du prototype, temps réel, déterministe avec une graine). Reste :
+- [ ] Écran de combat : arène (fond d'exploration), échos qui avancent par pas, tirs, halos d'incantation, statuts en orbite, jauge de vie dessinée (sans chiffre), ordres avec cadran de recharge, objets de soin, fuite.
+- [ ] Musique de combat (`sons/musiques/combat*`) et sons des coups, esquives, parades.
+- [ ] Carnet : page des techniques (apprises, trois équipées, description en mots).
+- [ ] Brancher les combats : échos sauvages (événement « invité »), exploration, PNJ (Garry, Lady Roger, Phil et Hibert, Hevann, Bourbella), mode Arène.
+- [ ] Équilibrage : à caractéristiques égales, un combat de bébés dure environ 1 min 30, d'adolescents moyens 1 min 20 (essai sur 40 combats).
+- [ ] Décider : les adultes gardent-ils les techniques de leur adolescence (comme le jeu du prototype) ou prennent-ils les pools adultes (mode Arène du prototype) ? Le moteur permet les deux (`poolsAdultes`).
+
 ## Simulation et contenu
 - [ ] Héritage entre générations (7–12 % des caractéristiques) : calculé puis remis à zéro dans le prototype — décider s’il devient réel.
 - [ ] Mini-jeux des corvées et réparations d’Ash.
@@ -48,5 +57,4 @@ Laver, brosser, coucher, manger, jeux, entraînements et corvées se jouent dans
 - [ ] Jardin et cuisine.
 - [ ] Échos de mémoire.
 - [ ] Démarche propre à chaque forme d’écho.
-- [ ] Mode Arène.
 - [ ] Musique au ranch et au village (l'introduction, le choix de la graine, la mort et les scènes ont déjà la leur).
