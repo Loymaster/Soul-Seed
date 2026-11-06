@@ -1,13 +1,15 @@
 // Implémentation brute des sons synthétisés (portée telle quelle depuis les maquettes validées).
 // Ne pas importer directement : passer par sfx.ts, qui la type.
 export const SFX = {
-  ctx: null, on: true,
+  ctx: null, on: true, niveau: 0.8,
+  /** Volume général des bruitages (0–1), réglé dans les options. */
+  regler(n) { this.niveau = n; if (this.master) this.master.gain.value = 0.6 * n; },
   get() {
     if (!this.on) return null;
     if (!this.ctx) {
       const C = window.AudioContext || window.webkitAudioContext; if (!C) return null;
       const c = this.ctx = new C();
-      this.master = c.createGain(); this.master.gain.value = 0.6; this.master.connect(c.destination);
+      this.master = c.createGain(); this.master.gain.value = 0.6 * this.niveau; this.master.connect(c.destination);
       // léger écho cristallin (magie sainte), volontairement discret
       this.delay = c.createDelay(); this.delay.delayTime.value = 0.13;
       const fb = c.createGain(); fb.gain.value = 0.12; const lp = c.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 4500;

@@ -1,5 +1,6 @@
 // Musiques d'ambiance des écrans plein cadre : lecture en boucle, montée et descente en fondu.
 import { useEffect, useRef } from 'react';
+import { ecouterVolumes, volumeMusique } from './volumes';
 
 export const cheminSon = (nom: string) => `${import.meta.env.BASE_URL}assets/sons/musiques/${nom}.mp3`;
 
@@ -10,7 +11,7 @@ export interface Piste {
 
 /**
  * Joue `nom` (public/assets/sons/musiques/<nom>.mp3) tant que le composant est affiché et que `active` est vrai.
- * Le volume monte jusqu'à `volume` ; à la fin, la piste s'éteint en fondu.
+ * Le volume monte jusqu'à `volume` (multiplié par le volume de musique des options) ; à la fin, la piste s'éteint en fondu.
  */
 export function useMusique(nom: string | null, { volume = 0.4, active = true, montee = 3000 }: { volume?: number; active?: boolean; montee?: number } = {}): Piste {
   const audio = useRef<HTMLAudioElement | null>(null);
@@ -32,11 +33,15 @@ export function useMusique(nom: string | null, { volume = 0.4, active = true, mo
     a.loop = true; a.volume = 0;
     audio.current = a;
     // lecture refusée par le navigateur (aucun geste encore) : on réessaie au premier clic ou à la première touche
-    const reessayer = () => { a.play().then(() => vers(volume, montee)).catch(() => {}); retirer(); };
+    const cible = () => volume * volumeMusique();
+    const reessayer = () => { a.play().then(() => vers(cible(), montee)).catch(() => {}); retirer(); };
     const retirer = () => { window.removeEventListener('pointerdown', reessayer); window.removeEventListener('keydown', reessayer); };
     a.play().catch(() => { window.addEventListener('pointerdown', reessayer); window.addEventListener('keydown', reessayer); });
-    vers(volume, montee);
+    vers(cible(), montee);
+    // volume changé dans les options : la piste s'y ajuste en douceur
+    const desabonner = ecouterVolumes(() => vers(cible(), 300));
     return () => {
+      desabonner();
       retirer();
       if (fondu.current) clearInterval(fondu.current);
       const v0 = a.volume, t0 = performance.now();

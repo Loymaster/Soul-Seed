@@ -24,7 +24,10 @@ export function Carnet({ etat: e, signes, papier, heure, son, nouvelles, surLu, 
   etat: Etat; signes: Signes; papier: string; heure: string; nouvelles: number;
   son: (nom: Son, ...a: unknown[]) => void;
   surLu: () => void; surFermer: () => void; surSauver: () => void; surQuitter: () => void;
-  reglages: { sons: boolean; setSons: (v: boolean) => void; musique: boolean; setMusique: (v: boolean) => void };
+  reglages: {
+    sons: boolean; setSons: (v: boolean) => void; musique: boolean; setMusique: (v: boolean) => void;
+    volumeMusique: number; setVolumeMusique: (v: number) => void; volumeBruitages: number; setVolumeBruitages: (v: number) => void;
+  };
 }) {
   const [section, setSection] = useState<Section>('sommaire');
   const [ferme, setFerme] = useState(false);
@@ -189,6 +192,9 @@ export function Carnet({ etat: e, signes, papier, heure, son, nouvelles, surLu, 
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
                       {[{ nom: 'Sons', actif: reglages.sons, basculer: () => reglages.setSons(!reglages.sons) }, { nom: 'Musique', actif: reglages.musique, basculer: () => reglages.setMusique(!reglages.musique) }].map((g) => (
                         <label key={g.nom} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, fontSize: 17, cursor: 'pointer' }}><span>{g.nom}</span><input type="checkbox" checked={g.actif} onChange={g.basculer} style={{ width: 22, height: 22, accentColor: '#6e3f22' }} /></label>
+                      ))}
+                      {[{ nom: 'Volume de la musique', valeur: reglages.volumeMusique, changer: reglages.setVolumeMusique }, { nom: 'Volume des bruitages', valeur: reglages.volumeBruitages, changer: reglages.setVolumeBruitages }].map((c) => (
+                        <label key={c.nom} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 14, fontSize: 17, cursor: 'pointer' }}><span>{c.nom}</span><input type="range" min={0} max={100} step={5} value={c.valeur} onChange={(ev) => c.changer(Number(ev.target.value))} style={{ flex: '0 0 46%', accentColor: '#6e3f22', cursor: 'pointer' }} /></label>
                       ))}
                       <div style={{ fontFamily: "'Reenie Beanie',cursive", fontSize: 22, color: '#6b4f33' }}>{accord(e, 'Il', 'Elle')} vous attendra ici.</div>
                     </div>

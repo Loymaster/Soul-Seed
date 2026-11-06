@@ -23,6 +23,14 @@ export const PRONOMS: { id: Pronom; nom: string; exemple: string }[] = [
   { id: 'iel', nom: 'iel', exemple: 'Iel est prêt·e pour l’aventure.' },
 ];
 
+/** Réglages du profil. Les volumes vont de 0 à 100 (80 par défaut). */
+export interface Reglages {
+  sons: boolean;
+  musique: boolean;
+  volumeMusique?: number;
+  volumeBruitages?: number;
+}
+
 export interface Profil {
   id: string;
   nom: string;
@@ -30,7 +38,7 @@ export interface Profil {
   pronom: Pronom;
   creeLe: string;
   vuLe: string;
-  reglages: { sons: boolean; musique: boolean };
+  reglages: Reglages;
   /** Formes d'écho découvertes (chemins d'apparence), pour la Mémoire des échos. */
   memoire: string[];
 }
@@ -91,7 +99,7 @@ export function creerProfil(nom: string, avatar: IdAvatar, pronom: Pronom): Prof
   const p: Profil = {
     id: 'p' + Date.now().toString(36) + Math.floor(Math.random() * 1e4).toString(36),
     nom: nom.trim(), avatar, pronom, creeLe: maintenant, vuLe: maintenant,
-    reglages: { sons: true, musique: true }, memoire: [],
+    reglages: { sons: true, musique: true, volumeMusique: 80, volumeBruitages: 80 }, memoire: [],
   };
   r.profils.push(p);
   r.actif = p.id;

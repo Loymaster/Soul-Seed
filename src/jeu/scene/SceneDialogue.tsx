@@ -2,6 +2,7 @@
 // feuille de dialogue écrite lettre à lettre avec la voix de chacun, choix colorés par leur résonance.
 // L'action en cours est en pause derrière ; la scène rend la main à la fin (surFin).
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { volumeMusique } from '../commun/volumes';
 import type { Asset, Catalogue, FichePNJ } from '@/contenu/types';
 import { SFX, TIMBRES, timbre } from '@/moteur/sfx';
 import { LecteurScene, type Changement, type Evenement } from '@/moteur/scene/lecteur';
@@ -314,7 +315,8 @@ export function SceneDialogue(props: PropsSceneDialogue) {
     audio.loop = true; audio.volume = 0;
     audio.play().catch(() => {});
     let v = 0;
-    const monte = setInterval(() => { v = Math.min(0.45, v + 0.03); audio.volume = v; if (v >= 0.45) clearInterval(monte); }, 80);
+    const haut = 0.45 * volumeMusique();
+    const monte = setInterval(() => { v = Math.min(haut, v + 0.03); audio.volume = v; if (v >= haut) clearInterval(monte); }, 80);
     return () => {
       clearInterval(monte);
       const descend = setInterval(() => { v = Math.max(0, v - 0.04); audio.volume = v; if (v <= 0) { clearInterval(descend); audio.pause(); } }, 60);

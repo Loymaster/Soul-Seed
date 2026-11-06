@@ -12,6 +12,8 @@ import { IC } from './icones';
 import { TAILLE_STADE, profilEcho, volumePas } from './demarche';
 import { Carnet } from './Carnet';
 import { Sac } from './Sac';
+import { fixerVolumes } from '../commun/volumes';
+import type { Reglages } from '../profils';
 import './ranch.css';
 
 export const asset = (chemin: string) => `${import.meta.env.BASE_URL}assets/${chemin}`;
@@ -65,8 +67,8 @@ export interface ProprietesRanch {
   /** Enregistre la partie (appelé à chaque heure de jeu et après chaque action). */
   sauver: (e: Etat) => void;
   surQuitter: () => void;
-  reglages?: { sons: boolean; musique: boolean };
-  surReglages?: (r: { sons: boolean; musique: boolean }) => void;
+  reglages?: Reglages;
+  surReglages?: (r: Reglages) => void;
   /** L'écho s'est éteint : la séquence du « dernier souffle » prend le relais. */
   surMort?: (e: Etat) => void;
 }
@@ -100,8 +102,13 @@ export function Ranch({ etat, sauver: sauverProp, surQuitter, reglages, surRegla
   // ——— état de l'interface
   const [sons, setSons] = useState(reglages?.sons ?? true);
   const [musique, setMusique] = useState(reglages?.musique ?? true);
+  const [volumeMusique, setVolumeMusique] = useState(reglages?.volumeMusique ?? 80);
+  const [volumeBruitages, setVolumeBruitages] = useState(reglages?.volumeBruitages ?? 80);
   const reglagesRef = useRef(surReglages); reglagesRef.current = surReglages;
-  useEffect(() => { reglagesRef.current?.({ sons, musique }); }, [sons, musique]);
+  useEffect(() => {
+    fixerVolumes({ musique: volumeMusique / 100, bruitages: volumeBruitages / 100 });
+    reglagesRef.current?.({ sons, musique, volumeMusique, volumeBruitages });
+  }, [sons, musique, volumeMusique, volumeBruitages]);
   const son = useCallback(<K extends keyof typeof SFX>(nom: K, ...args: unknown[]) => {
     if (!sonsRef.current) return;
     const f = SFX[nom] as unknown as (...a: unknown[]) => void;
@@ -755,7 +762,7 @@ export function Ranch({ etat, sauver: sauverProp, surQuitter, reglages, surRegla
         {carnet && (
           <Carnet etat={e} signes={signes} papier={m.papier} heure={m.heure} son={son} nouvelles={nouvelles}
             surLu={() => setNouvelles(0)} surFermer={() => setCarnet(false)}
-            reglages={{ sons, setSons, musique, setMusique }}
+            reglages={{ sons, setSons, musique, setMusique, volumeMusique, setVolumeMusique, volumeBruitages, setVolumeBruitages }}
             surSauver={() => sauver(e)}
             surQuitter={() => { sauver(e); surQuitter(); }} />
         )}

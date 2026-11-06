@@ -184,6 +184,8 @@ export function MenuPrincipal(p: ProprietesMenu) {
               <div className="chapeau">Réglages du profil de {profil.nom}.</div>
               <label className="interrupteur"><span>Musique</span><input type="checkbox" checked={musique} onChange={() => p.surModifierProfil({ reglages: { ...profil.reglages, musique: !musique } })} /></label>
               <label className="interrupteur"><span>Bruitages</span><input type="checkbox" checked={sons} onChange={() => { SFX.on = !sons; p.surModifierProfil({ reglages: { ...profil.reglages, sons: !sons } }); }} /></label>
+              <label className="curseur"><span>Volume de la musique</span><input type="range" min={0} max={100} step={5} value={profil.reglages.volumeMusique ?? 80} onChange={(ev) => p.surModifierProfil({ reglages: { ...profil.reglages, volumeMusique: Number(ev.target.value) } })} /></label>
+              <label className="curseur"><span>Volume des bruitages</span><input type="range" min={0} max={100} step={5} value={profil.reglages.volumeBruitages ?? 80} onChange={(ev) => { p.surModifierProfil({ reglages: { ...profil.reglages, volumeBruitages: Number(ev.target.value) } }); }} onPointerUp={() => SFX.holyHover()} /></label>
               <div style={{ position: 'relative', margin: '18px 0 8px', fontFamily: "'Alegreya SC',serif", letterSpacing: 2, color: '#bfe6ff', fontSize: 13 }}>Avatar</div>
               <div style={{ position: 'relative', display: 'flex', gap: 10, flexWrap: 'wrap' }}>
                 {AVATARS.map((a) => (

@@ -33,6 +33,9 @@ export function timbre(nom: string | Timbre | undefined): Timbre {
 type Son = () => void;
 export interface MoteurSons {
   on: boolean;
+  /** Volume des bruitages (0–1). */
+  niveau: number;
+  regler: (n: number) => void;
   holyHover: Son; holyClick: Son; reveal: Son; darkHover: Son; darkClick: Son;
   stamp: Son; leather: Son; page: (volume?: number) => void; woosh: Son; bookArrive: Son;
   pencil: Son; paperTick: Son; slide: Son; pop: Son;

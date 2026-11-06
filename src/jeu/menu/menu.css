@@ -73,6 +73,8 @@
 .lien-petit:hover{color:#ffd0d0}
 .interrupteur{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 4px;font-size:17px;border-bottom:1px solid rgba(200,230,255,.14)}
 .interrupteur input{width:22px;height:22px;accent-color:#a8dcff}
+.curseur{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:10px 4px;font-size:17px;border-bottom:1px solid rgba(200,230,255,.14)}
+.curseur input{flex:0 0 46%;accent-color:#a8dcff;cursor:pointer}
 
 /* Introduction : création d'un profil */
 .intro{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;padding:24px 16px;box-sizing:border-box;background:radial-gradient(ellipse at 50% 120%,rgba(255,184,107,.35),transparent 55%),linear-gradient(180deg,#0b1628 0%,#15294a 55%,#2e2c48 100%)}

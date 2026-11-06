@@ -23,6 +23,7 @@ import { ID_SCENE_SANCTUAIRE, Sanctuaire } from './intro/Sanctuaire';
 import * as P from './profils';
 import '@/styles/polices';
 import './base.css';
+import { fixerVolumes } from './commun/volumes';
 
 const catalogue = donnees as unknown as Catalogue;
 const DISPONIBLES = new Set(catalogue.assets.map((a) => a.chemin));
@@ -66,6 +67,7 @@ function Jeu() {
 
   const { musique, sons } = profil.reglages;
   SFX.on = sons;
+  fixerVolumes({ musique: (profil.reglages.volumeMusique ?? 80) / 100, bruitages: (profil.reglages.volumeBruitages ?? 80) / 100 });
   const menu = () => { rafraichir(); setEcran({ nom: 'menu' }); };
   const lancer = (emplacement: number, etat: Etat) => {
     if (emplacement === ESSAI) { menu(); return; }

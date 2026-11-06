@@ -43,8 +43,13 @@ Laver, brosser, coucher, manger, jeux, entraînements et corvées se jouent dans
 
 ## Combat
 Moteur prêt dans `src/moteur/combat/` (règles du prototype, temps réel, déterministe avec une graine). Reste :
-- [ ] Écran de combat : arène (fond d'exploration), échos qui avancent par pas, tirs, halos d'incantation, statuts en orbite, jauge de vie dessinée (sans chiffre), ordres avec cadran de recharge, objets de soin, fuite.
-- [ ] Musique de combat (`sons/musiques/combat*`) et sons des coups, esquives, parades.
+- [ ] Écran de combat (maquettes : page « Combat » du canevas, branchées sur le vrai moteur), en trois registres :
+  - **exploration** (carnet de terrain : carte punaisée, toile kaki, étiquettes de bois) pour les combats courants en forêt, en exploration et à l'entraînement — musique *exploration* (Misty Trees) ;
+  - **magie sainte** (verre et filigrane, lumière qui monte) pour l'arène et les combats importants — musique *combat* ;
+  - **magie corrompue** (obsidienne fêlée, cendres qui tombent, pas de fuite possible) pour les boss — musique *morthen* (Dark Reality).
+  Le combat ne démarre qu'au bouton « Commencer le combat ».
+- [ ] Sons des coups, esquives, parades (synthétisés dans les maquettes, plus graves en registre corrompu).
+- [ ] Musique de Vinland : *nyxara-battle* (Leomon), qui lui revient.
 - [ ] Carnet : page des techniques (apprises, trois équipées, description en mots).
 - [ ] Brancher les combats : échos sauvages (événement « invité »), exploration, PNJ (Garry, Lady Roger, Phil et Hibert, Hevann, Bourbella), mode Arène.
 - [ ] Équilibrage : à caractéristiques égales, un combat de bébés dure environ 1 min 30, d'adolescents moyens 1 min 20 (essai sur 40 combats).
