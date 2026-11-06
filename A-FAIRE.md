@@ -34,6 +34,13 @@ Maquette : plateau « Ranch » (page v7) du canevas.
   - Chaque choix est lié à un tempérament, que le joueur découvre en le choisissant, et a un effet positif ou négatif sur le comportement choisi.
   - Pages 2 et 4 : prévoir l'affichage de plusieurs tempéraments possibles, chacun inconnu jusqu'à ce qu'il ait été choisi une fois.
 
+## Scènes d'action (fenêtre centrale)
+Laver, brosser, coucher, manger, jeux, entraînements et corvées se jouent dans une fenêtre au centre de l'écran : l'écho y saute depuis sa place au ranch, l'action se joue (accessoires et légères déformations du sprite), puis une feuille volante résume ce qu'on devine, sans chiffre (« Il semble apprécier. Il lui reste un petit creux. »). Maquette : plateau « Ranch » (page v7) du canevas.
+- [ ] Porter la scène d'action dans le jeu (textes tirés de `lireSignes()`).
+- [ ] Préférences de l'écho entre deux actions qui comblent le même besoin : brosser ou laver pour la propreté (il peut préférer l'une à l'autre), et plus largement aliments, jeux. À découvrir par le joueur au fil des feuilles volantes.
+- [ ] Remplacer les accessoires dessinés provisoires (seau, brosse, balle, buissons, livre, bûche, marteau…) par des visuels définitifs.
+- [ ] Jeux proposés en plus de la balle, du cache-cache et de l'histoire : bulles de savon, chasse aux lucioles (à la nuit tombée), tir à la corde (dans la maquette) ; à étudier : tas de feuilles (automne), ricochets (près d'un point d'eau), imitation de cris, course-poursuite.
+
 ## Simulation et contenu
 - [ ] Héritage entre générations (7–12 % des caractéristiques) : calculé puis remis à zéro dans le prototype — décider s’il devient réel.
 - [ ] Mini-jeux des corvées et réparations d’Ash.
