@@ -15,6 +15,25 @@ L’épitaphe de la carte « Mémoire des échos » doit être choisie selon ce 
 - [ ] Éviter les répétitions d’un écho à l’autre (mémoire des épitaphes déjà vues par profil).
 - [ ] Accorder les phrases au genre de l’écho et au pronom du joueur.
 
+## Événements du ranch (carnet d'événement)
+Quand le « ! » apparaît au-dessus de l'écho et qu'on le clique, le carnet s'ouvre avec le personnage du joueur.
+- Page 1 : « Que se passe-t-il ? » et la situation.
+- Page 2 : les réponses, et en haut à droite le tempérament en jeu. Il est inconnu tant que l'événement n'a jamais été joué.
+- Page 3 : la réponse choisie en titre (« Vous réprimandez Filo », « Vous l'ignorez »…), puis sa conséquence.
+- Page 4 : le tempérament, révélé la première fois puis inscrit pour de bon, avec un tampon « renforcée », « diminuée » ou « inchangée ».
+
+Maquette : plateau « Ranch » (page v7) du canevas.
+
+- [ ] Porter le carnet d'événement dans le jeu, avec les variantes d'expression de l'avatar (gêné·e, neutre, satisfait·e, sévère…).
+- [ ] Garder en mémoire, par profil, les tempéraments déjà découverts pour chaque événement.
+- [ ] Écrire les événements simples : bêtises, réussites, habitudes, trouvailles. Un seul tempérament est en jeu, et la réponse le renforce, le diminue ou le laisse inchangé.
+- [ ] Écrire les événements de renforcement « au choix entre tempéraments » (les plus complexes, et les plus intéressants) :
+  - Il se passe quelque chose, et l'écho regarde le joueur, en attente du comportement à adopter.
+  - L'événement lui-même est neutre.
+  - Le joueur peut l'encourager à faire ceci ou cela : jusqu'à 5 choix, dont toujours un choix neutre (« ne rien faire »).
+  - Chaque choix est lié à un tempérament, que le joueur découvre en le choisissant, et a un effet positif ou négatif sur le comportement choisi.
+  - Pages 2 et 4 : prévoir l'affichage de plusieurs tempéraments possibles, chacun inconnu jusqu'à ce qu'il ait été choisi une fois.
+
 ## Simulation et contenu
 - [ ] Héritage entre générations (7–12 % des caractéristiques) : calculé puis remis à zéro dans le prototype — décider s’il devient réel.
 - [ ] Mini-jeux des corvées et réparations d’Ash.
