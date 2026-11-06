@@ -31,9 +31,13 @@ export function useMusique(nom: string | null, { volume = 0.4, active = true, mo
     const a = new Audio(cheminSon(nom));
     a.loop = true; a.volume = 0;
     audio.current = a;
-    a.play().catch(() => { /* lecture refusée par le navigateur : on reste silencieux */ });
+    // lecture refusée par le navigateur (aucun geste encore) : on réessaie au premier clic ou à la première touche
+    const reessayer = () => { a.play().then(() => vers(volume, montee)).catch(() => {}); retirer(); };
+    const retirer = () => { window.removeEventListener('pointerdown', reessayer); window.removeEventListener('keydown', reessayer); };
+    a.play().catch(() => { window.addEventListener('pointerdown', reessayer); window.addEventListener('keydown', reessayer); });
     vers(volume, montee);
     return () => {
+      retirer();
       if (fondu.current) clearInterval(fondu.current);
       const v0 = a.volume, t0 = performance.now();
       const id = setInterval(() => {

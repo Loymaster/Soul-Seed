@@ -4,6 +4,7 @@ import { NOM_STADE, ageJours, apparence, type Etat } from '@/moteur/simulation';
 import { SFX } from '@/moteur/sfx';
 import { AVATARS, NB_EMPLACEMENTS, PRONOMS, type Profil } from '../profils';
 import { Avatar } from './Avatar';
+import { useMusique } from '../commun/musique';
 import './menu.css';
 
 const asset = (chemin: string) => `${import.meta.env.BASE_URL}assets/${chemin}`;
@@ -42,6 +43,7 @@ export function MenuPrincipal(p: ProprietesMenu) {
   const { profil, parties } = p;
   const musique = profil.reglages.musique, sons = profil.reglages.sons;
   SFX.on = sons;
+  useMusique('menu', { volume: 0.4, active: musique });
   const nbParties = parties.filter(Boolean).length;
   const libre = parties.findIndex((x) => !x);
   const formesTotales = [...p.disponibles].filter((c) => /^echos\/(bebe|enfant|adolescent|adulte)\//.test(c)).length;
