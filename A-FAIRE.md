@@ -55,9 +55,17 @@ Moteur prêt dans `src/moteur/combat/` (règles du prototype, temps réel, déte
 - [ ] Carnet : page des techniques (apprises, trois équipées, description en mots).
 - [x] Combats d'exploration : l'écho sauvage du lieu (âge et graines de la zone) ; on revient au même lieu avec l'issue.
 - [x] Combats contre les PNJ (`src/jeu/monde/adversaires.ts`, lancés par `action: combat <pnj>` dans les scènes) : Jumpy (entraînement), Lady Roger, Hevann et Garry (magie sainte, musique de Garry pour lui), Bourbella, Phil et Hibert (à deux). L'écran de combat accepte plusieurs adversaires (`renforts`) et une piste (`piste`).
-- [ ] Brancher les combats : échos sauvages (événement « invité »), mode Arène.
+- [x] Combat contre l'écho de passage au ranch (« Affronter … » en cliquant sur lui ; sans risque de blessure). L'activité « Combat d'entraînement » contre un écho de passage est retirée.
+- [ ] Brancher les combats : mode Arène.
 - [ ] Équilibrage : à caractéristiques égales, un combat de bébés dure environ 1 min 30, d'adolescents moyens 1 min 20 (essai sur 40 combats).
 - [ ] Décider : les adultes gardent-ils les techniques de leur adolescence (comme le jeu du prototype) ou prennent-ils les pools adultes (mode Arène du prototype) ? Le moteur permet les deux (`poolsAdultes`).
+
+## Ranch : visites, évolution, tutoriel
+- [x] Événements aléatoires du prototype (bruit de Garry, nouvel écho, retour d'un écho connu) ; le visiteur entre et repart à pied, à l'échelle de son stade.
+- [x] Relations avec les échos sauvages (affect du prototype) : paliers en mots dans le carnet (Relations) et au journal ; les deux échos interagissent aussi d'eux-mêmes (jeu, dispute, partage, repos).
+- [x] Séquence d'évolution (Evolution.tsx) et tutoriel de Jumpy à la première arrivée au ranch.
+- [ ] Décider : un écho sauvage qui revient au fil des jours reste à son stade de départ (comme dans le prototype) ou grandit avec son âge.
+- [ ] Sons propres aux gestes à deux (bousculade, partage) ; une vignette dessinée pour la poussière.
 
 ## Simulation et contenu
 - [ ] Héritage entre générations (7–12 % des caractéristiques) : calculé puis remis à zéro dans le prototype — décider s’il devient réel.

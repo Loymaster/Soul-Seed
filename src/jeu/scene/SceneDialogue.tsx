@@ -39,6 +39,8 @@ export interface PropsSceneDialogue {
   surAction?: (nom: string, argument: string | undefined, reprendre: (variables?: Record<string, Valeur>) => void) => void;
   /** ce que le jeu dessine par-dessus la scène pendant ses actions (repère 1280 × 800) */
   calque?: ReactNode;
+  /** scène jouée par-dessus l'écran du jeu (tutoriel du ranch) : pas de fond, le jeu reste visible derrière */
+  transparent?: boolean;
 }
 
 interface PersoAffiche { qui: string; place: Place; expression?: string; etat: 'dehors' | 'la' | 'sort'; arrive: boolean }
@@ -341,7 +343,7 @@ export function SceneDialogue(props: PropsSceneDialogue) {
   const encreParleur = parleur && catalogue.pnj[parleur] ? catalogue.pnj[parleur].encre : '#6b4f33';
 
   return (
-    <div className="sc-cadre" ref={cadre}>
+    <div className={`sc-cadre${props.transparent ? ' transparent' : ''}`} ref={cadre}>
       <div className="sc-repere" style={{ transform: `translate(-50%, -50%) scale(${echelle})` }} onClick={cliquer}>
         {assetAncien && <div key={'a' + ancienDecor!.cle} className="sc-decor sort" style={{ backgroundImage: `url(${assetAncien.url})` }} />}
         {assetDecor && <div key={'d' + decor.cle} className="sc-decor" style={{ backgroundImage: `url(${assetDecor.url})` }} />}

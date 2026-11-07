@@ -50,6 +50,8 @@ export interface MoteurSons {
   chant: (i: number) => void; pose: Son; eveil: Son; ouverture: Son; cri: Son;
   pouls: Son; secousse: Son; vent: (duree: number) => void; repli: Son; formeGraine: Son; survolDoux: Son;
   motVoix: (i: number) => void; sceau: (i: number) => void; aube: Son;
+  // évolution de l'écho
+  evoMontee: (duree: number) => void; evoBattement: (i: number) => void; evoEclat: Son; evoRevelation: Son;
 }
 
 export const SFX = brut as unknown as MoteurSons;

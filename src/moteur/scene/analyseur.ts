@@ -51,6 +51,7 @@ export const ACTIONS: Record<string, string> = {
   eclosion: 'la graine tremble, s’ouvre dans un éclair et l’écho naît',
   'nommer-echo': 'le joueur donne un nom à son écho ({echo.nom} ensuite)',
   image: 'épingle une image au-dessus de la scène (« action: image pnj/garry/attaque-jumpy », « action: image aucune »)',
+  montrer: 'tutoriel du ranch : met en lumière un élément de l’écran (« action: montrer sac » : echo, onglets, carnet, heure, sac, poteau ; « action: montrer aucun »)',
   // — Actions du monde (village, exploration) : jouées par src/jeu/monde/actions.ts
   donner: 'range un objet dans le sac (« action: donner canne_peche », « action: donner pomme 2 ») ; {action.ok} vaut faux si le sac est plein',
   retirer: 'retire un objet du sac (« action: retirer poisson_anguille », « action: retirer aliment » = le premier aliment) ; {action.ok}, {action.objet}',

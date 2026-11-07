@@ -39,7 +39,8 @@ sinon:
 aller: foret-rencontre             ← enchaîne sur une autre scène (ou « fin »)
 ```
 
-- **Actions** mises en scène par le jeu : `action: graine` (la graine de la partie apparaît), `action: eclosion` (elle éclot, l'écho naît), `action: nommer-echo` (le joueur nomme son écho : `{echo.nom}` ensuite), `action: image …`. Dans l'aperçu de l'atelier, les actions sont passées.
+- **Actions** mises en scène par le jeu : `action: graine` (la graine de la partie apparaît), `action: eclosion` (elle éclot, l'écho naît), `action: nommer-echo` (le joueur nomme son écho : `{echo.nom}` ensuite), `action: image …`, `action: montrer sac` (tutoriel du ranch : une lueur sur `echo`, `onglets`, `carnet`, `heure`, `sac`, `poteau` ; `aucun` l'éteint).
+- `décor: aucun` : la scène se joue par-dessus l'écran du jeu, sans fond (tutoriel du ranch, `ranch-tutoriel.scene`). Dans l'aperçu de l'atelier, les actions sont passées.
 - **Places** : `G1` (bord gauche), `G2` (gauche, centre), `D2` (droite, centre), `D1` (bord droit). Quatre personnages au plus. Un PNJ qui parle sans être là entre tout seul.
 - **Résonances** des réponses : curiosité, résolution, discernement, observation, anticipation, neutre, indéterminée (abréviations : cur, res, dis, obs, ant, neu, ind). Quatre réponses au plus à l'écran.
 - **Variables** : `=`, `+=`, `-=` ; valeurs : nombres, `vrai`, `faux`, `"texte"`. Une variable jamais définie vaut 0. Conditions : `== != < > <= >=`, `et`, `ou`, `non`, parenthèses. Mettre des espaces autour du moins (`a - 1`) : un tiret collé fait partie du nom (`lady-roger.relation`).

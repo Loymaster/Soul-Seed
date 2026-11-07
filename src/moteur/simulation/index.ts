@@ -6,6 +6,7 @@ export { lireSignes, ICONE_BESOIN, type Signes, type SigneBesoin, type Besoin, t
 export { etatEmotionnel, ETATS_EMOTIONNELS, type EtatEmotionnel } from './emotions';
 export { apparence, determinerAdolescent, determinerAdulte } from './evolution';
 export { texteComportement } from './comportements';
+export { niveauRelation, rangRelation, compatibilite, LIEN_RELATION, ENCRE_RELATION, type NiveauRelation, type NatureInteractionVisite } from './visites';
 export { aliment, objetDivers, descriptionObjet, OBJETS_DIVERS, TOUS_ALIMENTS, type ObjetDivers } from './objets';
 export { POISSONS, CURIOSITES, PETITES_BETES } from './donnees/exploration';
 export { regimeCompatible } from './alimentation';

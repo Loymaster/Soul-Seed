@@ -203,17 +203,37 @@ export function VueRanch({ v }: { v: any }) {
         </Fragment>
       ))}
       {v.visiteur ? (<>
-        <button className="visiteur" onClick={v.visiteur.ouvrir} aria-label={v.visiteur.aria} style={{ left: "1010px", top: `${v.visiteur.y}px`, zIndex: v.visiteur.z } as CSSProperties}>
-          <img src={v.visiteur.image} alt="" style={{ height: `${v.visiteur.hauteur}px`, filter: v.echoFilter } as CSSProperties} />
-          <span className="visiteur-tag">
-            <b>
-              {v.visiteur.nom}
-            </b>
-            <i>
-              de passage
-            </i>
-          </span>
-        </button>
+        <div className={`echo-pos visiteur-pos ${v.visiteur.cls}`} style={{ left: `${v.visiteur.x}px`, top: `${v.visiteur.y}px`, transitionDuration: `${v.visiteur.dur}s`, transform: `scale(${v.visiteur.persp})`, zIndex: v.visiteur.z } as CSSProperties}>
+          <button className={`echo-zone visiteur-zone ${v.visiteur.anim} ${v.visiteur.demarche}`} style={{ "--cycle": `${v.visiteur.cycle}s` } as CSSProperties} onClick={v.visiteur.ouvrir} aria-label={v.visiteur.aria}>
+            <span className="echo-ombre" style={{ transform: `scaleX(${v.visiteur.taille})` } as CSSProperties} />
+            <span className={`echo-sens ${v.visiteur.sens}`}>
+              <span className="echo-taille" style={{ transform: `scale(${v.visiteur.taille})` } as CSSProperties}>
+                <img className="echo-img" src={v.visiteur.image} alt="" style={{ filter: v.echoFilter } as CSSProperties} />
+              </span>
+            </span>
+            <span className="visiteur-tag" style={{ top: `${v.visiteur.tete}px` } as CSSProperties}>
+              <b>
+                {v.visiteur.nom}
+              </b>
+              <i>
+                {v.visiteur.lien}
+              </i>
+            </span>
+          </button>
+          {v.visiteur.poussiere ? (<>
+            <span className="visiteur-poussiere">
+              <i />
+              <i />
+              <i />
+              <i />
+            </span>
+          </>) : null}
+          {v.visiteur.signe ? (<>
+            <div className="emo-flotte" style={{ top: `${v.visiteur.teteSigne}px` } as CSSProperties}>
+              <img src={v.visiteur.signe} alt="" />
+            </div>
+          </>) : null}
+        </div>
       </>) : null}
       {/* L'écho se promène sur le terrain ; tout ce qui le concerne le suit */}
       <div className="echo-pos" style={{ opacity: v.echoOp, left: `${v.ex}px`, top: `${v.ey}px`, transitionDuration: `${v.eDur}s`, transform: `scale(${v.eScale})`, zIndex: v.eZ } as CSSProperties}>
@@ -1230,18 +1250,45 @@ export function VueRanch({ v }: { v: any }) {
                     </div>
                   </>) : null}
                   {v.pRelations ? (<>
-                    <div style={{ fontFamily: "'Alegreya SC',serif", fontWeight: "700", fontSize: "14px", letterSpacing: "2px", color: "#9a7b55", marginBottom: "6px" } as CSSProperties}>
-                      À rencontrer
-                    </div>
-                    <div style={{ fontSize: "16.5px", lineHeight: "32px", color: "#9a8668" } as CSSProperties}>
-                      ??? — quelqu'un vit près de la rivière
-                    </div>
-                    <div style={{ fontSize: "16.5px", lineHeight: "32px", color: "#9a8668" } as CSSProperties}>
-                      ??? — une lumière dans la forêt, la nuit
-                    </div>
-                    <div style={{ fontSize: "16.5px", lineHeight: "32px", color: "#9a8668" } as CSSProperties}>
-                      ??? — l'atelier du village est fermé
-                    </div>
+                    {v.aDesEchosConnus ? (<>
+                      <div style={{ fontFamily: "'Alegreya SC',serif", fontWeight: "700", fontSize: "14px", letterSpacing: "2px", color: "#9a7b55", marginBottom: "8px" } as CSSProperties}>
+                        Échos de passage
+                      </div>
+                      {(v.echosConnus || []).map((xC20: any, i20: number) => (
+                        <Fragment key={i20}>
+                          <div className={`relation-echo ${xC20.cls}`}>
+                            <span className="medaillon">
+                              <img src={xC20.image} alt="" />
+                            </span>
+                            <span className="qui">
+                              <b>
+                                {xC20.nom}
+                              </b>
+                              <em>
+                                {xC20.note}
+                              </em>
+                            </span>
+                            <span className="lien" style={{ color: xC20.encre } as CSSProperties}>
+                              {xC20.lien}
+                            </span>
+                          </div>
+                        </Fragment>
+                      ))}
+                    </>) : null}
+                    {v.sansEchosConnus ? (<>
+                      <div style={{ fontFamily: "'Alegreya SC',serif", fontWeight: "700", fontSize: "14px", letterSpacing: "2px", color: "#9a7b55", marginBottom: "6px" } as CSSProperties}>
+                        À rencontrer
+                      </div>
+                      <div style={{ fontSize: "16.5px", lineHeight: "32px", color: "#9a8668" } as CSSProperties}>
+                        ??? — quelqu'un vit près de la rivière
+                      </div>
+                      <div style={{ fontSize: "16.5px", lineHeight: "32px", color: "#9a8668" } as CSSProperties}>
+                        ??? — une lumière dans la forêt, la nuit
+                      </div>
+                      <div style={{ fontSize: "16.5px", lineHeight: "32px", color: "#9a8668" } as CSSProperties}>
+                        ??? — l'atelier du village est fermé
+                      </div>
+                    </>) : null}
                   </>) : null}
                   {v.pCarte ? (<>
                     <svg width="340" height="420" viewBox="0 0 340 420" role="img" aria-label="Carte des environs">
@@ -1353,23 +1400,23 @@ export function VueRanch({ v }: { v: any }) {
                       {v.pageTitre}
                     </div>
                     {v.pSommaire ? (<>
-                      {(v.sommaire || []).map((xS20: any, i20: number) => (
-                        <Fragment key={i20}>
-                          <button className="sommaire-ligne" onClick={xS20.ouvrir}>
+                      {(v.sommaire || []).map((xS21: any, i21: number) => (
+                        <Fragment key={i21}>
+                          <button className="sommaire-ligne" onClick={xS21.ouvrir}>
                             <span className="num">
-                              {xS20.num}
+                              {xS21.num}
                             </span>
                             <span>
-                              {xS20.nom}
+                              {xS21.nom}
                             </span>
-                            {xS20.aBadge ? (<>
+                            {xS21.aBadge ? (<>
                               <span className="sceau">
-                                {xS20.badge}
+                                {xS21.badge}
                               </span>
                             </>) : null}
                             <span className="points" />
                             <span className="num">
-                              {xS20.page}
+                              {xS21.page}
                             </span>
                           </button>
                         </Fragment>
@@ -1379,14 +1426,14 @@ export function VueRanch({ v }: { v: any }) {
                       <div style={{ fontFamily: "'Reenie Beanie',cursive", fontSize: "30px", lineHeight: "1", color: "#3a2a1c", marginBottom: "6px" } as CSSProperties}>
                         aujourd'hui
                       </div>
-                      {(v.journal || []).map((xJ21: any, i21: number) => (
-                        <Fragment key={i21}>
+                      {(v.journal || []).map((xJ22: any, i22: number) => (
+                        <Fragment key={i22}>
                           <div style={{ display: "flex", gap: "12px", fontSize: "16px", lineHeight: "32px" } as CSSProperties}>
                             <span style={{ flex: "none", width: "46px", fontFamily: "'Alegreya SC',serif", fontSize: "13px", color: "#9a7b55" } as CSSProperties}>
-                              {xJ21.heure}
+                              {xJ22.heure}
                             </span>
                             <span>
-                              {xJ21.texte}
+                              {xJ22.texte}
                             </span>
                           </div>
                         </Fragment>
@@ -1397,15 +1444,15 @@ export function VueRanch({ v }: { v: any }) {
                         Nourriture
                       </div>
                       <div style={{ display: "grid", gridTemplateColumns: "repeat(4,minmax(0,1fr))", gap: "8px" } as CSSProperties}>
-                        {(v.sacNourriture || []).map((xN22: any, i22: number) => (
-                          <Fragment key={i22}>
-                            <div className="case-sac" style={{ opacity: xN22.opacite } as CSSProperties}>
-                              <img src={xN22.image} alt="" />
+                        {(v.sacNourriture || []).map((xN23: any, i23: number) => (
+                          <Fragment key={i23}>
+                            <div className="case-sac" style={{ opacity: xN23.opacite } as CSSProperties}>
+                              <img src={xN23.image} alt="" />
                               <span>
-                                {xN22.nom}
+                                {xN23.nom}
                               </span>
                               <b style={{ fontFamily: "'Alegreya SC',serif", fontSize: "12px", color: "#6b4f33" } as CSSProperties}>
-                                × {xN22.qte}
+                                × {xN23.qte}
                               </b>
                             </div>
                           </Fragment>
@@ -1413,29 +1460,29 @@ export function VueRanch({ v }: { v: any }) {
                       </div>
                     </>) : null}
                     {v.pRelations ? (<>
-                      {(v.relations || []).map((xR23: any, i23: number) => (
-                        <Fragment key={i23}>
+                      {(v.relations || []).map((xR24: any, i24: number) => (
+                        <Fragment key={i24}>
                           <div style={{ display: "flex", alignItems: "baseline", gap: "10px", fontSize: "17px", lineHeight: "32px" } as CSSProperties}>
-                            <b style={{ fontFamily: "'Alegreya SC',serif", letterSpacing: "1.5px", color: xR23.encre, width: "84px" } as CSSProperties}>
-                              {xR23.nom}
+                            <b style={{ fontFamily: "'Alegreya SC',serif", letterSpacing: "1.5px", color: xR24.encre, width: "84px" } as CSSProperties}>
+                              {xR24.nom}
                             </b>
                             <span style={{ fontFamily: "'Reenie Beanie',cursive", fontSize: "23px", color: "#6b4f33" } as CSSProperties}>
-                              {xR23.lien}
+                              {xR24.lien}
                             </span>
                           </div>
                         </Fragment>
                       ))}
                     </>) : null}
                     {v.pCarte ? (<>
-                      {(v.lieux || []).map((xL24: any, i24: number) => (
-                        <Fragment key={i24}>
-                          <button className="sommaire-ligne" onClick={xL24.partir} disabled={!!(xL24.off)} style={{ opacity: xL24.opacite } as CSSProperties}>
+                      {(v.lieux || []).map((xL25: any, i25: number) => (
+                        <Fragment key={i25}>
+                          <button className="sommaire-ligne" onClick={xL25.partir} disabled={!!(xL25.off)} style={{ opacity: xL25.opacite } as CSSProperties}>
                             <span>
-                              {xL24.nom}
+                              {xL25.nom}
                             </span>
                             <span className="points" />
                             <span className="num">
-                              {xL24.duree}
+                              {xL25.duree}
                             </span>
                           </button>
                         </Fragment>
@@ -1467,23 +1514,23 @@ export function VueRanch({ v }: { v: any }) {
                     </>) : null}
                     {v.pOptions ? (<>
                       <div style={{ display: "flex", flexDirection: "column", gap: "14px" } as CSSProperties}>
-                        {(v.reglages || []).map((xG25: any, i25: number) => (
-                          <Fragment key={i25}>
-                            <label style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "12px", fontSize: "17px", cursor: "pointer" } as CSSProperties}>
-                              <span>
-                                {xG25.nom}
-                              </span>
-                              <input type="checkbox" checked={xG25.actif} onChange={xG25.basculer} style={{ width: "22px", height: "22px", accentColor: "#6e3f22" } as CSSProperties} />
-                            </label>
-                          </Fragment>
-                        ))}
-                        {(v.curseurs || []).map((xG26: any, i26: number) => (
+                        {(v.reglages || []).map((xG26: any, i26: number) => (
                           <Fragment key={i26}>
-                            <label style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "14px", fontSize: "17px", cursor: "pointer" } as CSSProperties}>
+                            <label style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "12px", fontSize: "17px", cursor: "pointer" } as CSSProperties}>
                               <span>
                                 {xG26.nom}
                               </span>
-                              <input type="range" min="0" max="100" step="5" value={xG26.valeur} onChange={xG26.changer} style={{ flex: "0 0 46%", accentColor: "#6e3f22", cursor: "pointer" } as CSSProperties} />
+                              <input type="checkbox" checked={xG26.actif} onChange={xG26.basculer} style={{ width: "22px", height: "22px", accentColor: "#6e3f22" } as CSSProperties} />
+                            </label>
+                          </Fragment>
+                        ))}
+                        {(v.curseurs || []).map((xG27: any, i27: number) => (
+                          <Fragment key={i27}>
+                            <label style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "14px", fontSize: "17px", cursor: "pointer" } as CSSProperties}>
+                              <span>
+                                {xG27.nom}
+                              </span>
+                              <input type="range" min="0" max="100" step="5" value={xG27.valeur} onChange={xG27.changer} style={{ flex: "0 0 46%", accentColor: "#6e3f22", cursor: "pointer" } as CSSProperties} />
                             </label>
                           </Fragment>
                         ))}
