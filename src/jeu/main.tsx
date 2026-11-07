@@ -257,6 +257,7 @@ function Jeu() {
           surMort={(e) => setEcran({ nom: 'mort', emplacement, etat: e })}
           surCombat={(e, nature) => setEcran({ nom: 'combat', emplacement, etat: e, ...preparerCombat(e, nature) })}
           ressources={chargerMonde(emplacement).ressources}
+          corvees={chargerMonde(emplacement).corvees}
           surPartir={(e, lieu) => {
             const monde = chargerMonde(emplacement);
             // le village (centre) ou la boutique de Jumpy

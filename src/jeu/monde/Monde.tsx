@@ -38,7 +38,6 @@ export interface ProprietesMonde {
 const pad = (n: number) => (n < 10 ? '0' : '') + n;
 const SAISONS = ['Printemps', 'Été', 'Automne', 'Hiver'];
 const periode = (h: number) => (h >= 6 && h < 12 ? 'matinée' : h < 18 && h >= 12 ? 'après-midi' : h >= 18 && h < 23 ? 'soirée' : 'nuit');
-const ICONE_PERIODE = (h: number) => (h >= 6 && h < 12 ? 'matin' : h >= 12 && h < 18 ? 'journee' : h >= 18 && h < 23 ? 'soiree' : 'nuit');
 const ACCUEILS = [
   (j: string) => `Bonjour ${j}, bienvenue dans ma boutique ! Tu veux acheter quelque chose ?`,
   (j: string) => `Ah, ${j} ! Quel plaisir de te voir par ici, entre donc !`,
@@ -329,7 +328,6 @@ export function Monde(props: ProprietesMonde) {
             <div className="planche bois">
               <div className="lieu pyro">{L.nom}</div>
               <div className="ligne">
-                <img src={asset(`interface/icones/${ICONE_PERIODE(h)}.png`)} alt="" />
                 <b className="pyro">{pad(h)}:{pad(etat.minute % 60)}</b>
                 <span className="craie">{periode(h)}</span>
               </div>

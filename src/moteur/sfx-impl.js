@@ -322,6 +322,19 @@ export const SFX = {
     this.noise(t, 0.09, { type: 'lowpass', f: 700, gain: 0.18 }); this.tone(180, t, 0.12, { gain: 0.08, type: 'triangle' }); },
   berceuse() { const c = this.get(); if (!c) return; const t = c.currentTime;
     [523, 659, 587, 494].forEach((f, i) => this.tone(f, t + i * 0.55, 0.9, { gain: 0.035, attack: 0.08, type: 'sine' })); },
+  // berceuse de boîte à musique (environ 4 s) : quand l'écho s'endort, la musique se tait pour elle
+  berceuseLongue() { const c = this.get(); if (!c) return; const t = c.currentTime + 0.05;
+    const n = (k) => 261.63 * Math.pow(2, k / 12);
+    // mélodie (3/4, noire = 0,3 s) : mi mi sol | mi mi sol | mi sol do' si la | la sol… puis la note tenue
+    const melodie = [[4, 0], [4, 0.3], [7, 0.6], [4, 0.9], [4, 1.2], [7, 1.5], [4, 1.8], [7, 2.0], [12, 2.2], [11, 2.5], [9, 2.8], [9, 3.1], [7, 3.35]];
+    melodie.forEach(([k, d]) => {
+      this.tone(n(k + 12), t + d, 0.9, { gain: 0.05, attack: 0.004, send: this.bright, sendGain: 0.5 });
+      this.tone(n(k + 24), t + d, 0.35, { gain: 0.012, attack: 0.002, type: 'triangle' });
+    });
+    // basse douce : do, fa, do, sol
+    [[0, 0], [5, 0.9], [0, 1.8], [7, 2.7]].forEach(([k, d]) => this.tone(n(k - 12), t + d, 1.1, { gain: 0.03, attack: 0.08 }));
+    // accord final qui s'éteint
+    [0, 4, 7, 12].forEach((k, i) => this.tone(n(k + 12), t + 3.6 + i * 0.04, 1.6, { gain: 0.03, attack: 0.02, send: this.bright, sendGain: 0.6 })); },
   sacPose() { const c = this.get(); if (!c) return; const t = c.currentTime;
     this.noise(t, 0.08, { type: 'lowpass', f: 900, gain: 0.07, attack: 0.004 }); this.noise(t, 0.05, { f: 2400, q: 0.8, gain: 0.015 }); }
 };

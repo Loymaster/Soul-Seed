@@ -7,7 +7,7 @@ import type {
 } from './types';
 import {
   AGE_EVOLUTION, AGE_MORT, CARESSES_PAR_JOUR, CLES_CARACS, CLES_TEMPERAMENT, CONSTANTE_GUERISON_MALADIE,
-  DUREE_VISITE_HEURES, EMOTION_DE_TEMPERAMENT, MAX_ECHOS_SAUVAGES, MAX_PAR_STADE, MULT_ENTRAINEMENT,
+  DUREE_BROSSAGE_HEURES, DUREE_REPAS_HEURES, DUREE_VISITE_HEURES, ESSAIS_CORVEE, MULT_CORVEE, EMOTION_DE_TEMPERAMENT, MAX_ECHOS_SAUVAGES, MAX_PAR_STADE, MULT_ENTRAINEMENT,
   MULT_GUERISON_BLESSURE, NOM_STADE, PLAGES_RYTHME, SALETE_MAX, TRAIT_DE_TEMPERAMENT, TRAIT_D_EMOTION,
   TRAIT_D_EMOTION_EDUCATIVE,
 } from './constantes';
@@ -486,6 +486,31 @@ export class Simulation {
       : repu ? `${this.Nom} mange du bout des lèvres…`
       : saveur ? `${this.Nom} se régale.` : `${this.Nom} mange tranquillement.`;
     this.message(texte, prefere || saveur ? 'bien' : deteste || !compatible || repu ? 'mal' : 'note');
+    // Le repas prend du temps (retour de test : nourrir ne faisait pas passer le temps).
+    this.avancer(DUREE_REPAS_HEURES);
+    return { ok: true, texte };
+  }
+
+  /**
+   * Brosser : une heure. Pas dans le prototype ; effet cohérent avec les soins et les câlins :
+   * l'écho est un peu plus propre (sans remplacer un bain), apaisé, et le lien se resserre.
+   */
+  brosser(): Reussi<{ texte: string }> | Refus {
+    const e = this.etat;
+    const etaitSale = e.proprete <= 20;
+    this.avancer(DUREE_BROSSAGE_HEURES);
+    if (e.mort) return { ok: false, raison: '' };
+    e.proprete = borne(e.proprete + 30);
+    e.humeur = borne(e.humeur + 6);
+    e.manqueAffection = Math.max(0, e.manqueAffection - 20);
+    e.besoinAffection = e.manqueAffection > 70;
+    e.anxiete = Math.max(0, e.anxiete - 5);
+    appliquerEmotions(e, { joie: 8, degout: -8, peur: -3 });
+    this.eduquer('socio', null);
+    this.noter(`Vous avez brossé ${e.nom}.`);
+    const texte = etaitSale ? `${this.Nom} se laisse faire, mais un bon bain ne serait pas de trop.`
+      : `${this.Nom} ferme les yeux de plaisir sous la brosse.`;
+    this.message(texte, 'bien');
     return { ok: true, texte };
   }
 
@@ -795,20 +820,21 @@ export class Simulation {
    * Corvée : `reussis` / `total` est le score du mini-jeu (finishChoreGame).
    * Fait passer une heure, avec l'humeur et les émotions selon le palier.
    */
-  corvee(id: string, reussis: number, total: number): Reussi<{ palier: 'Parfait' | 'Bon' | 'Mauvais' | 'Horrible' }> | Refus {
+  corvee(id: string, reussis: number, total: number, niveau = 1): Reussi<{ palier: 'Parfait' | 'Bon' | 'Mauvais' | 'Horrible' }> | Refus {
     const e = this.etat;
     const c = CORVEES.find(x => x.id === id);
     if (!c) return { ok: false, raison: '' };
+    const mult = MULT_CORVEE[Math.max(0, Math.min(3, niveau))];
     let palier: 'Parfait' | 'Bon' | 'Mauvais' | 'Horrible', secondaire: number, gain: number, humeur: number, d: Partial<Emotions>, emo: 'joy' | 'sorrow' | 'wrath';
     if (reussis === total) { palier = 'Parfait'; secondaire = 6 + this.rng() * 2; gain = 28 + this.rng() * 8; humeur = 20; d = { joie: 20, surprise: 10 }; emo = 'joy'; }
     else if (reussis >= total / 2) { palier = 'Bon'; secondaire = 3 + this.rng() * 2; gain = 14 + this.rng() * 6; humeur = 10; d = { joie: 10 }; emo = 'joy'; }
     else if (reussis >= 1) { palier = 'Mauvais'; secondaire = 1 + this.rng(); gain = 4 + this.rng() * 4; humeur = -8; d = { tristesse: 10, colere: 5, joie: -5 }; emo = 'sorrow'; }
     else { palier = 'Horrible'; secondaire = 0; gain = 0; humeur = -20; d = { tristesse: 20, colere: 10, peur: 5, joie: -15 }; emo = 'wrath'; }
-    // (Les niveaux d'amélioration des corvées, construits par Ash, ne sont pas encore repris : multiplicateur 1.)
+    // Les niveaux de remise en état (travaux d'Ash) multiplient les gains (corveeXpMult).
     this.eduquer('cognitif', emo);
     this.avancer(1, { gainHumeur: humeur, emotions: d, message: `${this.Nom} : ${c.nom.toLowerCase()} (${palier.toLowerCase()}).` });
-    e.caracs[c.carac] = dixieme(e.caracs[c.carac] + dixieme(gain));
-    if (!c.sansSecondaire) e.caracs.intelligence = dixieme(e.caracs.intelligence + dixieme(secondaire));
+    e.caracs[c.carac] = Math.min(999, dixieme(e.caracs[c.carac] + dixieme(gain * mult)));
+    if (!c.sansSecondaire) e.caracs.intelligence = Math.min(999, dixieme(e.caracs.intelligence + dixieme(secondaire * mult)));
     e.experienceCorvees[id] = (e.experienceCorvees[id] ?? 0) + 1;
     e.derniereCorvee[id] = e.jour;
     const succes = palier === 'Parfait' || palier === 'Bon';
@@ -816,6 +842,24 @@ export class Simulation {
     e.reussite = succes;
     e.betise = !succes;
     return { ok: true, palier };
+  }
+
+  /**
+   * Une corvée jouée d'un bout à l'autre (les mini-jeux du prototype se déroulaient seuls) : chaque essai réussit
+   * selon le trait associé et l'expérience acquise sur cette corvée ; une fois par jour ; `niveau` : remise en état (1 à 3).
+   */
+  jouerCorvee(id: string, niveau = 1): Reussi<{ palier: 'Parfait' | 'Bon' | 'Mauvais' | 'Horrible'; essais: boolean[] }> | Refus {
+    const e = this.etat;
+    const c = CORVEES.find(x => x.id === id);
+    if (!c) return { ok: false, raison: '' };
+    if (e.malade) return { ok: false, raison: `${this.Nom} est ${this.a('malade', 'malade')} et ne peut pas faire de corvée.` };
+    if (e.derniereCorvee[id] === e.jour) return { ok: false, raison: 'Cette corvée a déjà été faite aujourd’hui. Revenez demain !' };
+    const trait = e.traits[c.trait] ?? 0;
+    const experience = e.experienceCorvees[id] ?? 0;
+    const proba = Math.max(0.15, Math.min(0.95, 0.35 + trait / 250 + Math.min(0.5, experience * 0.02)));
+    const essais = Array.from({ length: ESSAIS_CORVEE[Math.max(0, Math.min(3, niveau))] }, () => this.rng() < proba);
+    const r = this.corvee(id, essais.filter(Boolean).length, essais.length, niveau);
+    return r.ok ? { ok: true, palier: r.palier, essais } : r;
   }
 
   /** « Laisser le temps passer » (timePass) : l'écho s'ennuie. */

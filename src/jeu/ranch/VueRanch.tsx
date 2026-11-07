@@ -240,6 +240,9 @@ export function VueRanch({ v }: { v: any }) {
           <Fragment key={i3}>
             <div className="orbite-etat" style={{ offsetPath: v.orbite, animationDelay: `${xE3.delai}s` } as CSSProperties} aria-label={xE3.nom}>
               <img src={xE3.image} alt="" />
+              <span className="astuce">
+                {xE3.nom}
+              </span>
             </div>
           </Fragment>
         ))}
@@ -254,7 +257,9 @@ export function VueRanch({ v }: { v: any }) {
           </div>
         </>) : null}
         {v.emoFlotte ? (<>
-          <div className="emo-flotte" style={{ top: `${v.teteSigne}px` } as CSSProperties}>
+          <div className="emo-flotte" style={{ top: `${v.teteSigne}px`, "--lueur-emo": v.emoTeinte } as CSSProperties}>
+            <span className="emo-halo" />
+            <span className="emo-rayons" />
             <img src={v.bulleImg} alt="" />
           </div>
         </>) : null}
@@ -351,57 +356,126 @@ export function VueRanch({ v }: { v: any }) {
             </span>
           </div>
           {v.ficheEcho ? (<>
-            <div style={{ position: "relative", display: "flex", gap: "14px", alignItems: "flex-start", marginTop: "4px" } as CSSProperties}>
-              <div style={{ flex: "none", width: "96px", height: "118px", borderRadius: "6px", background: "radial-gradient(circle at 50% 40%,#fff6df,#e8d6b0)", boxShadow: "inset 0 0 0 1.5px rgba(58,31,14,.6)", display: "flex", alignItems: "flex-end", justifyContent: "center", overflow: "hidden" } as CSSProperties}>
-                <img src={v.echoImg} alt="" style={{ height: "104px", width: "auto" } as CSSProperties} />
-              </div>
-              <div style={{ flex: "1", minWidth: "0" } as CSSProperties}>
-                {(v.traits || []).map((xT6: any, i6: number) => (
-                  <Fragment key={i6}>
-                    <div className={`trait ${xT6.cls}`}>
-                      <span>
-                        {xT6.nom}
-                      </span>
-                      <b>
-                        {xT6.valeur}
-                      </b>
-                    </div>
-                  </Fragment>
-                ))}
-              </div>
+            <div className="fe-onglets" role="tablist">
+              {(v.ficheOnglets || []).map((xFo6: any, i6: number) => (
+                <Fragment key={i6}>
+                  <button className={`fe-onglet ${xFo6.cls}`} role="tab" aria-selected={xFo6.choisi} onClick={xFo6.ouvrir} onMouseEnter={xFo6.survol}>
+                    {xFo6.nom}
+                  </button>
+                </Fragment>
+              ))}
             </div>
-            <div style={{ position: "relative", marginTop: "8px", fontFamily: "'Reenie Beanie',cursive", fontSize: "21px", lineHeight: "1.05", color: "#6b4f33" } as CSSProperties}>
-              d'autres pages se découvriront en grandissant ensemble…
-            </div>
+            {v.fichePortrait ? (<>
+              <div style={{ position: "relative", display: "flex", gap: "14px", alignItems: "flex-start", marginTop: "4px" } as CSSProperties}>
+                <div style={{ flex: "none", width: "96px", height: "118px", borderRadius: "6px", background: "radial-gradient(circle at 50% 40%,#fff6df,#e8d6b0)", boxShadow: "inset 0 0 0 1.5px rgba(58,31,14,.6)", display: "flex", alignItems: "flex-end", justifyContent: "center", overflow: "hidden" } as CSSProperties}>
+                  <img src={v.echoImg} alt="" style={{ height: "104px", width: "auto" } as CSSProperties} />
+                </div>
+                <div style={{ flex: "1", minWidth: "0" } as CSSProperties}>
+                  {(v.traits || []).map((xT7: any, i7: number) => (
+                    <Fragment key={i7}>
+                      <div className={`trait ${xT7.cls}`}>
+                        <span>
+                          {xT7.nom}
+                        </span>
+                        <b>
+                          {xT7.valeur}
+                        </b>
+                      </div>
+                    </Fragment>
+                  ))}
+                  <div className="fe-dominant" style={{ "--c": v.domCouleur, "--l": v.domLueur } as CSSProperties}>
+                    <span className="fe-glyphe" style={{ "--g": v.domGlyphe } as CSSProperties} />
+                    <span>
+                      {v.domTexte}
+                    </span>
+                  </div>
+                </div>
+              </div>
+              <div style={{ position: "relative", marginTop: "8px", fontFamily: "'Reenie Beanie',cursive", fontSize: "21px", lineHeight: "1.05", color: "#6b4f33" } as CSSProperties}>
+                {v.ficheMot}
+              </div>
+            </>) : null}
+            {v.ficheTemperament ? (<>
+              <div className="fe-intro">
+                Ce que sa graine lui a donné, et ce que vos réponses font grandir.
+              </div>
+              {(v.temperaments || []).map((xTp8: any, i8: number) => (
+                <Fragment key={i8}>
+                  <div className={`ft-ligne ${xTp8.cls}`} style={{ "--c": xTp8.couleur, "--l": xTp8.lueur } as CSSProperties}>
+                    <span className="fe-glyphe" style={{ "--g": xTp8.glyphe } as CSSProperties} />
+                    <span className="ft-nom">
+                      {xTp8.nom}
+                    </span>
+                    <span className="ft-points">
+                      {(xTp8.points || []).map((xPt9: any, i9: number) => (
+                        <Fragment key={i9}>
+                          <i className={xPt9.cls} />
+                        </Fragment>
+                      ))}
+                    </span>
+                    <span className="ft-trait">
+                      {xTp8.trait}
+                    </span>
+                  </div>
+                </Fragment>
+              ))}
+            </>) : null}
+            {v.ficheCombat ? (<>
+              <div className="fe-intro">
+                Les entraînements et les corvées les font grandir.
+              </div>
+              {(v.combat || []).map((xCb10: any, i10: number) => (
+                <Fragment key={i10}>
+                  <div className={`fc-ligne ${xCb10.cls}`}>
+                    <span className="fc-nom">
+                      {xCb10.nom}
+                    </span>
+                    <span className="fc-jauge">
+                      {(xCb10.crans || []).map((xCr11: any, i11: number) => (
+                        <Fragment key={i11}>
+                          <i className={xCr11.cls} />
+                        </Fragment>
+                      ))}
+                    </span>
+                    <b className="fc-mot">
+                      {xCb10.mot}
+                    </b>
+                    <span className="fc-fleche">
+                      {xCb10.fleches}
+                    </span>
+                  </div>
+                </Fragment>
+              ))}
+            </>) : null}
           </>) : null}
           {v.ficheChoix ? (<>
             <div style={{ position: "relative", display: "flex", flexDirection: "column", gap: "1px" } as CSSProperties}>
-              {(v.choix || []).map((xO7: any, i7: number) => (
-                <Fragment key={i7}>
-                  {xO7.estRubrique ? (<>
+              {(v.choix || []).map((xO12: any, i12: number) => (
+                <Fragment key={i12}>
+                  {xO12.estRubrique ? (<>
                     <div className="rubrique">
-                      {xO7.nom}
+                      {xO12.nom}
                     </div>
                   </>) : null}
-                  {xO7.estChoix ? (<>
-                    <button className={`choix ${xO7.cls}`} onMouseEnter={xO7.survol} onClick={xO7.prendre} disabled={!!(xO7.off)}>
+                  {xO12.estChoix ? (<>
+                    <button className={`choix ${xO12.cls}`} onMouseEnter={xO12.survol} onClick={xO12.prendre} disabled={!!(xO12.off)}>
                       <span className="vign">
-                        {xO7.aImage ? (<>
-                          <img src={xO7.image} alt="" />
+                        {xO12.aImage ? (<>
+                          <img src={xO12.image} alt="" />
                         </>) : null}
-                        {xO7.aIcone ? (<>
+                        {xO12.aIcone ? (<>
                           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#6e3f22" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                            <path d={xO7.icone} />
+                            <path d={xO12.icone} />
                           </svg>
                         </>) : null}
                       </span>
                       <span>
-                        {xO7.nom}
+                        {xO12.nom}
                       </span>
                       <span className="det">
-                        {xO7.detail}
+                        {xO12.detail}
                       </span>
-                      {xO7.tamponne ? (<>
+                      {xO12.tamponne ? (<>
                         <svg className="tamp" viewBox="0 0 40 40" aria-hidden="true">
                           <circle cx="20" cy="20" r="16.5" fill="rgba(63,122,58,.08)" stroke="#3f7a3a" strokeWidth="3" />
                           <path d="M12.5 20.5l5 5 10-11" fill="none" stroke="#3f7a3a" strokeWidth="3.6" strokeLinecap="round" strokeLinejoin="round" />
@@ -419,15 +493,15 @@ export function VueRanch({ v }: { v: any }) {
       <nav className={`pcarnet ${v.ceintureCls} ${v.carnetLeve}`} aria-label="Actions du ranch" style={{ filter: v.paperFilter } as CSSProperties}>
         <div className="pc-corps">
           <div className="pc-pages" />
-          {(v.verbes || []).map((xV8: any, i8: number) => (
-            <Fragment key={i8}>
-              <button className={`pc-onglet ${xV8.cls}`} style={{ "--c": xV8.teinte, "--l": `${xV8.largeur}px`, top: `${xV8.haut}px` } as CSSProperties} onMouseEnter={xV8.survol} onMouseLeave={xV8.quitte} onFocus={xV8.survol} onBlur={xV8.quitte} onClick={xV8.ouvrir} aria-label={xV8.etiquette} aria-expanded={xV8.ouvertAria}>
+          {(v.verbes || []).map((xV13: any, i13: number) => (
+            <Fragment key={i13}>
+              <button className={`pc-onglet ${xV13.cls}`} style={{ "--c": xV13.teinte, "--l": `${xV13.largeur}px`, top: `${xV13.haut}px` } as CSSProperties} onMouseEnter={xV13.survol} onMouseLeave={xV13.quitte} onFocus={xV13.survol} onBlur={xV13.quitte} onClick={xV13.ouvrir} aria-label={xV13.etiquette} aria-expanded={xV13.ouvertAria}>
                 <span className="nom">
-                  {xV8.court}
+                  {xV13.court}
                 </span>
                 <span className="ico">
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                    <path d={xV8.icone} />
+                    <path d={xV13.icone} />
                   </svg>
                 </span>
               </button>
@@ -496,6 +570,11 @@ export function VueRanch({ v }: { v: any }) {
                 <i className="vitesse" style={{ top: "76px", width: "75px", animationDelay: "0.50s", animationDuration: "0.67s" } as CSSProperties} />
                 <i className="sol-defile" />
               </span>
+              <span className="p p-ciel">
+                <img className="nuage-s" src={`${A}decors/ranch/nuage-g2.webp`} alt="" style={{ top: "30px", animationDelay: "0s" } as CSSProperties} />
+                <img className="nuage-s" src={`${A}decors/ranch/nuage-g1.webp`} alt="" style={{ top: "90px", width: "120px", animationDelay: "-2.2s" } as CSSProperties} />
+                <img className="nuage-s" src={`${A}decors/ranch/nuage-g3.webp`} alt="" style={{ top: "10px", width: "150px", animationDelay: "-4s" } as CSSProperties} />
+              </span>
               <span className="p p-lucioles">
                 <i className="luciole" style={{ left: "172px", top: "188px", animationDelay: "-2.74s", animationDuration: "4.71s" } as CSSProperties} />
                 <i className="luciole" style={{ left: "135px", top: "158px", animationDelay: "-2.66s", animationDuration: "5.17s" } as CSSProperties} />
@@ -528,34 +607,48 @@ export function VueRanch({ v }: { v: any }) {
           </div>
           <div className="sc-avant">
             <span className="p p-laver">
-              <img className="seau-s" src={`${A}activites/corvees/seau-eau.png`} alt="" />
-              <i className="goutte" style={{ left: "230px", animationDelay: "0.33s", animationDuration: "0.77s" } as CSSProperties} />
-              <i className="goutte" style={{ left: "292px", animationDelay: "0.17s", animationDuration: "0.57s" } as CSSProperties} />
-              <i className="goutte" style={{ left: "272px", animationDelay: "0.60s", animationDuration: "0.64s" } as CSSProperties} />
-              <i className="goutte" style={{ left: "185px", animationDelay: "0.24s", animationDuration: "0.71s" } as CSSProperties} />
-              <i className="goutte" style={{ left: "240px", animationDelay: "0.86s", animationDuration: "0.80s" } as CSSProperties} />
-              <i className="goutte" style={{ left: "237px", animationDelay: "0.24s", animationDuration: "0.83s" } as CSSProperties} />
-              <i className="goutte" style={{ left: "334px", animationDelay: "0.89s", animationDuration: "0.79s" } as CSSProperties} />
-              <i className="goutte" style={{ left: "219px", animationDelay: "0.18s", animationDuration: "0.64s" } as CSSProperties} />
-              <i className="goutte" style={{ left: "265px", animationDelay: "0.10s", animationDuration: "0.73s" } as CSSProperties} />
-              <i className="goutte" style={{ left: "269px", animationDelay: "0.56s", animationDuration: "0.60s" } as CSSProperties} />
-              <i className="goutte" style={{ left: "291px", animationDelay: "0.31s", animationDuration: "0.83s" } as CSSProperties} />
-              <i className="goutte" style={{ left: "310px", animationDelay: "0.92s", animationDuration: "0.55s" } as CSSProperties} />
-              <i className="goutte" style={{ left: "244px", animationDelay: "0.63s", animationDuration: "0.81s" } as CSSProperties} />
-              <i className="goutte" style={{ left: "300px", animationDelay: "0.21s", animationDuration: "0.68s" } as CSSProperties} />
-              <i className="goutte" style={{ left: "243px", animationDelay: "0.47s", animationDuration: "0.60s" } as CSSProperties} />
-              <i className="goutte" style={{ left: "248px", animationDelay: "0.29s", animationDuration: "0.79s" } as CSSProperties} />
+              <img className="seau-s" src={`${A}interface/icones/seau.png`} alt="" />
+              <i className="goutte" style={{ left: "272px", animationDelay: "0.95s", animationDuration: "0.67s" } as CSSProperties} />
+              <i className="goutte" style={{ left: "202px", animationDelay: "0.07s", animationDuration: "0.71s" } as CSSProperties} />
+              <i className="goutte" style={{ left: "283px", animationDelay: "0.58s", animationDuration: "0.82s" } as CSSProperties} />
+              <i className="goutte" style={{ left: "244px", animationDelay: "0.04s", animationDuration: "0.68s" } as CSSProperties} />
+              <i className="goutte" style={{ left: "207px", animationDelay: "0.24s", animationDuration: "0.72s" } as CSSProperties} />
+              <i className="goutte" style={{ left: "205px", animationDelay: "0.83s", animationDuration: "0.59s" } as CSSProperties} />
+              <i className="goutte" style={{ left: "247px", animationDelay: "0.63s", animationDuration: "0.72s" } as CSSProperties} />
+              <i className="goutte" style={{ left: "205px", animationDelay: "0.58s", animationDuration: "0.67s" } as CSSProperties} />
+              <i className="goutte" style={{ left: "246px", animationDelay: "0.05s", animationDuration: "0.81s" } as CSSProperties} />
+              <i className="goutte" style={{ left: "264px", animationDelay: "0.42s", animationDuration: "0.71s" } as CSSProperties} />
+              <i className="goutte" style={{ left: "268px", animationDelay: "0.56s", animationDuration: "0.75s" } as CSSProperties} />
+              <i className="goutte" style={{ left: "216px", animationDelay: "0.58s", animationDuration: "0.74s" } as CSSProperties} />
+              <i className="goutte" style={{ left: "285px", animationDelay: "0.10s", animationDuration: "0.76s" } as CSSProperties} />
+              <i className="goutte" style={{ left: "205px", animationDelay: "0.62s", animationDuration: "0.70s" } as CSSProperties} />
+              <i className="goutte" style={{ left: "299px", animationDelay: "0.78s", animationDuration: "0.69s" } as CSSProperties} />
+              <i className="goutte" style={{ left: "306px", animationDelay: "0.36s", animationDuration: "0.62s" } as CSSProperties} />
+              <img className="mousse" src={`${A}interface/icones/bulle.png`} alt="" style={{ left: "225px", top: "265px", width: "43px", animationDelay: "1.16s" } as CSSProperties} />
+              <img className="mousse" src={`${A}interface/icones/bulle.png`} alt="" style={{ left: "319px", top: "250px", width: "46px", animationDelay: "2.06s" } as CSSProperties} />
+              <img className="mousse" src={`${A}interface/icones/bulle.png`} alt="" style={{ left: "320px", top: "191px", width: "41px", animationDelay: "1.42s" } as CSSProperties} />
+              <img className="mousse" src={`${A}interface/icones/bulle.png`} alt="" style={{ left: "224px", top: "214px", width: "41px", animationDelay: "1.98s" } as CSSProperties} />
+              <img className="mousse" src={`${A}interface/icones/bulle.png`} alt="" style={{ left: "305px", top: "250px", width: "38px", animationDelay: "2.18s" } as CSSProperties} />
+              <img className="mousse" src={`${A}interface/icones/bulle.png`} alt="" style={{ left: "203px", top: "219px", width: "46px", animationDelay: "1.20s" } as CSSProperties} />
+              <img className="mousse" src={`${A}interface/icones/bulle.png`} alt="" style={{ left: "298px", top: "239px", width: "26px", animationDelay: "2.24s" } as CSSProperties} />
+              <img className="mousse" src={`${A}interface/icones/bulle.png`} alt="" style={{ left: "181px", top: "210px", width: "44px", animationDelay: "0.99s" } as CSSProperties} />
+              <img className="mousse" src={`${A}interface/icones/bulle.png`} alt="" style={{ left: "172px", top: "295px", width: "34px", animationDelay: "1.85s" } as CSSProperties} />
+              <img className="mousse" src={`${A}interface/icones/bulle.png`} alt="" style={{ left: "264px", top: "281px", width: "39px", animationDelay: "1.69s" } as CSSProperties} />
+              <img className="mousse" src={`${A}interface/icones/bulle.png`} alt="" style={{ left: "312px", top: "246px", width: "30px", animationDelay: "2.66s" } as CSSProperties} />
+              <img className="mousse" src={`${A}interface/icones/bulle.png`} alt="" style={{ left: "189px", top: "194px", width: "30px", animationDelay: "1.89s" } as CSSProperties} />
               <i className="eclabousse" />
             </span>
             <span className="p p-brosser">
-              <svg className="brosse" width="120" height="70" viewBox="0 0 120 70" aria-hidden="true">
-                <rect x="4" y="10" width="78" height="26" rx="9" fill="#b07a46" stroke="#3a1f0e" strokeWidth="3" />
-                <path d="M82 23h30" stroke="#8a5530" strokeWidth="10" strokeLinecap="round" />
-                <path d="M12 38v18M22 38v20M32 38v18M42 38v20M52 38v18M62 38v20M72 38v18" stroke="#e8d7b0" strokeWidth="5" strokeLinecap="round" />
-              </svg>
-              <i className="poil" style={{ left: "200px" } as CSSProperties} />
-              <i className="poil" style={{ left: "290px", animationDelay: ".5s" } as CSSProperties} />
-              <i className="poil" style={{ left: "250px", animationDelay: "1s" } as CSSProperties} />
+              <img className="brosse-i" src={`${A}interface/icones/brosse.png`} alt="" />
+              <i className="poil" style={{ left: "289px", animationDelay: "0.43s" } as CSSProperties} />
+              <i className="poil" style={{ left: "273px", animationDelay: "1.39s" } as CSSProperties} />
+              <i className="poil" style={{ left: "257px", animationDelay: "0.40s" } as CSSProperties} />
+              <i className="poil" style={{ left: "249px", animationDelay: "1.24s" } as CSSProperties} />
+              <i className="poil" style={{ left: "244px", animationDelay: "0.03s" } as CSSProperties} />
+              <i className="poil" style={{ left: "259px", animationDelay: "0.50s" } as CSSProperties} />
+              <i className="eclat-b" style={{ left: "180px", top: "190px" } as CSSProperties} />
+              <i className="eclat-b" style={{ left: "320px", top: "220px", animationDelay: ".6s" } as CSSProperties} />
+              <i className="eclat-b" style={{ left: "250px", top: "170px", animationDelay: "1.2s" } as CSSProperties} />
             </span>
             <span className="p p-coucher">
               <b className="zz" style={{ left: "300px" } as CSSProperties}>
@@ -570,59 +663,193 @@ export function VueRanch({ v }: { v: any }) {
             </span>
             <span className="p p-manger">
               <img className="aliment-s" src={v.scImage} alt="" />
-              <i className="miette" style={{ "--mx": "-30px" } as CSSProperties} />
-              <i className="miette" style={{ "--mx": "24px", animationDelay: ".7s" } as CSSProperties} />
-              <i className="miette" style={{ "--mx": "-12px", animationDelay: "1.4s" } as CSSProperties} />
+              <i className="miette" style={{ "--mx": "-46px" } as CSSProperties} />
+              <i className="miette" style={{ "--mx": "38px", animationDelay: ".35s" } as CSSProperties} />
+              <i className="miette" style={{ "--mx": "-20px", animationDelay: ".7s" } as CSSProperties} />
+              <i className="miette" style={{ "--mx": "56px", animationDelay: "1.05s" } as CSSProperties} />
             </span>
             <span className="p p-balle">
-              <svg className="balle-s" width="54" height="54" viewBox="0 0 54 54" aria-hidden="true">
-                <circle cx="27" cy="27" r="24" fill="#d9573e" stroke="#3a1f0e" strokeWidth="3" />
-                <path d="M6 20c14 6 28 6 42 0M8 36c13-5 25-5 38 0" fill="none" stroke="#f6dcc0" strokeWidth="4" />
-              </svg>
+              <img className="balle-i" src={`${A}interface/icones/balle.png`} alt="" />
             </span>
             <span className="p p-cache">
-              <svg className="buisson b-g" width="190" height="150" viewBox="0 0 190 150" aria-hidden="true">
-                <path d="M10 150c-8-30 6-58 32-62-2-30 34-48 58-30 18-26 62-18 66 16 26 6 32 44 18 76z" fill="#5f8a3a" stroke="#2c4418" strokeWidth="3" />
-                <path d="M40 112c8-10 20-12 30-6M98 74c10-8 24-6 30 4M130 118c8-8 20-8 26 0" fill="none" stroke="#86b05a" strokeWidth="4" strokeLinecap="round" />
-              </svg>
-              <svg className="buisson b-d" width="190" height="150" viewBox="0 0 190 150" aria-hidden="true">
-                <path d="M10 150c-8-30 6-58 32-62-2-30 34-48 58-30 18-26 62-18 66 16 26 6 32 44 18 76z" fill="#5f8a3a" stroke="#2c4418" strokeWidth="3" />
-                <path d="M40 112c8-10 20-12 30-6M98 74c10-8 24-6 30 4M130 118c8-8 20-8 26 0" fill="none" stroke="#86b05a" strokeWidth="4" strokeLinecap="round" />
-              </svg>
+              <img className="buisson b-g" src={`${A}interface/icones/buisson.png`} alt="" />
+              <img className="buisson b-d" src={`${A}interface/icones/buisson.png`} alt="" />
             </span>
             <span className="p p-histoire">
-              <svg className="livre-s" width="150" height="96" viewBox="0 0 150 96" aria-hidden="true">
-                <path d="M75 18C55 6 26 6 6 14v72c20-8 49-8 69 4 20-12 49-12 69-4V14C124 6 95 6 75 18z" fill="#f4ead6" stroke="#3a1f0e" strokeWidth="3" />
-                <path d="M75 18v72" stroke="#3a1f0e" strokeWidth="2.5" />
-                <path d="M18 32c14-4 30-4 46 2M18 46c14-4 30-4 46 2M86 34c14-6 30-6 46-2M86 48c14-6 30-6 46-2" stroke="#b9a37e" strokeWidth="2.5" fill="none" />
-                <path className="feuille-t" d="M75 18c14-10 36-12 52-6v70c-16-6-38-4-52 6z" fill="#efe2c6" stroke="#3a1f0e" strokeWidth="2.5" />
+              <img className="livre-i" src={`${A}interface/icones/livre.png`} alt="" />
+              <i className="page-t" />
+              <b className="etoile-h" style={{ left: "90px" } as CSSProperties}>
+                ✦
+              </b>
+              <b className="etoile-h" style={{ left: "150px", animationDelay: ".8s" } as CSSProperties}>
+                ✧
+              </b>
+              <b className="etoile-h" style={{ left: "120px", animationDelay: "1.6s" } as CSSProperties}>
+                ✦
+              </b>
+            </span>
+            <span className="p p-discussion">
+              <img className="parole p-g" src={`${A}interface/icones/discussion.png`} alt="" />
+              <img className="parole p-d" src={`${A}interface/icones/discussion.png`} alt="" />
+            </span>
+            <span className="p p-rire">
+              <b className="ha" style={{ left: "330px", top: "120px" } as CSSProperties}>
+                ha !
+              </b>
+              <b className="ha" style={{ left: "120px", top: "150px", animationDelay: ".5s" } as CSSProperties}>
+                hi hi
+              </b>
+              <b className="ha" style={{ left: "350px", top: "200px", animationDelay: "1s" } as CSSProperties}>
+                ha ha !
+              </b>
+              <b className="ha" style={{ left: "90px", top: "100px", animationDelay: "1.5s" } as CSSProperties}>
+                ha !
+              </b>
+            </span>
+            <span className="p p-dessin">
+              <img className="tableau-i" src={`${A}interface/icones/tableau.png`} alt="" />
+              <svg className="craie-s" width="70" height="60" viewBox="0 0 70 60" aria-hidden="true">
+                <path pathLength="100" d="M8 46c8-18 14-30 22-30s6 22 14 22 10-14 18-24M14 54h40" fill="none" stroke="#f4f1e6" strokeWidth="3" strokeLinecap="round" />
               </svg>
             </span>
-            <span className="p p-bulles">
-              <i className="bulle-s" style={{ left: "277px", width: "33px", height: "33px", animationDelay: "0.60s", animationDuration: "2.19s" } as CSSProperties} />
-              <i className="bulle-s" style={{ left: "386px", width: "14px", height: "14px", animationDelay: "0.54s", animationDuration: "2.65s" } as CSSProperties} />
-              <i className="bulle-s" style={{ left: "349px", width: "16px", height: "16px", animationDelay: "0.53s", animationDuration: "3.31s" } as CSSProperties} />
-              <i className="bulle-s" style={{ left: "398px", width: "15px", height: "15px", animationDelay: "1.17s", animationDuration: "2.24s" } as CSSProperties} />
-              <i className="bulle-s" style={{ left: "271px", width: "37px", height: "37px", animationDelay: "0.68s", animationDuration: "2.24s" } as CSSProperties} />
-              <i className="bulle-s" style={{ left: "66px", width: "17px", height: "17px", animationDelay: "0.21s", animationDuration: "3.22s" } as CSSProperties} />
-              <i className="bulle-s" style={{ left: "342px", width: "16px", height: "16px", animationDelay: "1.24s", animationDuration: "2.54s" } as CSSProperties} />
-              <i className="bulle-s" style={{ left: "422px", width: "17px", height: "17px", animationDelay: "1.47s", animationDuration: "2.29s" } as CSSProperties} />
-              <i className="bulle-s" style={{ left: "154px", width: "37px", height: "37px", animationDelay: "1.27s", animationDuration: "3.25s" } as CSSProperties} />
-              <i className="bulle-s" style={{ left: "435px", width: "22px", height: "22px", animationDelay: "1.46s", animationDuration: "2.56s" } as CSSProperties} />
-              <i className="bulle-s" style={{ left: "214px", width: "39px", height: "39px", animationDelay: "0.07s", animationDuration: "2.99s" } as CSSProperties} />
-              <i className="bulle-s" style={{ left: "42px", width: "27px", height: "27px", animationDelay: "0.09s", animationDuration: "2.53s" } as CSSProperties} />
-              <i className="bulle-s" style={{ left: "291px", width: "18px", height: "18px", animationDelay: "0.04s", animationDuration: "2.59s" } as CSSProperties} />
-              <i className="bulle-s" style={{ left: "97px", width: "33px", height: "33px", animationDelay: "0.01s", animationDuration: "3.07s" } as CSSProperties} />
-              <i className="bulle-s" style={{ left: "141px", width: "20px", height: "20px", animationDelay: "0.53s", animationDuration: "3.25s" } as CSSProperties} />
-              <i className="bulle-s" style={{ left: "108px", width: "31px", height: "31px", animationDelay: "1.47s", animationDuration: "2.70s" } as CSSProperties} />
-              <i className="bulle-s" style={{ left: "333px", width: "29px", height: "29px", animationDelay: "0.86s", animationDuration: "2.28s" } as CSSProperties} />
-              <i className="bulle-s" style={{ left: "75px", width: "26px", height: "26px", animationDelay: "0.31s", animationDuration: "3.07s" } as CSSProperties} />
-              <i className="bulle-s" style={{ left: "398px", width: "32px", height: "32px", animationDelay: "0.23s", animationDuration: "3.32s" } as CSSProperties} />
-              <i className="bulle-s" style={{ left: "408px", width: "15px", height: "15px", animationDelay: "0.09s", animationDuration: "2.78s" } as CSSProperties} />
-              <i className="bulle-s" style={{ left: "350px", width: "18px", height: "18px", animationDelay: "1.19s", animationDuration: "3.03s" } as CSSProperties} />
-              <i className="bulle-s" style={{ left: "334px", width: "15px", height: "15px", animationDelay: "0.19s", animationDuration: "2.99s" } as CSSProperties} />
-              <i className="bulle-s" style={{ left: "161px", width: "19px", height: "19px", animationDelay: "0.98s", animationDuration: "2.06s" } as CSSProperties} />
-              <i className="bulle-s" style={{ left: "227px", width: "35px", height: "35px", animationDelay: "0.84s", animationDuration: "2.79s" } as CSSProperties} />
+            <span className="p p-cabane">
+              <img className="bois-c c1" src={`${A}interface/icones/bois.png`} alt="" />
+              <img className="bois-c c2" src={`${A}interface/icones/bois.png`} alt="" />
+              <img className="bois-c c3" src={`${A}interface/icones/bois.png`} alt="" />
+              <img className="abri-c" src={`${A}interface/icones/abri.png`} alt="" />
+            </span>
+            <span className="p p-devinette">
+              <b className="devine d1">
+                ?
+              </b>
+              <b className="devine d2">
+                ?
+              </b>
+              <b className="devine d3">
+                !
+              </b>
+            </span>
+            <span className="p p-bruits">
+              <b className="note-m" style={{ left: "80px", animationDelay: "0s" } as CSSProperties}>
+                ♪
+              </b>
+              <b className="note-m" style={{ left: "400px", animationDelay: "0.5s" } as CSSProperties}>
+                ♫
+              </b>
+              <b className="note-m" style={{ left: "120px", animationDelay: "1.1s" } as CSSProperties}>
+                ♫
+              </b>
+              <b className="note-m" style={{ left: "380px", animationDelay: "1.6s" } as CSSProperties}>
+                ♪
+              </b>
+              <b className="note-m" style={{ left: "60px", animationDelay: "2.1s" } as CSSProperties}>
+                ♪
+              </b>
+              <b className="note-m" style={{ left: "420px", animationDelay: "2.5s" } as CSSProperties}>
+                ♫
+              </b>
+            </span>
+            <span className="p p-insectes">
+              <img className="insecte i1" src={`${A}interface/icones/luciole.png`} alt="" />
+              <img className="insecte i2" src={`${A}interface/icones/luciole.png`} alt="" />
+              <img className="insecte i3" src={`${A}interface/icones/luciole.png`} alt="" />
+            </span>
+            <span className="p p-feu">
+              <img className="feu-i" src={`${A}interface/icones/feu.png`} alt="" />
+              <i className="etincelle" style={{ left: "84px", animationDelay: "0.79s", "--ex": "-17px" } as CSSProperties} />
+              <i className="etincelle" style={{ left: "106px", animationDelay: "0.21s", "--ex": "-15px" } as CSSProperties} />
+              <i className="etincelle" style={{ left: "120px", animationDelay: "0.63s", "--ex": "25px" } as CSSProperties} />
+              <i className="etincelle" style={{ left: "133px", animationDelay: "0.13s", "--ex": "-2px" } as CSSProperties} />
+              <i className="etincelle" style={{ left: "121px", animationDelay: "0.88s", "--ex": "26px" } as CSSProperties} />
+              <i className="etincelle" style={{ left: "87px", animationDelay: "1.31s", "--ex": "25px" } as CSSProperties} />
+              <i className="etincelle" style={{ left: "140px", animationDelay: "0.45s", "--ex": "-4px" } as CSSProperties} />
+              <i className="etincelle" style={{ left: "115px", animationDelay: "1.09s", "--ex": "-6px" } as CSSProperties} />
+            </span>
+            <span className="p p-lecon">
+              <img className="tableau-i" src={`${A}interface/icones/tableau.png`} alt="" />
+              <svg className="craie-s" width="70" height="60" viewBox="0 0 70 60" aria-hidden="true">
+                <path pathLength="100" d="M8 14h40M8 28h52M8 42h30" fill="none" stroke="#f4f1e6" strokeWidth="3" strokeLinecap="round" />
+              </svg>
+              <b className="devine d3" style={{ left: "330px" } as CSSProperties}>
+                !
+              </b>
+            </span>
+            <span className="p p-probleme">
+              <img className="tableau-i" src={`${A}interface/icones/tableau.png`} alt="" />
+              <b className="craie-t q">
+                ?
+              </b>
+              <b className="craie-t r">
+                !
+              </b>
+              <b className="devine d1" style={{ left: "330px" } as CSSProperties}>
+                ?
+              </b>
+            </span>
+            <span className="p p-pierres">
+              <img className="pierre-i" src={`${A}interface/icones/pierre.png`} alt="" />
+              <img className="sueur" src={`${A}interface/icones/sueur.png`} alt="" style={{ "--sx": "-60px", animationDelay: "0s" } as CSSProperties} />
+              <img className="sueur" src={`${A}interface/icones/sueur.png`} alt="" style={{ "--sx": "55px", animationDelay: "0.45s" } as CSSProperties} />
+              <img className="sueur" src={`${A}interface/icones/sueur.png`} alt="" style={{ "--sx": "-35px", animationDelay: "0.9s" } as CSSProperties} />
+              <img className="sueur" src={`${A}interface/icones/sueur.png`} alt="" style={{ "--sx": "70px", animationDelay: "1.35s" } as CSSProperties} />
+            </span>
+            <span className="p p-equilibre">
+              <img className="buche-e" src={`${A}interface/icones/bois.png`} alt="" />
+              <img className="sueur" src={`${A}interface/icones/sueur.png`} alt="" style={{ "--sx": "-60px", animationDelay: "0s" } as CSSProperties} />
+              <img className="sueur" src={`${A}interface/icones/sueur.png`} alt="" style={{ "--sx": "55px", animationDelay: "0.45s" } as CSSProperties} />
+              <img className="sueur" src={`${A}interface/icones/sueur.png`} alt="" style={{ "--sx": "-35px", animationDelay: "0.9s" } as CSSProperties} />
+              <img className="sueur" src={`${A}interface/icones/sueur.png`} alt="" style={{ "--sx": "70px", animationDelay: "1.35s" } as CSSProperties} />
+            </span>
+            <span className="p p-sauter">
+              <i className="poussiere" style={{ left: "205px", animationDelay: "0s" } as CSSProperties} />
+              <i className="poussiere" style={{ left: "280px", animationDelay: "0s" } as CSSProperties} />
+              <i className="poussiere" style={{ left: "225px", animationDelay: "0.55s" } as CSSProperties} />
+              <i className="poussiere" style={{ left: "300px", animationDelay: "0.55s" } as CSSProperties} />
+              <img className="sueur" src={`${A}interface/icones/sueur.png`} alt="" style={{ "--sx": "-60px", animationDelay: "0s" } as CSSProperties} />
+              <img className="sueur" src={`${A}interface/icones/sueur.png`} alt="" style={{ "--sx": "55px", animationDelay: "0.45s" } as CSSProperties} />
+              <img className="sueur" src={`${A}interface/icones/sueur.png`} alt="" style={{ "--sx": "-35px", animationDelay: "0.9s" } as CSSProperties} />
+              <img className="sueur" src={`${A}interface/icones/sueur.png`} alt="" style={{ "--sx": "70px", animationDelay: "1.35s" } as CSSProperties} />
+            </span>
+            <span className="p p-course">
+              <img className="sueur" src={`${A}interface/icones/sueur.png`} alt="" style={{ "--sx": "-60px", animationDelay: "0s" } as CSSProperties} />
+              <img className="sueur" src={`${A}interface/icones/sueur.png`} alt="" style={{ "--sx": "55px", animationDelay: "0.45s" } as CSSProperties} />
+              <img className="sueur" src={`${A}interface/icones/sueur.png`} alt="" style={{ "--sx": "-35px", animationDelay: "0.9s" } as CSSProperties} />
+              <img className="sueur" src={`${A}interface/icones/sueur.png`} alt="" style={{ "--sx": "70px", animationDelay: "1.35s" } as CSSProperties} />
+            </span>
+            <span className="p p-mediter">
+              <i className="aura" />
+            </span>
+            <span className="p p-ranger">
+              <span className="caisse" />
+              <img className="objet-r o1" src={`${A}interface/icones/balle.png`} alt="" />
+              <img className="objet-r o2" src={`${A}interface/icones/pierre.png`} alt="" />
+              <img className="objet-r o3" src={`${A}interface/icones/bois.png`} alt="" />
+              <img className="objet-r o4" src={`${A}interface/icones/livre.png`} alt="" />
+            </span>
+            <span className="p p-barriere">
+              <img className="barriere-i" src={`${A}interface/icones/barriere.png`} alt="" />
+              <img className="planche-i" src={`${A}interface/icones/bois.png`} alt="" />
+              <img className="marteau-i" src={`${A}interface/icones/marteau.png`} alt="" />
+              <i className="choc" />
+            </span>
+            <span className="p p-poules">
+              <img className="poule-i q1" src={`${A}interface/icones/poule.png`} alt="" />
+              <img className="poule-i q2" src={`${A}interface/icones/poule.png`} alt="" />
+              <i className="poussiere" style={{ left: "205px", animationDelay: "0s" } as CSSProperties} />
+              <i className="poussiere" style={{ left: "280px", animationDelay: "0s" } as CSSProperties} />
+              <i className="poussiere" style={{ left: "225px", animationDelay: "0.55s" } as CSSProperties} />
+              <i className="poussiere" style={{ left: "300px", animationDelay: "0.55s" } as CSSProperties} />
+            </span>
+            <span className="p p-foin">
+              <img className="gerbe-porte" src={`${A}interface/icones/gerbe.png`} alt="" />
+              <img className="gerbe-tas t1" src={`${A}interface/icones/gerbe.png`} alt="" />
+              <img className="gerbe-tas t2" src={`${A}interface/icones/gerbe.png`} alt="" />
+              <img className="gerbe-tas t3" src={`${A}interface/icones/gerbe.png`} alt="" />
+            </span>
+            <span className="p p-eau">
+              <img className="seau-porte" src={`${A}interface/icones/seau.png`} alt="" />
+              <i className="goutte-e" style={{ animationDelay: ".2s" } as CSSProperties} />
+              <i className="goutte-e" style={{ animationDelay: ".9s", "--gx": "16px" } as CSSProperties} />
             </span>
             <span className="p p-corde">
               <svg className="corde-s" width="300" height="40" viewBox="0 0 300 40" aria-hidden="true">
@@ -630,6 +857,10 @@ export function VueRanch({ v }: { v: any }) {
                 <path d="M0 20c40-6 80 6 120 0s80-6 120 0 40 4 60 0" fill="none" stroke="#d6b67c" strokeWidth="7" strokeDasharray="7 5" strokeLinecap="round" />
                 <circle cx="150" cy="20" r="9" fill="#9c3b2a" stroke="#3a1f0e" strokeWidth="2.5" />
               </svg>
+              <i className="poussiere" style={{ left: "205px", animationDelay: "0s" } as CSSProperties} />
+              <i className="poussiere" style={{ left: "280px", animationDelay: "0s" } as CSSProperties} />
+              <i className="poussiere" style={{ left: "225px", animationDelay: "0.55s" } as CSSProperties} />
+              <i className="poussiere" style={{ left: "300px", animationDelay: "0.55s" } as CSSProperties} />
             </span>
             <span className="p p-saut">
               <svg className="buche" width="110" height="46" viewBox="0 0 110 46" aria-hidden="true">
@@ -638,34 +869,54 @@ export function VueRanch({ v }: { v: any }) {
                 <path d="M20 18h40M28 30h36" stroke="#5e381b" strokeWidth="3" strokeLinecap="round" />
               </svg>
             </span>
-            <span className="p p-barriere">
-              <svg className="planches" width="130" height="150" viewBox="0 0 130 150" aria-hidden="true">
-                <rect x="12" y="10" width="20" height="140" rx="3" fill="#a87543" stroke="#3a1f0e" strokeWidth="3" />
-                <rect x="96" y="10" width="20" height="140" rx="3" fill="#a87543" stroke="#3a1f0e" strokeWidth="3" />
-                <rect x="4" y="44" width="122" height="18" rx="3" fill="#c08a52" stroke="#3a1f0e" strokeWidth="3" />
-                <rect className="planche-n" x="4" y="92" width="122" height="18" rx="3" fill="#d9a466" stroke="#3a1f0e" strokeWidth="3" />
-              </svg>
-              <svg className="marteau" width="80" height="80" viewBox="0 0 80 80" aria-hidden="true">
-                <path d="M30 34l34 34" stroke="#8a5530" strokeWidth="9" strokeLinecap="round" />
-                <rect x="8" y="12" width="42" height="22" rx="4" transform="rotate(45 29 23)" fill="#8b8f96" stroke="#3a1f0e" strokeWidth="3" />
-              </svg>
+            <span className="gain-lueur">
+              <i className="scintille" style={{ left: "229px", top: "208px", animationDelay: "0.10s" } as CSSProperties} />
+              <i className="scintille" style={{ left: "208px", top: "229px", animationDelay: "0.79s" } as CSSProperties} />
+              <i className="scintille" style={{ left: "173px", top: "294px", animationDelay: "1.00s" } as CSSProperties} />
+              <i className="scintille" style={{ left: "216px", top: "237px", animationDelay: "0.34s" } as CSSProperties} />
+              <i className="scintille" style={{ left: "207px", top: "277px", animationDelay: "0.64s" } as CSSProperties} />
+              <i className="scintille" style={{ left: "326px", top: "314px", animationDelay: "0.38s" } as CSSProperties} />
+              <i className="scintille" style={{ left: "202px", top: "301px", animationDelay: "1.14s" } as CSSProperties} />
+              <i className="scintille" style={{ left: "183px", top: "286px", animationDelay: "1.08s" } as CSSProperties} />
+              <i className="scintille" style={{ left: "313px", top: "270px", animationDelay: "0.48s" } as CSSProperties} />
+              <i className="scintille" style={{ left: "270px", top: "196px", animationDelay: "0.58s" } as CSSProperties} />
             </span>
-            <span className="p p-eau">
-              <img className="seau-porte" src={`${A}activites/corvees/seau-eau.png`} alt="" />
-            </span>
+            <div className="essais">
+              {(v.scEssais || []).map((xEs14: any, i14: number) => (
+                <Fragment key={i14}>
+                  <span className={`essai ${xEs14.cls}`} style={{ animationDelay: `${xEs14.delai}s` } as CSSProperties}>
+                    {xEs14.signe}
+                  </span>
+                </Fragment>
+              ))}
+            </div>
           </div>
           {v.scNote ? (<>
             <div className="sc-note" onClick={v.fermerScene} role="status">
               <div className="sn-titre">
                 {v.scTitre}
               </div>
-              {(v.scLignes || []).map((xL9: any, i9: number) => (
-                <Fragment key={i9}>
+              {(v.scLignes || []).map((xL15: any, i15: number) => (
+                <Fragment key={i15}>
                   <div className="sn-ligne">
-                    {xL9.t}
+                    {xL15.t}
                   </div>
                 </Fragment>
               ))}
+              {v.scAGains ? (<>
+                <div className="sn-gains">
+                  {(v.scGains || []).map((xG16: any, i16: number) => (
+                    <Fragment key={i16}>
+                      <span className="sn-gain" style={{ animationDelay: `${xG16.delai}s` } as CSSProperties}>
+                        {xG16.nom}
+                        <b>
+                          {xG16.fleches}
+                        </b>
+                      </span>
+                    </Fragment>
+                  ))}
+                </div>
+              </>) : null}
               <div className="sn-suite">
                 continuer
               </div>
@@ -802,25 +1053,25 @@ export function VueRanch({ v }: { v: any }) {
                         </span>
                       </div>
                       <div className={v.choicesClass} style={{ position: "relative", display: "flex", flexDirection: "column", gap: `${v.listGap}px`, marginTop: "10px", width: "342px" } as CSSProperties}>
-                        {(v.answers || []).map((xA10: any, i10: number) => (
-                          <Fragment key={i10}>
-                            <button className={xA10.cls} onClick={xA10.pick} onMouseEnter={xA10.enter} onFocus={xA10.enter} style={{ position: "relative", width: "100%", display: "flex", alignItems: "center", gap: "12px", padding: xA10.pad, border: "none", borderRadius: "4px", background: "transparent", textAlign: "left", fontFamily: "'Alegreya',serif", fontSize: "16.5px", color: "#2b2118", cursor: "pointer", transitionDelay: xA10.delay } as CSSProperties}>
-                              <span style={{ flex: "none", width: "28px", height: "28px", boxSizing: "border-box", borderRadius: "50%", border: `2.5px ${xA10.borderStyle} ${xA10.color}`, display: "flex", alignItems: "center", justifyContent: "center", color: xA10.color, boxShadow: `0 0 ${xA10.glow}px ${xA10.glowColor}` } as CSSProperties}>
+                        {(v.answers || []).map((xA17: any, i17: number) => (
+                          <Fragment key={i17}>
+                            <button className={xA17.cls} onClick={xA17.pick} onMouseEnter={xA17.enter} onFocus={xA17.enter} style={{ position: "relative", width: "100%", display: "flex", alignItems: "center", gap: "12px", padding: xA17.pad, border: "none", borderRadius: "4px", background: "transparent", textAlign: "left", fontFamily: "'Alegreya',serif", fontSize: "16.5px", color: "#2b2118", cursor: "pointer", transitionDelay: xA17.delay } as CSSProperties}>
+                              <span style={{ flex: "none", width: "28px", height: "28px", boxSizing: "border-box", borderRadius: "50%", border: `2.5px ${xA17.borderStyle} ${xA17.color}`, display: "flex", alignItems: "center", justifyContent: "center", color: xA17.color, boxShadow: `0 0 ${xA17.glow}px ${xA17.glowColor}` } as CSSProperties}>
                                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                                  <path d={xA10.icon} />
+                                  <path d={xA17.icon} />
                                 </svg>
                               </span>
                               <span style={{ minWidth: "0", flex: "1" } as CSSProperties}>
-                                <span style={{ display: "block", fontFamily: "'Alegreya SC',serif", fontWeight: "700", fontSize: `${xA10.labelSize}px`, letterSpacing: "1px", color: xA10.color } as CSSProperties}>
-                                  {xA10.label}
+                                <span style={{ display: "block", fontFamily: "'Alegreya SC',serif", fontWeight: "700", fontSize: `${xA17.labelSize}px`, letterSpacing: "1px", color: xA17.color } as CSSProperties}>
+                                  {xA17.label}
                                 </span>
-                                {xA10.showText ? (<>
+                                {xA17.showText ? (<>
                                   <span className="ans">
-                                    {xA10.text}
+                                    {xA17.text}
                                   </span>
                                 </>) : null}
                               </span>
-                              {xA10.sheetIcon ? (<>
+                              {xA17.sheetIcon ? (<>
                                 <span title="Voir la réponse" style={{ flex: "none", marginLeft: "auto", width: "22px", height: "22px", display: "flex", alignItems: "center", justifyContent: "center", color: "#6b4f33" } as CSSProperties}>
                                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
                                     <path d="M6 3h9l4 4v14H6z" />
@@ -828,7 +1079,7 @@ export function VueRanch({ v }: { v: any }) {
                                   </svg>
                                 </span>
                               </>) : null}
-                              <svg className={xA10.stampCls} viewBox="0 0 40 40" aria-hidden="true">
+                              <svg className={xA17.stampCls} viewBox="0 0 40 40" aria-hidden="true">
                                 <circle cx="20" cy="20" r="16.5" fill="rgba(63,122,58,.08)" stroke="#3f7a3a" strokeWidth="3" />
                                 <circle cx="20" cy="20" r="12.5" fill="none" stroke="#3f7a3a" strokeWidth="1.2" strokeDasharray="2 2.2" />
                                 <path d="M12.5 20.5l5 5 10-11" fill="none" stroke="#3f7a3a" strokeWidth="3.6" strokeLinecap="round" strokeLinejoin="round" />
@@ -945,25 +1196,25 @@ export function VueRanch({ v }: { v: any }) {
                       </span>
                     </div>
                     <div style={{ position: "relative", display: "flex", flexDirection: "column", gap: `${v.listGap}px`, marginTop: "10px", width: "342px" } as CSSProperties}>
-                      {(v.answers || []).map((xA11: any, i11: number) => (
-                        <Fragment key={i11}>
-                          <div className={xA11.ghostCls} aria-hidden="true" style={{ position: "relative", width: "100%", display: "flex", alignItems: "center", gap: "12px", padding: xA11.pad, border: "none", borderRadius: "4px", background: "transparent", textAlign: "left", fontFamily: "'Alegreya',serif", fontSize: "16.5px", color: "#2b2118", transitionDelay: xA11.delay } as CSSProperties}>
-                            <span style={{ flex: "none", width: "28px", height: "28px", boxSizing: "border-box", borderRadius: "50%", border: `2.5px ${xA11.borderStyle} ${xA11.color}`, display: "flex", alignItems: "center", justifyContent: "center", color: xA11.color, boxShadow: `0 0 ${xA11.glow}px ${xA11.glowColor}` } as CSSProperties}>
+                      {(v.answers || []).map((xA18: any, i18: number) => (
+                        <Fragment key={i18}>
+                          <div className={xA18.ghostCls} aria-hidden="true" style={{ position: "relative", width: "100%", display: "flex", alignItems: "center", gap: "12px", padding: xA18.pad, border: "none", borderRadius: "4px", background: "transparent", textAlign: "left", fontFamily: "'Alegreya',serif", fontSize: "16.5px", color: "#2b2118", transitionDelay: xA18.delay } as CSSProperties}>
+                            <span style={{ flex: "none", width: "28px", height: "28px", boxSizing: "border-box", borderRadius: "50%", border: `2.5px ${xA18.borderStyle} ${xA18.color}`, display: "flex", alignItems: "center", justifyContent: "center", color: xA18.color, boxShadow: `0 0 ${xA18.glow}px ${xA18.glowColor}` } as CSSProperties}>
                               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                                <path d={xA11.icon} />
+                                <path d={xA18.icon} />
                               </svg>
                             </span>
                             <span style={{ minWidth: "0", flex: "1" } as CSSProperties}>
-                              <span style={{ display: "block", fontFamily: "'Alegreya SC',serif", fontWeight: "700", fontSize: `${xA11.labelSize}px`, letterSpacing: "1px", color: xA11.color } as CSSProperties}>
-                                {xA11.label}
+                              <span style={{ display: "block", fontFamily: "'Alegreya SC',serif", fontWeight: "700", fontSize: `${xA18.labelSize}px`, letterSpacing: "1px", color: xA18.color } as CSSProperties}>
+                                {xA18.label}
                               </span>
-                              {xA11.showText ? (<>
+                              {xA18.showText ? (<>
                                 <span className="ans">
-                                  {xA11.text}
+                                  {xA18.text}
                                 </span>
                               </>) : null}
                             </span>
-                            {xA11.never ? (<>
+                            {xA18.never ? (<>
                               <span title="Voir la réponse" style={{ flex: "none", marginLeft: "auto", width: "22px", height: "22px", display: "flex", alignItems: "center", justifyContent: "center", color: "#6b4f33" } as CSSProperties}>
                                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
                                   <path d="M6 3h9l4 4v14H6z" />
@@ -971,7 +1222,7 @@ export function VueRanch({ v }: { v: any }) {
                                 </svg>
                               </span>
                             </>) : null}
-                            <svg className={xA11.ghostStamp} viewBox="0 0 40 40" aria-hidden="true">
+                            <svg className={xA18.ghostStamp} viewBox="0 0 40 40" aria-hidden="true">
                               <circle cx="20" cy="20" r="16.5" fill="rgba(63,122,58,.08)" stroke="#3f7a3a" strokeWidth="3" />
                               <circle cx="20" cy="20" r="12.5" fill="none" stroke="#3f7a3a" strokeWidth="1.2" strokeDasharray="2 2.2" />
                               <path d="M12.5 20.5l5 5 10-11" fill="none" stroke="#3f7a3a" strokeWidth="3.6" strokeLinecap="round" strokeLinejoin="round" />
@@ -997,9 +1248,9 @@ export function VueRanch({ v }: { v: any }) {
               <img src={v.avatarImg} alt="" style={{ filter: `blur(7px) ${v.portraitFilter}` } as CSSProperties} />
             </div>
             <div className={`portrait portrait-fade ${v.talkClass}`} style={{ filter: v.portraitFilter } as CSSProperties}>
-              {(v.poses || []).map((xP12: any, i12: number) => (
-                <Fragment key={i12}>
-                  <img className={`pose ${xP12.cls}`} src={xP12.src} alt={xP12.alt} style={{ opacity: xP12.op, position: xP12.pos, left: "40px", top: "40px" } as CSSProperties} />
+              {(v.poses || []).map((xP19: any, i19: number) => (
+                <Fragment key={i19}>
+                  <img className={`pose ${xP19.cls}`} src={xP19.src} alt={xP19.alt} style={{ opacity: xP19.op, position: xP19.pos, left: "40px", top: "40px" } as CSSProperties} />
                 </Fragment>
               ))}
             </div>
@@ -1041,13 +1292,13 @@ export function VueRanch({ v }: { v: any }) {
           <div className="sac-corps">
             <div className="stitch" style={{ borderRadius: "18px 18px 54px 54px" } as CSSProperties} />
             <div className="sac-poche">
-              {(v.sacCases || []).map((xC13: any, i13: number) => (
-                <Fragment key={i13}>
-                  <button className={`case ${xC13.cls}`} style={{ animationDelay: `${xC13.delai}s` } as CSSProperties} draggable={xC13.plein} onDragStart={xC13.prendreDnd} onDragOver={xC13.survolDnd} onDragLeave={xC13.quitteDnd} onDrop={xC13.deposer} onDragEnd={xC13.finDnd} onMouseEnter={xC13.survol} onClick={xC13.choisir} aria-disabled={!!(xC13.vide)} aria-haspopup="menu" aria-label={xC13.nom}>
-                    {xC13.plein ? (<>
-                      <img src={xC13.image} alt="" />
+              {(v.sacCases || []).map((xC20: any, i20: number) => (
+                <Fragment key={i20}>
+                  <button className={`case ${xC20.cls}`} style={{ animationDelay: `${xC20.delai}s` } as CSSProperties} draggable={xC20.plein} onDragStart={xC20.prendreDnd} onDragOver={xC20.survolDnd} onDragLeave={xC20.quitteDnd} onDrop={xC20.deposer} onDragEnd={xC20.finDnd} onMouseEnter={xC20.survol} onClick={xC20.choisir} aria-disabled={!!(xC20.vide)} aria-haspopup="menu" aria-label={xC20.nom}>
+                    {xC20.plein ? (<>
+                      <img src={xC20.image} alt="" />
                       <span className="sceau qte" style={{ background: "#6e3f22" } as CSSProperties}>
-                        {xC13.qte}
+                        {xC20.qte}
                       </span>
                     </>) : null}
                   </button>
@@ -1080,12 +1331,12 @@ export function VueRanch({ v }: { v: any }) {
               <span className="sr-titre">
                 ressources
               </span>
-              {(v.ressourcesSac || []).map((xR14: any, i14: number) => (
-                <Fragment key={i14}>
-                  <span className={`sr ${xR14.cls}`} title={xR14.nom}>
-                    <img src={xR14.image} alt={xR14.nom} />
+              {(v.ressourcesSac || []).map((xR21: any, i21: number) => (
+                <Fragment key={i21}>
+                  <span className={`sr ${xR21.cls}`} title={xR21.nom}>
+                    <img src={xR21.image} alt={xR21.nom} />
                     <b>
-                      {xR14.qte}
+                      {xR21.qte}
                     </b>
                   </span>
                 </Fragment>
@@ -1115,13 +1366,13 @@ export function VueRanch({ v }: { v: any }) {
           <div className="l-wrap">
             {/* Onglets : glissent hors du carnet une fois ouvert */}
             <nav className="l-onglets" aria-label="Pages du carnet">
-              {(v.onglets || []).map((xO15: any, i15: number) => (
-                <Fragment key={i15}>
-                  <button className={`l-onglet leather ${xO15.cls}`} style={{ animationDelay: `${xO15.delai}s` } as CSSProperties} onClick={xO15.ouvrir} aria-label={xO15.nom}>
+              {(v.onglets || []).map((xO22: any, i22: number) => (
+                <Fragment key={i22}>
+                  <button className={`l-onglet leather ${xO22.cls}`} style={{ animationDelay: `${xO22.delai}s` } as CSSProperties} onClick={xO22.ouvrir} aria-label={xO22.nom}>
                     <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                      <path d={xO15.icone} />
+                      <path d={xO22.icone} />
                     </svg>
-                    {xO15.court} 
+                    {xO22.court} 
                   </button>
                 </Fragment>
               ))}
@@ -1144,14 +1395,14 @@ export function VueRanch({ v }: { v: any }) {
                     <div style={{ fontFamily: "'Alegreya SC',serif", fontSize: "13px", letterSpacing: "2px", color: "#9a7b55", margin: "2px 0 12px" } as CSSProperties}>
                       {v.jourTexteMin} · {v.time}
                     </div>
-                    {(v.journalCourt || []).map((xJ16: any, i16: number) => (
-                      <Fragment key={i16}>
+                    {(v.journalCourt || []).map((xJ23: any, i23: number) => (
+                      <Fragment key={i23}>
                         <div style={{ display: "flex", gap: "12px", fontSize: "16.5px", lineHeight: "32px" } as CSSProperties}>
                           <span style={{ flex: "none", width: "46px", fontFamily: "'Alegreya SC',serif", fontSize: "13px", color: "#9a7b55" } as CSSProperties}>
-                            {xJ16.heure}
+                            {xJ23.heure}
                           </span>
                           <span>
-                            {xJ16.texte}
+                            {xJ23.texte}
                           </span>
                         </div>
                       </Fragment>
@@ -1159,31 +1410,31 @@ export function VueRanch({ v }: { v: any }) {
                     <div style={{ fontFamily: "'Reenie Beanie',cursive", fontSize: "28px", lineHeight: "1", color: "#9c3b2a", marginTop: "22px" } as CSSProperties}>
                       à ne pas oublier
                     </div>
-                    {(v.rappels || []).map((xR17: any, i17: number) => (
-                      <Fragment key={i17}>
+                    {(v.rappels || []).map((xR24: any, i24: number) => (
+                      <Fragment key={i24}>
                         <div style={{ fontSize: "16.5px", lineHeight: "32px", display: "flex", gap: "10px", alignItems: "center" } as CSSProperties}>
                           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#9c3b2a" strokeWidth="2.2" strokeLinecap="round" aria-hidden="true">
                             <path d="M5 12h14M13 6l6 6-6 6" />
                           </svg>
-                          {xR17.texte}
+                          {xR24.texte}
                         </div>
                       </Fragment>
                     ))}
                   </>) : null}
                   {v.pJournal ? (<>
-                    {(v.journalJours || []).map((xJj18: any, i18: number) => (
-                      <Fragment key={i18}>
+                    {(v.journalJours || []).map((xJj25: any, i25: number) => (
+                      <Fragment key={i25}>
                         <div style={{ fontFamily: "'Reenie Beanie',cursive", fontSize: "30px", lineHeight: "1", color: "#3a2a1c", margin: "6px 0 6px" } as CSSProperties}>
-                          {xJj18.titre}
+                          {xJj25.titre}
                         </div>
-                        {(xJj18.lignes || []).map((xJ19: any, i19: number) => (
-                          <Fragment key={i19}>
+                        {(xJj25.lignes || []).map((xJ26: any, i26: number) => (
+                          <Fragment key={i26}>
                             <div style={{ display: "flex", gap: "12px", fontSize: "16px", lineHeight: "24px", marginBottom: "6px" } as CSSProperties}>
                               <span style={{ flex: "none", width: "46px", fontFamily: "'Alegreya SC',serif", fontSize: "13px", color: "#9a7b55" } as CSSProperties}>
-                                {xJ19.heure}
+                                {xJ26.heure}
                               </span>
                               <span>
-                                {xJ19.texte}
+                                {xJ26.texte}
                               </span>
                             </div>
                           </Fragment>
@@ -1353,23 +1604,23 @@ export function VueRanch({ v }: { v: any }) {
                       {v.pageTitre}
                     </div>
                     {v.pSommaire ? (<>
-                      {(v.sommaire || []).map((xS20: any, i20: number) => (
-                        <Fragment key={i20}>
-                          <button className="sommaire-ligne" onClick={xS20.ouvrir}>
+                      {(v.sommaire || []).map((xS27: any, i27: number) => (
+                        <Fragment key={i27}>
+                          <button className="sommaire-ligne" onClick={xS27.ouvrir}>
                             <span className="num">
-                              {xS20.num}
+                              {xS27.num}
                             </span>
                             <span>
-                              {xS20.nom}
+                              {xS27.nom}
                             </span>
-                            {xS20.aBadge ? (<>
+                            {xS27.aBadge ? (<>
                               <span className="sceau">
-                                {xS20.badge}
+                                {xS27.badge}
                               </span>
                             </>) : null}
                             <span className="points" />
                             <span className="num">
-                              {xS20.page}
+                              {xS27.page}
                             </span>
                           </button>
                         </Fragment>
@@ -1379,14 +1630,14 @@ export function VueRanch({ v }: { v: any }) {
                       <div style={{ fontFamily: "'Reenie Beanie',cursive", fontSize: "30px", lineHeight: "1", color: "#3a2a1c", marginBottom: "6px" } as CSSProperties}>
                         aujourd'hui
                       </div>
-                      {(v.journal || []).map((xJ21: any, i21: number) => (
-                        <Fragment key={i21}>
+                      {(v.journal || []).map((xJ28: any, i28: number) => (
+                        <Fragment key={i28}>
                           <div style={{ display: "flex", gap: "12px", fontSize: "16px", lineHeight: "32px" } as CSSProperties}>
                             <span style={{ flex: "none", width: "46px", fontFamily: "'Alegreya SC',serif", fontSize: "13px", color: "#9a7b55" } as CSSProperties}>
-                              {xJ21.heure}
+                              {xJ28.heure}
                             </span>
                             <span>
-                              {xJ21.texte}
+                              {xJ28.texte}
                             </span>
                           </div>
                         </Fragment>
@@ -1397,15 +1648,15 @@ export function VueRanch({ v }: { v: any }) {
                         Nourriture
                       </div>
                       <div style={{ display: "grid", gridTemplateColumns: "repeat(4,minmax(0,1fr))", gap: "8px" } as CSSProperties}>
-                        {(v.sacNourriture || []).map((xN22: any, i22: number) => (
-                          <Fragment key={i22}>
-                            <div className="case-sac" style={{ opacity: xN22.opacite } as CSSProperties}>
-                              <img src={xN22.image} alt="" />
+                        {(v.sacNourriture || []).map((xN29: any, i29: number) => (
+                          <Fragment key={i29}>
+                            <div className="case-sac" style={{ opacity: xN29.opacite } as CSSProperties}>
+                              <img src={xN29.image} alt="" />
                               <span>
-                                {xN22.nom}
+                                {xN29.nom}
                               </span>
                               <b style={{ fontFamily: "'Alegreya SC',serif", fontSize: "12px", color: "#6b4f33" } as CSSProperties}>
-                                × {xN22.qte}
+                                × {xN29.qte}
                               </b>
                             </div>
                           </Fragment>
@@ -1413,29 +1664,29 @@ export function VueRanch({ v }: { v: any }) {
                       </div>
                     </>) : null}
                     {v.pRelations ? (<>
-                      {(v.relations || []).map((xR23: any, i23: number) => (
-                        <Fragment key={i23}>
+                      {(v.relations || []).map((xR30: any, i30: number) => (
+                        <Fragment key={i30}>
                           <div style={{ display: "flex", alignItems: "baseline", gap: "10px", fontSize: "17px", lineHeight: "32px" } as CSSProperties}>
-                            <b style={{ fontFamily: "'Alegreya SC',serif", letterSpacing: "1.5px", color: xR23.encre, width: "84px" } as CSSProperties}>
-                              {xR23.nom}
+                            <b style={{ fontFamily: "'Alegreya SC',serif", letterSpacing: "1.5px", color: xR30.encre, width: "84px" } as CSSProperties}>
+                              {xR30.nom}
                             </b>
                             <span style={{ fontFamily: "'Reenie Beanie',cursive", fontSize: "23px", color: "#6b4f33" } as CSSProperties}>
-                              {xR23.lien}
+                              {xR30.lien}
                             </span>
                           </div>
                         </Fragment>
                       ))}
                     </>) : null}
                     {v.pCarte ? (<>
-                      {(v.lieux || []).map((xL24: any, i24: number) => (
-                        <Fragment key={i24}>
-                          <button className="sommaire-ligne" onClick={xL24.partir} disabled={!!(xL24.off)} style={{ opacity: xL24.opacite } as CSSProperties}>
+                      {(v.lieux || []).map((xL31: any, i31: number) => (
+                        <Fragment key={i31}>
+                          <button className="sommaire-ligne" onClick={xL31.partir} disabled={!!(xL31.off)} style={{ opacity: xL31.opacite } as CSSProperties}>
                             <span>
-                              {xL24.nom}
+                              {xL31.nom}
                             </span>
                             <span className="points" />
                             <span className="num">
-                              {xL24.duree}
+                              {xL31.duree}
                             </span>
                           </button>
                         </Fragment>
@@ -1467,23 +1718,23 @@ export function VueRanch({ v }: { v: any }) {
                     </>) : null}
                     {v.pOptions ? (<>
                       <div style={{ display: "flex", flexDirection: "column", gap: "14px" } as CSSProperties}>
-                        {(v.reglages || []).map((xG25: any, i25: number) => (
-                          <Fragment key={i25}>
+                        {(v.reglages || []).map((xG32: any, i32: number) => (
+                          <Fragment key={i32}>
                             <label style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "12px", fontSize: "17px", cursor: "pointer" } as CSSProperties}>
                               <span>
-                                {xG25.nom}
+                                {xG32.nom}
                               </span>
-                              <input type="checkbox" checked={xG25.actif} onChange={xG25.basculer} style={{ width: "22px", height: "22px", accentColor: "#6e3f22" } as CSSProperties} />
+                              <input type="checkbox" checked={xG32.actif} onChange={xG32.basculer} style={{ width: "22px", height: "22px", accentColor: "#6e3f22" } as CSSProperties} />
                             </label>
                           </Fragment>
                         ))}
-                        {(v.curseurs || []).map((xG26: any, i26: number) => (
-                          <Fragment key={i26}>
+                        {(v.curseurs || []).map((xG33: any, i33: number) => (
+                          <Fragment key={i33}>
                             <label style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "14px", fontSize: "17px", cursor: "pointer" } as CSSProperties}>
                               <span>
-                                {xG26.nom}
+                                {xG33.nom}
                               </span>
-                              <input type="range" min="0" max="100" step="5" value={xG26.valeur} onChange={xG26.changer} style={{ flex: "0 0 46%", accentColor: "#6e3f22", cursor: "pointer" } as CSSProperties} />
+                              <input type="range" min="0" max="100" step="5" value={xG33.valeur} onChange={xG33.changer} style={{ flex: "0 0 46%", accentColor: "#6e3f22", cursor: "pointer" } as CSSProperties} />
                             </label>
                           </Fragment>
                         ))}

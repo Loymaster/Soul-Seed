@@ -5,7 +5,7 @@
 import { Component, type ReactNode } from 'react';
 import {
   CORVEES, ENTRAINEMENTS, INTERACTIONS, NOM_STADE, Simulation, accord, aliment, apparence, ageJours, descriptionObjet,
-  heureDuJour, lireSignes, objetDivers, texteComportement, type CategorieInteraction, type Etat, type OptionInteraction,
+  heureDuJour, lireSignes, objetDivers, texteComportement, type CategorieInteraction, type CleCarac, type Etat, type OptionInteraction,
   type ReponseComportement, type Signes, type Sortie,
 } from '@/moteur/simulation';
 import { SFX } from '@/moteur/sfx';
@@ -17,6 +17,11 @@ import { profilEcho, volumePas, type Profil } from './demarche';
 import { saison } from './lumiere';
 import { REP, TAMPON, TEMPERAMENTS, GLYPHE_INCONNU, cleEvenement, consequence, noteSens, parole, phraseReponse } from './evenements';
 import { ecouterVolumes, fixerVolumes, volumeMusique } from '../commun/volumes';
+import { ONGLETS_FICHE, lignesCombat, lignesTemperament, progression, temperamentDominant, type OngletFiche } from './fiche';
+import { PALIER_CORVEE, essaisScene, sceneCorvee, sceneEntrainement, sceneInteraction, sonsScene } from './scenes';
+import { teinteEmotion } from './lueurs';
+import { FenetreTemps } from './FenetreTemps';
+import { VoileSommeil, type Sommeil } from './VoileSommeil';
 import type { Personnage, Reglages } from '../profils';
 import './ranch.css';
 
@@ -39,10 +44,6 @@ const CAT_JOUER: { k: Exclude<CategorieInteraction, 'cadeau' | 'affection'>; nom
   { k: 'jeu', nom: 'Jeux' }, { k: 'discussion', nom: 'Discussion' }, { k: 'partage', nom: 'Partage' }, { k: 'education', nom: 'Éducation' },
 ];
 const ICONE_INTERACTION: Record<string, string> = { jeu: IC.balle, discussion: IC.discussion, partage: IC.partage, education: IC.education, affection: IC.caliner };
-/** Scène jouée pour une interaction (animations de la maquette). */
-const SCENE_INTERACTION = (cat: string, id: string) =>
-  id === 'balle' ? 'balle' : id === 'cachecache' ? 'cache' : id === 'histoire' ? 'histoire' : id === 'course' ? 'course'
-    : cat === 'jeu' ? 'balle' : cat === 'education' ? 'esprit' : 'histoire';
 
 const SECTIONS = [
   { k: 'sommaire', nom: 'Sommaire', court: 'Sommaire', titre: 'Sommaire', surtitre: 'Carnet d’éleveur', icone: IC.sommaire },
@@ -97,6 +98,8 @@ export interface ProprietesRanch {
   surPartir?: (e: Etat, lieu: Destination) => boolean | void;
   /** Ressources de construction rapportées d'exploration (monde de la partie), montrées dans le sac. */
   ressources?: Partial<Record<string, number>>;
+  /** Corvées remises en état par Ash (monde de la partie) : niveau 1 à 3 ; absentes ou 0 : pas encore praticables. */
+  corvees?: Partial<Record<string, number>>;
 }
 
 interface Choix {
@@ -104,7 +107,13 @@ interface Choix {
   /** L'action ; « ouvreSac » : la fiche se ferme et le sac s'ouvre. */
   agir?: () => void; sansTampon?: boolean;
 }
-interface Scene { kind: string; groupe: string; image: string; titre: string; lignes: string[]; dx: number; dy: number; s0: string; emo: number; journal?: string }
+interface Scene {
+  kind: string; groupe: string; image: string; titre: string; lignes: string[]; dx: number; dy: number; s0: string; emo: number; journal?: string;
+  /** Ce qui a progressé (flèches, sans chiffre) ; essais d'une corvée. */
+  gains: { nom: string; fleches: string }[]; essais: boolean[];
+}
+/** Ce que renvoie l'action d'une scène : ses phrases, ou davantage (essais d'une corvée, titre). */
+type ResultatScene = string[] | { lignes: string[]; essais?: boolean[]; titre?: string } | null;
 interface Sortie_ { texte: string; sous?: string; image?: string; bloquant?: boolean }
 
 interface EtatUI {
@@ -123,6 +132,12 @@ interface EtatUI {
   phase: 'choose' | 'stamped' | 'turning' | 'result'; chosen: number; active: number;
   decouverte: boolean; revealed: boolean; tamponGo: boolean;
   propositions: Partial<Record<CategorieInteraction, { jour: number; options: OptionInteraction[] }>>;
+  /** Fiche de l'écho : onglet ouvert. */
+  ongletFiche: OngletFiche;
+  /** Fenêtre « laisser le temps passer » ouverte. */
+  temps: boolean;
+  /** L'écho dort : l'écran s'assombrit le temps d'une berceuse. */
+  sommeil: Sommeil | null;
 }
 
 export class Ranch extends Component<ProprietesRanch, EtatUI> {
@@ -143,6 +158,10 @@ export class Ranch extends Component<ProprietesRanch, EtatUI> {
   /** Événement en cours dans le carnet : le comportement (gardé jusqu'à la fin, la simulation l'efface à la réponse). */
   evtCourant: { c: NonNullable<Etat['comportement']>; reponses: { cle: ReponseComportement; libelle: string }[]; reponse: ReponseComportement | null; consequence: string } | null = null;
   vivant = true;
+  /** La musique se tait jusqu'à cet instant (berceuse du sommeil). */
+  musiqueCoupeeJusqua = 0;
+  /** Ce qui a progressé lors de la dernière activité du jour (fiche « Combat » : lueur et flèches). */
+  recents: { jour: number; gains: Partial<Record<CleCarac, string>> } = { jour: -1, gains: {} };
 
   constructor(p: ProprietesRanch) {
     super(p);
@@ -158,7 +177,7 @@ export class Ranch extends Component<ProprietesRanch, EtatUI> {
       quitter: false, dejSurvol: null, dejPart: [],
       scene: null, scPhase: '',
       evc: false, evcFerme: false, playing: false, typed: 0, done: false, phase: 'choose', chosen: -1, active: -1, decouverte: false, revealed: false, tamponGo: false,
-      propositions: {},
+      propositions: {}, ongletFiche: 'portrait', temps: false, sommeil: null,
     };
   }
 
@@ -213,6 +232,8 @@ export class Ranch extends Component<ProprietesRanch, EtatUI> {
     this.musiques = { jour: mk('sons/musiques/day.mp3'), nuit: mk('sons/musiques/night.mp3') };
     this.fondu = window.setInterval(() => {
       if (!this.musiques) return;
+      // berceuse : la musique se tait d'un coup, puis revient en fondu
+      if (Date.now() < this.musiqueCoupeeJusqua) { Object.values(this.musiques).forEach((a) => { a.volume = 0; if (!a.paused) a.pause(); }); return; }
       const h = this.e.minute / 60; const nuit = h >= 20 || h < 6;
       const V = this.state.musique ? 0.32 * volumeMusique() : 0;
       const voulue = this.musiques[nuit ? 'nuit' : 'jour'], autre = this.musiques[nuit ? 'jour' : 'nuit'];
@@ -230,8 +251,8 @@ export class Ranch extends Component<ProprietesRanch, EtatUI> {
     }, 200);
   }
 
-  occupe() { const s = this.state; return !!(s.ouvert || s.carnet || s.sacOuvert || s.quitter || s.evc || s.sortie || s.scene || Date.now() < this.repos || this.e.mort); }
-  enPause() { const s = this.state; return !!(s.carnet || s.sacOuvert || s.sortie || s.evc || s.scene || this.e.mort); }
+  occupe() { const s = this.state; return !!(s.ouvert || s.carnet || s.sacOuvert || s.quitter || s.evc || s.sortie || s.scene || s.temps || s.sommeil || Date.now() < this.repos || this.e.mort); }
+  enPause() { const s = this.state; return !!(s.carnet || s.sacOuvert || s.sortie || s.evc || s.scene || s.temps || s.sommeil || this.e.mort); }
 
   // ——— Le temps s'écoule
   tic() {
@@ -262,9 +283,7 @@ export class Ranch extends Component<ProprietesRanch, EtatUI> {
           this.flotter(x.texte, COULEUR.note);
           break;
         case 'comportement': this.son('reveal'); break;
-        case 'sommeil':
-          this.montrerSortie({ texte: `${x.heures} heure${x.heures > 1 ? 's' : ''} plus tard…`, sous: x.effondrement ? `${this.e.nom} s’est ${this.a('écroulé', 'écroulée')} de fatigue` : `${this.e.nom} a dormi` }, 2400);
-          break;
+        case 'sommeil': this.endormir(x.heures, x.effondrement); break;
         case 'evolution':
           this.son('reveal');
           this.montrerSortie({ texte: 'Il se passe quelque chose !', sous: `${this.e.nom} a atteint le stade ${NOM_STADE[x.vers]}`, image: asset(apparence(this.e)) }, 4200);
@@ -280,6 +299,26 @@ export class Ranch extends Component<ProprietesRanch, EtatUI> {
         default: break;
       }
     }
+  }
+
+  /** L'écho dort : l'écran s'assombrit, la musique se tait pour une berceuse de quatre secondes, puis tout reprend. */
+  endormir(heures: number, effondrement: boolean) {
+    const e = this.e; const id = ++this.n;
+    this.musiqueCoupeeJusqua = Date.now() + 4600;
+    if (this.musiques) Object.values(this.musiques).forEach((a) => { a.volume = 0; a.pause(); });
+    this.son('berceuseLongue');
+    this.setState({ sommeil: { id, nom: e.nom, heures, effondrement, reveil: hm(e.minute), jour: `jour ${ageJours(e)}`, feminin: e.genre === 'f' }, ouvert: null, quitter: false });
+    this.later(() => this.setState((s) => (s.sommeil?.id === id ? { sommeil: { ...s.sommeil, part: true } } : null)), 4400);
+    this.later(() => this.setState((s) => (s.sommeil?.id === id ? { sommeil: null } : null)), 5300);
+  }
+  /** « Laisser le temps passer » : la durée choisie dans la fenêtre (1 à 24 h). */
+  attendre(heures: number) {
+    const s = this.sim;
+    this.setState({ temps: false });
+    s.laisserPasser(heures);
+    const sorties = s.vider();
+    if (!sorties.some((x) => x.type === 'sommeil' || x.type === 'mort')) this.montrerSortie({ texte: heures === 1 ? 'Une heure plus tard…' : `${heures} heures plus tard…` }, 1700);
+    this.traiter(sorties); this.sauver(); this.rafraichir();
   }
 
   montrerSortie(o: Sortie_, ms = 2200) {
@@ -329,7 +368,7 @@ export class Ranch extends Component<ProprietesRanch, EtatUI> {
       const id = ++this.n;
       this.son('pop'); this.setState({ bulle: null });
       this.later(() => this.setState({ bulle: id, bulleImg: asset(this.signes.expression.icone) }), 30);
-      this.later(() => this.setState((s) => (s.bulle === id ? { bulle: null } : null)), 2600);
+      this.later(() => this.setState((s) => (s.bulle === id ? { bulle: null } : null)), 3200);
     }
   }
   coeurs(k: number) {
@@ -394,7 +433,8 @@ export class Ranch extends Component<ProprietesRanch, EtatUI> {
       this.later(() => this.flotter(r.texte), 600);
       return;
     }
-    this.ouvrirScene({ kind: SCENE_INTERACTION(cat, o.id), groupe: 'jeu', image: '', titre: s.libelle(o) }, () => {
+    const h = heureDuJour(this.e);
+    this.ouvrirScene({ kind: sceneInteraction(cat, o.id, h >= 21 || h < 6), groupe: 'jeu', image: '', titre: s.libelle(o) }, () => {
       const r = s.interagir(cat, o);
       return r.ok ? [r.texte] : null;
     });
@@ -408,11 +448,11 @@ export class Ranch extends Component<ProprietesRanch, EtatUI> {
       const caliner = INTERACTIONS.affection.find((o) => o.id === 'caliner') ?? INTERACTIONS.affection[0];
       const affectionFaite = e.interactionsDuJour.affection === e.jour;
       return [
-        { k: 'nourrir', nom: 'Nourrir', icone: IC.repas, detail: 'ouvrir le sac', sansTampon: true, agir: () => this.ouvrirLeSac() },
+        { k: 'nourrir', nom: 'Nourrir', icone: IC.repas, detail: 'dans le sac · 30 min', sansTampon: true, agir: () => this.ouvrirLeSac() },
         { k: 'caliner', nom: 'Câliner', icone: IC.caliner, off: affectionFaite, detail: affectionFaite ? 'déjà fait aujourd’hui' : '1 h', agir: () => this.interaction('affection', caliner) },
         { k: 'r-soins', nom: 'Soins', rubrique: true },
         { k: 'laver', nom: 'Laver', icone: IC.laver, detail: '2 h', agir: () => this.ouvrirScene({ kind: 'laver', groupe: 'soin', image: '', titre: 'Le bain' }, () => { const r = s.laver(); return r.ok ? [] : null; }) },
-        { k: 'brosser', nom: 'Brosser', icone: IC.brosser, off: true, detail: 'bientôt' },
+        { k: 'brosser', nom: 'Brosser', icone: IC.brosser, detail: '1 h', agir: () => this.ouvrirScene({ kind: 'brosser', groupe: 'soin', image: '', titre: 'Un coup de brosse' }, () => { const r = s.brosser(); return r.ok ? [r.texte] : null; }) },
         { k: 'pansement', nom: 'Soigner une blessure', icone: IC.trousse, off: !nb('bandage') || !e.blesse, detail: !e.blesse ? 'aucune blessure' : nb('bandage') ? 'un pansement' : 'pas de pansement', agir: () => this.utiliserObjet(index('bandage')) },
         { k: 'medicament', nom: 'Donner un médicament', icone: IC.medicament, off: !nb('medicament'), detail: nb('medicament') ? 'dans le sac' : 'aucun', agir: () => this.utiliserObjet(index('medicament')) },
         { k: 'coucher', nom: 'Le coucher', icone: IC.coucher, agir: () => this.coucher() },
@@ -431,24 +471,32 @@ export class Ranch extends Component<ProprietesRanch, EtatUI> {
         { k: 'r-entr', nom: 'Entraînements', rubrique: true },
         ...ENTRAINEMENTS.map((t) => ({
           k: t.id, nom: t.nom, image: asset(t.icone), detail: '2 h',
-          agir: () => {
-            const kind = t.carac === 'agilite' ? 'saut' : t.carac === 'intelligence' || t.carac === 'perception' ? 'esprit' : 'course';
-            this.ouvrirScene({ kind, groupe: 'entrainement', image: asset(t.icone), titre: t.nom }, () => { const r = s.entrainer(t.id); return r.ok ? [] : null; });
-          },
+          agir: () => this.ouvrirScene({ kind: sceneEntrainement(t), groupe: 'entrainement', image: asset(t.icone), titre: t.nom }, () => { const r = s.entrainer(t.id); if (!r.ok && r.raison) this.flotter(r.raison, COULEUR.mal); return r.ok ? [] : null; }),
         })),
         { k: 'r-combat', nom: 'Combat', rubrique: true },
         { k: 'combat-entr', nom: 'Combat d’entraînement', icone: IC.course, detail: this.props.surCombat ? 'contre un écho de passage' : 'à venir', off: !this.props.surCombat,
           agir: () => { if (!this.props.surCombat) return; this.sauver(); this.props.surCombat(this.e, 'entrainement'); } },
         { k: 'r-corv', nom: 'Corvées', rubrique: true },
-        ...CORVEES.map((c) => ({ k: c.id, nom: c.nom, image: asset(c.icone), off: true, detail: 'à remettre en état' })),
+        ...CORVEES.map((c) => {
+          const niveau = this.props.corvees?.[c.id] ?? 0;
+          const faite = e.derniereCorvee[c.id] === e.jour;
+          return {
+            k: c.id, nom: c.nom, image: asset(c.icone), off: !niveau || faite, detail: !niveau ? 'à remettre en état' : faite ? 'faite aujourd’hui' : '1 h',
+            agir: () => this.ouvrirScene({ kind: sceneCorvee(c.id), groupe: 'corvee', image: asset(c.icone), titre: c.nom }, () => {
+              const r = s.jouerCorvee(c.id, niveau);
+              if (!r.ok) { if (r.raison) this.flotter(r.raison, COULEUR.mal); return null; }
+              return { lignes: [PALIER_CORVEE[r.palier]], essais: r.essais };
+            }),
+          };
+        }),
       ];
     }
     if (v === 'ranch') {
       return [
         { k: 'balayer', nom: 'Tout balayer', icone: IC.balai, off: !e.dejections.length, detail: e.dejections.length ? '' : 'rien à ramasser',
           agir: () => { [...e.dejections].forEach((d) => s.nettoyer(d.id)); this.son('balai'); this.flotter('Vous avez tout balayé.', COULEUR.bien); this.apres(); } },
-        { k: 'attendre', nom: 'Laisser le temps passer', icone: IC.sablier, detail: '1 h',
-          agir: () => { s.laisserPasser(1); const sorties = s.vider(); if (!sorties.some((x) => x.type === 'sommeil')) this.montrerSortie({ texte: 'Une heure plus tard…' }, 1500); this.traiter(sorties); this.sauver(); this.rafraichir(); } },
+        { k: 'attendre', nom: 'Laisser le temps passer', icone: IC.sablier, detail: 'jusqu’à 24 h', sansTampon: true,
+          agir: () => { this.son('bookArrive'); this.setState({ temps: true }); } },
         { k: 'r-lieux', nom: 'Lieux', rubrique: true },
         { k: 'jardin', nom: 'Jardin', icone: IC.jardin, off: true, detail: 'à venir' },
         { k: 'cuisine', nom: 'Cuisine', icone: IC.cuisine, off: true, detail: 'personne pour cuisiner… pour l’instant' },
@@ -473,25 +521,30 @@ export class Ranch extends Component<ProprietesRanch, EtatUI> {
     const r = s.coucher();
     if (!r.ok) { this.traiter(s.vider()); this.rafraichir(); return; }
     this.traiter(s.vider());
-    this.later(() => this.apres({}), 2600);
+    this.later(() => this.apres({}), 5400);
     this.rafraichir();
   }
 
   // ——— Scène d'action : une fenêtre s'ouvre au centre, l'écho y saute, l'action se joue, une feuille volante la résume
   /** `action` applique la règle de la simulation et renvoie les phrases à écrire (null : refus, rien ne se joue). */
-  ouvrirScene(sc: { kind: string; groupe: string; image: string; titre: string }, action: () => string[] | null) {
+  ouvrirScene(sc: { kind: string; groupe: string; image: string; titre: string }, action: () => ResultatScene) {
     const s = this.state;
     const humeurAvant = this.e.humeur;
-    const lignes = action();
-    if (!lignes) { this.traiter(this.sim.vider()); this.rafraichir(); return; }
+    const caracsAvant = { ...this.e.caracs };
+    const brut = action();
+    if (!brut) { this.traiter(this.sim.vider()); this.rafraichir(); return; }
+    const res = Array.isArray(brut) ? { lignes: brut } : brut;
     const sorties = this.sim.vider();
     const dort = sorties.some((x) => x.type === 'sommeil');
     const emo = Math.sign(this.e.humeur - humeurAvant);
-    const note = this.noteScene(sc.kind, sc.groupe, lignes, emo);
+    // ce qui a progressé : montré sur la feuille volante et, le reste de la journée, dans la fiche « Combat »
+    const gains = progression(caracsAvant, this.e.caracs);
+    if (gains.length) this.recents = { jour: this.e.jour, gains: Object.fromEntries(gains.map((x) => [x.cle, x.fleches])) };
+    const note = this.noteScene(sc.kind, sc.groupe, res.lignes, emo);
     const g = ++this.scg;
     const ech = 0.86 + (s.ey - 235) / 135 * 0.28;
     this.setState({
-      scene: { ...sc, titre: note.titre || sc.titre, lignes: note.lignes, dx: Math.round(s.ex + 75 - 640), dy: Math.round(s.ey + 232 - 470), s0: ech.toFixed(3), emo },
+      scene: { ...sc, titre: res.titre || note.titre || sc.titre, lignes: note.lignes, dx: Math.round(s.ex + 75 - 640), dy: Math.round(s.ey + 232 - 470), s0: ech.toFixed(3), emo, gains, essais: res.essais ?? [] },
       scPhase: 'ouvre', ouvert: null, quitter: false, carnetLeve: false,
     });
     this.sortiesScene = sorties; this.dortScene = dort;
@@ -503,13 +556,21 @@ export class Ranch extends Component<ProprietesRanch, EtatUI> {
   }
   sortiesScene: Sortie[] = [];
   dortScene = false;
-  noterScene(g: number) { const s = this.state; if (this.scg !== g || !s.scene || s.scPhase === 'note' || s.scPhase === 'ferme') return; this.setState({ scPhase: 'note' }); this.son('page', 0.7); this.later(() => this.son('pencil'), 300); }
+  noterScene(g: number) {
+    const s = this.state; if (this.scg !== g || !s.scene || s.scPhase === 'note' || s.scPhase === 'ferme') return;
+    this.setState({ scPhase: 'note' }); this.son('page', 0.7); this.later(() => this.son('pencil'), 300);
+    if (s.scene.gains.length) this.later(() => this.son('reveal'), 650);
+  }
   sonScene(kind: string) {
-    const S: Record<string, string> = { laver: 'eau', brosser: 'brosse', coucher: 'berceuse', manger: 'croque', balle: 'rebond', saut: 'rebond', bulles: 'bulles', lucioles: 'berceuse', barriere: 'marteau', cache: 'foulee', course: 'foulee', corde: 'leather', eau: 'eau', histoire: 'page', esprit: 'reveal' };
-    const n = S[kind]; if (!n) return;
-    const fois = ({ croque: [0, 700, 1400, 2100], rebond: [0, 1100, 2200], marteau: [0, 650, 1300, 1950, 2600], brosse: [0, 900, 1800], foulee: [0, 500, 1000, 1500, 2000, 2500], eau: [0, 1200], page: [0, 1400] } as Record<string, number[]>)[n] || [0];
-    const g = this.scg;
-    fois.forEach((d, i) => this.later(() => { if (this.scg === g && this.state.scene) { if (n === 'foulee') this.son(n, this.profil(), 0.7, i % 2); else this.son(n); } }, d));
+    const x = sonsScene(kind); if (!x) return;
+    const g = this.scg; const n = x.son;
+    x.instants.forEach((d, i) => this.later(() => {
+      if (this.scg !== g || !this.state.scene) return;
+      if (n === 'foulee') this.son(n, this.profil(), 0.7, i % 2); else if (n === 'typeTick') this.son(n, 'a', 330); else this.son(n);
+    }, d));
+    // corvée : un petit bruit par essai, réussi ou manqué
+    const essais = this.state.scene?.essais ?? [];
+    essais.forEach((ok, i) => this.later(() => { if (this.scg === g && this.state.scene) this.son(ok ? 'paperTick' : 'refus'); }, 200 + i * Math.min(350, 2800 / essais.length)));
   }
   /** La feuille volante : jamais de chiffre, seulement ce qu'on devine (lireSignes) et ce que la simulation raconte. */
   noteScene(kind: string, groupe: string, textes: string[], emo: number) {
@@ -522,7 +583,8 @@ export class Ranch extends Component<ProprietesRanch, EtatUI> {
     const fatigue = niveau('fatigue') >= 2 ? `${Il} paraît ${this.a('fatigué', 'fatiguée')}.` : 'Il lui reste de l’énergie.';
     if (kind === 'manger') lignes = [premier || app, faim];
     else if (kind === 'laver' || kind === 'brosser') lignes = [app, niveau('salete') >= 2 ? `${Il} est encore sale.` : `${Il} est tout${this.a('', 'e')} propre.`];
-    else if (groupe === 'entrainement') lignes = [`${Il} s’est ${this.a('donné', 'donnée')} du mal.`, fatigue, 'Quelque chose a changé dans sa façon de bouger.'];
+    else if (groupe === 'entrainement') lignes = [`${Il} s’est ${this.a('donné', 'donnée')} du mal.`, fatigue];
+    else if (groupe === 'corvee') lignes = [premier || app, fatigue];
     else lignes = [premier || app, niveau('fatigue') >= 2 ? `${Il} paraît ${this.a('épuisé', 'épuisée')}.` : emo > 0 ? `${Il} a le cœur léger.` : `${Il} en redemanderait bien.`];
     return { titre: '', lignes: lignes.filter(Boolean).slice(0, 3) };
   }
@@ -703,6 +765,28 @@ export class Ranch extends Component<ProprietesRanch, EtatUI> {
     };
   }
 
+  /** La fiche de l'écho : portrait, tempérament, caractéristiques de combat (jamais de chiffre). */
+  valsFiche() {
+    const s = this.state; const e = this.e;
+    const dom = temperamentDominant(e);
+    return {
+      ficheOnglets: ONGLETS_FICHE.map((o) => ({
+        nom: o.nom, cls: s.ongletFiche === o.k ? 'ici' : '', choisi: s.ongletFiche === o.k ? 'true' : 'false',
+        survol: () => undefined,
+        ouvrir: () => { if (this.state.ongletFiche !== o.k) { this.son('page', 0.6); this.setState({ ongletFiche: o.k }); } },
+      })),
+      fichePortrait: s.ongletFiche === 'portrait', ficheTemperament: s.ongletFiche === 'temperament', ficheCombat: s.ongletFiche === 'combat',
+      traits: [
+        { nom: 'Stade', valeur: NOM_STADE[e.stade] }, { nom: this.a('Né d’une', 'Née d’une'), valeur: NOM_GRAINE[e.graine] },
+        { nom: 'Âge', valeur: `${ageJours(e)} jour${ageJours(e) > 1 ? 's' : ''}` },
+      ].map((x) => ({ cls: '', ...x })),
+      domCouleur: dom.color, domLueur: dom.glow, domGlyphe: dom.glyphe, domTexte: `Tempérament : ${dom.label.toLowerCase()}`,
+      ficheMot: 'Ses entraînements et ses corvées se lisent dans l’onglet « Combat ».',
+      temperaments: lignesTemperament(e),
+      combat: lignesCombat(e, this.recents.jour === e.jour ? this.recents.gains : {}),
+    };
+  }
+
   // ——— Le carnet
   allerA(k: Section) {
     const s = this.state;
@@ -736,7 +820,15 @@ export class Ranch extends Component<ProprietesRanch, EtatUI> {
   }
 
   render(): ReactNode {
-    return <Repere fond="#0d0a14"><VueRanch v={this.valeurs()} /></Repere>;
+    const s = this.state;
+    return (
+      <Repere fond="#0d0a14">
+        <VueRanch v={this.valeurs()} />
+        {s.temps && <FenetreTemps minute={this.e.minute} nomEcho={this.e.nom} filtre="url(#rk7Ui)" son={(n, ...a) => this.son(n, ...a)}
+          surValider={(h) => this.attendre(h)} surAnnuler={() => this.setState({ temps: false })} />}
+        {s.sommeil && <VoileSommeil s={s.sommeil} />}
+      </Repere>
+    );
   }
 
   valeurs() {
@@ -755,7 +847,7 @@ export class Ranch extends Component<ProprietesRanch, EtatUI> {
         const n = Date.now(); if (n - (this.dernierSon[i] || 0) > 1000) { this.dernierSon[i] = n; this.son('paperTick'); }
       },
       quitte: () => { if (this.state.survol === i) this.setState({ survol: -1 }); },
-      ouvrir: () => { const o = this.state.ouvert === v.k ? null : v.k; this.son('leather'); this.setState({ ouvert: o, actif: -1, tamponne: null, quitter: false }); if (o === 'echo') this.reagir(true, ''); },
+      ouvrir: () => { const o = this.state.ouvert === v.k ? null : v.k; this.son('leather'); this.setState({ ouvert: o, actif: -1, tamponne: null, quitter: false, ongletFiche: 'portrait' }); if (o === 'echo') this.reagir(true, ''); },
     }));
     const iv = VERBES.findIndex((v) => v.k === s.ouvert);
     let n = -1;
@@ -805,10 +897,11 @@ export class Ranch extends Component<ProprietesRanch, EtatUI> {
       ...ciel(h), nuagesFiltre: 'url(#rk7Decor)', lanternes: lanternes(h),
       ...(sc ? {
         sceneVisible: true,
-        scCls: ['k-' + sc.kind, 'g-' + sc.groupe, ph === 'ouvre' ? 'ouvre' : '', ['saut', 'agit', 'note'].includes(ph) ? 'dedans' : '', ['agit', 'note'].includes(ph) ? 'agit' : '', ph === 'note' ? 'note' : '', ph === 'ferme' ? 'ferme agit' : ''].join(' '),
+        scCls: ['k-' + sc.kind, 'g-' + sc.groupe, sc.gains.length ? 'gagne' : '', ph === 'ouvre' ? 'ouvre' : '', ['saut', 'agit', 'note'].includes(ph) ? 'dedans' : '', ['agit', 'note'].includes(ph) ? 'agit' : '', ph === 'note' ? 'note' : '', ph === 'ferme' ? 'ferme agit' : ''].join(' '),
         scDx: sc.dx, scDy: sc.dy, scS0: sc.s0, echoOp: ph === 'ouvre' ? 1 : 0, scImage: sc.image,
         scNote: ph === 'note' || ph === 'ferme', scTitre: sc.titre, scLignes: sc.lignes.map((x) => ({ t: x })), fermerScene: this.fermerScene,
-      } : { sceneVisible: false, echoOp: 1, scNote: false }),
+        scAGains: sc.gains.length > 0, scGains: sc.gains.map((x, i) => ({ ...x, delai: (0.5 + i * 0.25).toFixed(2) })), scEssais: essaisScene(sc.essais),
+      } : { sceneVisible: false, echoOp: 1, scNote: false, scAGains: false, scGains: [], scEssais: [] }),
       bgFilter: m.bg, gradeColor: m.c, gradeOpacity: m.o.toFixed(3), glow: m.glow.toFixed(3), vignette: m.vig.toFixed(3), fireflies: m.fly,
       paperFilter: 'url(#rk7Ui)', matDecor: m.matDecor, matUi: m.matUi, matEcho: m.matEcho, decorFilter: m.decor, fondTexte: m.ft.toFixed(3),
       time: m.heure, period: m.periode, echoFilter: m.echo, pieces: e.or,
@@ -822,7 +915,7 @@ export class Ranch extends Component<ProprietesRanch, EtatUI> {
       rienDuTout: false,
       orbite: `path('M${75 - rx} ${cy} a${rx} ${ry} 0 1 0 ${2 * rx} 0 a${rx} ${ry} 0 1 0 ${-2 * rx} 0')`,
       etatsOrbite: visibles.map((k, i) => ({ nom: NOM_ETAT[k][e.genre === 'f' ? 1 : 0], image: asset(`interface/etats/orbite/${k}.webp`), delai: (-13 * i / visibles.length).toFixed(2) })),
-      bulleImg: s.bulleImg, orbeTeinte: TEINTES_EMO[0],
+      bulleImg: s.bulleImg, orbeTeinte: TEINTES_EMO[0], emoTeinte: teinteEmotion(g.expression.id),
       bulleBulle: false, bulleHalo: false, signe_joyeux: false, signe_fier: false, signe_surpris: false, signe_anxieux: false,
       emoFlotte: s.bulle !== null && !e.comportement && !s.evc,
       teteSigne: Math.round(-30 - (t - 1) * 180), teteOrbe: Math.round(-2 - (t - 1) * 180), teteAlerte: Math.round(-34 - (t - 1) * 180),
@@ -856,12 +949,7 @@ export class Ranch extends Component<ProprietesRanch, EtatUI> {
       ficheVisible: !!s.ouvert, fichePointe: iv >= 0 ? Math.round(201 - 42 * iv) : 0,
       ficheTitre: ouvertVisiteur ? `Avec ${visiteur?.nom ?? 'le visiteur'}` : s.ouvert === 'echo' ? nom : s.ouvert === 'soins' ? `Prendre soin ${this.a('de lui', 'd’elle')}` : s.ouvert === 'jouer' ? 'Passer un moment ensemble' : s.ouvert === 'activites' ? 'Entraînements et corvées' : s.ouvert === 'ranch' ? 'Autour du ranch' : '',
       ficheBesoin: '', ficheCouleur: '#6b4f33', ficheEcho: s.ouvert === 'echo', ficheChoix: s.ouvert !== 'echo',
-      traits: [
-        { nom: 'Stade', valeur: NOM_STADE[e.stade] }, { nom: 'Né d’une', valeur: NOM_GRAINE[e.graine] },
-        { nom: 'Âge', valeur: `${ageJours(e)} jour${ageJours(e) > 1 ? 's' : ''}` },
-        { nom: 'Humeur', valeur: accord(e, g.expression.m, g.expression.f) },
-        { nom: 'Talent', valeur: '???', cls: 'verrou' }, { nom: 'Souvenir', valeur: '???', cls: 'verrou' },
-      ].map((x) => ({ cls: '', ...x })),
+      ...this.valsFiche(),
       // le carnet
       carnetVisible: s.carnet, livreCls: s.ferme ? 'ferme' : '', voileCls: s.ferme ? 'part' : '', coteCls: s.carnet || s.sacOuvert || s.evc || s.scene ? 'cache' : '',
       jourTexte: `Jour ${ageJours(e)} · ${saison(e.jour)}`, jourTexteMin: `jour ${ageJours(e)} · ${saison(e.jour).toLowerCase()}`,

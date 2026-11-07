@@ -40,7 +40,7 @@ export interface MoteurSons {
   stamp: Son; leather: Son; page: (volume?: number) => void; woosh: Son; bookArrive: Son;
   pencil: Son; paperTick: Son; slide: Son; pop: Son;
   caresse: Son; refus: Son;
-  balai: Son; berceuse: Son; brosse: Son; bulles: Son; croque: Son; eau: Son; marteau: Son; rebond: Son; sacPose: Son;
+  balai: Son; berceuse: Son; berceuseLongue: Son; brosse: Son; bulles: Son; croque: Son; eau: Son; marteau: Son; rebond: Son; sacPose: Son;
   pas: (volume?: number) => void; sacoche: (ouvre: boolean) => void;
   foulee: (profil: { demarche: string; taille: number; poids: number }, volume: number, patte: number) => void;
   glisse: (profil: { demarche: string; taille: number; poids: number }, volume: number, duree: number) => void;
