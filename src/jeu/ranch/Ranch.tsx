@@ -1,66 +1,79 @@
-// Écran du ranch : la simulation (src/moteur/simulation) tourne en continu, 1 seconde = 1 minute de jeu.
-// Le joueur ne voit aucun chiffre : il lit l'état de son écho dans son attitude, ses bulles et ce qu'il fait.
-import { useCallback, useEffect, useReducer, useRef, useState, type CSSProperties } from 'react';
+// Écran du ranch (maquette « Ranch », page v7 du canevas) branché sur la simulation (src/moteur/simulation).
+// 1 seconde réelle = 1 minute de jeu. Le joueur ne voit aucun chiffre : il lit son écho dans son attitude,
+// les états qui gravitent autour de lui, ses bulles, les feuilles volantes et le journal.
+// La vue est générée depuis la maquette (VueRanch.tsx) ; ce fichier calcule ses valeurs et tient la logique.
+import { Component, type ReactNode } from 'react';
 import {
-  CORVEES, ENTRAINEMENTS, NOM_STADE, Simulation, accord, aliment, apparence, ageJours, heureDuJour,
-  lireSignes, texteComportement, type CategorieInteraction, type Etat, type OptionInteraction,
-  type ReponseComportement, type Sortie,
+  CORVEES, ENTRAINEMENTS, INTERACTIONS, NOM_STADE, Simulation, accord, aliment, apparence, ageJours, descriptionObjet,
+  heureDuJour, lireSignes, objetDivers, texteComportement, type CategorieInteraction, type Etat, type OptionInteraction,
+  type ReponseComportement, type Signes, type Sortie,
 } from '@/moteur/simulation';
 import { SFX } from '@/moteur/sfx';
-import { couches, lumiere, saison } from './lumiere';
+import { VueRanch } from './VueRanch';
+import { Repere } from '../commun/Repere';
+import { ciel, lanternes, lumiere } from './ciel';
 import { IC } from './icones';
-import { TAILLE_STADE, profilEcho, volumePas } from './demarche';
-import { Carnet } from './Carnet';
-import { Sac } from './Sac';
-import { fixerVolumes } from '../commun/volumes';
-import type { Reglages } from '../profils';
+import { profilEcho, volumePas, type Profil } from './demarche';
+import { saison } from './lumiere';
+import { REP, TAMPON, TEMPERAMENTS, GLYPHE_INCONNU, cleEvenement, consequence, noteSens, parole, phraseReponse } from './evenements';
+import { ecouterVolumes, fixerVolumes, volumeMusique } from '../commun/volumes';
+import type { Personnage, Reglages } from '../profils';
 import './ranch.css';
 
 export const asset = (chemin: string) => `${import.meta.env.BASE_URL}assets/${chemin}`;
+const pad = (n: number) => (n < 10 ? '0' : '') + n;
+const hm = (minute: number) => `${pad(Math.floor(minute / 60) % 24)}:${pad(minute % 60)}`;
 
 const NOM_GRAINE = { joy: 'Graine solaire', wrath: 'Graine tellurique', disgust: 'Graine caustique', sorrow: 'Graine boréale', fear: 'Graine spectrale' } as const;
 const COULEUR = { bien: '#3f7a3a', mal: '#9c3b2a', note: '#2b2118' } as const;
 
 type Verbe = 'echo' | 'soins' | 'jouer' | 'activites' | 'ranch';
-const VERBES: { k: Verbe; nom: string; info: string; titre: (n: string) => string }[] = [
-  { k: 'echo', nom: 'Mon écho', info: 'observer · éduquer', titre: (n) => n },
-  { k: 'soins', nom: 'Soins', info: 'nourrir · laver · coucher', titre: () => 'Prendre soin' },
-  { k: 'jouer', nom: 'Jouer', info: 'un moment ensemble', titre: () => 'Passer un moment ensemble' },
-  { k: 'activites', nom: 'Activités', info: 'entraînements · corvées', titre: () => 'Entraînements et corvées' },
-  { k: 'ranch', nom: 'Ranch', info: 'autour du ranch', titre: () => 'Autour du ranch' },
+const VERBES: { k: Verbe; court: string; teinte: string; nom: string }[] = [
+  { k: 'echo', court: 'Écho', teinte: '#3f6a3a', nom: 'Mon écho' },
+  { k: 'soins', court: 'Soins', teinte: '#2f5a7a', nom: 'Soins' },
+  { k: 'jouer', court: 'Jouer', teinte: '#b3671a', nom: 'Jouer' },
+  { k: 'activites', court: 'Activités', teinte: '#7a2e2e', nom: 'Activités' },
+  { k: 'ranch', court: 'Ranch', teinte: '#566b3a', nom: 'Ranch' },
 ];
-const CATEGORIES: { k: Exclude<CategorieInteraction, 'cadeau'> | 'cadeau'; nom: string; icone: string }[] = [
-  { k: 'affection', nom: 'Affection', icone: IC.caliner },
-  { k: 'discussion', nom: 'Discussion', icone: IC.discussion },
-  { k: 'jeu', nom: 'Jeu', icone: IC.balle },
-  { k: 'partage', nom: 'Partage', icone: IC.partage },
-  { k: 'education', nom: 'Éducation', icone: IC.education },
-  { k: 'cadeau', nom: 'Cadeau', icone: IC.cadeau },
+const CAT_JOUER: { k: Exclude<CategorieInteraction, 'cadeau' | 'affection'>; nom: string }[] = [
+  { k: 'jeu', nom: 'Jeux' }, { k: 'discussion', nom: 'Discussion' }, { k: 'partage', nom: 'Partage' }, { k: 'education', nom: 'Éducation' },
 ];
-const COURT: Record<ReponseComportement, string> = {
-  feliciter: 'Féliciter', gronder: 'Gronder', rien: 'Se taire', encourager: 'Encourager', prevenir: 'Prévenir', remercier: 'Remercier', critiquer: 'Critiquer',
-};
+const ICONE_INTERACTION: Record<string, string> = { jeu: IC.balle, discussion: IC.discussion, partage: IC.partage, education: IC.education, affection: IC.caliner };
+/** Scène jouée pour une interaction (animations de la maquette). */
+const SCENE_INTERACTION = (cat: string, id: string) =>
+  id === 'balle' ? 'balle' : id === 'cachecache' ? 'cache' : id === 'histoire' ? 'histoire' : id === 'course' ? 'course'
+    : cat === 'jeu' ? 'balle' : cat === 'education' ? 'esprit' : 'histoire';
+
+const SECTIONS = [
+  { k: 'sommaire', nom: 'Sommaire', court: 'Sommaire', titre: 'Sommaire', surtitre: 'Carnet d’éleveur', icone: IC.sommaire },
+  { k: 'journal', nom: 'Journal du ranch', court: 'Journal', titre: 'Journal du ranch', surtitre: 'Ce qui s’est passé', icone: IC.journal, page: 2 },
+  { k: 'relations', nom: 'Relations', court: 'Relations', titre: 'Relations', surtitre: 'Les gens du coin', icone: IC.relations, page: 4 },
+  { k: 'memoire', nom: 'Mémoire des échos', court: 'Mémoire', titre: 'Mémoire des échos', surtitre: 'Ce profil', icone: IC.memoire, page: 6 },
+  { k: 'options', nom: 'Options', court: 'Options', titre: 'Options', surtitre: 'Réglages', icone: IC.options, page: 8 },
+] as const;
+type Section = (typeof SECTIONS)[number]['k'];
+
+const RESSOURCES = [
+  { k: 'bois', nom: 'Bois' }, { k: 'pierre', nom: 'Pierre' }, { k: 'fibres', nom: 'Fibres' },
+  { k: 'resine', nom: 'Résine' }, { k: 'ferraille', nom: 'Ferraille' }, { k: 'cristaux', nom: 'Cristaux' },
+];
 const DESTINATIONS = [
-  { nom: 'Au village', duree: '20 min', icone: IC.village, texte: 'En route pour le village…', combat: false },
-  { nom: 'Au magasin', duree: '10 min', icone: IC.magasin, texte: 'Direction le magasin…', combat: false },
-  { nom: 'En exploration', duree: 'selon le chemin', icone: IC.exploration, texte: 'Le sentier vous attend…', combat: true },
+  { nom: 'Le village', duree: '20 min', icone: 'M3 20h18M5 20v-8l7-6 7 6v8M10 20v-5h4v5', texte: 'En route pour le village…', combat: false },
+  { nom: 'Le magasin', duree: '10 min', icone: 'M4 9l1.5-5h13L20 9M4 9h16v11H4zM4 9c0 2 1.5 3 3 3s3-1 3-3c0 2 1.5 3 3 3s3-1 3-3c0 2 1.5 3 3 3s3-1 2-3M10 20v-5h4v5', texte: 'Direction le magasin…', combat: false },
+  { nom: 'Explorer', duree: 'selon le chemin', icone: 'M12 3.5a8.5 8.5 0 1 0 0 17a8.5 8.5 0 1 0 0-17zM15.5 8.5l-2 5-5 2 2-5z', texte: 'Le sentier vous attend…', combat: true },
 ];
-
-interface Choix {
-  cle: string;
-  nom: string;
-  image?: string;
-  icone?: string;
-  detail?: string;
-  off?: boolean;
-  rubrique?: boolean;
-  /** Le choix ouvre une sous-liste au lieu de lancer l'action (la fiche reste ouverte). */
-  garderOuvert?: boolean;
-  prendre?: () => void;
-}
-
-interface Flottant { id: number; texte: string; couleur: string; x: number; y: number; long: boolean }
-interface Passage { cle: number; titre: string; sous?: string; image?: string; bloquant?: boolean; part?: boolean }
+/** États qui gravitent autour de l'écho, par ordre de priorité ; chacun vient d'un besoin lu par lireSignes(). */
+const ETAT_DE_BESOIN: Record<string, string> = { maladie: 'malade', blessure: 'blesse', faim: 'faim', fatigue: 'fatigue', angoisse: 'angoisse', salete: 'sale', affection: 'affection', humeur: 'mecontent' };
+const ORDRE_ETATS = ['malade', 'blesse', 'faim', 'fatigue', 'angoisse', 'sale', 'affection', 'mecontent'];
+const NOM_ETAT: Record<string, [string, string]> = {
+  malade: ['malade', 'malade'], blesse: ['blessé', 'blessée'], faim: ['a faim', 'a faim'], fatigue: ['fatigué', 'fatiguée'], angoisse: ['angoissé', 'angoissée'],
+  sale: ['sale', 'sale'], affection: ['réclame de l’affection', 'réclame de l’affection'], mecontent: ['mécontent', 'mécontente'],
+};
+const TEINTES_EMO = ['255,206,96', '255,156,64', '120,200,255', '170,140,255'];
+const CAUSES: Record<string, string> = {
+  faim: 'la faim a eu raison de ses forces', blessure: 'une blessure ne s’est jamais refermée', combat: 'au terme d’un combat',
+  maladie: 'la maladie a été la plus forte', vieillesse: 'au terme d’une longue vie',
+};
 
 export interface ProprietesRanch {
   etat: Etat;
@@ -69,752 +82,833 @@ export interface ProprietesRanch {
   surQuitter: () => void;
   reglages?: Reglages;
   surReglages?: (r: Reglages) => void;
+  /** Le personnage du joueur (carnet d'événement : son nom et ses poses). */
+  personnage?: Personnage;
+  /** Tempéraments déjà découverts, par genre d'événement (mémoire du profil). */
+  connus?: string[];
+  surDecouverte?: (cle: string) => void;
   /** L'écho s'est éteint : la séquence du « dernier souffle » prend le relais. */
   surMort?: (e: Etat) => void;
   /** Un combat commence (exploration ou entraînement) : l'écran de combat prend le relais. */
   surCombat?: (e: Etat, nature: 'exploration' | 'entrainement') => void;
 }
 
-export function Ranch({ etat, sauver: sauverProp, surQuitter, reglages, surReglages, surMort, surCombat }: ProprietesRanch) {
-  const sauverRef = useRef(sauverProp); sauverRef.current = sauverProp;
-  const surMortRef = useRef(surMort); surMortRef.current = surMort;
-  const sauver = useCallback((x: Etat) => sauverRef.current(x), []);
-  const sim = useRef<Simulation>(null as unknown as Simulation);
-  if (!sim.current) sim.current = new Simulation(etat);
-  const e = sim.current.etat;
-  const [, rafraichir] = useReducer((x: number) => x + 1, 0);
+interface Choix {
+  k: string; nom: string; image?: string; icone?: string; detail?: string; off?: boolean; rubrique?: boolean;
+  /** L'action ; « ouvreSac » : la fiche se ferme et le sac s'ouvre. */
+  agir?: () => void; sansTampon?: boolean;
+}
+interface Scene { kind: string; groupe: string; image: string; titre: string; lignes: string[]; dx: number; dy: number; s0: string; emo: number; journal?: string }
+interface Sortie_ { texte: string; sous?: string; image?: string; bloquant?: boolean }
 
-  // ——— mise à l'échelle du repère 1280 × 800
-  const cadre = useRef<HTMLDivElement>(null);
-  const [echelle, setEchelle] = useState(1);
-  useEffect(() => {
-    const el = cadre.current;
-    if (!el) return;
-    const ro = new ResizeObserver(() => setEchelle(Math.min(el.clientWidth / 1280, el.clientHeight / 800)));
-    ro.observe(el);
-    return () => ro.disconnect();
-  }, []);
+interface EtatUI {
+  t: number;
+  sons: boolean; musique: boolean; volumeMusique: number; volumeBruitages: number;
+  ex: number; ey: number; eDur: number; eSens: '' | 'gauche'; marche: boolean;
+  survol: number; ouvert: Verbe | 'visiteur' | null; actif: number; tamponne: string | null;
+  anim: string; bulle: number | null; bulleImg: string; coeurs: { id: number; x: number; y: number; dx: number; delai: string }[];
+  flottants: { id: number; texte: string; couleur: string; x: number; y: number }[];
+  carnet: boolean; ferme: boolean; section: Section; contenuCache: boolean; tourne: null | 'avant' | 'arriere'; sauve: string; carnetLeve: boolean;
+  sortie: Sortie_ | null; nouvelles: number; mainVisible: boolean; main: number;
+  sacOuvert: boolean; sacFerme: boolean; sacSurvol: number; sacMenu: number; sacMenuInfo: boolean; dndDe: number; dndCible: number;
+  quitter: boolean; dejSurvol: number | null; dejPart: number[];
+  scene: Scene | null; scPhase: '' | 'ouvre' | 'saut' | 'agit' | 'note' | 'ferme';
+  evc: boolean; evcFerme: boolean; playing: boolean; typed: number; done: boolean;
+  phase: 'choose' | 'stamped' | 'turning' | 'result'; chosen: number; active: number;
+  decouverte: boolean; revealed: boolean; tamponGo: boolean;
+  propositions: Partial<Record<CategorieInteraction, { jour: number; options: OptionInteraction[] }>>;
+}
 
-  // ——— minuteurs
-  const minuteurs = useRef<number[]>([]);
-  const plusTard = useCallback((f: () => void, ms: number) => { minuteurs.current.push(window.setTimeout(f, ms)); }, []);
-  useEffect(() => () => { minuteurs.current.forEach(clearTimeout); }, []);
-  const n = useRef(0);
+export class Ranch extends Component<ProprietesRanch, EtatUI> {
+  sim: Simulation;
+  timers: number[] = [];
+  n = 0;
+  repos = 0;
+  dernierSon: Record<number, number> = {};
+  horloge = 0;
+  pasTimer = 0;
+  fondu = 0;
+  musiques: { jour: HTMLAudioElement; nuit: HTMLAudioElement } | null = null;
+  desabonner: (() => void) | null = null;
+  surGeste: (() => void) | null = null;
+  segs = '';
+  evg = 0;
+  scg = 0;
+  /** Événement en cours dans le carnet : le comportement (gardé jusqu'à la fin, la simulation l'efface à la réponse). */
+  evtCourant: { c: NonNullable<Etat['comportement']>; reponses: { cle: ReponseComportement; libelle: string }[]; reponse: ReponseComportement | null; consequence: string } | null = null;
+  vivant = true;
 
-  // ——— état de l'interface
-  const [sons, setSons] = useState(reglages?.sons ?? true);
-  const [musique, setMusique] = useState(reglages?.musique ?? true);
-  const [volumeMusique, setVolumeMusique] = useState(reglages?.volumeMusique ?? 80);
-  const [volumeBruitages, setVolumeBruitages] = useState(reglages?.volumeBruitages ?? 80);
-  const reglagesRef = useRef(surReglages); reglagesRef.current = surReglages;
-  useEffect(() => {
-    fixerVolumes({ musique: volumeMusique / 100, bruitages: volumeBruitages / 100 });
-    reglagesRef.current?.({ sons, musique, volumeMusique, volumeBruitages });
-  }, [sons, musique, volumeMusique, volumeBruitages]);
-  const son = useCallback(<K extends keyof typeof SFX>(nom: K, ...args: unknown[]) => {
-    if (!sonsRef.current) return;
-    const f = SFX[nom] as unknown as (...a: unknown[]) => void;
-    if (typeof f === 'function') f.apply(SFX, args);
-  }, []);
-  const sonsRef = useRef(sons); sonsRef.current = sons;
+  constructor(p: ProprietesRanch) {
+    super(p);
+    this.sim = new Simulation(p.etat);
+    const r = p.reglages;
+    this.state = {
+      t: 0, sons: r?.sons ?? true, musique: r?.musique ?? true, volumeMusique: r?.volumeMusique ?? 80, volumeBruitages: r?.volumeBruitages ?? 80,
+      ex: 520, ey: 290, eDur: 0, eSens: '', marche: false,
+      survol: -1, ouvert: null, actif: -1, tamponne: null, anim: '', bulle: null, bulleImg: '', coeurs: [], flottants: [],
+      carnet: false, ferme: false, section: 'sommaire', contenuCache: false, tourne: null, sauve: '', carnetLeve: false,
+      sortie: null, nouvelles: 0, mainVisible: false, main: 0,
+      sacOuvert: false, sacFerme: false, sacSurvol: -1, sacMenu: -1, sacMenuInfo: false, dndDe: -1, dndCible: -1,
+      quitter: false, dejSurvol: null, dejPart: [],
+      scene: null, scPhase: '',
+      evc: false, evcFerme: false, playing: false, typed: 0, done: false, phase: 'choose', chosen: -1, active: -1, decouverte: false, revealed: false, tamponGo: false,
+      propositions: {},
+    };
+  }
 
-  const [pos, setPos] = useState({ x: 520, y: 290, dur: 0, sens: '' as '' | 'gauche', marche: false });
-  const posRef = useRef(pos); posRef.current = pos;
-  const [anim, setAnim] = useState('');
-  const [bulleEmo, setBulleEmo] = useState<string | null>(null);
-  const [coeurs, setCoeurs] = useState<{ id: number; x: number; y: number; dx: number; delai: string }[]>([]);
-  const [flottants, setFlottants] = useState<Flottant[]>([]);
-  const [main, setMain] = useState(0);
-  const [survol, setSurvol] = useState(-1);
-  const [ouvert, setOuvert] = useState<Verbe | 'visiteur' | null>(null);
-  const [sousCategorie, setSousCategorie] = useState<{ cat: Exclude<CategorieInteraction, 'cadeau'>; options: OptionInteraction[] } | null>(null);
-  const [actif, setActif] = useState(-1);
-  const [tamponne, setTamponne] = useState<string | null>(null);
-  const [carnet, setCarnet] = useState(false);
-  const [sacOuvert, setSacOuvert] = useState(false);
-  const [quitter, setQuitter] = useState(false);
-  const [evt, setEvt] = useState(false);
-  const [passage, setPassage] = useState<Passage | null>(null);
-  const [nouvelles, setNouvelles] = useState(0);
-  const [dejSurvol, setDejSurvol] = useState<number | null>(null);
-  const [dejPart, setDejPart] = useState<number[]>([]);
-  const dernierSon = useRef<Record<number, number>>({});
-  const repos = useRef(0);
+  get e() { return this.sim.etat; }
+  get signes(): Signes { return lireSignes(this.e); }
+  profil(): Profil { return profilEcho(this.e, 'bipede', this.signes.allure); }
+  taille() { return this.profil().echelle; }
+  rafraichir = () => this.setState((s) => ({ t: s.t + 1 }));
+  later(f: () => void, ms: number) { this.timers.push(window.setTimeout(() => { if (this.vivant) f(); }, ms)); }
+  son(nom: string, ...a: unknown[]) {
+    if (!this.state.sons) return;
+    const f = (SFX as unknown as Record<string, unknown>)[nom];
+    if (typeof f === 'function') (f as (...x: unknown[]) => void).apply(SFX, a);
+  }
+  sauver() { this.props.sauver(this.e); }
+  a(m: string, f: string) { return accord(this.e, m, f); }
 
-  const signes = lireSignes(e);
-  const profil = profilEcho(e, 'bipede', signes.allure);
-  const profilRef = useRef(profil); profilRef.current = profil;
-  const signesRef = useRef(signes); signesRef.current = signes;
-  const nom = e.nom;
-  const a = (m: string, f: string) => accord(e, m, f);
-
-  const enPause = carnet || sacOuvert || !!passage || evt || !!e.mort;
-  const pauseRef = useRef(enPause); pauseRef.current = enPause;
-  const occupe = () => !!(ouvertRef.current || carnetRef.current || sacRef.current || evtRef.current || passageRef.current || Date.now() < repos.current);
-  const ouvertRef = useRef(ouvert); ouvertRef.current = ouvert;
-  const carnetRef = useRef(carnet); carnetRef.current = carnet;
-  const sacRef = useRef(sacOuvert); sacRef.current = sacOuvert;
-  const evtRef = useRef(evt); evtRef.current = evt;
-  const passageRef = useRef(passage); passageRef.current = passage;
-
-  // ——— petits effets
-  const flotter = useCallback((texte: string, couleur: string = COULEUR.note, dx = -120, dy = -40) => {
-    const id = ++n.current;
-    const long = texte.length > 34;
-    const p = posRef.current;
-    const x = Math.max(16, Math.min(1280 - (long ? 410 : 300), Math.round(p.x + dx)));
-    const y = Math.max(110, Math.round(p.y + dy - (flottantsRef.current.length % 3) * 34));
-    setFlottants((f) => f.concat({ id, texte, couleur, x, y, long }));
-    plusTard(() => setFlottants((f) => f.filter((x) => x.id !== id)), long ? 4200 : 2400);
-  }, [plusTard]);
-  const flottantsRef = useRef(flottants); flottantsRef.current = flottants;
-
-  const reagir = useCallback((emo: string | null, anime: string) => {
-    repos.current = Date.now() + 3500;
-    if (anime) { setAnim(''); plusTard(() => setAnim(anime), 20); plusTard(() => setAnim(''), 1400); }
-    if (emo) {
-      son('pop'); setBulleEmo(null);
-      plusTard(() => setBulleEmo(emo), 30);
-      plusTard(() => setBulleEmo((b) => (b === emo ? null : b)), 2600);
+  componentDidMount() {
+    this.vivant = true;
+    fixerVolumes({ musique: this.state.volumeMusique / 100, bruitages: this.state.volumeBruitages / 100 });
+    this.horloge = window.setInterval(() => this.tic(), 1000);
+    this.later(() => this.errer(), 1800);
+    // la musique démarre au premier geste (les navigateurs refusent la lecture automatique)
+    this.surGeste = () => { this.lancerMusique(); if (this.surGeste) window.removeEventListener('pointerdown', this.surGeste); };
+    window.addEventListener('pointerdown', this.surGeste);
+    this.lancerMusique();
+    this.desabonner = ecouterVolumes(() => undefined);
+  }
+  componentWillUnmount() {
+    this.vivant = false;
+    this.timers.forEach(clearTimeout);
+    clearInterval(this.horloge); clearInterval(this.pasTimer); clearInterval(this.fondu);
+    if (this.surGeste) window.removeEventListener('pointerdown', this.surGeste);
+    this.desabonner?.();
+    if (this.musiques) Object.values(this.musiques).forEach((a) => a.pause());
+    this.musiques = null;
+  }
+  componentDidUpdate(_: ProprietesRanch, avant: EtatUI) {
+    const s = this.state;
+    if (avant.sons !== s.sons || avant.musique !== s.musique || avant.volumeMusique !== s.volumeMusique || avant.volumeBruitages !== s.volumeBruitages) {
+      fixerVolumes({ musique: s.volumeMusique / 100, bruitages: s.volumeBruitages / 100 });
+      SFX.on = s.sons;
+      this.props.surReglages?.({ sons: s.sons, musique: s.musique, volumeMusique: s.volumeMusique, volumeBruitages: s.volumeBruitages });
     }
-  }, [plusTard, son]);
+  }
 
-  const lancerCoeurs = useCallback((k: number) => {
-    const ech = profilRef.current.echelle;
-    const c = Array.from({ length: k }, (_, i) => ({ id: ++n.current, x: 56 + Math.round(Math.random() * 40), y: Math.round(234 - 190 * ech - 16), dx: Math.round((Math.random() - 0.5) * 60), delai: (i * 0.12).toFixed(2) }));
-    setCoeurs((s) => s.concat(c));
-    plusTard(() => setCoeurs((s) => s.filter((x) => !c.includes(x))), 2000);
-  }, [plusTard]);
+  // ——— Musique : deux boucles (jour, nuit), fondu croisé quand l'heure bascule (20 h → nuit, 6 h → jour)
+  lancerMusique() {
+    if (this.musiques) return;
+    const mk = (src: string) => { const a = new Audio(asset(src)); a.loop = true; a.volume = 0; a.play().catch(() => {}); return a; };
+    this.musiques = { jour: mk('sons/musiques/day.mp3'), nuit: mk('sons/musiques/night.mp3') };
+    this.fondu = window.setInterval(() => {
+      if (!this.musiques) return;
+      const h = this.e.minute / 60; const nuit = h >= 20 || h < 6;
+      const V = this.state.musique ? 0.32 * volumeMusique() : 0;
+      const pas = Math.max(0.004, V / 20);
+      (['jour', 'nuit'] as const).forEach((k) => {
+        const a = this.musiques![k]; const cible = (k === 'nuit') === nuit ? V : 0; const v = a.volume;
+        a.volume = Math.max(0, Math.min(1, v < cible ? Math.min(cible, v + pas) : Math.max(cible, v - pas)));
+        if (a.paused && cible > 0) a.play().catch(() => {});
+      });
+    }, 200);
+  }
 
-  const montrerPassage = useCallback((p: Omit<Passage, 'cle'>, duree = 1900) => {
-    const cle = ++n.current;
-    setPassage({ ...p, cle });
-    if (!p.bloquant) {
-      plusTard(() => setPassage((x) => (x && x.cle === cle ? { ...x, part: true } : x)), duree);
-      plusTard(() => setPassage((x) => (x && x.cle === cle ? null : x)), duree + 600);
-    }
-  }, [plusTard]);
+  occupe() { const s = this.state; return !!(s.ouvert || s.carnet || s.sacOuvert || s.quitter || s.evc || s.sortie || s.scene || Date.now() < this.repos || this.e.mort); }
+  enPause() { const s = this.state; return !!(s.carnet || s.sacOuvert || s.sortie || s.evc || s.scene || this.e.mort); }
 
-  // ——— ce que la simulation signale
-  const traiter = useCallback((sorties: Sortie[]) => {
-    const s = sim.current;
+  // ——— Le temps s'écoule
+  tic() {
+    if (this.enPause()) return;
+    const s = this.sim;
+    const heureAvant = heureDuJour(s.etat);
+    s.minute();
+    this.traiter(s.vider());
+    if (heureDuJour(s.etat) !== heureAvant) this.sauver();
+    const g = this.signes;
+    const niveau = (b: string) => g.besoins.find((x) => x.besoin === b)?.urgence ?? 0;
+    if (niveau('faim') >= 2 && s.etat.minute % 37 === 0) this.son('gargouille', volumePas(this.state.ey));
+    if (niveau('fatigue') >= 2 && s.etat.minute % 45 === 0) { this.son('baille', volumePas(this.state.ey)); if (!this.state.marche) { this.setState({ anim: 'baille' }); this.later(() => this.setState({ anim: '' }), 1500); } }
+    this.rafraichir();
+  }
+
+  /** Ce que la simulation signale. */
+  traiter(sorties: Sortie[]) {
     for (const x of sorties) {
       switch (x.type) {
-        case 'journal': setNouvelles((k) => k + 1); break;
-        case 'message': flotter(x.texte, COULEUR[x.ton], -150, -10); break;
-        case 'refus': son('refus'); reagir(null, 'non'); flotter(x.texte, COULEUR.mal, -150, -30); break;
-        case 'dejection': son('pop'); break;
-        case 'voisin': case 'autonomie': case 'visiteur-parti': flotter(x.texte, COULEUR.note, -150, -20); break;
+        case 'journal': this.setState((s) => ({ nouvelles: s.nouvelles + 1 })); break;
+        case 'message': this.flotter(x.texte, COULEUR[x.ton]); break;
+        case 'refus': this.son('refus'); this.reagir(false, 'non'); this.flotter(x.texte, COULEUR.mal); break;
+        case 'dejection': this.son('pop'); break;
+        case 'voisin': case 'autonomie': case 'visiteur-parti': this.flotter(x.texte, COULEUR.note); break;
         case 'evenement':
-          if (x.nature === 'bruit') { son('darkHover'); reagir(lireSignes(s.etat).expression.icone, 'saute'); } else son('reveal');
-          flotter(x.texte, COULEUR.note, -150, -20);
+          if (x.nature === 'bruit') { this.son('darkHover'); this.reagir(true, 'saute'); } else this.son('reveal');
+          this.flotter(x.texte, COULEUR.note);
           break;
-        case 'comportement': son('pop'); break;
+        case 'comportement': this.son('reveal'); break;
         case 'sommeil':
-          montrerPassage({ titre: `${x.heures} heure${x.heures > 1 ? 's' : ''} plus tard…`, sous: x.effondrement ? `${s.etat.nom} s’est ${accord(s.etat, 'écroulé', 'écroulée')} de fatigue` : `${s.etat.nom} a dormi` }, 2200);
+          this.montrerSortie({ texte: `${x.heures} heure${x.heures > 1 ? 's' : ''} plus tard…`, sous: x.effondrement ? `${this.e.nom} s’est ${this.a('écroulé', 'écroulée')} de fatigue` : `${this.e.nom} a dormi` }, 2400);
           break;
         case 'evolution':
-          son('reveal');
-          montrerPassage({ titre: 'Il se passe quelque chose !', sous: `${s.etat.nom} a atteint le stade ${NOM_STADE[x.vers]}`, image: asset(apparence(s.etat)) }, 4200);
+          this.son('reveal');
+          this.montrerSortie({ texte: 'Il se passe quelque chose !', sous: `${this.e.nom} a atteint le stade ${NOM_STADE[x.vers]}`, image: asset(apparence(this.e)) }, 4200);
           break;
-        case 'mort':
-          sauver(s.etat);
-          // « Il se passe quelque chose… » : la séquence de mort prend le relais, sans annonce au ranch
-          if (surMortRef.current) { const fin = s.etat; window.setTimeout(() => surMortRef.current?.(fin), 1500); break; }
-          son('darkClick');
-          montrerPassage({ titre: `${s.etat.nom} s’est ${accord(s.etat, 'éteint', 'éteinte')}…`, sous: CAUSES[x.cause], image: asset(apparence(s.etat)), bloquant: true });
+        case 'mort': {
+          this.sauver();
+          const fin = this.e;
+          if (this.props.surMort) { window.setTimeout(() => this.props.surMort?.(fin), 1500); break; }
+          this.son('darkClick');
+          this.setState({ sortie: { texte: `${fin.nom} s’est ${this.a('éteint', 'éteinte')}…`, sous: CAUSES[x.cause], image: asset(apparence(fin)), bloquant: true } });
           break;
+        }
         default: break;
       }
     }
-  }, [flotter, montrerPassage, reagir, son, sauver]);
+  }
 
-  // ——— le temps s'écoule
-  useEffect(() => {
-    const id = window.setInterval(() => {
-      if (pauseRef.current) return;
-      const s = sim.current;
-      const heureAvant = heureDuJour(s.etat);
-      s.minute();
-      traiter(s.vider());
-      if (heureDuJour(s.etat) !== heureAvant) sauver(s.etat);
-      // Indices sonores discrets : un ventre qui gargouille, un bâillement
-      const g = lireSignes(s.etat);
-      const niveau = (b: string) => g.besoins.find((x) => x.besoin === b)?.urgence ?? 0;
-      if (niveau('faim') >= 2 && s.etat.minute % 37 === 0) son('gargouille', volumePas(posRef.current.y));
-      if (niveau('fatigue') >= 2 && s.etat.minute % 45 === 0) { son('baille', volumePas(posRef.current.y)); if (!posRef.current.marche) { setAnim('baille'); plusTard(() => setAnim(''), 1500); } }
-      rafraichir();
-    }, 1000);
-    return () => clearInterval(id);
-  }, [traiter, son, plusTard]);
+  montrerSortie(o: Sortie_, ms = 2200) {
+    this.setState({ sortie: o });
+    if (!o.bloquant) this.later(() => this.setState((s) => (s.sortie === o ? { sortie: null } : null)), ms);
+  }
 
-  // ——— l'écho se promène
-  const pasTimer = useRef<number>(0);
-  const pasDemarrer = useCallback(() => {
-    clearInterval(pasTimer.current);
-    const p = profilRef.current;
-    const ms = p.cycle * 1000;
+  // ——— L'écho se promène : une destination au hasard, il y marche, s'arrête, recommence
+  errer() {
+    if (this.occupe()) { this.later(() => this.errer(), 1200); return; }
+    const s = this.state; const g = this.signes;
+    let x = 0, y = 0, d = 0, essais = 0;
+    do {
+      if (g.approche && Math.random() < 0.7) { x = 460 + Math.random() * 360; y = 330 + Math.random() * 40; }
+      else { x = 250 + Math.random() * 730; y = 235 + Math.random() * 135; }
+      d = Math.hypot(x - s.ex, y - s.ey);
+    } while (d < 140 && ++essais < 8);
+    const dur = d / this.profil().vitesse;
+    this.setState({ ex: Math.round(x), ey: Math.round(y), eDur: +dur.toFixed(2), eSens: x < s.ex ? 'gauche' : '', marche: true });
+    this.pasDemarrer();
+    this.later(() => { clearInterval(this.pasTimer); this.setState({ marche: false }); this.later(() => this.errer(), (2600 + Math.random() * 4200) * this.signes.flanerie); }, dur * 1000);
+  }
+  pasDemarrer() {
+    clearInterval(this.pasTimer);
+    const p = this.profil(); const ms = p.cycle * 1000;
     const cycleSon = () => {
-      if (!posRef.current.marche) return;
-      if (p.motif) p.motif.forEach((o, i) => plusTard(() => { if (posRef.current.marche) son('foulee', p, volumePas(posRef.current.y), i); }, o * ms));
-      else son('glisse', p, volumePas(posRef.current.y), p.cycle * 0.95);
+      if (!this.state.marche) return;
+      if (p.motif) p.motif.forEach((o, i) => this.later(() => { if (this.state.marche) this.son('foulee', p, volumePas(this.state.ey), i); }, o * ms));
+      else this.son('glisse', p, volumePas(this.state.ey), p.cycle * 0.95);
     };
-    plusTard(cycleSon, 30);
-    pasTimer.current = window.setInterval(cycleSon, ms);
-  }, [plusTard, son]);
-  useEffect(() => () => clearInterval(pasTimer.current), []);
+    this.later(cycleSon, 30);
+    this.pasTimer = window.setInterval(cycleSon, ms);
+  }
 
-  useEffect(() => {
-    let actifErrer = true;
-    const errer = () => {
-      if (!actifErrer) return;
-      const s = sim.current;
-      if (occupe() || s.etat.mort) { plusTard(errer, 1200); return; }
-      const g = signesRef.current;
-      const p = posRef.current;
-      let x = 0, y = 0, d = 0, essais = 0;
-      do {
-        if (g.approche && Math.random() < 0.7) { x = 460 + Math.random() * 360; y = 330 + Math.random() * 40; }
-        else { x = 250 + Math.random() * 730; y = 235 + Math.random() * 135; }
-        d = Math.hypot(x - p.x, y - p.y);
-      } while (d < 140 && ++essais < 8);
-      const dur = d / profilRef.current.vitesse;
-      setPos({ x: Math.round(x), y: Math.round(y), dur: +dur.toFixed(2), sens: x < p.x ? 'gauche' : '', marche: true });
-      posRef.current = { ...posRef.current, marche: true };
-      pasDemarrer();
-      plusTard(() => {
-        clearInterval(pasTimer.current);
-        setPos((q) => ({ ...q, marche: false }));
-        plusTard(errer, (2600 + Math.random() * 4200) * signesRef.current.flanerie);
-      }, dur * 1000);
-    };
-    plusTard(errer, 1800);
-    return () => { actifErrer = false; };
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
-
-  // ——— actions
-  const apres = useCallback((reaction?: { anim?: string; coeurs?: number; sansBulle?: boolean }) => {
-    const s = sim.current;
-    traiter(s.vider());
-    sauver(s.etat);
-    if (reaction) {
-      reagir(reaction.sansBulle ? null : lireSignes(s.etat).expression.icone, reaction.anim ?? '');
-      if (reaction.coeurs) lancerCoeurs(reaction.coeurs);
+  // ——— Petits effets
+  flotter(texte: string, couleur: string = COULEUR.note, dx = -150, dy = -30) {
+    const id = ++this.n; const s = this.state;
+    const x = Math.max(16, Math.min(1280 - 320, Math.round(s.ex + dx))), y = Math.max(110, Math.round(s.ey + dy - (s.flottants.length % 3) * 34));
+    this.setState((st) => ({ flottants: st.flottants.concat({ id, texte, couleur, x, y }) }));
+    this.later(() => this.setState((st) => ({ flottants: st.flottants.filter((f) => f.id !== id) })), texte.length > 34 ? 4200 : 2600);
+  }
+  /** Réaction de l'écho : son émotion du moment (une icône, jamais un mot) et une petite animation. */
+  reagir(emotion: boolean, anim: string) {
+    this.repos = Date.now() + 3500;
+    if (anim) { this.setState({ anim: '' }); this.later(() => this.setState({ anim }), 20); this.later(() => this.setState({ anim: '' }), 1400); }
+    if (emotion) {
+      const id = ++this.n;
+      this.son('pop'); this.setState({ bulle: null });
+      this.later(() => this.setState({ bulle: id, bulleImg: asset(this.signes.expression.icone) }), 30);
+      this.later(() => this.setState((s) => (s.bulle === id ? { bulle: null } : null)), 2600);
     }
-    rafraichir();
-  }, [lancerCoeurs, reagir, traiter]);
+  }
+  coeurs(k: number) {
+    const t = this.taille();
+    const c = Array.from({ length: k }, (_, i) => ({ id: ++this.n, x: 56 + Math.round(Math.random() * 40), y: Math.round(28 - (t - 1) * 180), dx: Math.round((Math.random() - 0.5) * 60), delai: (i * 0.12).toFixed(2) }));
+    this.setState((s) => ({ coeurs: s.coeurs.concat(c) }));
+    this.later(() => this.setState((s) => ({ coeurs: s.coeurs.filter((x) => !c.includes(x)) })), 2000);
+  }
+  /** Après une action : ce que la simulation a signalé, sauvegarde, réaction. */
+  apres(reaction?: { anim?: string; coeurs?: number; sansBulle?: boolean }) {
+    this.traiter(this.sim.vider());
+    this.sauver();
+    if (reaction) {
+      this.reagir(!reaction.sansBulle, reaction.anim ?? '');
+      if (reaction.coeurs) this.coeurs(reaction.coeurs);
+    }
+    this.rafraichir();
+  }
 
-  /** Une action qui prend du temps : un fondu « … plus tard », puis la réaction. */
-  const avecTemps = (heures: number, f: () => void, reaction?: { anim?: string; coeurs?: number }) => {
-    f();
-    const s = sim.current;
-    const sorties = s.vider();
-    const dort = sorties.some((x) => x.type === 'sommeil');
-    if (!dort && !s.etat.mort) montrerPassage({ titre: heures === 1 ? 'Une heure plus tard…' : heures === 2 ? 'Deux heures plus tard…' : `${heures} heures plus tard…` }, 1500);
-    traiter(sorties);
-    sauver(s.etat);
-    plusTard(() => apres(reaction), 1700);
-    rafraichir();
+  // ——— Caresse (5 par jour, comptées par la simulation)
+  caresser = () => {
+    if (this.e.mort) return;
+    if (this.e.comportement && !this.state.evc) { this.ouvrirEvt(); return; }
+    if (this.state.mainVisible) return;
+    this.repos = Date.now() + 3000;
+    const r = this.sim.caresser();
+    if (!r.ok) { this.traiter(this.sim.vider()); this.rafraichir(); return; }
+    const m = ++this.n;
+    this.setState({ mainVisible: true, main: m, anim: 'flatte' });
+    this.son('caresse');
+    this.later(() => this.setState((s) => (s.main === m ? { mainVisible: false, anim: s.anim === 'flatte' ? '' : s.anim } : null)), 1000);
+    this.later(() => { this.coeurs(3); this.apres({ anim: 'saute' }); }, 1020);
   };
 
-  const prendre = (cle: string, action: () => void) => {
-    if (tamponne) return;
-    setTamponne(cle);
-    plusTard(() => son('stamp'), 120);
-    plusTard(() => { setOuvert(null); setTamponne(null); setActif(-1); setSousCategorie(null); action(); }, 700);
-  };
+  // ——— Fiches d'action
+  prendre(c: Choix) {
+    if (c.off || this.state.tamponne || this.state.scene || !c.agir) return;
+    if (c.sansTampon) { this.son('paperTick'); this.setState({ ouvert: null, actif: -1 }); this.later(() => c.agir!(), 160); return; }
+    this.setState({ tamponne: c.k });
+    this.later(() => this.son('stamp'), 120);
+    this.later(() => { this.setState({ ouvert: null, tamponne: null, actif: -1 }); c.agir!(); }, 700);
+  }
+  /** Les trois propositions du jour d'une catégorie (tirées une fois, gardées jusqu'au lendemain). */
+  propositions(cat: Exclude<CategorieInteraction, 'cadeau'>): OptionInteraction[] | null {
+    const e = this.e;
+    if (e.interactionsDuJour[cat] === e.jour) return null;
+    const p = this.state.propositions[cat];
+    if (p && p.jour === e.jour) return p.options;
+    const o = this.sim.proposer(cat);
+    if (!o) return null;
+    window.setTimeout(() => this.setState((s) => ({ propositions: { ...s.propositions, [cat]: { jour: e.jour, options: o } } })), 0);
+    return o;
+  }
+  /** Une interaction (jouer, parler, partager, apprendre, câliner) : une heure passe. */
+  interaction(cat: Exclude<CategorieInteraction, 'cadeau'>, o: OptionInteraction) {
+    const s = this.sim;
+    if (cat === 'affection') {
+      const r = s.interagir(cat, o);
+      if (!r.ok) { this.flotter(r.raison, COULEUR.mal); return; }
+      this.son('caresse'); this.coeurs(5);
+      this.apres({ anim: 'flatte' });
+      this.later(() => this.flotter(r.texte), 600);
+      return;
+    }
+    this.ouvrirScene({ kind: SCENE_INTERACTION(cat, o.id), groupe: 'jeu', image: '', titre: s.libelle(o) }, () => {
+      const r = s.interagir(cat, o);
+      return r.ok ? [r.texte] : null;
+    });
+  }
 
-  const caresser = () => {
-    const s = sim.current;
-    if (main) return;
-    if (s.etat.comportement) { ouvrirEvt(); return; }
-    repos.current = Date.now() + 3000;
-    const r = s.caresser();
-    if (!r.ok) { traiter(s.vider()); rafraichir(); return; }
-    const m = ++n.current;
-    setMain(m);
-    son('caresse');
-    plusTard(() => setMain((x) => (x === m ? 0 : x)), 1300);
-    plusTard(() => { lancerCoeurs(3); apres({ anim: 'saute' }); }, 1150);
-  };
-
-  const ouvrirEvt = () => {
-    son('slide');
-    setOuvert(null); setQuitter(false);
-    setEvt(true);
-  };
-  const repondre = (r: ReponseComportement) => {
-    const s = sim.current;
-    son('stamp');
-    setEvt(false);
-    const res = s.repondreComportement(r);
-    const anime = r === 'gronder' || r === 'critiquer' || r === 'prevenir' ? '' : 'saute';
-    apres({ anim: anime });
-    if (res.ok && res.objetTrouve) plusTard(() => flotter(res.sacPlein ? `Le sac est plein : impossible de garder ${res.objetTrouve!.toLowerCase()}.` : `${res.objetTrouve} rejoint votre sac.`, res.sacPlein ? COULEUR.mal : COULEUR.bien, -150, -10), 400);
-  };
-
-  const fermerSac = () => setSacOuvert(false);
-  const utiliserObjet = (index: number) => {
-    const s = sim.current;
-    const c = s.etat.inventaire[index];
-    if (!c) return;
-    const estAliment = !!aliment(c.id);
-    const r = s.utiliser(index);
-    if (!r.ok) { traiter(s.vider()); if (r.raison && !estAliment) flotter(r.raison, COULEUR.mal, -150, -20); rafraichir(); return; }
-    apres({ anim: estAliment ? 'mange' : 'saute' });
-  };
-
-  // ——— fiches
-  const nbObjets = (id: string) => e.inventaire.filter((c) => c?.id === id).reduce((t, c) => t + (c?.qte ?? 0), 0);
-  const indexObjet = (id: string) => e.inventaire.findIndex((c) => c?.id === id);
-  const choixDe = (v: Verbe | 'visiteur'): Choix[] => {
-    const s = sim.current;
+  choixDe(v: Verbe | 'visiteur'): Choix[] {
+    const s = this.sim; const e = this.e;
+    const nb = (id: string) => e.inventaire.filter((c) => c?.id === id).reduce((t, c) => t + (c?.qte ?? 0), 0);
+    const index = (id: string) => e.inventaire.findIndex((c) => c?.id === id);
     if (v === 'soins') {
-      const aliments: Choix[] = e.inventaire.flatMap((c, i) => {
-        const al = c && aliment(c.id);
-        return al && c ? [{ cle: 'al-' + i, nom: al.nom, image: asset(al.icone), detail: `× ${c.qte}`, prendre: () => utiliserObjet(i) }] : [];
-      });
+      const caliner = INTERACTIONS.affection.find((o) => o.id === 'caliner') ?? INTERACTIONS.affection[0];
+      const affectionFaite = e.interactionsDuJour.affection === e.jour;
       return [
-        { cle: 'r-nourrir', nom: 'Nourrir', rubrique: true },
-        ...(aliments.length ? aliments : [{ cle: 'rien', nom: 'Plus rien à manger dans le sac', icone: IC.mystere, off: true }]),
-        { cle: 'r-soins', nom: 'Soins', rubrique: true },
-        { cle: 'laver', nom: 'Laver', icone: IC.laver, detail: '2 h', prendre: () => avecTemps(2, () => s.laver(), { anim: 'secoue' }) },
-        { cle: 'pansement', nom: 'Soigner une blessure', icone: IC.trousse, detail: nbObjets('bandage') ? `pansement × ${nbObjets('bandage')}` : 'pas de pansement', off: !nbObjets('bandage'), prendre: () => utiliserObjet(indexObjet('bandage')) },
-        { cle: 'medicament', nom: 'Donner un médicament', icone: IC.medicament, detail: nbObjets('medicament') ? `× ${nbObjets('medicament')}` : 'aucun', off: !nbObjets('medicament'), prendre: () => utiliserObjet(indexObjet('medicament')) },
-        { cle: 'coucher', nom: 'Le coucher', icone: IC.coucher, prendre: () => { const r = s.coucher(); if (!r.ok) { traiter(s.vider()); rafraichir(); return; } traiter(s.vider()); plusTard(() => apres({ sansBulle: false }), 2400); rafraichir(); } },
+        { k: 'nourrir', nom: 'Nourrir', icone: IC.repas, detail: 'ouvrir le sac', sansTampon: true, agir: () => this.ouvrirLeSac() },
+        { k: 'caliner', nom: 'Câliner', icone: IC.caliner, off: affectionFaite, detail: affectionFaite ? 'déjà fait aujourd’hui' : '1 h', agir: () => this.interaction('affection', caliner) },
+        { k: 'r-soins', nom: 'Soins', rubrique: true },
+        { k: 'laver', nom: 'Laver', icone: IC.laver, detail: '2 h', agir: () => this.ouvrirScene({ kind: 'laver', groupe: 'soin', image: '', titre: 'Le bain' }, () => { const r = s.laver(); return r.ok ? [] : null; }) },
+        { k: 'brosser', nom: 'Brosser', icone: IC.brosser, off: true, detail: 'bientôt' },
+        { k: 'pansement', nom: 'Soigner une blessure', icone: IC.trousse, off: !nb('bandage') || !e.blesse, detail: !e.blesse ? 'aucune blessure' : nb('bandage') ? 'un pansement' : 'pas de pansement', agir: () => this.utiliserObjet(index('bandage')) },
+        { k: 'medicament', nom: 'Donner un médicament', icone: IC.medicament, off: !nb('medicament'), detail: nb('medicament') ? 'dans le sac' : 'aucun', agir: () => this.utiliserObjet(index('medicament')) },
+        { k: 'coucher', nom: 'Le coucher', icone: IC.coucher, agir: () => this.coucher() },
       ];
     }
     if (v === 'jouer') {
-      if (sousCategorie) {
-        return [
-          { cle: 'r-' + sousCategorie.cat, nom: CATEGORIES.find((c) => c.k === sousCategorie.cat)!.nom, rubrique: true },
-          ...sousCategorie.options.map((o) => ({
-            cle: o.id, nom: s.libelle(o), icone: CATEGORIES.find((c) => c.k === sousCategorie.cat)!.icone, detail: '1 h',
-            prendre: () => avecTemps(1, () => {
-              const r = s.interagir(sousCategorie.cat, o);
-              if (r.ok) plusTard(() => flotter(r.texte, COULEUR.note, -150, -10), 1800);
-            }, { anim: 'saute', coeurs: sousCategorie.cat === 'affection' ? 5 : 0 }),
-          })),
-        ];
-      }
-      return CATEGORIES.map((c) => {
-        const fait = c.k !== 'cadeau' && e.interactionsDuJour[c.k] === e.jour;
-        return {
-          cle: c.k, nom: c.nom, icone: c.icone, garderOuvert: true,
-          off: c.k === 'cadeau' || fait,
-          detail: c.k === 'cadeau' ? 'pas encore' : fait ? 'déjà fait aujourd’hui' : 'choisir…',
-          prendre: () => {
-            if (c.k === 'cadeau') return;
-            const options = s.proposer(c.k);
-            if (!options) return;
-            son('page', 0.7);
-            setActif(-1);
-            setSousCategorie({ cat: c.k, options });
-          },
-        };
+      return CAT_JOUER.flatMap((c) => {
+        const o = this.propositions(c.k);
+        const tete: Choix = { k: 'r-' + c.k, nom: c.nom, rubrique: true };
+        if (!o) return [tete, { k: c.k + '-fait', nom: 'Déjà partagé aujourd’hui', icone: ICONE_INTERACTION[c.k], off: true, detail: 'demain' }];
+        return [tete, ...o.map((x) => ({ k: c.k + '-' + x.id, nom: s.libelle(x), icone: ICONE_INTERACTION[c.k], detail: '1 h', agir: () => this.interaction(c.k, x) }))];
       });
     }
     if (v === 'activites') {
       return [
-        { cle: 'r-entr', nom: 'Entraînements', rubrique: true },
+        { k: 'r-entr', nom: 'Entraînements', rubrique: true },
         ...ENTRAINEMENTS.map((t) => ({
-          cle: t.id, nom: t.nom, image: asset(t.icone), detail: '2 h',
-          prendre: () => {
-            const r = s.entrainer(t.id);
-            if (!r.ok) { flotter(r.raison, COULEUR.mal, -150, -20); return; }
-            const sorties = s.vider();
-            montrerPassage({ titre: 'Deux heures plus tard…', sous: t.nom }, 1500);
-            traiter(sorties);
-            sauver(s.etat);
-            plusTard(() => { apres({ anim: 'effort' }); flotter(`${nom} a l’air un peu plus ${a('fort', 'forte')}.`, COULEUR.bien, -150, -10); }, 1700);
-            rafraichir();
+          k: t.id, nom: t.nom, image: asset(t.icone), detail: '2 h',
+          agir: () => {
+            const kind = t.carac === 'agilite' ? 'saut' : t.carac === 'intelligence' || t.carac === 'perception' ? 'esprit' : 'course';
+            this.ouvrirScene({ kind, groupe: 'entrainement', image: asset(t.icone), titre: t.nom }, () => { const r = s.entrainer(t.id); return r.ok ? [] : null; });
           },
         })),
-        { cle: 'r-combat', nom: 'Combat', rubrique: true },
-        { cle: 'combat-entr', nom: 'Combat d’entraînement', icone: IC.course, detail: surCombat ? 'contre un écho de passage' : 'à venir', off: !surCombat,
-          prendre: () => { if (!surCombat) return; sauver(s.etat); surCombat(s.etat, 'entrainement'); } },
-        { cle: 'r-corv', nom: 'Corvées', rubrique: true },
-        ...CORVEES.map((c) => ({ cle: c.id, nom: c.nom, image: asset(c.icone), off: true, detail: 'à remettre en état' })),
+        { k: 'r-combat', nom: 'Combat', rubrique: true },
+        { k: 'combat-entr', nom: 'Combat d’entraînement', icone: IC.course, detail: this.props.surCombat ? 'contre un écho de passage' : 'à venir', off: !this.props.surCombat,
+          agir: () => { if (!this.props.surCombat) return; this.sauver(); this.props.surCombat(this.e, 'entrainement'); } },
+        { k: 'r-corv', nom: 'Corvées', rubrique: true },
+        ...CORVEES.map((c) => ({ k: c.id, nom: c.nom, image: asset(c.icone), off: true, detail: 'à remettre en état' })),
       ];
     }
     if (v === 'ranch') {
       return [
-        { cle: 'balayer', nom: 'Tout balayer', icone: IC.balai, off: !e.dejections.length, detail: e.dejections.length ? '' : 'rien à ramasser', prendre: () => { [...e.dejections].forEach((d) => s.nettoyer(d.id)); son('woosh'); flotter('Vous avez tout balayé.', COULEUR.bien); apres(); } },
-        { cle: 'attendre', nom: 'Laisser le temps passer', icone: IC.sablier, detail: '1 h', prendre: () => avecTemps(1, () => s.laisserPasser(1)) },
-        { cle: 'r-lieux', nom: 'Lieux', rubrique: true },
-        { cle: 'jardin', nom: 'Jardin', icone: IC.jardin, off: true, detail: 'à venir' },
-        { cle: 'cuisine', nom: 'Cuisine', icone: IC.cuisine, off: true, detail: 'personne pour cuisiner… pour l’instant' },
-        { cle: 'lieu1', nom: '???', icone: IC.mystere, off: true, detail: 'à découvrir' },
+        { k: 'balayer', nom: 'Tout balayer', icone: IC.balai, off: !e.dejections.length, detail: e.dejections.length ? '' : 'rien à ramasser',
+          agir: () => { [...e.dejections].forEach((d) => s.nettoyer(d.id)); this.son('balai'); this.flotter('Vous avez tout balayé.', COULEUR.bien); this.apres(); } },
+        { k: 'attendre', nom: 'Laisser le temps passer', icone: IC.sablier, detail: '1 h',
+          agir: () => { s.laisserPasser(1); const sorties = s.vider(); if (!sorties.some((x) => x.type === 'sommeil')) this.montrerSortie({ texte: 'Une heure plus tard…' }, 1500); this.traiter(sorties); this.sauver(); this.rafraichir(); } },
+        { k: 'r-lieux', nom: 'Lieux', rubrique: true },
+        { k: 'jardin', nom: 'Jardin', icone: IC.jardin, off: true, detail: 'à venir' },
+        { k: 'cuisine', nom: 'Cuisine', icone: IC.cuisine, off: true, detail: 'personne pour cuisiner… pour l’instant' },
+        { k: 'lieu1', nom: '???', icone: IC.mystere, off: true, detail: 'à découvrir' },
       ];
     }
     if (v === 'visiteur') {
-      const duo = (nature: 'jeu' | 'bagarre') => () => avecTemps(1, () => {
-        const r = s.duoAvecVisiteur(nature);
-        if (r.ok) plusTard(() => flotter(r.texte, r.succes ? COULEUR.bien : COULEUR.mal, -150, -10), 1800);
-      }, { anim: nature === 'jeu' ? 'saute' : 'effort' });
+      const duo = (nature: 'jeu' | 'bagarre') => () => this.ouvrirScene({ kind: nature === 'jeu' ? 'balle' : 'corde', groupe: 'jeu', image: '', titre: nature === 'jeu' ? 'Jouer ensemble' : 'La bagarre' }, () => {
+        const r = s.duoAvecVisiteur(nature); return r.ok ? [r.texte] : null;
+      });
       return [
-        { cle: 'temps', nom: 'Passer du temps ensemble', icone: IC.partage, detail: '1 h', prendre: () => avecTemps(1, () => { const r = s.passerDuTempsAvecVisiteur(); if (r.ok) plusTard(() => flotter(r.texte, COULEUR.note, -150, -10), 1800); }, { anim: 'saute' }) },
-        { cle: 'jouer', nom: 'Jouer ensemble', icone: IC.balle, detail: '1 h', prendre: duo('jeu') },
-        { cle: 'bagarre', nom: 'Se bagarrer', icone: IC.course, detail: '1 h', prendre: duo('bagarre') },
+        { k: 'temps', nom: 'Passer du temps ensemble', icone: IC.partage, detail: '1 h', agir: () => this.ouvrirScene({ kind: 'histoire', groupe: 'jeu', image: '', titre: 'Un moment ensemble' }, () => { const r = s.passerDuTempsAvecVisiteur(); return r.ok ? [r.texte] : null; }) },
+        { k: 'jouer', nom: 'Jouer ensemble', icone: IC.balle, detail: '1 h', agir: duo('jeu') },
+        { k: 'bagarre', nom: 'Se bagarrer', icone: IC.course, detail: '1 h', agir: duo('bagarre') },
       ];
     }
     return [];
+  }
+
+  coucher() {
+    const s = this.sim;
+    const r = s.coucher();
+    if (!r.ok) { this.traiter(s.vider()); this.rafraichir(); return; }
+    this.traiter(s.vider());
+    this.later(() => this.apres({}), 2600);
+    this.rafraichir();
+  }
+
+  // ——— Scène d'action : une fenêtre s'ouvre au centre, l'écho y saute, l'action se joue, une feuille volante la résume
+  /** `action` applique la règle de la simulation et renvoie les phrases à écrire (null : refus, rien ne se joue). */
+  ouvrirScene(sc: { kind: string; groupe: string; image: string; titre: string }, action: () => string[] | null) {
+    const s = this.state;
+    const humeurAvant = this.e.humeur;
+    const lignes = action();
+    if (!lignes) { this.traiter(this.sim.vider()); this.rafraichir(); return; }
+    const sorties = this.sim.vider();
+    const dort = sorties.some((x) => x.type === 'sommeil');
+    const emo = Math.sign(this.e.humeur - humeurAvant);
+    const note = this.noteScene(sc.kind, sc.groupe, lignes, emo);
+    const g = ++this.scg;
+    const ech = 0.86 + (s.ey - 235) / 135 * 0.28;
+    this.setState({
+      scene: { ...sc, titre: note.titre || sc.titre, lignes: note.lignes, dx: Math.round(s.ex + 75 - 640), dy: Math.round(s.ey + 232 - 470), s0: ech.toFixed(3), emo },
+      scPhase: 'ouvre', ouvert: null, quitter: false, carnetLeve: false,
+    });
+    this.sortiesScene = sorties; this.dortScene = dort;
+    this.son('woosh');
+    this.later(() => { if (this.scg !== g) return; this.setState({ scPhase: 'saut' }); this.son('foulee', this.profil(), 0.8, 0); }, 420);
+    this.later(() => { if (this.scg !== g) return; this.son('foulee', this.profil(), 1.3, 1); }, 1080);
+    this.later(() => { if (this.scg !== g) return; this.setState({ scPhase: 'agit' }); this.sonScene(sc.kind); }, 1250);
+    this.later(() => this.noterScene(g), 4650);
+  }
+  sortiesScene: Sortie[] = [];
+  dortScene = false;
+  noterScene(g: number) { const s = this.state; if (this.scg !== g || !s.scene || s.scPhase === 'note' || s.scPhase === 'ferme') return; this.setState({ scPhase: 'note' }); this.son('page', 0.7); this.later(() => this.son('pencil'), 300); }
+  sonScene(kind: string) {
+    const S: Record<string, string> = { laver: 'eau', brosser: 'brosse', coucher: 'berceuse', manger: 'croque', balle: 'rebond', saut: 'rebond', bulles: 'bulles', lucioles: 'berceuse', barriere: 'marteau', cache: 'foulee', course: 'foulee', corde: 'leather', eau: 'eau', histoire: 'page', esprit: 'reveal' };
+    const n = S[kind]; if (!n) return;
+    const fois = ({ croque: [0, 700, 1400, 2100], rebond: [0, 1100, 2200], marteau: [0, 650, 1300, 1950, 2600], brosse: [0, 900, 1800], foulee: [0, 500, 1000, 1500, 2000, 2500], eau: [0, 1200], page: [0, 1400] } as Record<string, number[]>)[n] || [0];
+    const g = this.scg;
+    fois.forEach((d, i) => this.later(() => { if (this.scg === g && this.state.scene) { if (n === 'foulee') this.son(n, this.profil(), 0.7, i % 2); else this.son(n); } }, d));
+  }
+  /** La feuille volante : jamais de chiffre, seulement ce qu'on devine (lireSignes) et ce que la simulation raconte. */
+  noteScene(kind: string, groupe: string, textes: string[], emo: number) {
+    const g = this.signes; const Il = this.a('Il', 'Elle');
+    const niveau = (b: string) => g.besoins.find((x) => x.besoin === b)?.urgence ?? 0;
+    const app = emo > 0 ? `${Il} semble apprécier.` : emo < 0 ? `${Il} ne semble pas aimer ça.` : `${Il} ne laisse rien paraître.`;
+    const premier = textes.find((t) => t && t.length < 140);
+    let lignes: string[];
+    const faim = niveau('repus') ? `${Il} paraît ${this.a('repu', 'repue')}.` : niveau('faim') >= 2 ? `${Il} a encore faim.` : niveau('faim') ? 'Il lui reste un petit creux.' : `${Il} paraît ${this.a('rassasié', 'rassasiée')}.`;
+    const fatigue = niveau('fatigue') >= 2 ? `${Il} paraît ${this.a('fatigué', 'fatiguée')}.` : 'Il lui reste de l’énergie.';
+    if (kind === 'manger') lignes = [premier || app, faim];
+    else if (kind === 'laver' || kind === 'brosser') lignes = [app, niveau('salete') >= 2 ? `${Il} est encore sale.` : `${Il} est tout${this.a('', 'e')} propre.`];
+    else if (groupe === 'entrainement') lignes = [`${Il} s’est ${this.a('donné', 'donnée')} du mal.`, fatigue, 'Quelque chose a changé dans sa façon de bouger.'];
+    else lignes = [premier || app, niveau('fatigue') >= 2 ? `${Il} paraît ${this.a('épuisé', 'épuisée')}.` : emo > 0 ? `${Il} a le cœur léger.` : `${Il} en redemanderait bien.`];
+    return { titre: '', lignes: lignes.filter(Boolean).slice(0, 3) };
+  }
+  fermerScene = () => {
+    const s = this.state; if (!s.scene) return;
+    if (s.scPhase === 'agit') { this.noterScene(this.scg); return; }
+    if (s.scPhase !== 'note') return;
+    const g = ++this.scg; const emo = s.scene.emo;
+    this.son('woosh'); this.later(() => this.son('foulee', this.profil(), 0.8, 0), 380);
+    this.setState({ scPhase: 'ferme' });
+    this.later(() => {
+      if (this.scg !== g) return;
+      this.setState({ scene: null, scPhase: '' });
+      this.traiter(this.sortiesScene); this.sortiesScene = [];
+      this.sauver();
+      this.reagir(emo !== 0, emo > 0 ? 'saute' : '');
+      this.rafraichir();
+    }, 1000);
   };
 
-  // ——— rendu
-  const heure = e.minute / 60;
-  const m = lumiere(heure);
-  const op = couches(heure);
-  const visiteur = sim.current.visiteur;
-  const iv = VERBES.findIndex((v) => v.k === ouvert);
-  const centreVerbe = ouvert === 'visiteur' ? 1010 : 640 + (iv - 2) * 104;
-  const ficheX = Math.max(24, Math.min(1280 - 454, centreVerbe - 215));
-  const choix = ouvert && ouvert !== 'echo' ? choixDe(ouvert) : [];
-  const ech = profil.echelle;
-  /** Haut de la tête dans la zone de l'écho (l'image de 190 px pour 90 cm est posée 6 px au-dessus du bas). */
-  const tete = 234 - 190 * ech;
-  const eScale = (0.86 + (pos.y - 235) / 135 * 0.28).toFixed(3);
-  const droite = pos.x > 640;
-  const bulleBesoin = signes.bulle && !bulleEmo && e.minute % 14 < 5 ? signes.bulle : null;
-  const niveau = (b: string) => signes.besoins.find((x) => x.besoin === b)?.urgence ?? 0;
-  const humeurMot = accord(e, signes.expression.m, signes.expression.f);
-  const C = 2 * Math.PI * 30;
-  const cacheCote = carnet || sacOuvert;
-  let idx = -1;
+  // ——— Le sac : 10 emplacements, déplaçables ; un objet s'utilise ou se décrit
+  ouvrirLeSac() {
+    if (this.state.sacOuvert) return;
+    this.son('woosh'); this.later(() => this.son('sacoche', true), 380);
+    this.setState({ sacOuvert: true, sacFerme: false, sacSurvol: -1, sacMenu: -1, ouvert: null, quitter: false });
+  }
+  fermerSac = () => {
+    if (this.state.sacMenu >= 0) this.setState({ sacMenu: -1 });
+    if (!this.state.sacOuvert || this.state.sacFerme) return;
+    this.son('sacoche', false); this.later(() => this.son('woosh'), 620);
+    this.setState({ sacFerme: true });
+    this.later(() => this.setState({ sacOuvert: false, sacFerme: false }), 1080);
+  };
+  deplacerSac(de: number, vers: number) {
+    if (de < 0 || de === vers) { this.setState({ dndDe: -1, dndCible: -1 }); return; }
+    const inv = this.e.inventaire; const x = inv[de]; inv[de] = inv[vers]; inv[vers] = x;
+    this.sauver();
+    this.son('sacPose'); this.setState({ dndDe: -1, dndCible: -1, sacSurvol: vers });
+  }
+  /** Utiliser l'objet d'une case : un aliment se mange dans la fenêtre d'action. */
+  utiliserObjet(index: number) {
+    const c = this.e.inventaire[index];
+    if (!c) return;
+    const al = aliment(c.id);
+    if (al) {
+      this.ouvrirScene({ kind: 'manger', groupe: 'soin', image: asset(al.icone), titre: `Repas · ${al.nom.toLowerCase()}` }, () => {
+        const r = this.sim.nourrir(index);
+        return r.ok ? [r.texte] : null;
+      });
+      return;
+    }
+    const r = this.sim.utiliser(index);
+    if (!r.ok) { this.traiter(this.sim.vider()); if (r.raison) this.flotter(r.raison, COULEUR.mal); this.rafraichir(); return; }
+    this.apres({ anim: 'saute' });
+  }
 
-  return (
-    <div className="ranch-cadre" ref={cadre}>
-      <div className="ranch-repere" style={{ transform: `translate(-50%, -50%) scale(${echelle})` }}>
-        {/* Décor : les quatre illustrations du ranch se fondent l'une dans l'autre selon l'heure */}
-        <div className="ranch" style={{ backgroundImage: `url(${asset('decors/ranch/nuit.png')})`, opacity: 1 }} />
-        <div className="ranch" style={{ backgroundImage: `url(${asset('decors/ranch/soiree.png')})`, opacity: op.soir }} />
-        <div className="ranch" style={{ backgroundImage: `url(${asset('decors/ranch/matinee.png')})`, opacity: op.matin }} />
-        <div className="ranch" style={{ backgroundImage: `url(${asset('decors/ranch/journee.png')})`, opacity: op.jour }} />
-        <div style={{ position: 'absolute', inset: 0, mixBlendMode: 'multiply', background: m.c, opacity: m.o * 0.3, transition: 'all 1.2s ease', pointerEvents: 'none' }} />
-        <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(ellipse at 50% 55%,transparent 45%,rgba(10,8,20,.75) 100%)', opacity: m.vig * 0.7, transition: 'opacity 1.2s ease', pointerEvents: 'none' }} />
-        <div style={{ position: 'absolute', inset: 0, opacity: m.fly, transition: 'opacity 1.2s ease', pointerEvents: 'none' }}>
-          {[[440, 300, 0, 6], [820, 330, -3, 5], [300, 390, -6, 4], [1000, 400, -2, 5], [660, 250, -4.5, 4]].map(([x, y, d, t], i) => (
-            <div key={i} className="fly" style={{ position: 'absolute', left: x, top: y, animationDelay: `${d}s` }}><div style={{ width: t, height: t, borderRadius: '50%', background: '#fff1a8', boxShadow: '0 0 10px 3px rgba(255,226,120,.8)', animationDelay: `${-i * 0.5}s` }} /></div>
-          ))}
-        </div>
+  // ——— L'événement : le « ! » ; le carnet s'ouvre avec le personnage du joueur ; on lit, on choisit, on referme
+  ouvrirEvt = () => {
+    const c = this.e.comportement;
+    if (!c || this.state.evc) return;
+    const g = ++this.evg;
+    this.evtCourant = { c, reponses: this.sim.reponsesComportement(), reponse: null, consequence: '' };
+    this.segs = texteComportement(this.e, c);
+    this.setState({ evc: true, evcFerme: false, playing: false, typed: 0, done: false, phase: 'choose', chosen: -1, active: -1, decouverte: false, revealed: false, tamponGo: false, ouvert: null, quitter: false, carnetLeve: false });
+    this.son('bookArrive');
+    this.later(() => { if (this.evg === g) this.setState({ playing: true }); }, 40);
+    this.later(() => this.taper(g), 1890);
+  };
+  taper(g: number) {
+    if (this.evg !== g || !this.state.evc) return;
+    const n = this.state.typed;
+    if (n >= this.segs.length) {
+      this.later(() => { if (this.evg === g) this.setState({ done: true }); }, 160);
+      if (this.state.phase === 'result' && !this.state.tamponGo) {
+        if (this.state.decouverte && !this.state.revealed) this.later(() => this.reveler(g), 500);
+        else if (!this.state.decouverte) this.later(() => { if (this.evg !== g) return; this.setState({ tamponGo: true }); this.later(() => { if (this.evg === g) this.son('stamp'); }, 250); }, 400);
+      }
+      return;
+    }
+    const ch = this.segs[n];
+    let d = 24; if (ch === '…') d = 300; else if (ch === '.' || ch === '?' || ch === '!') d = 220; else if (ch === ',') d = 120; else if (ch === ' ') d = 30;
+    this.son('typeTick', ch, 330);
+    this.setState({ typed: n + 1 });
+    this.later(() => this.taper(g), d);
+  }
+  choisir(i: number) {
+    const s = this.state; const ev = this.evtCourant;
+    if (s.phase !== 'choose' || !s.done || !ev) return;
+    const g = this.evg; const k = ev.reponses[i].cle;
+    ev.reponse = k;
+    ev.consequence = consequence(this.e, ev.c, k);
+    // la simulation applique la réponse tout de suite (objet rangé, émotions, éducation, journal)
+    const r = this.sim.repondreComportement(k);
+    this.traiter(this.sim.vider()); this.sauver();
+    if (r.ok && r.objetTrouve && r.sacPlein) ev.consequence += ` Le sac est plein : impossible de garder ${r.objetTrouve.toLowerCase()}.`;
+    this.setState({ phase: 'stamped', chosen: i, active: i });
+    this.later(() => this.son('stamp'), 210);
+    this.later(() => { if (this.evg !== g) return; this.setState({ phase: 'turning' }); this.son('page', 1); this.son('woosh'); }, 1000);
+    this.later(() => {
+      if (this.evg !== g) return;
+      this.segs = ev.consequence;
+      // la première fois, le tempérament en jeu se révèle sur la page 4 ; ensuite il y reste inscrit
+      const decouverte = !(this.props.connus ?? []).includes(cleEvenement(ev.c));
+      this.setState({ phase: 'result', typed: 0, done: false, decouverte, revealed: false, tamponGo: false });
+      this.later(() => this.taper(g), 250);
+    }, 1740);
+  }
+  reveler(g: number) {
+    if (this.evg !== g || !this.evtCourant) return;
+    this.son('reveal'); this.setState({ revealed: true, tamponGo: true });
+    this.props.surDecouverte?.(cleEvenement(this.evtCourant.c));
+    this.later(() => { if (this.evg === g) this.son('stamp'); }, 1500);
+  }
+  fermerEvt = () => {
+    if (!this.state.evc || this.state.evcFerme) return;
+    this.evg++; this.son('page', 0.9); this.later(() => this.son('bookArrive'), 640); this.later(() => this.son('woosh'), 820);
+    this.setState({ evcFerme: true });
+    const ev = this.evtCourant;
+    this.later(() => {
+      this.setState({ evc: false, evcFerme: false, playing: false });
+      const k = ev?.reponse;
+      if (k) {
+        const sens = REP[k].sens;
+        if (sens > 0) { this.reagir(true, 'saute'); this.coeurs(2); } else if (sens < 0) this.reagir(true, 'non'); else this.reagir(true, '');
+      }
+      this.evtCourant = null;
+      this.rafraichir();
+    }, 1320);
+  };
 
-        {/* Fenêtre de ciel cousue dans le cuir : jour, heure, bourse */}
-        <div className="leather" style={{ position: 'absolute', left: 24, top: 22, display: 'flex', alignItems: 'center', gap: 16, padding: '12px 24px 12px 14px', borderRadius: 18, filter: m.papier }}>
-          <div className="stitch" style={{ borderRadius: 12 }} />
-          <svg width="112" height="66" viewBox="0 0 132 78" role="img" aria-label={`Ciel du ranch : ${m.periode}`}>
-            <defs>
-              <clipPath id="rSkyClip"><path d="M10 70a56 56 0 0 1 112 0z" /></clipPath>
-              <linearGradient id="rSkyGrad" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor={m.cielHaut} /><stop offset="1" stopColor={m.cielBas} /></linearGradient>
-            </defs>
-            <g clipPath="url(#rSkyClip)">
-              <rect x="0" y="0" width="132" height="78" fill="url(#rSkyGrad)" />
-              <g opacity={m.etoiles}>
-                <circle className="star" cx="34" cy="34" r="1.3" fill="#fff8e0" />
-                <circle className="star" cx="88" cy="26" r="1.1" fill="#fff8e0" style={{ animationDelay: '-.8s' }} />
-                <circle className="star" cx="104" cy="44" r="1.4" fill="#fff8e0" style={{ animationDelay: '-1.5s' }} />
-                <circle className="star" cx="52" cy="22" r="1" fill="#fff8e0" style={{ animationDelay: '-.4s' }} />
-              </g>
-              <circle className="sun-glow" cx={m.sx} cy={m.sy} r="15" fill={m.soleil} opacity=".3" />
-              <circle cx={m.sx} cy={m.sy} r="8.5" fill={m.soleil} stroke="#3a1f0e" strokeWidth="1.5" />
-              <path d="M6 66c14-9 26-11 40-6s24 4 38-3 28-5 44 3v20H6z" fill={m.colline} stroke="#3a1f0e" strokeWidth="1.5" />
-            </g>
-            <path d="M10 70a56 56 0 0 1 112 0" fill="none" stroke="#3a1f0e" strokeWidth="5" />
-            <path d="M4 70a62 62 0 0 1 124 0" fill="none" stroke="rgba(240,214,170,.7)" strokeWidth="1.8" strokeDasharray="5 4" />
-            <path d="M6 70h120" stroke="#3a1f0e" strokeWidth="3" strokeLinecap="round" />
-            <circle cx="10" cy="70" r="4" fill="#c9a050" stroke="#3a2410" strokeWidth="1.5" />
-            <circle cx="122" cy="70" r="4" fill="#c9a050" stroke="#3a2410" strokeWidth="1.5" />
-          </svg>
-          <div style={{ position: 'relative' }}>
-            <div style={{ fontFamily: "'Alegreya SC',serif", fontWeight: 700, fontSize: 12, letterSpacing: 2.5, color: '#e9cfa0' }}>Jour {e.jour} · {saison(e.jour)}</div>
-            <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, color: '#f6ecd6' }}><span style={{ fontSize: 34, fontWeight: 700, lineHeight: 1.05 }}>{m.heure}</span><span style={{ fontFamily: "'Reenie Beanie',cursive", fontSize: 27, color: '#f2c27a', lineHeight: 1 }}>{m.periode}</span></div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 7, fontSize: 14.5, fontWeight: 500, color: '#e9cfa0' }}><span style={{ width: 12, height: 12, borderRadius: '50%', background: '#c9a050', boxShadow: 'inset 0 0 0 1.5px #3a2410' }} />{e.or} pièces</div>
-          </div>
-        </div>
+  valsEvc(m: ReturnType<typeof lumiere>) {
+    const s = this.state; const e = this.e; const ev = this.evtCourant;
+    const per = this.props.personnage;
+    const av = per?.avatar ?? 'fille-1';
+    const reponses = ev?.reponses ?? [];
+    const kChoisi: ReponseComportement = ev?.reponse ?? (s.chosen >= 0 ? reponses[s.chosen]?.cle : 'rien') ?? 'rien';
+    const ch = REP[kChoisi];
+    const temp = TEMPERAMENTS[ev?.c.coloration ?? 'cur'];
+    const connu = !!ev && ((this.props.connus ?? []).includes(cleEvenement(ev.c)) || s.revealed);
+    const [tTexte, tCouleur] = TAMPON[ch.sens];
+    const answers = reponses.map((r, i) => {
+      const p = REP[r.cle];
+      return {
+        label: p.label, color: p.color, icon: p.icon, glow: m.ink, glowColor: p.glow, borderStyle: 'solid',
+        text: parole(e, r.cle), showText: true, labelSize: 12, pad: '6px 8px', delay: (i * 0.08).toFixed(2) + 's', sheetIcon: false, never: false,
+        enter: () => { if (this.state.phase !== 'choose' || !this.state.done) return; if (this.state.active !== i) this.son('paperTick'); this.setState({ active: i }); },
+        pick: () => this.choisir(i),
+        cls: 'check choice' + (s.phase === 'choose' && s.active === i ? ' act' : '') + (s.phase !== 'choose' ? (s.chosen === i ? ' picked' : ' dim') : ''),
+        stampCls: 'vstamp' + (s.chosen === i && s.phase !== 'choose' ? ' on' : ''),
+        ghostCls: 'ghost' + (s.chosen === i ? ' picked' : ' dim'), ghostStamp: s.chosen === i ? 'vstamp static' : 'vstamp',
+      };
+    });
+    const apres = s.phase === 'turning' || s.phase === 'result';
+    const voulue = !apres ? 'interro' : ch.sens > 0 ? 'recompense' : ch.sens < 0 ? 'reprimande' : 'ignorer';
+    const nomEcho = e.nom;
+    return {
+      evcVisible: s.evc, evcScrim: s.evc && !s.evcFerme ? 'on' : '', playClass: (s.playing ? 'play' : '') + (s.evcFerme ? ' ferme' : ''),
+      avatarImg: asset(`joueur/poses/${av}-${voulue}.webp`),
+      poses: ['interro', 'recompense', 'reprimande', 'ignorer'].map((k, i) => ({ src: asset(`joueur/poses/${av}-${k}.webp`), alt: k === voulue ? 'Votre personnage' : '', op: k === voulue ? 1 : 0, pos: i === 0 ? 'relative' : 'absolute', cls: k === voulue ? 'on' : '' })),
+      joueurNom: per?.nom ?? 'Vous', echoNom: nomEcho,
+      paperGlow: (m.glow * 0.5).toFixed(3), inkGlow: m.ink, portraitFilter: 'url(#rk7Echo) drop-shadow(6px 8px 0 rgba(43,33,24,.18))',
+      seg1: (this.segs || '').slice(0, s.typed), seg2: '', seg3: '',
+      caretClass: s.done ? 'caret-off' : 'caret-on', voiceClass: 'quiet', talkClass: '',
+      choicesClass: s.done ? 'choices-on' : '', answers, listGap: 6,
+      peekLabel: '', peekColor: '#6b4f33', peekIcon: '', peekBorder: 'solid', peekText: '', peekClass: '',
+      titreGauche: s.phase === 'result' ? phraseReponse(e, kChoisi) : 'Que se passe-t-il ?', titreReponse: phraseReponse(e, kChoisi),
+      tsCls: connu ? 'connu' : 'inconnu', tsLabel: connu ? temp.label : 'tempérament inconnu', tsColor: connu ? temp.color : '#9a8668',
+      tsGlyphe: connu ? temp.glyphe : GLYPHE_INCONNU, rcGlyphe: temp.glyphe, rvGlyphe: temp.glyphe,
+      isReveal: !!s.decouverte, notReveal: !s.decouverte, revealCls: s.revealed ? 'on' : '', rvColor: temp.color, rvGlow: temp.glow, rvLabel: temp.label, rvNote: noteSens(e, ch.sens),
+      tamponTexte: tTexte, tamponCouleur: tCouleur, tamponDelai: s.decouverte ? '1.4' : '.1', tamponCls: s.tamponGo ? 'go' : '',
+      rcColor: temp.color, rcGlow: temp.glow, rcLabel: temp.label, rcBorder: 'solid', rcNote: noteSens(e, ch.sens),
+      showChoices: s.phase === 'choose' || s.phase === 'stamped',
+      showRecap: apres, recapOn: s.phase === 'result' ? 'on' : '', turnCls: s.phase === 'turning' ? 'go' : '',
+      isNarration: true, isDialogue: false, textSize: 18, textStyle: 'italic',
+      onReset: this.fermerEvt,
+      passerTexte: () => { const st = this.state; if (st.evc && !st.done && this.segs && st.typed > 0 && st.typed < this.segs.length) this.setState({ typed: this.segs.length }); },
+      ouvrirEvt: this.ouvrirEvt,
+    };
+  }
 
-        {/* Colonne de droite : carnet, sac, partir */}
-        <button className={`carnet-btn ${cacheCote ? 'cache' : ''}`} onClick={() => { son('bookArrive'); setCarnet(true); setOuvert(null); setQuitter(false); }} aria-label="Ouvrir le carnet">
-          <svg width="86" height="104" viewBox="0 0 86 104" aria-hidden="true">
-            <rect x="10" y="8" width="62" height="80" rx="6" fill="#efe2c6" stroke="#3a1f0e" strokeWidth="2" transform="rotate(5 41 48)" />
-            <rect x="8" y="6" width="64" height="82" rx="7" fill="#6e3f22" stroke="#3a1f0e" strokeWidth="2.2" transform="rotate(-4 40 47)" />
-            <rect x="14" y="12" width="52" height="70" rx="4" fill="none" stroke="rgba(240,214,170,.65)" strokeWidth="1.6" strokeDasharray="4 3" transform="rotate(-4 40 47)" />
-            <path d="M52 4v86l5-6 5 6V4" fill="#9c3b2a" stroke="#3a1f0e" strokeWidth="1.6" strokeLinejoin="round" transform="rotate(-4 40 47)" />
-            <path d="M26 38h22M26 46h16" stroke="rgba(240,214,170,.8)" strokeWidth="2" strokeLinecap="round" transform="rotate(-4 40 47)" />
-          </svg>
-          <span style={{ position: 'absolute', left: 6, bottom: -4, fontFamily: "'Reenie Beanie',cursive", fontSize: 24, color: '#fbf3e2', textShadow: '0 1px 3px rgba(0,0,0,.8)' }}>carnet</span>
-          {nouvelles > 0 && <span className="sceau" style={{ position: 'absolute', right: 4, top: 0 }}>{nouvelles > 9 ? '9+' : nouvelles}</span>}
-        </button>
-        <button className={`cote-btn ${cacheCote ? 'cache' : ''}`} style={{ top: 136 }} onClick={() => { son('leather'); plusTard(() => son('page', 0.5), 300); setSacOuvert(true); setOuvert(null); setQuitter(false); }} aria-label="Ouvrir le sac">
-          <svg width="86" height="92" viewBox="0 0 86 92" aria-hidden="true">
-            <path d="M14 44 C10 10 76 10 72 44" fill="none" stroke="#3a1f0e" strokeWidth="8" strokeLinecap="round" />
-            <path d="M14 44 C10 10 76 10 72 44" fill="none" stroke="#8a5530" strokeWidth="5" strokeLinecap="round" />
-            <path d="M14 44 C10 10 76 10 72 44" fill="none" stroke="rgba(240,214,170,.55)" strokeWidth="1.2" strokeDasharray="3 3" />
-            <path d="M10 42h66l-4 34c-1 6-5 9-11 9H25c-6 0-10-3-11-9z" fill="#6e3f22" stroke="#3a1f0e" strokeWidth="2.2" strokeLinejoin="round" />
-            <path d="M16 48h54l-3 26c-1 4-3 6-7 6H26c-4 0-6-2-7-6z" fill="none" stroke="rgba(240,214,170,.55)" strokeWidth="1.4" strokeDasharray="4 3" />
-            <path d="M9 40h68v12c0 6-5 10-11 10H20c-6 0-11-4-11-10z" fill="#7d4a28" stroke="#3a1f0e" strokeWidth="2.2" strokeLinejoin="round" />
-            <rect x="37" y="54" width="12" height="14" rx="2.5" fill="#c9a050" stroke="#3a2410" strokeWidth="1.8" />
-            <rect x="41" y="58" width="4" height="6" rx="1" fill="#3a2410" />
-          </svg>
-          <span className="etiq">sac</span>
-        </button>
-        <button className={`cote-btn ${cacheCote ? 'cache' : ''}`} style={{ top: 244 }} onClick={() => { son('leather'); setQuitter((q) => !q); setOuvert(null); }} aria-label="Quitter le ranch" aria-expanded={quitter}>
-          <svg width="86" height="92" viewBox="0 0 86 92" aria-hidden="true">
-            <rect x="39" y="10" width="8" height="78" rx="2" fill="#8a5530" stroke="#3a1f0e" strokeWidth="2" />
-            <path d="M14 18h48l10 9-10 9H14z" fill="#f4ead6" stroke="#3a1f0e" strokeWidth="2.2" strokeLinejoin="round" />
-            <path d="M72 44H24l-10 9 10 9h48z" fill="#efe2c6" stroke="#3a1f0e" strokeWidth="2.2" strokeLinejoin="round" />
-            <path d="M22 27h30M32 53h30" stroke="#6e3f22" strokeWidth="2" strokeLinecap="round" />
-            <path d="M30 88c6-4 20-4 26 0" fill="none" stroke="#3a1f0e" strokeWidth="2" strokeLinecap="round" />
-          </svg>
-          <span className="etiq">partir</span>
-        </button>
-        {quitter && (
-          <div className="quitter">
-            <div style={{ position: 'relative', fontFamily: "'Reenie Beanie',cursive", fontSize: 26, lineHeight: 1, color: '#6b4f33', margin: '0 0 6px 6px' }}>Quitter le ranch</div>
-            {DESTINATIONS.map((d) => (
-              <button key={d.nom} className="choix" onMouseEnter={() => son('paperTick')} onClick={() => {
-                setQuitter(false); son('woosh');
-                if (d.combat && surCombat && !e.mort) { sauver(e); montrerPassage({ titre: d.texte, sous: 'quelque chose bouge dans les fourrés…', bloquant: false }, 1600); plusTard(() => surCombat(e, 'exploration'), 1700); return; }
-                montrerPassage({ titre: d.texte, sous: 'ce chemin n’est pas encore ouvert dans cette version' }, 2200);
-              }}>
-                <span className="vign"><Encre d={d.icone} /></span>
-                <span>{d.nom}</span><span className="det">{d.duree}</span>
-              </button>
-            ))}
-          </div>
-        )}
+  // ——— Le carnet
+  allerA(k: Section) {
+    const s = this.state;
+    if (k === s.section || s.tourne) return;
+    const ordre = (x: Section) => SECTIONS.findIndex((t) => t.k === x);
+    const avant = ordre(k) > ordre(s.section);
+    this.son('page', 1);
+    this.setState({ tourne: avant ? 'avant' : 'arriere', contenuCache: true });
+    this.later(() => this.setState({ section: k, contenuCache: false, nouvelles: k === 'journal' ? 0 : this.state.nouvelles }), 380);
+    this.later(() => this.setState({ tourne: null }), 760);
+  }
+  fermerCarnet = () => {
+    if (!this.state.carnet || this.state.ferme) return;
+    this.son('page', 0.8); this.later(() => this.son('woosh'), 380);
+    this.setState({ ferme: true });
+    this.later(() => this.setState({ carnet: false, ferme: false, section: 'sommaire' }), 1050);
+  };
+  partir(texte: string, combat: boolean) {
+    this.son('woosh');
+    if (combat && this.props.surCombat && !this.e.mort) {
+      this.sauver();
+      this.setState({ sortie: { texte, sous: 'quelque chose bouge dans les fourrés…' } });
+      this.later(() => this.props.surCombat?.(this.e, 'exploration'), 1700);
+      return;
+    }
+    this.montrerSortie({ texte, sous: 'ce chemin n’est pas encore ouvert dans cette version' }, 2200);
+  }
 
-        {/* Déjections : on nettoie là où elles sont tombées, même si l'écho est devant */}
-        {e.dejections.map((d) => {
-          const x = Math.round(250 + d.x * 760), y = Math.round(430 + d.y * 160);
-          return (
-            <div key={d.id}>
-              <div className={`crotte-img ${dejPart.includes(d.id) ? 'part' : dejSurvol === d.id ? 'survol' : ''}`} style={{ left: x, top: y, zIndex: 100 + y - 200 }}>
-                <Recadre chemin={d.nature === 'vomi' ? 'activites/ranch/vomi.png' : 'activites/ranch/dejection.png'} l={56} h={52} />
-              </div>
-              <button className="crotte" style={{ left: x, top: y }} aria-label="Ramasser" onMouseEnter={() => setDejSurvol(d.id)} onMouseLeave={() => setDejSurvol(null)}
-                onClick={() => {
-                  if (dejPart.includes(d.id)) return;
-                  son('woosh'); setDejPart((p) => p.concat(d.id));
-                  plusTard(() => { sim.current.nettoyer(d.id); setDejPart((p) => p.filter((k) => k !== d.id)); son('pencil'); rafraichir(); }, 650);
-                }}>
-                <span className="astuce">ramasser</span>
-              </button>
-            </div>
-          );
-        })}
+  render(): ReactNode {
+    return <Repere fond="#0d0a14"><VueRanch v={this.valeurs()} /></Repere>;
+  }
 
-        {/* L'écho visiteur */}
-        {visiteur && (
-          <button className="visiteur" style={{ left: 1030, top: 250, zIndex: 100 + 250 + 120 }} onClick={() => { son('leather'); setOuvert(ouvert === 'visiteur' ? null : 'visiteur'); setQuitter(false); }} aria-label={`${visiteur.nom}, écho de passage`}>
-            <img src={asset(apparence({ ...visiteur, evolution: null }))} alt="" style={{ filter: m.echo, height: Math.round(190 * TAILLE_STADE[visiteur.stade] / 0.9) }} />
-            <span className="echo-tag"><span style={{ fontFamily: "'Alegreya SC',serif", fontWeight: 700, fontSize: 13, letterSpacing: 2, color: '#2b2118' }}>{visiteur.nom}</span><span style={{ fontFamily: "'Reenie Beanie',cursive", fontSize: 19, color: '#6b4f33' }}>de passage</span></span>
-          </button>
-        )}
-
-        {/* L'écho se promène ; tout ce qui le concerne le suit */}
-        <div className="echo-pos" style={{ left: pos.x, top: pos.y, transitionDuration: `${pos.dur}s`, transform: `scale(${eScale})`, zIndex: 100 + pos.y } as CSSProperties}>
-          <button className={`echo-zone ${pos.marche ? 'marche' : anim} ${profil.demarche} p-${signes.posture}`} style={{ '--cycle': `${profil.cycle.toFixed(3)}s` } as CSSProperties}
-            onClick={caresser} aria-label={e.comportement ? `${nom} a quelque chose à vous montrer` : `Caresser ${nom}`} disabled={!!e.mort}>
-            <span className="echo-ombre" style={{ transform: `scaleX(${ech.toFixed(3)})` }} />
-            <span className={`echo-sens ${pos.sens}`}><span className="echo-taille" style={{ transform: `scale(${ech.toFixed(3)})` }}>
-              <img className={`echo-img ${e.malade ? 'echo-malade' : ''}`} src={asset(apparence(e))} alt={`${nom}, écho ${NOM_STADE[e.stade]}`} style={{ filter: m.echo }} />
-            </span></span>
-            {niveau('salete') >= 2 && <span className="mouches" style={{ top: Math.round(tete + 10) }}><i /><i /><i /></span>}
-            <span className="echo-tag">
-              <span style={{ fontFamily: "'Alegreya SC',serif", fontWeight: 700, fontSize: 14, letterSpacing: 2, color: '#2b2118' }}>{nom}</span>
-              <svg width="14" height="14" viewBox="0 0 24 24" aria-hidden="true"><path d={IC.caliner} fill="#9c3b2a" opacity=".85" stroke="#3a1f0e" strokeWidth="1.6" /></svg>
-              <span style={{ fontFamily: "'Reenie Beanie',cursive", fontSize: 21, lineHeight: 1, color: '#6b4f33' }}>{humeurMot}</span>
-            </span>
-            <span className="caresse" style={{ top: Math.round(234 - 190 * ech + 40), left: Math.round(75 + 60 * ech) }}>{e.comportement ? 'regarder' : 'caresser'}</span>
-          </button>
-          {main > 0 && (
-            <svg className="main" viewBox="0 0 82 66" aria-hidden="true" style={{ top: Math.round(tete - 38) }}>
-              <path d="M78 10 C70 6 58 8 52 14 L30 16 C24 16 24 22 30 23 L44 24 L18 26 C12 27 12 34 18 34 L42 33 L16 38 C10 39 11 46 17 45 L42 41 L22 48 C16 50 18 57 24 55 L48 47 C58 50 70 46 76 38 Z" fill="#f6dcc4" stroke="#3a1f0e" strokeWidth="2.2" strokeLinejoin="round" />
-              <path d="M52 14 C48 20 50 26 56 28" fill="none" stroke="#3a1f0e" strokeWidth="1.8" strokeLinecap="round" />
-              <path d="M74 12 C70 22 70 30 76 38" fill="none" stroke="#c9a37f" strokeWidth="2" strokeLinecap="round" />
-            </svg>
-          )}
-          {bulleBesoin && (
-            <div key={bulleBesoin.besoin} className="bulle besoin" style={{ left: Math.round(70 + 40 * ech), top: Math.round(tete - 104) }}>
-              <svg width="74" height="74" viewBox="0 0 86 86" aria-hidden="true" style={{ position: 'absolute', inset: 0 }}><path d="M43 4c21 0 38 15 38 34S64 72 43 72c-4 0-7 0-10-1l-16 9 5-13C11 61 5 50 5 38 5 19 22 4 43 4z" fill="#fbf4e3" stroke="#3a1f0e" strokeWidth="2.5" /></svg>
-              <img src={asset(bulleBesoin.icone)} alt="" style={{ position: 'absolute', left: 17, top: 10, width: 40, height: 40, objectFit: 'contain' }} />
-            </div>
-          )}
-          {bulleEmo && (
-            <div className="bulle" style={{ left: Math.round(78 + 40 * ech), top: Math.round(tete - 108) }}>
-              <svg width="74" height="74" viewBox="0 0 86 86" aria-hidden="true" style={{ position: 'absolute', inset: 0 }}><path d="M43 4c21 0 38 15 38 34S64 72 43 72c-4 0-7 0-10-1l-16 9 5-13C11 61 5 50 5 38 5 19 22 4 43 4z" fill="#fbf4e3" stroke="#3a1f0e" strokeWidth="2.5" /></svg>
-              <img src={asset(bulleEmo)} alt="" style={{ position: 'absolute', left: 13, top: 8, width: 48, height: 48, objectFit: 'contain' }} />
-            </div>
-          )}
-          {coeurs.map((c) => (
-            <svg key={c.id} className="coeur" width="22" height="22" viewBox="0 0 24 24" aria-hidden="true" style={{ left: c.x, top: c.y, '--dx': `${c.dx}px`, animationDelay: `${c.delai}s` } as CSSProperties}><path d={IC.caliner} fill="#e8705a" stroke="#3a1f0e" strokeWidth="1.4" /></svg>
-          ))}
-          {evt && e.comportement && (
-            <div className="evt" style={{ left: droite ? -400 : 175, textAlign: droite ? 'right' : 'left', top: -40 }}>
-              <div className="evt-note evt-texte">{texteComportement(e, e.comportement)}</div>
-              <div className="evt-btns trois" style={{ justifyContent: droite ? 'flex-end' : 'flex-start' }}>
-                {sim.current.reponsesComportement().map((r) => {
-                  const couleur = r.cle === 'gronder' || r.cle === 'critiquer' || r.cle === 'prevenir' ? '#9c3b2a' : r.cle === 'rien' ? '#6b4f33' : '#3f7a3a';
-                  const icone = r.cle === 'rien' ? IC.rien : couleur === '#9c3b2a' ? IC.croix : IC.coche;
-                  return (
-                    <button key={r.cle} className="tampon-btn" onClick={() => repondre(r.cle)} aria-label={r.libelle} style={{ color: couleur }}>
-                      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d={icone} /></svg>
-                      <span>{COURT[r.cle]}</span>
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-          )}
-        </div>
-
-        {flottants.map((f) => (
-          <div key={f.id} className={`flotte ${f.long ? 'long' : ''}`} style={{ left: f.x, top: f.y, color: f.couleur }}>{f.texte}</div>
-        ))}
-
-        {/* La fiche de l'action ouverte */}
-        {ouvert && (
-          <div className="r-fiche" style={{ left: ficheX, '--pointe': `${Math.round(centreVerbe - ficheX - 8)}px`, ...(ouvert === 'visiteur' ? { bottom: 'auto', top: 430 } : {}) } as CSSProperties}>
-            <div style={{ position: 'relative', display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 2 }}>
-              <span style={{ fontFamily: "'Reenie Beanie',cursive", fontSize: 27, lineHeight: 1, color: '#6b4f33' }}>
-                {ouvert === 'visiteur' ? `Avec ${visiteur?.nom ?? 'le visiteur'}` : VERBES[iv].titre(nom)}
-              </span>
-              {sousCategorie && ouvert === 'jouer' && <button className="retour" onClick={() => { son('page', 0.6); setSousCategorie(null); setActif(-1); }}>← retour</button>}
-            </div>
-            {ouvert === 'echo' ? (
-              <>
-                <div style={{ position: 'relative', display: 'flex', gap: 14, alignItems: 'flex-start', marginTop: 4 }}>
-                  <div style={{ flex: 'none', width: 96, height: 118, borderRadius: 6, background: 'radial-gradient(circle at 50% 40%,#fff6df,#e8d6b0)', boxShadow: 'inset 0 0 0 1.5px rgba(58,31,14,.6)', display: 'flex', alignItems: 'flex-end', justifyContent: 'center', overflow: 'hidden' }}>
-                    <img src={asset(apparence(e))} alt="" style={{ maxHeight: 104, maxWidth: 90, width: 'auto' }} />
-                  </div>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    {[
-                      { nom: 'Stade', valeur: NOM_STADE[e.stade] },
-                      { nom: 'Âge', valeur: `${ageJours(e)} jour${ageJours(e) > 1 ? 's' : ''}` },
-                      { nom: 'Né d’une', valeur: NOM_GRAINE[e.graine] },
-                      { nom: 'Talent', valeur: '???', verrou: true },
-                      { nom: 'Souvenir', valeur: '???', verrou: true },
-                    ].map((t) => <div key={t.nom} className={`trait ${t.verrou ? 'verrou' : ''}`}><span>{t.nom}</span><b>{t.valeur}</b></div>)}
-                  </div>
-                </div>
-                <div className="phrase">{signes.phrase}</div>
-                {signes.besoins.filter((b) => b.besoin !== 'comportement').slice(0, 3).map((b) => <div key={b.besoin} className="indice">{b.indice}</div>)}
-                <div style={{ position: 'relative', display: 'flex', gap: 14, justifyContent: 'center', marginTop: 10 }}>
-                  {([['feliciter', 'Féliciter', '#3f7a3a', IC.coche], ['gronder', 'Gronder', '#9c3b2a', IC.croix]] as const).map(([k, lib, coul, ic]) => (
-                    <button key={k} className="tampon-btn" style={{ color: coul }} aria-label={`${lib} ${nom}`} onClick={() => {
-                      const s = sim.current;
-                      son('stamp');
-                      const r = k === 'feliciter' ? s.feliciter() : s.gronder();
-                      if (!r.ok) { flotter(r.raison, COULEUR.note, -150, -20); return; }
-                      setOuvert(null);
-                      apres({ anim: k === 'feliciter' ? 'saute' : '' });
-                      flotter(k === 'feliciter' ? `${nom} bombe le torse.` : `${nom} baisse les oreilles.`, coul, -150, -10);
-                    }}>
-                      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d={ic} /></svg>
-                      <span>{lib}</span>
-                    </button>
-                  ))}
-                </div>
-              </>
-            ) : (
-              <div style={{ position: 'relative', display: 'flex', flexDirection: 'column', gap: 1, maxHeight: 420, overflowY: 'auto' }}>
-                {choix.map((c) => {
-                  if (c.rubrique) return <div key={c.cle} className="rubrique">{c.nom}</div>;
-                  const i = ++idx;
-                  return (
-                    <button key={c.cle} className={`choix ${actif === i && !c.off ? 'act' : ''}`} disabled={c.off}
-                      onMouseEnter={() => { if (!c.off && actif !== i && !tamponne) { son('paperTick'); setActif(i); } }}
-                      onClick={() => { if (!c.prendre) return; if (c.garderOuvert) c.prendre(); else prendre(c.cle, c.prendre); }}>
-                      <span className="vign">{c.image ? <img src={c.image} alt="" /> : <Encre d={c.icone ?? IC.mystere} />}</span>
-                      <span>{c.nom}</span>
-                      <span className="det">{c.detail}</span>
-                      {tamponne === c.cle && <svg className="tamp" viewBox="0 0 40 40" aria-hidden="true"><circle cx="20" cy="20" r="16.5" fill="rgba(63,122,58,.08)" stroke="#3f7a3a" strokeWidth="3" /><path d="M12.5 20.5l5 5 10-11" fill="none" stroke="#3f7a3a" strokeWidth="3.6" strokeLinecap="round" strokeLinejoin="round" /></svg>}
-                    </button>
-                  );
-                })}
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* Ceinture : cinq actions. Les anneaux sont un ornement : aucune jauge. */}
-        <nav className={`ceinture ${carnet || sacOuvert ? 'repli' : ''}`} aria-label="Actions du ranch">
-          {VERBES.map((v, i) => (
-            <button key={v.k} className={`verbe ${survol === i ? 'actif' : ''} ${ouvert === v.k ? 'ouvert' : ''}`}
-              onMouseEnter={() => { if (survol !== i) setSurvol(i); const t = Date.now(); if (t - (dernierSon.current[i] || 0) > 1000) { dernierSon.current[i] = t; son('paperTick'); } }}
-              onMouseLeave={() => setSurvol((s) => (s === i ? -1 : s))} onFocus={() => setSurvol(i)} onBlur={() => setSurvol((s) => (s === i ? -1 : s))}
-              onClick={() => {
-                const o = ouvert === v.k ? null : v.k;
-                son('leather'); setOuvert(o); setActif(-1); setTamponne(null); setSousCategorie(null); setQuitter(false);
-                if (o === 'echo') reagir(signes.expression.icone, '');
-              }}
-              aria-label={`${v.nom} — ${v.info}`} aria-expanded={ouvert === v.k}>
-              <span className="info" style={{ color: '#f2c27a' }}>{v.info}</span>
-              <span className="medaillon">
-                <span className="eclat e1" style={{ left: -4, top: 16 }} />
-                <span className="eclat e2" style={{ right: -2, top: 4 }} />
-                <span className="eclat e3" style={{ right: 6, bottom: 6, width: 6, height: 6 }} />
-                <svg width="84" height="84" viewBox="0 0 84 84" aria-hidden="true">
-                  <circle cx="42" cy="42" r="40" fill="#5a3119" stroke="#3a1f0e" strokeWidth="2" />
-                  <circle cx="42" cy="42" r="36.5" fill="none" stroke="rgba(240,214,170,.55)" strokeWidth="1.4" strokeDasharray="3 3" />
-                  <circle className="jauge" cx="42" cy="42" r="30" fill="none" strokeWidth="4.5" strokeDasharray={`${C.toFixed(1)} 0`} style={{ filter: `drop-shadow(0 0 ${m.encre}px rgba(242,194,122,.9))` }} />
-                  <circle cx="42" cy="42" r="24" fill="#f4ead6" stroke="#2b2118" strokeWidth="1.8" />
-                </svg>
-                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#2b2118" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" style={{ position: 'absolute', left: 28, top: 28 }}><path d={IC[v.k]} /></svg>
-              </span>
-              <span className="nom">{v.nom}</span>
-            </button>
-          ))}
-        </nav>
-
-        {sacOuvert && <Sac etat={e} papier={m.papier} surFermer={fermerSac} surUtiliser={utiliserObjet} son={son} />}
-
-        {carnet && (
-          <Carnet etat={e} signes={signes} papier={m.papier} heure={m.heure} son={son} nouvelles={nouvelles}
-            surLu={() => setNouvelles(0)} surFermer={() => setCarnet(false)}
-            reglages={{ sons, setSons, musique, setMusique, volumeMusique, setVolumeMusique, volumeBruitages, setVolumeBruitages }}
-            surSauver={() => sauver(e)}
-            surQuitter={() => { sauver(e); surQuitter(); }} />
-        )}
-
-        {passage && (
-          <div className={`passage ${passage.part ? 'part' : ''} ${passage.bloquant ? 'bloquant' : ''}`}>
-            {passage.image && <img src={passage.image} alt="" />}
-            <div className="titre">{passage.titre}</div>
-            {passage.sous && <div className="sous">{passage.sous}</div>}
-            {passage.bloquant && <button className="bouton-cuir" style={{ marginTop: 18 }} onClick={surQuitter}>Revenir au menu</button>}
-          </div>
-        )}
-      </div>
-    </div>
-  );
-}
-
-const CAUSES: Record<string, string> = {
-  faim: 'la faim a eu raison de ses forces', blessure: 'une blessure ne s’est jamais refermée', combat: 'au terme d’un combat',
-  maladie: 'la maladie a été la plus forte', vieillesse: 'au terme d’une longue vie',
-};
-
-/** Zone utile des images qui ont de grandes marges transparentes : [largeur, hauteur, x0, y0, x1, y1]. */
-const CADRAGE: Record<string, [number, number, number, number, number, number]> = {
-  'activites/ranch/dejection.png': [1024, 1536, 207, 491, 846, 1051],
-  'activites/ranch/vomi.png': [384, 384, 11, 184, 382, 322],
-};
-/** Affiche seulement la zone utile de l'image, ajustée dans l × h. */
-function Recadre({ chemin, l, h }: { chemin: string; l: number; h: number }) {
-  const c = CADRAGE[chemin];
-  if (!c) return <img src={asset(chemin)} alt="" />;
-  const [w, H, x0, y0, x1, y1] = c;
-  const k = Math.min(l / (x1 - x0), h / (y1 - y0));
-  const dx = (l - (x1 - x0) * k) / 2, dy = h - (y1 - y0) * k;
-  return (
-    <span style={{ position: 'absolute', inset: 0, overflow: 'hidden' }}>
-      <img src={asset(chemin)} alt="" style={{ position: 'absolute', width: w * k, height: H * k, maxWidth: 'none', left: dx - x0 * k, top: dy - y0 * k }} />
-    </span>
-  );
-}
-
-export function Encre({ d, couleur = '#6e3f22', taille = 22 }: { d: string; couleur?: string; taille?: number }) {
-  return (
-    <svg width={taille} height={taille} viewBox="0 0 24 24" fill="none" stroke={couleur} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d={d} /></svg>
-  );
+  valeurs() {
+    const s = this.state; const e = this.e; const g = this.signes;
+    const h = e.minute / 60;
+    const m = lumiere(h);
+    const nom = e.nom;
+    const t = this.taille();
+    const prof = this.profil();
+    const verbes = VERBES.map((v, i) => ({
+      nom: v.nom, court: v.court, icone: IC[v.k], teinte: v.teinte, haut: 12 + i * 42, largeur: Math.round(v.court.length * 9.4 + 6), etiquette: v.nom,
+      cls: [s.survol === i ? 'actif' : '', s.ouvert === v.k ? 'ouvert' : ''].join(' '),
+      ouvertAria: s.ouvert === v.k ? 'true' : 'false',
+      survol: () => {
+        if (this.state.survol !== i) this.setState({ survol: i });
+        const n = Date.now(); if (n - (this.dernierSon[i] || 0) > 1000) { this.dernierSon[i] = n; this.son('paperTick'); }
+      },
+      quitte: () => { if (this.state.survol === i) this.setState({ survol: -1 }); },
+      ouvrir: () => { const o = this.state.ouvert === v.k ? null : v.k; this.son('leather'); this.setState({ ouvert: o, actif: -1, tamponne: null, quitter: false }); if (o === 'echo') this.reagir(true, ''); },
+    }));
+    const iv = VERBES.findIndex((v) => v.k === s.ouvert);
+    let n = -1;
+    const liste = s.ouvert && s.ouvert !== 'echo' ? this.choixDe(s.ouvert) : [];
+    const choix = liste.map((c) => {
+      if (c.rubrique) return { estRubrique: true, estChoix: false, nom: c.nom };
+      const i = ++n; const off = !!c.off;
+      return {
+        estRubrique: false, estChoix: true, nom: c.nom, aImage: !!c.image, image: c.image || '', aIcone: !c.image, icone: c.icone || IC.mystere,
+        detail: c.detail || '', off, tamponne: s.tamponne === c.k, cls: s.actif === i && !off ? 'act' : '',
+        survol: () => { if (!off && this.state.actif !== i && !this.state.tamponne) { this.son('paperTick'); this.setState({ actif: i }); } },
+        prendre: () => this.prendre(c),
+      };
+    });
+    const sec = SECTIONS.find((x) => x.k === s.section)!;
+    const p = (k: Section) => s.section === k;
+    const besoinsVus = g.besoins.filter((b) => b.besoin !== 'comportement' && b.besoin !== 'repus');
+    const rappels = besoinsVus.slice(0, 2).map((b) => ({ texte: b.indice }));
+    if (e.dejections.length) rappels.push({ texte: `ramasser derrière ${nom}` });
+    if (!e.inventaire.some((c) => c && aliment(c.id))) rappels.push({ texte: 'plus rien à manger dans le sac' });
+    const journal = e.journal.map((j) => ({ heure: hm(j.minute), texte: j.texte, jour: j.jour }));
+    const parJour = new Map<number, { heure: string; texte: string }[]>();
+    journal.slice(-24).forEach((j) => { if (!parJour.has(j.jour)) parJour.set(j.jour, []); parJour.get(j.jour)!.push({ heure: j.heure, texte: j.texte }); });
+    const journalJours = [...parJour.entries()].reverse().map(([jour, lignes]) => ({ titre: jour === e.jour ? 'Aujourd’hui' : `Jour ${ageJours({ jour, naissance: e.naissance })}`, lignes: lignes.reverse() }));
+    const visiteur = this.sim.visiteur;
+    const ouvertVisiteur = s.ouvert === 'visiteur';
+    // états qui gravitent : les besoins pressants (urgence 2 et plus)
+    const etats = ORDRE_ETATS.filter((k) => g.besoins.some((b) => ETAT_DE_BESOIN[b.besoin] === k && (b.urgence >= 2 || b.besoin === 'maladie' || b.besoin === 'blessure')));
+    const visibles = e.comportement || s.evc || e.mort ? [] : etats;
+    const cy = Math.round(234 - 92 * t), rx = Math.round(70 + 34 * t), ry = Math.round(22 + 10 * t);
+    const ordreSac = e.inventaire;
+    const sc = s.scene; const ph = s.scPhase;
+    const sacMenu = (() => {
+      const c = s.sacMenu >= 0 ? ordreSac[s.sacMenu] : null; const d = c && descriptionObjet(c.id);
+      if (!c || !d || s.sacFerme) return { sacMenuVisible: false, sacMenuInfo: false };
+      const col = s.sacMenu % 5, lig = Math.floor(s.sacMenu / 5);
+      const index = s.sacMenu;
+      const utilisable = !!aliment(c.id) || !!objetDivers(c.id)?.usage;
+      return {
+        sacMenuVisible: true, sacMenuInfo: !!s.sacMenuInfo, sacMenuNom: d.nom, sacMenuTexte: d.description,
+        sacMenuX: Math.round(34 + 22 + col * 104 + 46), sacMenuY: Math.round(30 + 26 + lig * 106 - 6),
+        sacInfos: () => { this.son('page', 0.5); this.setState((st) => ({ sacMenuInfo: !st.sacMenuInfo })); },
+        sacUtiliser: () => { if (!utilisable) { this.son('refus'); return; } this.setState({ sacMenu: -1 }); this.fermerSac(); this.later(() => this.utiliserObjet(index), 1100); },
+      };
+    })();
+    return {
+      ...ciel(h), nuagesFiltre: 'url(#rk7Decor)', lanternes: lanternes(h),
+      ...(sc ? {
+        sceneVisible: true,
+        scCls: ['k-' + sc.kind, 'g-' + sc.groupe, ph === 'ouvre' ? 'ouvre' : '', ['saut', 'agit', 'note'].includes(ph) ? 'dedans' : '', ['agit', 'note'].includes(ph) ? 'agit' : '', ph === 'note' ? 'note' : '', ph === 'ferme' ? 'ferme agit' : ''].join(' '),
+        scDx: sc.dx, scDy: sc.dy, scS0: sc.s0, echoOp: ph === 'ouvre' ? 1 : 0, scImage: sc.image,
+        scNote: ph === 'note' || ph === 'ferme', scTitre: sc.titre, scLignes: sc.lignes.map((x) => ({ t: x })), fermerScene: this.fermerScene,
+      } : { sceneVisible: false, echoOp: 1, scNote: false }),
+      bgFilter: m.bg, gradeColor: m.c, gradeOpacity: m.o.toFixed(3), glow: m.glow.toFixed(3), vignette: m.vig.toFixed(3), fireflies: m.fly,
+      paperFilter: 'url(#rk7Ui)', matDecor: m.matDecor, matUi: m.matUi, matEcho: m.matEcho, decorFilter: m.decor, fondTexte: m.ft.toFixed(3),
+      time: m.heure, period: m.periode, echoFilter: m.echo, pieces: e.or,
+      // l'écho
+      echoImg: asset(apparence(e)), echoAlt: `${nom}, écho ${NOM_STADE[e.stade]}`,
+      caresserAria: e.comportement ? `${nom} a quelque chose à vous montrer` : `Caresser ${nom}`, evtAria: `${nom} a fait quelque chose : ouvrir le carnet`,
+      ex: s.ex, ey: s.ey, eDur: s.eDur, eSens: s.eSens, eScale: (0.86 + (s.ey - 235) / 135 * 0.28).toFixed(3),
+      eTaille: t.toFixed(3), teteBulle2: Math.round(-74 - (t - 1) * 180), teteMain: Math.round(32 - (t - 1) * 175), eZ: 100 + s.ey,
+      echoAnim: s.marche ? 'marche' : s.anim, demarche: prof.demarche, cycle: prof.cycle.toFixed(3),
+      caresser: this.caresser, mainVisible: s.mainVisible,
+      rienDuTout: false,
+      orbite: `path('M${75 - rx} ${cy} a${rx} ${ry} 0 1 0 ${2 * rx} 0 a${rx} ${ry} 0 1 0 ${-2 * rx} 0')`,
+      etatsOrbite: visibles.map((k, i) => ({ nom: NOM_ETAT[k][e.genre === 'f' ? 1 : 0], image: asset(`interface/etats/orbite/${k}.webp`), delai: (-13 * i / visibles.length).toFixed(2) })),
+      bulleImg: s.bulleImg, orbeTeinte: TEINTES_EMO[0],
+      bulleBulle: false, bulleHalo: false, signe_joyeux: false, signe_fier: false, signe_surpris: false, signe_anxieux: false,
+      emoFlotte: s.bulle !== null && !e.comportement && !s.evc,
+      teteSigne: Math.round(-30 - (t - 1) * 180), teteOrbe: Math.round(-2 - (t - 1) * 180), teteAlerte: Math.round(-34 - (t - 1) * 180),
+      ...this.valsEvc(m),
+      coeurs: s.coeurs, flottants: s.flottants,
+      evtVisible: !!e.comportement && !s.evc && !s.scene && !e.mort,
+      // déjections : on nettoie là où elles sont tombées
+      crottes: e.dejections.map((d) => {
+        const x = Math.round(250 + d.x * 760), y = Math.round(430 + d.y * 160);
+        return {
+          x, y, z: 100 + y - 200, image: asset(d.nature === 'vomi' ? 'activites/ranch/vomi.png' : 'activites/ranch/dejection-detouree.webp'),
+          cls: s.dejPart.includes(d.id) ? 'part' : s.dejSurvol === d.id ? 'survol' : '',
+          survol: () => this.setState({ dejSurvol: d.id }), quitte: () => this.setState((st) => (st.dejSurvol === d.id ? { dejSurvol: null } : null)),
+          nettoyer: () => {
+            if (this.state.dejPart.includes(d.id)) return;
+            this.son('balai'); this.setState((st) => ({ dejPart: st.dejPart.concat(d.id) }));
+            this.later(() => { this.sim.nettoyer(d.id); this.setState((st) => ({ dejPart: st.dejPart.filter((k) => k !== d.id) })); this.son('pencil'); this.traiter(this.sim.vider()); this.rafraichir(); }, 650);
+          },
+        };
+      }),
+      visiteur: visiteur ? {
+        nom: visiteur.nom, aria: `${visiteur.nom}, écho de passage`, image: asset(apparence({ ...visiteur, evolution: null } as unknown as Etat)),
+        hauteur: Math.round(190 * profilEcho({ stade: visiteur.stade, taille: 1, poids: 18 }).echelle), y: 380, z: 480,
+        ouvrir: () => { this.son('leather'); this.setState({ ouvert: ouvertVisiteur ? null : 'visiteur', quitter: false, actif: -1 }); },
+      } : null,
+      // le petit carnet (onglets) et la fiche
+      verbes, choix, ceintureCls: s.carnet || s.sacOuvert || s.sortie || s.evc || s.scene ? 'repli' : '',
+      carnetLeve: s.carnetLeve && !s.carnet ? 'leve' : '',
+      leverCarnet: () => { if (!this.state.carnetLeve) { this.son('paperTick'); this.setState({ carnetLeve: true, survol: -1 }); } },
+      baisserCarnet: () => { if (this.state.carnetLeve) this.setState({ carnetLeve: false }); },
+      ficheVisible: !!s.ouvert, fichePointe: iv >= 0 ? Math.round(201 - 42 * iv) : 0,
+      ficheTitre: ouvertVisiteur ? `Avec ${visiteur?.nom ?? 'le visiteur'}` : s.ouvert === 'echo' ? nom : s.ouvert === 'soins' ? `Prendre soin ${this.a('de lui', 'd’elle')}` : s.ouvert === 'jouer' ? 'Passer un moment ensemble' : s.ouvert === 'activites' ? 'Entraînements et corvées' : s.ouvert === 'ranch' ? 'Autour du ranch' : '',
+      ficheBesoin: '', ficheCouleur: '#6b4f33', ficheEcho: s.ouvert === 'echo', ficheChoix: s.ouvert !== 'echo',
+      traits: [
+        { nom: 'Stade', valeur: NOM_STADE[e.stade] }, { nom: 'Né d’une', valeur: NOM_GRAINE[e.graine] },
+        { nom: 'Âge', valeur: `${ageJours(e)} jour${ageJours(e) > 1 ? 's' : ''}` },
+        { nom: 'Humeur', valeur: accord(e, g.expression.m, g.expression.f) },
+        { nom: 'Talent', valeur: '???', cls: 'verrou' }, { nom: 'Souvenir', valeur: '???', cls: 'verrou' },
+      ].map((x) => ({ cls: '', ...x })),
+      // le carnet
+      carnetVisible: s.carnet, livreCls: s.ferme ? 'ferme' : '', voileCls: s.ferme ? 'part' : '', coteCls: s.carnet || s.sacOuvert || s.evc || s.scene ? 'cache' : '',
+      jourTexte: `Jour ${ageJours(e)} · ${saison(e.jour)}`, jourTexteMin: `jour ${ageJours(e)} · ${saison(e.jour).toLowerCase()}`,
+      // le sac
+      sacVisible: s.sacOuvert, sacCls: s.sacFerme ? 'ferme' : '', sacVoileCls: s.sacFerme ? 'part' : '', sacVoileDelai: s.sacFerme ? '0.5' : '0',
+      ouvrirSac: () => this.ouvrirLeSac(), fermerSac: this.fermerSac,
+      ...sacMenu,
+      arreter: (ev: { stopPropagation?: () => void }) => { ev?.stopPropagation?.(); },
+      ressourcesSac: RESSOURCES.map((r) => ({ ...r, image: asset(`objets/materiaux/${r.k}.png`), qte: 0, cls: 'vide' })),
+      sacCases: ordreSac.map((c, i) => {
+        const d = c && descriptionObjet(c.id);
+        const marque = (s.dndDe === i ? ' souleve' : '') + (s.dndCible === i && s.dndDe >= 0 && s.dndDe !== i ? ' cible' : '');
+        const base = {
+          delai: (0.86 + i * 0.03).toFixed(2),
+          survolDnd: (ev: DragEvent) => { if (this.state.dndDe < 0) return; ev?.preventDefault?.(); if (ev?.dataTransfer) ev.dataTransfer.dropEffect = 'move'; if (this.state.dndCible !== i) this.setState({ dndCible: i }); },
+          quitteDnd: () => { if (this.state.dndCible === i) this.setState({ dndCible: -1 }); },
+          deposer: (ev: DragEvent) => { ev?.preventDefault?.(); this.deplacerSac(this.state.dndDe, i); },
+          finDnd: () => { if (this.state.dndDe >= 0 || this.state.dndCible >= 0) this.setState({ dndDe: -1, dndCible: -1 }); },
+        };
+        if (!c || !d) return { ...base, vide: true, plein: false, cls: 'vide' + marque, nom: 'emplacement vide', image: '', qte: 0, survol: () => this.setState({ sacSurvol: -1 }), choisir: () => { if (this.state.sacMenu >= 0) this.setState({ sacMenu: -1 }); }, prendreDnd: (ev: DragEvent) => ev?.preventDefault?.() };
+        return {
+          ...base, vide: false, plein: true, cls: marque + (s.sacMenu === i ? ' choisi' : ''), nom: d.nom, image: asset(d.icone), qte: c.qte,
+          choisir: () => { this.son('paperTick'); this.setState((st) => (st.sacMenu === i ? { sacMenu: -1, sacMenuInfo: false } : { sacMenu: i, sacMenuInfo: false })); },
+          survol: () => { if (this.state.sacSurvol !== i && this.state.dndDe < 0) { this.son('paperTick'); this.setState({ sacSurvol: i }); } },
+          prendreDnd: (ev: DragEvent & { currentTarget: HTMLElement }) => {
+            if (ev?.dataTransfer) { ev.dataTransfer.effectAllowed = 'move'; ev.dataTransfer.setData('text/plain', String(i)); const im = ev.currentTarget?.querySelector('img'); if (im) ev.dataTransfer.setDragImage(im, 29, 29); }
+            this.setState({ dndDe: i, sacSurvol: -1, sacMenu: -1 });
+          },
+        };
+      }),
+      // quitter le ranch : le poteau indicateur
+      quitterVisible: s.quitter, quitterAria: s.quitter ? 'true' : 'false',
+      basculerQuitter: () => { this.son('leather'); this.setState({ quitter: !this.state.quitter, ouvert: null }); },
+      poteauCls: s.quitter ? 'ouvert' : '',
+      destinations: DESTINATIONS.map((d, i) => ({ ...d, r: [-1.6, 1.2, -0.8][i] || 0, delai: (0.06 + i * 0.07).toFixed(2), survol: () => this.son('paperTick'), partir: () => { this.setState({ quitter: false }); this.partir(d.texte, d.combat); } })),
+      contenuCls: s.contenuCache ? 'cache' : '', tourneVisible: !!s.tourne, tourneCls: s.tourne === 'arriere' ? 'arriere' : '',
+      aDesNouvelles: s.nouvelles > 0, nouvelles: s.nouvelles > 9 ? '9+' : s.nouvelles,
+      ouvrirCarnet: () => { this.son('bookArrive'); this.setState({ carnet: true, carnetLeve: false, ferme: false, section: 'sommaire', ouvert: null, quitter: false }); },
+      fermerCarnet: this.fermerCarnet,
+      pageTitre: sec.titre, pageSurtitre: sec.surtitre,
+      pSommaire: p('sommaire'), pJournal: p('journal'), pSac: false, pRelations: p('relations'), pCarte: false, pMemoire: p('memoire'), pOptions: p('options'),
+      onglets: SECTIONS.map((x, i) => ({ nom: x.nom, court: x.court, icone: x.icone, delai: (1.5 + i * 0.07).toFixed(2), cls: s.section === x.k ? 'ici' : '', ouvrir: () => this.allerA(x.k) })),
+      sommaire: SECTIONS.slice(1).map((x, i) => ({ num: ['I', 'II', 'III', 'IV', 'V', 'VI'][i], nom: x.nom, page: 'page' in x ? x.page : '', aBadge: x.k === 'journal' && s.nouvelles > 0, badge: s.nouvelles, ouvrir: () => this.allerA(x.k) })),
+      journal: journal.slice(-8), journalCourt: journal.slice(-3), journalJours, rappels: rappels.slice(0, 3),
+      sacNourriture: e.inventaire.flatMap((c) => { const al = c && aliment(c.id); return al && c ? [{ nom: al.nom, image: asset(al.icone), qte: c.qte, opacite: 1 }] : []; }),
+      relations: [
+        { nom: 'Myhra', encre: '#3f6a3a', lien: 'veille sur vous deux' },
+        { nom: 'Jumpy', encre: '#9c3b2a', lien: 'un ami bruyant' },
+        { nom: 'Garry', encre: '#2f4a7a', lien: e.garryVaincu ? 'il a rejoint le village' : 'méfiance…' },
+      ],
+      lieux: [],
+      memoireDetail: `${NOM_STADE[e.stade]} · ${NOM_GRAINE[e.graine].toLowerCase()} · jour ${ageJours(e)}`,
+      reglages: [
+        { nom: 'Bruitages', actif: s.sons, basculer: () => this.setState({ sons: !this.state.sons }) },
+        { nom: 'Musique', actif: s.musique, basculer: () => this.setState({ musique: !this.state.musique }) },
+      ],
+      curseurs: [
+        { nom: 'Volume de la musique', valeur: s.volumeMusique, changer: (ev: { target: HTMLInputElement }) => this.setState({ volumeMusique: Number(ev.target.value) }) },
+        { nom: 'Volume des bruitages', valeur: s.volumeBruitages, changer: (ev: { target: HTMLInputElement }) => this.setState({ volumeBruitages: Number(ev.target.value) }) },
+      ],
+      retourMenu: () => { this.sauver(); this.props.surQuitter(); },
+      sauver: () => { this.sauver(); this.son('stamp'); this.setState({ sauve: 'partie sauvegardée' }); this.later(() => this.setState({ sauve: '' }), 2500); }, sauveTexte: s.sauve,
+      sortieVisible: !!s.sortie, sortieTexte: s.sortie?.texte ?? '', sortieSous: s.sortie?.sous ?? '', sortieImage: s.sortie?.image ?? '',
+      sortieCls: s.sortie?.bloquant ? 'bloquant' : '', sortieBouton: s.sortie?.bloquant ? { texte: 'Revenir au menu', agir: () => this.props.surQuitter() } : null,
+    };
+  }
 }

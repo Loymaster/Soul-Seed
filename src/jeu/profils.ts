@@ -41,6 +41,8 @@ export interface Profil {
   reglages: Reglages;
   /** Formes d'écho découvertes (chemins d'apparence), pour la Mémoire des échos. */
   memoire: string[];
+  /** Tempéraments découverts dans les événements du ranch (« coloration_type »). */
+  connus?: string[];
 }
 
 export const NB_EMPLACEMENTS = 3;

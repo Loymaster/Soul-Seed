@@ -1,0 +1,689 @@
+
+<div style="width:1280px;height:800px;position:relative;overflow:hidden;font-family:'Alegreya',Georgia,serif;color:#2b2118;background:#1b1a2c;user-select:none;--ft:{{fondTexte}};--ui:{{paperFilter}}">
+
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+    <filter id="rk7Decor" color-interpolation-filters="sRGB"><feColorMatrix type="matrix" values="{{matDecor}}"></feColorMatrix></filter>
+    <filter id="rk7Ui" color-interpolation-filters="sRGB"><feColorMatrix type="matrix" values="{{matUi}}"></feColorMatrix></filter>
+    <filter id="rk7Echo" color-interpolation-filters="sRGB"><feColorMatrix type="matrix" values="{{matEcho}}"></feColorMatrix></filter>
+  </defs></svg>
+  <!-- Décor : une seule illustration (le jour) ; l'heure joue sur la lumière, pas sur l'image -->
+  <div class="ciel" aria-hidden="true">
+    <div class="ciel-fond" style="background:linear-gradient(180deg,{{cielHaut}} 0%,{{cielMilieu}} 48%,{{cielBas}} 100%)"></div>
+    <div class="ciel-etoiles" style="opacity:{{cielEtoiles}}"></div>
+    <div class="astre soleil" style="transform:translate({{soleilX}}px,{{soleilY}}px);opacity:{{soleilOp}}"></div>
+    <img class="astre lune" src="/_blob/2398cecaed2a55a74683a50d22d03e26" alt="" style="transform:translate({{luneX}}px,{{luneY}}px);opacity:{{luneOp}}">
+    <!-- quelques nuages épars, de tailles et de transparences différentes, qui traversent lentement le ciel -->
+    <div class="nuages" style="opacity:{{nuagesPres}};filter:{{nuagesFiltre}}">
+      <img class="nuage" src="/_blob/bc1b52e4f31c2453bfe4013a32695589" alt="" style="width:230px;top:38px;opacity:0.95;--fin:-630px;animation-duration:560s;animation-delay:-215s">
+      <img class="nuage" src="/_blob/2b17b63a12dfa72e721b441966265fed" alt="" style="width:196px;top:128px;opacity:0.8;--fin:-596px;animation-duration:430s;animation-delay:-267s">
+      <img class="nuage" src="/_blob/822b4aead1fc85c03a76d1d98e74762b" alt="" style="width:164px;top:16px;opacity:0.62;--fin:-564px;animation-duration:500s;animation-delay:-120s">
+      <img class="nuage" src="/_blob/2b3267551d89886cf5af0f040dfe7616" alt="" style="width:340px;top:168px;opacity:0.42;--fin:-740px;animation-duration:760s;animation-delay:-380s">
+      <img class="nuage" src="/_blob/29c60c8a4814c2232415e72d1e3a13ef" alt="" style="width:124px;top:82px;opacity:0.55;--fin:-524px;animation-duration:360s;animation-delay:-41s">
+      <img class="nuage" src="/_blob/b370cf1a8e67bc3196d1612f0b066688" alt="" style="width:104px;top:206px;opacity:0.5;--fin:-504px;animation-duration:400s;animation-delay:-134s">
+    </div>
+  </div>
+  <div class="ranch" style="filter:{{bgFilter}}"></div>
+  <!-- la lumière du moment ne teinte que le ranch (calque masqué par son détourage), pas le ciel -->
+  <div style="position:absolute;inset:0;mix-blend-mode:multiply;background:{{gradeColor}};opacity:{{gradeOpacity}};transition:all 1.2s ease;pointer-events:none;-webkit-mask:url(/_blob/7e734709d88f2f42d9865f2d1187538f) center 62%/cover no-repeat;mask:url(/_blob/7e734709d88f2f42d9865f2d1187538f) center 62%/cover no-repeat"></div>
+  <div style="position:absolute;left:260px;top:120px;width:760px;height:520px;border-radius:50%;mix-blend-mode:screen;background:radial-gradient(ellipse,rgba(255,190,110,.42) 0%,rgba(255,160,80,.12) 40%,transparent 68%);opacity:{{glow}};transition:opacity 1.2s ease;pointer-events:none"></div>
+  <!-- Lanternes (arbre, porte de la grange) : allumées du soir à l'aube. Autour d'elles, le ranch réapparaît
+       sans le voile de nuit, réchauffé : copie du décor masquée par une carte de lumière qui épargne le lointain
+       (montagnes, arbres au loin restent dans l'obscurité) ; puis halo et flamme qui vacillent. -->
+  <div style="position:absolute;inset:0;opacity:{{lanternes}};transition:opacity 1.2s linear;pointer-events:none">
+    <div class="lanterne-vacille" style="position:absolute;inset:0">
+      <div style="position:absolute;inset:0;background:url(/_blob/7e734709d88f2f42d9865f2d1187538f) center 62%/cover no-repeat;filter:brightness(.92) sepia(.45) saturate(1.5) hue-rotate(-6deg);-webkit-mask:url(/_blob/7cbeae08f85b693b67dbe25d3c1e76c5) center 62%/cover no-repeat;mask:url(/_blob/7cbeae08f85b693b67dbe25d3c1e76c5) center 62%/cover no-repeat"></div>
+    </div>
+    <div class="lanterne" style="left:202px;top:283px;animation-delay:0.0s"><span class="halo-l"></span><span class="coeur-l"></span></div>
+    <div class="lanterne" style="left:724px;top:344px;animation-delay:-0.7s"><span class="halo-l"></span><span class="coeur-l"></span></div>
+    <div class="lanterne" style="left:848px;top:339px;animation-delay:-1.4s"><span class="halo-l"></span><span class="coeur-l"></span></div>
+  </div>
+  <div style="position:absolute;inset:0;background:radial-gradient(ellipse at 50% 55%,transparent 45%,rgba(10,8,20,.75) 100%);opacity:{{vignette}};transition:opacity 1.2s ease;pointer-events:none"></div>
+  <div style="position:absolute;inset:0;opacity:{{fireflies}};transition:opacity 1.2s ease;pointer-events:none">
+    <div class="fly" style="position:absolute;left:440px;top:300px"><div style="width:6px;height:6px;border-radius:50%;background:#fff1a8;box-shadow:0 0 10px 3px rgba(255,226,120,.8)"></div></div>
+    <div class="fly" style="position:absolute;left:820px;top:330px;animation-delay:-3s"><div style="width:5px;height:5px;border-radius:50%;background:#fff1a8;box-shadow:0 0 10px 3px rgba(255,226,120,.8);animation-delay:-1s"></div></div>
+    <div class="fly" style="position:absolute;left:300px;top:390px;animation-delay:-6s"><div style="width:4px;height:4px;border-radius:50%;background:#fff1a8;box-shadow:0 0 8px 3px rgba(255,226,120,.8);animation-delay:-.6s"></div></div>
+    <div class="fly" style="position:absolute;left:1000px;top:400px;animation-delay:-2s"><div style="width:5px;height:5px;border-radius:50%;background:#fff1a8;box-shadow:0 0 10px 3px rgba(255,226,120,.8);animation-delay:-1.7s"></div></div>
+    <div class="fly" style="position:absolute;left:660px;top:250px;animation-delay:-4.5s"><div style="width:4px;height:4px;border-radius:50%;background:#fff1a8;box-shadow:0 0 8px 3px rgba(255,226,120,.8);animation-delay:-.3s"></div></div>
+  </div>
+
+  <!-- L'heure, sur une planche suspendue -->
+  <div class="ecriteau" style="filter:{{paperFilter}}" role="group" aria-label="Jour, heure et bourse">
+    <div class="planche bois">
+      <div style="position:relative">
+      <div style="font-family:'Alegreya SC',serif;font-weight:700;font-size:12px;letter-spacing:2.5px" class="pyro">{{jourTexte}}</div>
+      <div style="display:flex;align-items:baseline;gap:10px"><span class="pyro" style="font-size:34px;font-weight:700;line-height:1.05">{{time}}</span><span class="craie" style="font-size:28px;line-height:1">{{period}}</span></div>
+      <div class="pyro" style="display:flex;align-items:center;gap:7px;font-size:14.5px;font-weight:500"><span style="width:12px;height:12px;border-radius:50%;background:radial-gradient(circle at 35% 35%,#f6dc8a,#c9a050 60%);box-shadow:inset 0 0 0 1.5px #3a2410"></span>{{pieces}} pièces</div>
+      </div>
+    </div>
+    <i class="corde" style="left:40px;height:40px"></i><i class="corde" style="left:252px;height:40px"></i>
+    <i class="clou" style="left:42px;top:36px"></i><i class="clou" style="left:254px;top:36px"></i>
+  </div>
+
+
+  <!-- Le sac en bandoulière -->
+  <button class="cote-btn {{coteCls}}" style="filter:{{paperFilter}};top:20px" onClick="{{ouvrirSac}}" aria-label="Ouvrir le sac">
+    <svg width="86" height="92" viewBox="0 0 86 92" aria-hidden="true">
+      <path d="M14 44 C10 10 76 10 72 44" fill="none" stroke="#3a1f0e" stroke-width="8" stroke-linecap="round"></path>
+      <path d="M14 44 C10 10 76 10 72 44" fill="none" stroke="#8a5530" stroke-width="5" stroke-linecap="round"></path>
+      <path d="M14 44 C10 10 76 10 72 44" fill="none" stroke="rgba(240,214,170,.55)" stroke-width="1.2" stroke-dasharray="3 3"></path>
+      <path d="M10 42h66l-4 34c-1 6-5 9-11 9H25c-6 0-10-3-11-9z" fill="#6e3f22" stroke="#3a1f0e" stroke-width="2.2" stroke-linejoin="round"></path>
+      <path d="M16 48h54l-3 26c-1 4-3 6-7 6H26c-4 0-6-2-7-6z" fill="none" stroke="rgba(240,214,170,.55)" stroke-width="1.4" stroke-dasharray="4 3"></path>
+      <path d="M9 40h68v12c0 6-5 10-11 10H20c-6 0-11-4-11-10z" fill="#7d4a28" stroke="#3a1f0e" stroke-width="2.2" stroke-linejoin="round"></path>
+      <rect x="37" y="54" width="12" height="14" rx="2.5" fill="#c9a050" stroke="#3a2410" stroke-width="1.8"></rect>
+      <rect x="41" y="58" width="4" height="6" rx="1" fill="#3a2410"></rect>
+    </svg>
+    <span class="etiq">sac</span>
+  </button>
+
+  <!-- Quitter le ranch -->
+  <button class="cote-btn poteau-btn {{coteCls}} {{poteauCls}}" style="filter:{{paperFilter}};top:122px;height:112px" onClick="{{basculerQuitter}}" aria-label="Quitter le ranch" aria-expanded="{{quitterAria}}">
+    <svg width="86" height="100" viewBox="0 0 86 100" aria-hidden="true">
+      <defs>
+        <linearGradient id="pqBois1" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#c58f58"></stop><stop offset="1" stop-color="#97612f"></stop></linearGradient>
+        <linearGradient id="pqBois2" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ad7642"></stop><stop offset="1" stop-color="#7f4f25"></stop></linearGradient>
+        <linearGradient id="pqPoteau" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#6a4020"></stop><stop offset=".45" stop-color="#9c683a"></stop><stop offset="1" stop-color="#5e381b"></stop></linearGradient>
+      </defs>
+      <path d="M20 96c4-8 11-10 23-10s19 2 23 10z" fill="#6f8f3c" stroke="#3a1f0e" stroke-width="1.8" stroke-linejoin="round"></path>
+      <rect x="39.5" y="10" width="8" height="82" rx="1.5" fill="url(#pqPoteau)" stroke="#3a1f0e" stroke-width="2"></rect>
+      <path d="M38.5 11l5-7 5 7z" fill="#5e381b" stroke="#3a1f0e" stroke-width="1.8" stroke-linejoin="round"></path>
+      <g class="fl1">
+        <path d="M17 17h50v18H17l-11-9z" fill="url(#pqBois1)" stroke="#3a1f0e" stroke-width="2.2" stroke-linejoin="round"></path>
+        <path d="M20 22h20M46 22h17M15 29h14M34 29h29" stroke="rgba(58,31,14,.3)" stroke-width="1.2" stroke-linecap="round"></path>
+        <path d="M18 34.5h48" stroke="rgba(255,222,176,.35)" stroke-width="1" ></path>
+      </g>
+      <g class="fl2">
+        <path d="M20 44h51l11 9-11 9H20z" fill="url(#pqBois2)" stroke="#3a1f0e" stroke-width="2.2" stroke-linejoin="round"></path>
+        <path d="M24 49h22M52 49h16M23 56h30M58 56h16" stroke="rgba(58,31,14,.32)" stroke-width="1.2" stroke-linecap="round"></path>
+      </g>
+      <circle cx="43.5" cy="26" r="2.3" fill="#e6cf98" stroke="#3a2410" stroke-width="1.1"></circle>
+      <circle cx="43.5" cy="53" r="2.3" fill="#e6cf98" stroke="#3a2410" stroke-width="1.1"></circle>
+      <path d="M27 92c0-5-1-8-3-11M32 91c0-4 1-7 3-9M55 91c0-4-1-7-3-10M61 92c1-4 3-6 5-7" fill="none" stroke="#4c6a2a" stroke-width="2" stroke-linecap="round"></path>
+    </svg>
+    <span class="etiq">partir</span>
+  </button>
+  <sc-if value="{{quitterVisible}}" hint-placeholder-val="{{ false }}">
+    <div class="quitter" role="menu" aria-label="Quitter le ranch" style="--nuit:{{paperFilter}}">
+      <div class="q-titre craie">où aller ?</div>
+      <sc-for list="{{destinations}}" as="d" hint-placeholder-count="3">
+        <button class="fleche" role="menuitem" style="--r:{{d.r}}deg;animation-delay:{{d.delai}}s" onClick="{{d.partir}}" onMouseEnter="{{d.survol}}">
+          <span class="fl-bois bois">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#2c1507" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{d.icone}}"></path></svg>
+            <span class="pyro" style="font-family:'Alegreya SC',serif;font-weight:700;font-size:16px;letter-spacing:1px">{{d.nom}}</span>
+            <span class="craie" style="margin-left:auto;font-size:21px;line-height:1;white-space:nowrap">{{d.duree}}</span>
+            <i class="clou" style="right:6px;left:auto;top:50%"></i>
+          </span>
+        </button>
+      </sc-for>
+    </div>
+  </sc-if>
+
+  <!-- La déjection : on nettoie là où elle est tombée -->
+  <sc-if value="{{crotteVisible}}" hint-placeholder-val="{{ true }}">
+    <div class="crotte-img {{crotteCls}}" style="left:{{crotteX}}px;top:{{crotteY}}px;z-index:{{crotteZ}}"><img src="/_blob/d51ed0b456413f23fdb3dfe427014aed" alt="" style="filter:{{decorFilter}};transition:filter 1.2s ease"><svg class="crotte-lueur" width="22" height="22" viewBox="0 0 22 22" aria-hidden="true"><path d="M11 1l2.2 7.8L21 11l-7.8 2.2L11 21l-2.2-7.8L1 11l7.8-2.2z" fill="#fff6d6"></path></svg></div>
+    <button class="crotte" onClick="{{nettoyer}}" onMouseEnter="{{crotteSurvol}}" onMouseLeave="{{crotteQuitte}}" aria-label="Ramasser la déjection" style="left:{{crotteX}}px;top:{{crotteY}}px">
+      <span class="astuce">ramasser</span>
+    </button>
+  </sc-if>
+
+  <!-- L'écho se promène sur le terrain ; tout ce qui le concerne le suit -->
+  <div class="echo-pos" style="opacity:{{echoOp}};left:{{ex}}px;top:{{ey}}px;transition-duration:{{eDur}}s;transform:scale({{eScale}});z-index:{{eZ}}">
+    <button class="echo-zone {{echoAnim}} {{demarche}}" style="--cycle:{{cycle}}s" onClick="{{caresser}}" aria-label="Caresser Filo">
+      <span class="echo-ombre" style="transform:scaleX({{eTaille}})"></span>
+      <span class="echo-sens {{eSens}}"><span class="echo-taille" style="transform:scale({{eTaille}})"><img class="echo-img" src="/_blob/f4e24910f42142c8fea4d63b7da610fd" alt="Filo, écho Enfant de la lignée Colère" style="filter:{{echoFilter}}"></span></span>
+      <span class="caresse">caresser</span>
+    </button>
+    <sc-if value="{{mainVisible}}" hint-placeholder-val="{{ false }}">
+      <svg class="frotte" viewBox="0 0 132 70" aria-hidden="true" style="top:{{teteMain}}px">
+        <path class="trait-l" pathLength="100" d="M22 46 Q66 6 110 44"></path>
+        <path class="trait-l t2" pathLength="100" d="M30 36 Q68 0 104 34"></path>
+      </svg>
+    </sc-if>
+    <!-- Signes d'humeur : besoin (rouge) et émotion passagère, selon le style choisi -->
+    <!-- États actifs : ils gravitent autour de l'écho (devant puis derrière lui) ; au survol, l'un s'arrête et grossit -->
+    <sc-for list="{{etatsOrbite}}" as="e" hint-placeholder-count="2">
+      <div class="orbite-etat" style="offset-path:{{orbite}};animation-delay:{{e.delai}}s" aria-label="{{e.nom}}">
+        <img src="{{e.image}}" alt="">
+      </div>
+    </sc-for>
+    <sc-if value="{{rienDuTout}}" hint-placeholder-val="{{ false }}">
+    </sc-if>
+    <sc-if value="{{bulleBulle}}" hint-placeholder-val="{{ false }}">
+      <div class="bulle" style="left:110px;top:{{teteBulle2}}px">
+        <svg width="74" height="74" viewBox="0 0 86 86" aria-hidden="true" style="position:absolute;inset:0"><path d="M43 4c21 0 38 15 38 34S64 72 43 72c-4 0-7 0-10-1l-16 9 5-13C11 61 5 50 5 38 5 19 22 4 43 4z" fill="#fbf4e3" stroke="#3a1f0e" stroke-width="2.5"></path></svg>
+        <img src="{{bulleImg}}" alt="" style="position:absolute;left:13px;top:8px;width:48px;height:48px;object-fit:contain">
+      </div>
+    </sc-if>
+    <sc-if value="{{emoFlotte}}" hint-placeholder-val="{{ false }}">
+      <div class="emo-flotte" style="top:{{teteSigne}}px"><img src="{{bulleImg}}" alt=""></div>
+    </sc-if>
+    <sc-if value="{{signe_joyeux}}" hint-placeholder-val="{{ false }}">
+      <svg class="signe" width="104" height="104" viewBox="0 0 80 80" aria-hidden="true" style="left:23px;top:{{teteSigne}}px"><g class="sg" style="animation-delay:0s"><path d="M18 34l2.8 7.2 7.2 2.8 -7.2 2.8 -2.8 7.2 -2.8 -7.2 -7.2 -2.8 7.2 -2.8z" fill="#fff1b8" stroke="#2a160a" stroke-width="2.6" stroke-linejoin="round"></path></g><g class="sg" style="animation-delay:0.12s"><path d="M42 7l3.6 9.4 9.4 3.6 -9.4 3.6 -3.6 9.4 -3.6 -9.4 -9.4 -3.6 9.4 -3.6z" fill="#ffe27a" stroke="#2a160a" stroke-width="2.6" stroke-linejoin="round"></path></g><g class="sg" style="animation-delay:0.24s"><path d="M65 35l2.5 6.5 6.5 2.5 -6.5 2.5 -2.5 6.5 -2.5 -6.5 -6.5 -2.5 6.5 -2.5z" fill="#fff1b8" stroke="#2a160a" stroke-width="2.6" stroke-linejoin="round"></path></g></svg>
+    </sc-if>
+    <sc-if value="{{signe_fier}}" hint-placeholder-val="{{ false }}">
+      <svg class="signe" width="104" height="104" viewBox="0 0 80 80" aria-hidden="true" style="left:23px;top:{{teteSigne}}px"><g class="sg" style="animation-delay:0s"><path d="M21.2 55.2L8.1 50.4M28.5 45.6L20.5 34.1M40.0 42.0L40.0 28.0M51.5 45.6L59.5 34.1M58.8 55.2L71.9 50.4" fill="none" stroke="#2a160a" stroke-width="6.6" stroke-linecap="round" stroke-linejoin="round"></path><path d="M21.2 55.2L8.1 50.4M28.5 45.6L20.5 34.1M40.0 42.0L40.0 28.0M51.5 45.6L59.5 34.1M58.8 55.2L71.9 50.4" fill="none" stroke="#ffd36e" stroke-width="3.6" stroke-linecap="round" stroke-linejoin="round"></path></g><g class="sg" style="animation-delay:0.2s"><path d="M40 6l2.2 5.8 5.8 2.2 -5.8 2.2 -2.2 5.8 -2.2 -5.8 -5.8 -2.2 5.8 -2.2z" fill="#fff1b8" stroke="#2a160a" stroke-width="2.6" stroke-linejoin="round"></path></g></svg>
+    </sc-if>
+    <sc-if value="{{signe_surpris}}" hint-placeholder-val="{{ false }}">
+      <svg class="signe" width="104" height="104" viewBox="0 0 80 80" aria-hidden="true" style="left:23px;top:{{teteSigne}}px"><g class="sg" style="animation-delay:0.1s"><path d="M14 22l-8-7M66 22l8-7M10 42H1M70 42h9" fill="none" stroke="#2a160a" stroke-width="6.2" stroke-linecap="round" stroke-linejoin="round"></path><path d="M14 22l-8-7M66 22l8-7M10 42H1M70 42h9" fill="none" stroke="#fff6e0" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"></path></g><g class="sg" style="animation-delay:0s"><path d="M35.5 8h9l-1.8 34h-5.4z" fill="#fff6e0" stroke="#2a160a" stroke-width="2.6" stroke-linejoin="round"></path></g><g class="sg" style="animation-delay:0.06s"><path d="M40 48.5a5 5 0 1 0 .01 0z" fill="#fff6e0" stroke="#2a160a" stroke-width="2.6" stroke-linejoin="round"></path></g></svg>
+    </sc-if>
+    <sc-if value="{{signe_anxieux}}" hint-placeholder-val="{{ false }}">
+      <svg class="signe" width="104" height="104" viewBox="0 0 80 80" aria-hidden="true" style="left:23px;top:{{teteSigne}}px"><g class="sg" style="animation-delay:0s"><path d="M12 40c4-5 8 5 12 0s8 5 12 0" fill="none" stroke="#2a160a" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"></path><path d="M12 40c4-5 8 5 12 0s8 5 12 0" fill="none" stroke="#e2d8ff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"></path></g><g class="sg" style="animation-delay:0.1s"><path d="M20 24c3-4 6 4 9 0s6 4 9 0" fill="none" stroke="#2a160a" stroke-width="5.6" stroke-linecap="round" stroke-linejoin="round"></path><path d="M20 24c3-4 6 4 9 0s6 4 9 0" fill="none" stroke="#e2d8ff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"></path></g><g class="sg goutte" style="animation-delay:0.15s"><path d="M60 10c5 7 8 11 8 15a8 8 0 0 1-16 0c0-4 3-8 8-15z" fill="#cfe8ff" stroke="#2a160a" stroke-width="2.6" stroke-linejoin="round"></path></g></svg>
+    </sc-if>
+    <sc-if value="{{bulleHalo}}" hint-placeholder-val="{{ false }}">
+      <div class="orbe" style="left:40px;top:{{teteOrbe}}px;--teinte:{{orbeTeinte}}"><img src="{{bulleImg}}" alt=""></div>
+    </sc-if>
+    <sc-for list="{{coeurs}}" as="c" hint-placeholder-count="0">
+      <svg class="coeur" width="22" height="22" viewBox="0 0 24 24" aria-hidden="true" style="left:{{c.x}}px;top:{{c.y}}px;--dx:{{c.dx}}px;animation-delay:{{c.delai}}s"><path d="M12 20c-5-3.2-8-6-8-9.2A4 4 0 0 1 12 8a4 4 0 0 1 8 2.8c0 3.2-3 6-8 9.2z" fill="#e8705a" stroke="#3a1f0e" stroke-width="1.4"></path></svg>
+    </sc-for>
+    <sc-if value="{{evtVisible}}" hint-placeholder-val="{{ true }}">
+      <button class="alerte-evt" style="top:{{teteAlerte}}px" onClick="{{ouvrirEvt}}" aria-label="Filo a fait quelque chose : ouvrir le carnet">
+        <img src="/_blob/910ee20837acbf6019a36f7178c4a264" alt="" style="position:absolute;left:0;top:8px;width:84px;height:84px;object-fit:contain">
+        <span class="astuce">que s'est-il passé ?</span>
+      </button>
+    </sc-if>
+  </div>
+
+  <sc-for list="{{flottants}}" as="f" hint-placeholder-count="0">
+    <div class="flotte" style="left:{{f.x}}px;top:{{f.y}}px;color:{{f.couleur}}">{{f.texte}}</div>
+  </sc-for>
+
+  <!-- La fiche de l'action ouverte -->
+  <sc-if value="{{ficheVisible}}" hint-placeholder-val="{{ false }}">
+    <div class="fiche" style="--pointe:{{fichePointe}}px;filter:{{paperFilter}}">
+      <div style="position:relative;display:flex;align-items:baseline;justify-content:space-between;margin-bottom:2px">
+        <span style="font-family:'Reenie Beanie',cursive;font-size:27px;line-height:1;color:#6b4f33">{{ficheTitre}}</span>
+        <span style="font-family:'Alegreya SC',serif;font-weight:700;font-size:12px;letter-spacing:1px;color:{{ficheCouleur}}">{{ficheBesoin}}</span>
+      </div>
+      <sc-if value="{{ficheEcho}}" hint-placeholder-val="{{ false }}">
+        <div style="position:relative;display:flex;gap:14px;align-items:flex-start;margin-top:4px">
+          <div style="flex:none;width:96px;height:118px;border-radius:6px;background:radial-gradient(circle at 50% 40%,#fff6df,#e8d6b0);box-shadow:inset 0 0 0 1.5px rgba(58,31,14,.6);display:flex;align-items:flex-end;justify-content:center;overflow:hidden"><img src="/_blob/f4e24910f42142c8fea4d63b7da610fd" alt="" style="height:104px;width:auto"></div>
+          <div style="flex:1;min-width:0">
+            <sc-for list="{{traits}}" as="t" hint-placeholder-count="6">
+              <div class="trait {{t.cls}}"><span>{{t.nom}}</span><b>{{t.valeur}}</b></div>
+            </sc-for>
+          </div>
+        </div>
+        <div style="position:relative;margin-top:8px;font-family:'Reenie Beanie',cursive;font-size:21px;line-height:1.05;color:#6b4f33">d'autres pages se découvriront en grandissant ensemble…</div>
+      </sc-if>
+      <sc-if value="{{ficheChoix}}" hint-placeholder-val="{{ true }}">
+        <div style="position:relative;display:flex;flex-direction:column;gap:1px">
+          <sc-for list="{{choix}}" as="o" hint-placeholder-count="4">
+            <sc-if value="{{o.estRubrique}}" hint-placeholder-val="{{ false }}"><div class="rubrique">{{o.nom}}</div></sc-if>
+            <sc-if value="{{o.estChoix}}" hint-placeholder-val="{{ true }}">
+              <button class="choix {{o.cls}}" onMouseEnter="{{o.survol}}" onClick="{{o.prendre}}" disabled="{{o.off}}">
+                <span class="vign">
+                  <sc-if value="{{o.aImage}}" hint-placeholder-val="{{ false }}"><img src="{{o.image}}" alt=""></sc-if>
+                  <sc-if value="{{o.aIcone}}" hint-placeholder-val="{{ true }}"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#6e3f22" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{o.icone}}"></path></svg></sc-if>
+                </span>
+                <span>{{o.nom}}</span>
+                <span class="det">{{o.detail}}</span>
+                <sc-if value="{{o.tamponne}}" hint-placeholder-val="{{ false }}"><svg class="tamp" viewBox="0 0 40 40" aria-hidden="true"><circle cx="20" cy="20" r="16.5" fill="rgba(63,122,58,.08)" stroke="#3f7a3a" stroke-width="3"></circle><path d="M12.5 20.5l5 5 10-11" fill="none" stroke="#3f7a3a" stroke-width="3.6" stroke-linecap="round" stroke-linejoin="round"></path></svg></sc-if>
+              </button>
+            </sc-if>
+          </sc-for>
+        </div>
+      </sc-if>
+    </div>
+  </sc-if>
+
+  <!-- Le petit carnet d'éleveur : les onglets sont les actions ; la couverture ouvre le carnet -->
+  <nav class="pcarnet {{ceintureCls}} {{carnetLeve}}" aria-label="Actions du ranch" style="filter:{{paperFilter}}">
+    <div class="pc-corps">
+    <div class="pc-pages"></div>
+    <sc-for list="{{verbes}}" as="v" hint-placeholder-count="5">
+      <button class="pc-onglet {{v.cls}}" style="--c:{{v.teinte}};--l:{{v.largeur}}px;top:{{v.haut}}px" onMouseEnter="{{v.survol}}" onMouseLeave="{{v.quitte}}" onFocus="{{v.survol}}" onBlur="{{v.quitte}}" onClick="{{v.ouvrir}}" aria-label="{{v.etiquette}}" aria-expanded="{{v.ouvertAria}}">
+        <span class="nom">{{v.court}}</span>
+        <span class="ico"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{v.icone}}"></path></svg></span>
+      </button>
+    </sc-for>
+    <div class="pc-couv" aria-hidden="true">
+      <span class="stitch"></span>
+      <span style="position:absolute;left:0;top:0;bottom:0;width:18px;border-radius:5px 0 0 5px;background:linear-gradient(90deg,#4a2814,rgba(110,63,34,0))"></span>
+      <svg width="26" height="26" viewBox="0 0 34 34" aria-hidden="true" style="position:absolute;right:0;top:0"><path d="M32 32V10a8 8 0 0 0-8-8H2z" fill="#c9a050" stroke="#3a2410" stroke-width="2.5"></path></svg>
+      <svg width="26" height="26" viewBox="0 0 34 34" aria-hidden="true" style="position:absolute;right:0;bottom:0"><path d="M32 2v22a8 8 0 0 1-8 8H2z" fill="#c9a050" stroke="#3a2410" stroke-width="2.5"></path></svg>
+      <span style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px"><svg width="58" height="58" viewBox="0 0 78 78" aria-hidden="true"><circle cx="39" cy="39" r="34" fill="none" stroke="rgba(30,14,4,.55)" stroke-width="2.5"></circle><path d="M39 58c-9 0-14-7-14-15s6-13 14-13 14 5 14 13-5 15-14 15zM39 30c0-6 3-10 9-12M39 30c-1-5-5-8-10-8" fill="none" stroke="rgba(30,14,4,.55)" stroke-width="2.5" stroke-linecap="round"></path></svg><span style="font-family:'Alegreya SC',serif;font-weight:700;font-size:14px;letter-spacing:3px;color:rgba(30,14,4,.55);text-shadow:0 1px 0 rgba(240,200,150,.2);text-align:center;line-height:1.25">Carnet<br>d'éleveur</span></span>
+      <span class="astuce">ouvrir le carnet</span>
+      <sc-if value="{{aDesNouvelles}}" hint-placeholder-val="{{ true }}"><span class="sceau" style="position:absolute;right:-9px;top:-9px">{{nouvelles}}</span></sc-if>
+    </div>
+    <span class="pc-signet"></span>
+    </div>
+    <button class="pc-zone" onClick="{{ouvrirCarnet}}" onMouseEnter="{{leverCarnet}}" onMouseLeave="{{baisserCarnet}}" onFocus="{{leverCarnet}}" onBlur="{{baisserCarnet}}" aria-label="Ouvrir le carnet d'éleveur"></button>
+  </nav>
+
+
+  <!-- Scène d'action : fenêtre centrale où l'écho saute pour laver, brosser, manger, jouer, s'entraîner… -->
+  <sc-if value="{{sceneVisible}}" hint-placeholder-val="{{ false }}">
+  <div class="sc-act {{scCls}}" style="--dx:{{scDx}}px;--dy:{{scDy}}px;--s0:{{scS0}};--ui:{{paperFilter}}">
+    <button class="sc-voile" onClick="{{fermerScene}}" aria-label="Continuer"></button>
+    <div class="sc-fen bois">
+      <div class="sc-fond" style="filter:{{decorFilter}}">
+        <span class="sc-sol"></span>
+        <span class="p p-coucher lune-s"></span>
+        <span class="p p-esprit anneaux"><i></i><i></i><i></i></span>
+        <span class="p p-course"><i class="vitesse" style="top:124px;width:113px;animation-delay:0.62s;animation-duration:0.70s"></i><i class="vitesse" style="top:285px;width:87px;animation-delay:0.89s;animation-duration:0.64s"></i><i class="vitesse" style="top:302px;width:83px;animation-delay:0.45s;animation-duration:0.54s"></i><i class="vitesse" style="top:41px;width:61px;animation-delay:0.33s;animation-duration:0.68s"></i><i class="vitesse" style="top:75px;width:78px;animation-delay:0.71s;animation-duration:0.54s"></i><i class="vitesse" style="top:159px;width:148px;animation-delay:0.04s;animation-duration:0.85s"></i><i class="vitesse" style="top:248px;width:138px;animation-delay:0.40s;animation-duration:0.83s"></i><i class="vitesse" style="top:316px;width:123px;animation-delay:0.62s;animation-duration:0.71s"></i><i class="vitesse" style="top:228px;width:62px;animation-delay:0.14s;animation-duration:0.78s"></i><i class="vitesse" style="top:103px;width:62px;animation-delay:0.41s;animation-duration:0.67s"></i><i class="vitesse" style="top:215px;width:111px;animation-delay:0.44s;animation-duration:0.52s"></i><i class="vitesse" style="top:59px;width:120px;animation-delay:0.78s;animation-duration:0.54s"></i><i class="vitesse" style="top:141px;width:86px;animation-delay:0.61s;animation-duration:0.77s"></i><i class="vitesse" style="top:76px;width:75px;animation-delay:0.50s;animation-duration:0.67s"></i><i class="sol-defile"></i></span>
+        <span class="p p-lucioles"><i class="luciole" style="left:172px;top:188px;animation-delay:-2.74s;animation-duration:4.71s"></i><i class="luciole" style="left:135px;top:158px;animation-delay:-2.66s;animation-duration:5.17s"></i><i class="luciole" style="left:368px;top:135px;animation-delay:-0.52s;animation-duration:4.33s"></i><i class="luciole" style="left:149px;top:190px;animation-delay:-0.12s;animation-duration:3.32s"></i><i class="luciole" style="left:390px;top:47px;animation-delay:-3.97s;animation-duration:5.09s"></i><i class="luciole" style="left:83px;top:174px;animation-delay:-3.31s;animation-duration:4.86s"></i><i class="luciole" style="left:111px;top:171px;animation-delay:-1.42s;animation-duration:3.59s"></i><i class="luciole" style="left:426px;top:259px;animation-delay:-2.68s;animation-duration:5.22s"></i><i class="luciole" style="left:366px;top:200px;animation-delay:-2.62s;animation-duration:3.86s"></i><i class="luciole" style="left:344px;top:174px;animation-delay:-2.76s;animation-duration:4.39s"></i><i class="luciole" style="left:423px;top:109px;animation-delay:-1.76s;animation-duration:4.82s"></i><i class="luciole" style="left:314px;top:130px;animation-delay:-1.17s;animation-duration:3.45s"></i><i class="luciole" style="left:222px;top:169px;animation-delay:-1.48s;animation-duration:3.65s"></i><i class="luciole" style="left:183px;top:242px;animation-delay:-3.56s;animation-duration:4.44s"></i><i class="luciole" style="left:321px;top:160px;animation-delay:-2.26s;animation-duration:5.22s"></i><i class="luciole" style="left:399px;top:227px;animation-delay:-0.52s;animation-duration:4.08s"></i></span>
+      </div>
+      <i class="clou" style="left:10px;top:10px"></i><i class="clou" style="right:0;left:auto;top:10px"></i><i class="clou" style="left:10px;top:auto;bottom:0"></i><i class="clou" style="right:0;left:auto;top:auto;bottom:0"></i>
+    </div>
+    <div class="sc-echo"><span class="sc-ombre"></span><div class="sc-anim"><img src="/_blob/f4e24910f42142c8fea4d63b7da610fd" alt="Filo" style="filter:{{echoFilter}}"></div></div>
+    <div class="sc-avant">
+      <span class="p p-laver"><img class="seau-s" src="/_blob/3bf241580093ba46f48588e542976f6d" alt=""><i class="goutte" style="left:230px;animation-delay:0.33s;animation-duration:0.77s"></i><i class="goutte" style="left:292px;animation-delay:0.17s;animation-duration:0.57s"></i><i class="goutte" style="left:272px;animation-delay:0.60s;animation-duration:0.64s"></i><i class="goutte" style="left:185px;animation-delay:0.24s;animation-duration:0.71s"></i><i class="goutte" style="left:240px;animation-delay:0.86s;animation-duration:0.80s"></i><i class="goutte" style="left:237px;animation-delay:0.24s;animation-duration:0.83s"></i><i class="goutte" style="left:334px;animation-delay:0.89s;animation-duration:0.79s"></i><i class="goutte" style="left:219px;animation-delay:0.18s;animation-duration:0.64s"></i><i class="goutte" style="left:265px;animation-delay:0.10s;animation-duration:0.73s"></i><i class="goutte" style="left:269px;animation-delay:0.56s;animation-duration:0.60s"></i><i class="goutte" style="left:291px;animation-delay:0.31s;animation-duration:0.83s"></i><i class="goutte" style="left:310px;animation-delay:0.92s;animation-duration:0.55s"></i><i class="goutte" style="left:244px;animation-delay:0.63s;animation-duration:0.81s"></i><i class="goutte" style="left:300px;animation-delay:0.21s;animation-duration:0.68s"></i><i class="goutte" style="left:243px;animation-delay:0.47s;animation-duration:0.60s"></i><i class="goutte" style="left:248px;animation-delay:0.29s;animation-duration:0.79s"></i><i class="eclabousse"></i></span>
+      <span class="p p-brosser"><svg class="brosse" width="120" height="70" viewBox="0 0 120 70" aria-hidden="true"><rect x="4" y="10" width="78" height="26" rx="9" fill="#b07a46" stroke="#3a1f0e" stroke-width="3"></rect><path d="M82 23h30" stroke="#8a5530" stroke-width="10" stroke-linecap="round"></path><path d="M12 38v18M22 38v20M32 38v18M42 38v20M52 38v18M62 38v20M72 38v18" stroke="#e8d7b0" stroke-width="5" stroke-linecap="round"></path></svg><i class="poil" style="left:200px"></i><i class="poil" style="left:290px;animation-delay:.5s"></i><i class="poil" style="left:250px;animation-delay:1s"></i></span>
+      <span class="p p-coucher"><b class="zz" style="left:300px">z</b><b class="zz" style="left:318px;animation-delay:.8s;font-size:30px">z</b><b class="zz" style="left:338px;animation-delay:1.6s;font-size:38px">Z</b></span>
+      <span class="p p-manger"><img class="aliment-s" src="{{scImage}}" alt=""><i class="miette" style="--mx:-30px"></i><i class="miette" style="--mx:24px;animation-delay:.7s"></i><i class="miette" style="--mx:-12px;animation-delay:1.4s"></i></span>
+      <span class="p p-balle"><svg class="balle-s" width="54" height="54" viewBox="0 0 54 54" aria-hidden="true"><circle cx="27" cy="27" r="24" fill="#d9573e" stroke="#3a1f0e" stroke-width="3"></circle><path d="M6 20c14 6 28 6 42 0M8 36c13-5 25-5 38 0" fill="none" stroke="#f6dcc0" stroke-width="4"></path></svg></span>
+      <span class="p p-cache"><svg class="buisson b-g" width="190" height="150" viewBox="0 0 190 150" aria-hidden="true"><path d="M10 150c-8-30 6-58 32-62-2-30 34-48 58-30 18-26 62-18 66 16 26 6 32 44 18 76z" fill="#5f8a3a" stroke="#2c4418" stroke-width="3"></path><path d="M40 112c8-10 20-12 30-6M98 74c10-8 24-6 30 4M130 118c8-8 20-8 26 0" fill="none" stroke="#86b05a" stroke-width="4" stroke-linecap="round"></path></svg><svg class="buisson b-d" width="190" height="150" viewBox="0 0 190 150" aria-hidden="true"><path d="M10 150c-8-30 6-58 32-62-2-30 34-48 58-30 18-26 62-18 66 16 26 6 32 44 18 76z" fill="#5f8a3a" stroke="#2c4418" stroke-width="3"></path><path d="M40 112c8-10 20-12 30-6M98 74c10-8 24-6 30 4M130 118c8-8 20-8 26 0" fill="none" stroke="#86b05a" stroke-width="4" stroke-linecap="round"></path></svg></span>
+      <span class="p p-histoire"><svg class="livre-s" width="150" height="96" viewBox="0 0 150 96" aria-hidden="true"><path d="M75 18C55 6 26 6 6 14v72c20-8 49-8 69 4 20-12 49-12 69-4V14C124 6 95 6 75 18z" fill="#f4ead6" stroke="#3a1f0e" stroke-width="3"></path><path d="M75 18v72" stroke="#3a1f0e" stroke-width="2.5"></path><path d="M18 32c14-4 30-4 46 2M18 46c14-4 30-4 46 2M86 34c14-6 30-6 46-2M86 48c14-6 30-6 46-2" stroke="#b9a37e" stroke-width="2.5" fill="none"></path><path class="feuille-t" d="M75 18c14-10 36-12 52-6v70c-16-6-38-4-52 6z" fill="#efe2c6" stroke="#3a1f0e" stroke-width="2.5"></path></svg></span>
+      <span class="p p-bulles"><i class="bulle-s" style="left:277px;width:33px;height:33px;animation-delay:0.60s;animation-duration:2.19s"></i><i class="bulle-s" style="left:386px;width:14px;height:14px;animation-delay:0.54s;animation-duration:2.65s"></i><i class="bulle-s" style="left:349px;width:16px;height:16px;animation-delay:0.53s;animation-duration:3.31s"></i><i class="bulle-s" style="left:398px;width:15px;height:15px;animation-delay:1.17s;animation-duration:2.24s"></i><i class="bulle-s" style="left:271px;width:37px;height:37px;animation-delay:0.68s;animation-duration:2.24s"></i><i class="bulle-s" style="left:66px;width:17px;height:17px;animation-delay:0.21s;animation-duration:3.22s"></i><i class="bulle-s" style="left:342px;width:16px;height:16px;animation-delay:1.24s;animation-duration:2.54s"></i><i class="bulle-s" style="left:422px;width:17px;height:17px;animation-delay:1.47s;animation-duration:2.29s"></i><i class="bulle-s" style="left:154px;width:37px;height:37px;animation-delay:1.27s;animation-duration:3.25s"></i><i class="bulle-s" style="left:435px;width:22px;height:22px;animation-delay:1.46s;animation-duration:2.56s"></i><i class="bulle-s" style="left:214px;width:39px;height:39px;animation-delay:0.07s;animation-duration:2.99s"></i><i class="bulle-s" style="left:42px;width:27px;height:27px;animation-delay:0.09s;animation-duration:2.53s"></i><i class="bulle-s" style="left:291px;width:18px;height:18px;animation-delay:0.04s;animation-duration:2.59s"></i><i class="bulle-s" style="left:97px;width:33px;height:33px;animation-delay:0.01s;animation-duration:3.07s"></i><i class="bulle-s" style="left:141px;width:20px;height:20px;animation-delay:0.53s;animation-duration:3.25s"></i><i class="bulle-s" style="left:108px;width:31px;height:31px;animation-delay:1.47s;animation-duration:2.70s"></i><i class="bulle-s" style="left:333px;width:29px;height:29px;animation-delay:0.86s;animation-duration:2.28s"></i><i class="bulle-s" style="left:75px;width:26px;height:26px;animation-delay:0.31s;animation-duration:3.07s"></i><i class="bulle-s" style="left:398px;width:32px;height:32px;animation-delay:0.23s;animation-duration:3.32s"></i><i class="bulle-s" style="left:408px;width:15px;height:15px;animation-delay:0.09s;animation-duration:2.78s"></i><i class="bulle-s" style="left:350px;width:18px;height:18px;animation-delay:1.19s;animation-duration:3.03s"></i><i class="bulle-s" style="left:334px;width:15px;height:15px;animation-delay:0.19s;animation-duration:2.99s"></i><i class="bulle-s" style="left:161px;width:19px;height:19px;animation-delay:0.98s;animation-duration:2.06s"></i><i class="bulle-s" style="left:227px;width:35px;height:35px;animation-delay:0.84s;animation-duration:2.79s"></i></span>
+      <span class="p p-corde"><svg class="corde-s" width="300" height="40" viewBox="0 0 300 40" aria-hidden="true"><path d="M0 20c40-6 80 6 120 0s80-6 120 0 40 4 60 0" fill="none" stroke="#3a1f0e" stroke-width="11" stroke-linecap="round"></path><path d="M0 20c40-6 80 6 120 0s80-6 120 0 40 4 60 0" fill="none" stroke="#d6b67c" stroke-width="7" stroke-dasharray="7 5" stroke-linecap="round"></path><circle cx="150" cy="20" r="9" fill="#9c3b2a" stroke="#3a1f0e" stroke-width="2.5"></circle></svg></span>
+      <span class="p p-saut"><svg class="buche" width="110" height="46" viewBox="0 0 110 46" aria-hidden="true"><rect x="4" y="6" width="98" height="34" rx="17" fill="#8a5530" stroke="#3a1f0e" stroke-width="3"></rect><ellipse cx="96" cy="23" rx="10" ry="16" fill="#d2a46a" stroke="#3a1f0e" stroke-width="3"></ellipse><path d="M20 18h40M28 30h36" stroke="#5e381b" stroke-width="3" stroke-linecap="round"></path></svg></span>
+      <span class="p p-barriere"><svg class="planches" width="130" height="150" viewBox="0 0 130 150" aria-hidden="true"><rect x="12" y="10" width="20" height="140" rx="3" fill="#a87543" stroke="#3a1f0e" stroke-width="3"></rect><rect x="96" y="10" width="20" height="140" rx="3" fill="#a87543" stroke="#3a1f0e" stroke-width="3"></rect><rect x="4" y="44" width="122" height="18" rx="3" fill="#c08a52" stroke="#3a1f0e" stroke-width="3"></rect><rect class="planche-n" x="4" y="92" width="122" height="18" rx="3" fill="#d9a466" stroke="#3a1f0e" stroke-width="3"></rect></svg><svg class="marteau" width="80" height="80" viewBox="0 0 80 80" aria-hidden="true"><path d="M30 34l34 34" stroke="#8a5530" stroke-width="9" stroke-linecap="round"></path><rect x="8" y="12" width="42" height="22" rx="4" transform="rotate(45 29 23)" fill="#8b8f96" stroke="#3a1f0e" stroke-width="3"></rect></svg></span>
+      <span class="p p-eau"><img class="seau-porte" src="/_blob/3bf241580093ba46f48588e542976f6d" alt=""></span>
+    </div>
+    <sc-if value="{{scNote}}" hint-placeholder-val="{{ false }}">
+      <div class="sc-note" onClick="{{fermerScene}}" role="status">
+        <div class="sn-titre">{{scTitre}}</div>
+        <sc-for list="{{scLignes}}" as="l" hint-placeholder-count="2"><div class="sn-ligne">{{l.t}}</div></sc-for>
+        <div class="sn-suite">continuer</div>
+      </div>
+    </sc-if>
+  </div>
+  </sc-if>
+
+  <!-- Événement : le carnet s'ouvre avec le personnage du joueur -->
+  <div class="evc" style="position:absolute;inset:0;z-index:975;pointer-events:none">
+    <div class="evc-scrim {{evcScrim}}"></div>
+    <sc-if value="{{evcVisible}}" hint-placeholder-val="{{ false }}">
+  <div class="{{playClass}}" style="position:absolute;inset:0;pointer-events:none">
+    <!-- Carnet : arrive fermé depuis le coin gauche (le petit carnet), puis s'ouvre -->
+    <section aria-label="Dialogue" onClick="{{passerTexte}}" style="position:absolute;left:250px;bottom:20px;width:934px;height:300px;filter:{{paperFilter}};pointer-events:auto">
+      <div class="wrap" style="position:absolute;inset:0;perspective:1800px">
+
+        <!-- Fiche de réponse longue : glisse depuis l'arrière du carnet -->
+        <div class="peek {{peekClass}}" aria-live="polite" style="position:absolute;left:540px;bottom:262px;width:340px;padding:14px 18px 54px;box-sizing:border-box;border-radius:8px 8px 0 0;background:repeating-linear-gradient(0deg,transparent 0 27px,rgba(122,90,58,.12) 27px 28px),#fbf4e3;box-shadow:0 0 0 1.5px #3a1f0e,0 -8px 20px rgba(30,14,4,.28)">
+          <div style="display:flex;align-items:center;gap:10px">
+            <span style="flex:none;width:26px;height:26px;box-sizing:border-box;border-radius:50%;border:2.5px {{peekBorder}} {{peekColor}};display:flex;align-items:center;justify-content:center;color:{{peekColor}}"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{peekIcon}}"></path></svg></span>
+            <span style="font-family:'Alegreya SC',serif;font-weight:700;font-size:12px;letter-spacing:1px;color:{{peekColor}}">{{peekLabel}}</span>
+            <span style="margin-left:auto;font-family:'Reenie Beanie',cursive;font-size:20px;line-height:1;color:#6b4f33">réponse complète</span>
+          </div>
+          <p style="margin:8px 0 0;font-size:16.5px;line-height:1.45;color:#2b2118">{{peekText}}</p>
+        </div>
+
+        <!-- Moitié droite : plat arrière + page des choix -->
+        <div style="position:absolute;left:467px;top:0;width:467px;height:300px;border-radius:0 16px 16px 0;box-shadow:inset 0 0 0 2px #3a1f0e,inset 0 0 0 7px #6e3f22,inset 0 0 22px rgba(30,14,4,.45),0 6px 0 #4a2814,0 18px 40px rgba(20,10,4,.45),0 0 90px rgba(255,170,80,{{paperGlow}});background:#6e3f22">
+          <div class="stitch" style="border-radius:0 11px 11px 0;left:0;border-left:none"></div>
+          <svg width="34" height="34" viewBox="0 0 34 34" aria-hidden="true" style="position:absolute;right:0;top:0"><path d="M32 32V10a8 8 0 0 0-8-8H2z" fill="#c9a050" stroke="#3a2410" stroke-width="2.5"></path></svg>
+          <svg width="34" height="34" viewBox="0 0 34 34" aria-hidden="true" style="position:absolute;right:0;bottom:0"><path d="M32 2v22a8 8 0 0 1-8 8H2z" fill="#c9a050" stroke="#3a2410" stroke-width="2.5"></path></svg>
+          <div style="position:absolute;left:10px;right:20px;top:16px;bottom:16px;padding:24px 24px 18px 58px;border-radius:0 4px 4px 0;overflow:hidden;box-shadow:0 0 0 1.5px #3a1f0e,1.5px 1.5px 0 #efe4cc,3px 3px 0 #d6c4a0,4.5px 4.5px 0 #ece0c6,6px 6px 0 #cbb893,7.5px 7.5px 0 #e6d8bb,8.5px 8.5px 0 #3a1f0e;background:linear-gradient(90deg,#c9b68e 0%,#e2d3b2 6%,#f4ead6 18%,#f4ead6 100%)">
+            <div style="position:absolute;inset:0;background:repeating-linear-gradient(0deg,transparent 0 31px,rgba(122,90,58,.12) 31px 32px);pointer-events:none"></div>
+            <div class="flip-shade" style="position:absolute;inset:0;background:linear-gradient(90deg,rgba(30,14,4,.55),rgba(30,14,4,.1));pointer-events:none"></div>
+            <sc-if value="{{showRecap}}" hint-placeholder-val="{{ false }}">
+              <div class="recap {{recapOn}}" style="position:relative">
+                <div style="font-family:'Reenie Beanie',cursive;font-size:26px;line-height:1;color:#6b4f33">{{echoNom}} s'en souviendra…</div>
+                <div style="display:flex;align-items:center;gap:14px;margin-top:18px">
+                  <sc-if value="{{notReveal}}" hint-placeholder-val="{{ true }}">
+                  <span style="flex:none;width:46px;height:46px;box-sizing:border-box;border-radius:50%;border:3px {{rcBorder}} {{rcColor}};display:flex;align-items:center;justify-content:center;color:{{rcColor}};box-shadow:0 0 {{inkGlow}}px {{rcGlow}}"><span class="glyphe" style="width:30px;height:30px;--g:{{rcGlyphe}}" aria-hidden="true"></span></span>
+                  <div><div style="font-family:'Alegreya SC',serif;font-weight:700;font-size:17px;letter-spacing:1.5px;color:{{rcColor}}">{{rcLabel}}</div><div style="font-size:15px;font-style:italic;color:#5a4632">{{rcNote}}</div></div>
+                  </sc-if>
+                  <sc-if value="{{isReveal}}" hint-placeholder-val="{{ false }}">
+                  <div class="reveal {{revealCls}}" style="position:relative;flex:none;width:46px;height:46px">
+                    <span class="flash"></span><span class="spk" style="--a:0deg"></span><span class="spk" style="--a:45deg"></span><span class="spk" style="--a:90deg"></span><span class="spk" style="--a:135deg"></span><span class="spk" style="--a:180deg"></span><span class="spk" style="--a:225deg"></span><span class="spk" style="--a:270deg"></span><span class="spk" style="--a:315deg"></span>
+                    <span class="ring-old" style="position:absolute;inset:0;box-sizing:border-box;border-radius:50%;border:3px dashed #9a8668;display:flex;align-items:center;justify-content:center;color:#9a8668"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9.5 9a2.5 2.5 0 1 1 3.5 2.3c-.8.4-1 1-1 1.7M12 17h.01"></path></svg></span>
+                    <span class="ring-new" style="position:absolute;inset:0;box-sizing:border-box;border-radius:50%;border:3px solid {{rvColor}};display:flex;align-items:center;justify-content:center;color:{{rvColor}};box-shadow:0 0 14px {{rvGlow}}"><span class="glyphe" style="width:30px;height:30px;--g:{{rvGlyphe}}" aria-hidden="true"></span></span>
+                  </div>
+                  <div class="reveal-txt {{revealCls}}" style="display:grid">
+                    <div class="lbl-old" style="grid-area:1/1"><div style="font-family:'Alegreya SC',serif;font-weight:700;font-size:17px;letter-spacing:1.5px;color:#9a8668">Tempérament inconnu</div><div style="font-size:15px;font-style:italic;color:#5a4632">Quelque chose a changé… mais quoi ?</div></div>
+                    <div class="lbl-new" style="grid-area:1/1"><div style="font-family:'Alegreya SC',serif;font-weight:700;font-size:17px;letter-spacing:1.5px;color:{{rvColor}}">{{rvLabel}}</div><div style="font-size:15px;font-style:italic;color:#5a4632">{{rvNote}}</div></div>
+                  </div>
+                  </sc-if>
+                  <span class="ts-tampon {{tamponCls}}" style="--tc:{{tamponCouleur}};--dl:{{tamponDelai}}s">{{tamponTexte}}</span>
+                </div>
+                <sc-if value="{{isReveal}}" hint-placeholder-val="{{ false }}">
+                  <div class="reveal-txt {{revealCls}}"><div class="lbl-new" style="margin-top:10px;font-family:'Reenie Beanie',cursive;font-size:24px;line-height:1;color:#b3671a">Tempérament découvert !</div></div>
+                </sc-if>
+                <button onClick="{{onReset}}" style="margin-top:26px;display:inline-flex;align-items:center;gap:8px;padding:8px 14px;border:none;border-radius:6px;background:#6e3f22;color:#f6ecd6;font-family:'Alegreya SC',serif;font-size:14px;letter-spacing:1px;cursor:pointer;box-shadow:inset 0 0 0 2px #3a1f0e,inset 0 0 0 4px #6e3f22,inset 0 0 0 5px rgba(240,214,170,.5)">Refermer le carnet<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M9 6l6 6-6 6"></path></svg></button>
+              </div>
+            </sc-if>
+            <sc-if value="{{showChoices}}" hint-placeholder-val="{{ true }}">
+            <div style="position:relative;font-family:'Reenie Beanie',cursive;font-size:26px;line-height:1;color:#6b4f33">Que faire ?</div>
+            <div class="ts-slot {{tsCls}}" aria-label="Tempérament en jeu : {{tsLabel}}"><span class="ts-nom">{{tsLabel}}</span><span class="ts-rond" style="border-color:{{tsColor}};color:{{tsColor}}"><span class="glyphe" style="width:22px;height:22px;--g:{{tsGlyphe}}" aria-hidden="true"></span></span></div>
+            <div class="{{choicesClass}}" style="position:relative;display:flex;flex-direction:column;gap:{{listGap}}px;margin-top:10px;width:342px">
+              <sc-for list="{{answers}}" as="a" hint-placeholder-count="3">
+                <button class="{{a.cls}}" onClick="{{a.pick}}" onMouseEnter="{{a.enter}}" onFocus="{{a.enter}}" style="position:relative;width:100%;display:flex;align-items:center;gap:12px;padding:{{a.pad}};border:none;border-radius:4px;background:transparent;text-align:left;font-family:'Alegreya',serif;font-size:16.5px;color:#2b2118;cursor:pointer;transition-delay:{{a.delay}}">
+                  <span style="flex:none;width:28px;height:28px;box-sizing:border-box;border-radius:50%;border:2.5px {{a.borderStyle}} {{a.color}};display:flex;align-items:center;justify-content:center;color:{{a.color}};box-shadow:0 0 {{a.glow}}px {{a.glowColor}}"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{a.icon}}"></path></svg></span>
+                  <span style="min-width:0;flex:1"><span style="display:block;font-family:'Alegreya SC',serif;font-weight:700;font-size:{{a.labelSize}}px;letter-spacing:1px;color:{{a.color}}">{{a.label}}</span><sc-if value="{{a.showText}}" hint-placeholder-val="{{ true }}"><span class="ans">{{a.text}}</span></sc-if></span>
+                  <sc-if value="{{a.sheetIcon}}" hint-placeholder-val="{{ false }}"><span title="Voir la réponse" style="flex:none;margin-left:auto;width:22px;height:22px;display:flex;align-items:center;justify-content:center;color:#6b4f33"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M6 3h9l4 4v14H6z"></path><path d="M15 3v4h4M9 12h7M9 16h5"></path></svg></span></sc-if>
+                  <svg class="{{a.stampCls}}" viewBox="0 0 40 40" aria-hidden="true"><circle cx="20" cy="20" r="16.5" fill="rgba(63,122,58,.08)" stroke="#3f7a3a" stroke-width="3"></circle><circle cx="20" cy="20" r="12.5" fill="none" stroke="#3f7a3a" stroke-width="1.2" stroke-dasharray="2 2.2"></circle><path d="M12.5 20.5l5 5 10-11" fill="none" stroke="#3f7a3a" stroke-width="3.6" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+                </button>
+              </sc-for>
+            </div>
+            </sc-if>
+          </div>
+          <!-- Marque-page : fixé en tête de reliure, il court le long du pli puis pend sous le carnet -->
+          <svg width="80" height="370" viewBox="0 0 80 370" aria-hidden="true" style="position:absolute;left:0;top:0;overflow:visible;filter:drop-shadow(1.5px 2.5px 1.5px rgba(30,14,4,.35))">
+            <defs>
+              <linearGradient id="evcRibHead" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2a1208" stop-opacity=".75"></stop><stop offset="1" stop-color="#2a1208" stop-opacity="0"></stop></linearGradient>
+            </defs>
+            <path d="M22 4 C20 100 30 200 34 300 C35 316 30 330 22 342" fill="none" stroke="#5e1a12" stroke-width="15"></path>
+            <path d="M22 4 C20 100 30 200 34 300 C35 316 30 330 22 342" fill="none" stroke="#9c3b2a" stroke-width="12.5"></path>
+            <path d="M22 4 C20 100 30 200 34 300 C35 316 30 330 22 342" fill="none" stroke="#c65a44" stroke-width="3" opacity=".55" transform="translate(-2.5 0)"></path>
+            <path d="M22 4 C20 100 30 200 34 300 C35 316 30 330 22 342" fill="none" stroke="#3e0f0a" stroke-width="1.2" opacity=".35" transform="translate(3.5 0)"></path>
+            <path d="M27.8 345.9 L21.7 355 L19.8 345.3 L10.1 347.3 L16.2 338.1 Z" fill="#9c3b2a" stroke="#5e1a12" stroke-width="1.3" stroke-linejoin="round"></path>
+            <path d="M28.5 296 C34 302 34 306 33 312" fill="none" stroke="#2a1208" stroke-width="13" opacity=".18"></path>
+            <rect x="8" y="2" width="30" height="22" fill="url(#evcRibHead)"></rect>
+          </svg>
+        </div>
+
+        <!-- Quelques pages qui tournent après la couverture -->
+          <div class="sheet sh3" style="position:absolute;left:471px;top:16px;width:443px;height:268px;transform-origin:0 50%;transform-style:preserve-3d">
+            <div class="face" style="position:absolute;inset:0;border-radius:0 4px 4px 0;background:repeating-linear-gradient(0deg,transparent 0 31px,rgba(122,90,58,.12) 31px 32px),linear-gradient(90deg,#c9b68e 0%,#e2d3b2 6%,#f4ead6 18%,#efe4cc 100%);box-shadow:0 0 0 1px rgba(58,31,14,.5)"></div>
+            <div class="face back" style="position:absolute;inset:0;border-radius:4px 0 0 4px;background:repeating-linear-gradient(0deg,transparent 0 31px,rgba(122,90,58,.12) 31px 32px),linear-gradient(90deg,#efe4cc 0%,#f4ead6 82%,#e2d3b2 94%,#c9b68e 100%);box-shadow:0 0 0 1px rgba(58,31,14,.5)"></div>
+          </div>
+          <div class="sheet sh2" style="position:absolute;left:471px;top:16px;width:443px;height:268px;transform-origin:0 50%;transform-style:preserve-3d">
+            <div class="face" style="position:absolute;inset:0;border-radius:0 4px 4px 0;background:repeating-linear-gradient(0deg,transparent 0 31px,rgba(122,90,58,.12) 31px 32px),linear-gradient(90deg,#c9b68e 0%,#e2d3b2 6%,#f4ead6 18%,#f2e7d0 100%);box-shadow:0 0 0 1px rgba(58,31,14,.5)"></div>
+            <div class="face back" style="position:absolute;inset:0;border-radius:4px 0 0 4px;background:repeating-linear-gradient(0deg,transparent 0 31px,rgba(122,90,58,.12) 31px 32px),linear-gradient(90deg,#f2e7d0 0%,#f4ead6 82%,#e2d3b2 94%,#c9b68e 100%);box-shadow:0 0 0 1px rgba(58,31,14,.5)"></div>
+          </div>
+          <div class="sheet sh1" style="position:absolute;left:471px;top:16px;width:443px;height:268px;transform-origin:0 50%;transform-style:preserve-3d">
+            <div class="face" style="position:absolute;inset:0;border-radius:0 4px 4px 0;background:repeating-linear-gradient(0deg,transparent 0 31px,rgba(122,90,58,.12) 31px 32px),linear-gradient(90deg,#c9b68e 0%,#e2d3b2 6%,#f4ead6 18%,#f4ead6 100%);box-shadow:0 0 0 1px rgba(58,31,14,.5)"></div>
+            <div class="face back" style="position:absolute;inset:0;border-radius:4px 0 0 4px;background:repeating-linear-gradient(0deg,transparent 0 31px,rgba(122,90,58,.12) 31px 32px),linear-gradient(90deg,#f4ead6 0%,#f4ead6 82%,#e2d3b2 94%,#c9b68e 100%);box-shadow:0 0 0 1px rgba(58,31,14,.5)"></div>
+          </div>
+        <!-- Rabat : couverture (recto) puis page de gauche (verso) -->
+        <div class="flap" style="position:absolute;left:467px;top:0;width:467px;height:300px;transform-origin:0 50%;transform-style:preserve-3d">
+          <div class="face" style="position:absolute;inset:0;border-radius:0 16px 16px 0;background:#6e3f22;box-shadow:inset 0 0 0 2px #3a1f0e,inset 0 0 0 7px #6e3f22,inset 0 0 26px rgba(30,14,4,.5),0 5px 0 #4a2814,0 20px 40px rgba(20,10,4,.45)">
+            <div class="stitch" style="border-radius:0 11px 11px 0"></div>
+            <svg width="34" height="34" viewBox="0 0 34 34" aria-hidden="true" style="position:absolute;right:0;top:0"><path d="M32 32V10a8 8 0 0 0-8-8H2z" fill="#c9a050" stroke="#3a2410" stroke-width="2.5"></path></svg>
+            <svg width="34" height="34" viewBox="0 0 34 34" aria-hidden="true" style="position:absolute;right:0;bottom:0"><path d="M32 2v22a8 8 0 0 1-8 8H2z" fill="#c9a050" stroke="#3a2410" stroke-width="2.5"></path></svg>
+            <div style="position:absolute;left:0;top:0;bottom:0;width:22px;background:linear-gradient(90deg,#4a2814,rgba(110,63,34,0));border-radius:0"></div>
+            <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px">
+              <svg width="78" height="78" viewBox="0 0 78 78" aria-hidden="true"><circle cx="39" cy="39" r="34" fill="none" stroke="rgba(30,14,4,.55)" stroke-width="2.5"></circle><circle cx="39" cy="40" r="34" fill="none" stroke="rgba(240,200,150,.18)" stroke-width="1.5"></circle><path d="M39 58c-9 0-14-7-14-15s6-13 14-13 14 5 14 13-5 15-14 15zM39 30c0-6 3-10 9-12M39 30c-1-5-5-8-10-8" fill="none" stroke="rgba(30,14,4,.55)" stroke-width="2.5" stroke-linecap="round"></path></svg>
+              <div style="font-family:'Alegreya SC',serif;font-weight:700;font-size:18px;letter-spacing:4px;color:rgba(30,14,4,.5);text-shadow:0 1px 0 rgba(240,200,150,.2)">Carnet d'éleveur</div>
+            </div>
+          </div>
+          <div class="face back" style="position:absolute;inset:0;border-radius:16px 0 0 16px;background:#6e3f22;box-shadow:inset 0 0 0 2px #3a1f0e,inset 0 0 0 7px #6e3f22,inset 0 0 22px rgba(30,14,4,.45),0 6px 0 #4a2814,0 18px 40px rgba(20,10,4,.45),0 0 90px rgba(255,170,80,{{paperGlow}})">
+            <div class="stitch" style="border-radius:11px 0 0 11px;right:0;border-right:none"></div>
+            <svg width="34" height="34" viewBox="0 0 34 34" aria-hidden="true" style="position:absolute;left:0;top:0"><path d="M2 32V10a8 8 0 0 1 8-8h22z" fill="#c9a050" stroke="#3a2410" stroke-width="2.5"></path></svg>
+            <svg width="34" height="34" viewBox="0 0 34 34" aria-hidden="true" style="position:absolute;left:0;bottom:0"><path d="M2 2v22a8 8 0 0 0 8 8h22z" fill="#c9a050" stroke="#3a2410" stroke-width="2.5"></path></svg>
+            <div style="position:absolute;left:20px;right:10px;top:16px;bottom:16px;padding:28px 30px 20px 140px;border-radius:4px 0 0 4px;overflow:hidden;box-shadow:0 0 0 1.5px #3a1f0e,-1.5px 1.5px 0 #efe4cc,-3px 3px 0 #d6c4a0,-4.5px 4.5px 0 #ece0c6,-6px 6px 0 #cbb893,-7.5px 7.5px 0 #e6d8bb,-8.5px 8.5px 0 #3a1f0e;background:linear-gradient(90deg,#f4ead6 0%,#f4ead6 82%,#e2d3b2 94%,#c9b68e 100%)">
+              <div style="position:absolute;inset:0;background:repeating-linear-gradient(0deg,transparent 0 31px,rgba(122,90,58,.12) 31px 32px);pointer-events:none"></div>
+              <sc-if value="{{isNarration}}" hint-placeholder-val="{{ false }}">
+                <div style="position:relative;font-family:'Reenie Beanie',cursive;font-size:28px;line-height:1;color:#6b4f33">{{titreGauche}}</div>
+              </sc-if>
+              <sc-if value="{{isDialogue}}" hint-placeholder-val="{{ true }}">
+              <div style="position:relative;display:flex;align-items:center;gap:12px">
+                <div class="stamp2" style="display:inline-block;padding:3px 12px 1px;border:2.5px solid #9c3b2a;border-radius:5px;color:#9c3b2a;font-family:'Alegreya SC',serif;font-weight:700;font-size:20px;letter-spacing:3px">{{joueurNom}}</div>
+                <div class="{{voiceClass}}" aria-label="Voix" style="display:flex;align-items:center;gap:2px;height:18px">
+                  <span class="vb" style="width:3px;height:6px;border-radius:2px;background:#9c3b2a"></span>
+                  <span class="vb" style="width:3px;height:12px;border-radius:2px;background:#9c3b2a;animation-delay:-.2s"></span>
+                  <span class="vb" style="width:3px;height:9px;border-radius:2px;background:#9c3b2a;animation-delay:-.4s"></span>
+                  <span class="vb" style="width:3px;height:14px;border-radius:2px;background:#9c3b2a;animation-delay:-.1s"></span>
+                </div>
+              </div>
+              </sc-if>
+              <p style="position:relative;margin:12px 0 0;font-size:{{textSize}}px;line-height:1.55;min-height:118px;font-style:{{textStyle}}">{{seg1}}<em>{{seg2}}</em>{{seg3}}<span class="{{caretClass}}" style="display:inline-block;width:9px;height:18px;margin-left:3px;vertical-align:-3px;background:#9c3b2a"></span></p>
+            </div>
+          </div>
+        </div>
+        <!-- Page qui tourne après validation : recto = la page des choix tamponnée, verso = la réponse choisie (« Vous réprimandez Filo ») -->
+        <div class="turnsheet {{turnCls}}" style="position:absolute;left:471px;top:16px;width:443px;height:268px;transform-origin:0 50%;transform-style:preserve-3d">
+          <div class="face" style="position:absolute;inset:0;border-radius:0 4px 4px 0;padding:24px 24px 18px 58px;box-sizing:border-box;background:repeating-linear-gradient(0deg,transparent 0 31px,rgba(122,90,58,.12) 31px 32px),linear-gradient(90deg,#c9b68e 0%,#e2d3b2 6%,#f4ead6 18%,#f4ead6 100%);box-shadow:0 0 0 1px rgba(58,31,14,.5)">
+            <div style="font-family:'Reenie Beanie',cursive;font-size:26px;line-height:1;color:#6b4f33">Que faire ?</div>
+            <div class="ts-slot {{tsCls}}" aria-label="Tempérament en jeu : {{tsLabel}}"><span class="ts-nom">{{tsLabel}}</span><span class="ts-rond" style="border-color:{{tsColor}};color:{{tsColor}}"><span class="glyphe" style="width:22px;height:22px;--g:{{tsGlyphe}}" aria-hidden="true"></span></span></div>
+            <div style="position:relative;display:flex;flex-direction:column;gap:{{listGap}}px;margin-top:10px;width:342px">
+              <sc-for list="{{answers}}" as="a" hint-placeholder-count="3">
+                <div class="{{a.ghostCls}}" aria-hidden="true" style="position:relative;width:100%;display:flex;align-items:center;gap:12px;padding:{{a.pad}};border:none;border-radius:4px;background:transparent;text-align:left;font-family:'Alegreya',serif;font-size:16.5px;color:#2b2118;transition-delay:{{a.delay}}">
+                  <span style="flex:none;width:28px;height:28px;box-sizing:border-box;border-radius:50%;border:2.5px {{a.borderStyle}} {{a.color}};display:flex;align-items:center;justify-content:center;color:{{a.color}};box-shadow:0 0 {{a.glow}}px {{a.glowColor}}"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{a.icon}}"></path></svg></span>
+                  <span style="min-width:0;flex:1"><span style="display:block;font-family:'Alegreya SC',serif;font-weight:700;font-size:{{a.labelSize}}px;letter-spacing:1px;color:{{a.color}}">{{a.label}}</span><sc-if value="{{a.showText}}" hint-placeholder-val="{{ true }}"><span class="ans">{{a.text}}</span></sc-if></span>
+                  <sc-if value="{{a.never}}" hint-placeholder-val="{{ false }}"><span title="Voir la réponse" style="flex:none;margin-left:auto;width:22px;height:22px;display:flex;align-items:center;justify-content:center;color:#6b4f33"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M6 3h9l4 4v14H6z"></path><path d="M15 3v4h4M9 12h7M9 16h5"></path></svg></span></sc-if>
+                  <svg class="{{a.ghostStamp}}" viewBox="0 0 40 40" aria-hidden="true"><circle cx="20" cy="20" r="16.5" fill="rgba(63,122,58,.08)" stroke="#3f7a3a" stroke-width="3"></circle><circle cx="20" cy="20" r="12.5" fill="none" stroke="#3f7a3a" stroke-width="1.2" stroke-dasharray="2 2.2"></circle><path d="M12.5 20.5l5 5 10-11" fill="none" stroke="#3f7a3a" stroke-width="3.6" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+          <div class="face back" style="position:absolute;inset:0;border-radius:4px 0 0 4px;padding:28px 30px 20px 120px;box-sizing:border-box;background:repeating-linear-gradient(0deg,transparent 0 31px,rgba(122,90,58,.12) 31px 32px),linear-gradient(90deg,#f4ead6 0%,#f4ead6 82%,#e2d3b2 94%,#c9b68e 100%);box-shadow:0 0 0 1px rgba(58,31,14,.5)">
+            <div style="font-family:'Reenie Beanie',cursive;font-size:28px;line-height:1;color:#6b4f33">{{titreReponse}}</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Portrait + halo -->
+    <div class="halo-in" style="position:absolute;left:170px;bottom:300px;width:300px;height:300px">
+      <div class="halo" style="width:300px;height:300px;border-radius:50%;background:radial-gradient(circle,rgba(255,200,120,.55) 0%,rgba(255,170,80,.16) 45%,transparent 70%)"></div>
+    </div>
+    <div class="portrait portrait-blur {{talkClass}}" aria-hidden="true"><img src="{{avatarImg}}" alt="" style="filter:blur(7px) {{portraitFilter}}"></div>
+    <div class="portrait portrait-fade {{talkClass}}" style="filter:{{portraitFilter}}">
+      <sc-for list="{{poses}}" as="p" hint-placeholder-count="1"><img class="pose {{p.cls}}" src="{{p.src}}" alt="{{p.alt}}" style="opacity:{{p.op}};position:{{p.pos}};left:40px;top:40px"></sc-for>
+    </div>
+  </div>
+    </sc-if>
+  </div>
+
+  <!-- Départ en exploration (transition) -->
+  <sc-if value="{{sortieVisible}}" hint-placeholder-val="{{ false }}">
+    <div class="sortie"><div style="font-family:'Reenie Beanie',cursive;font-size:46px;color:#fbf3e2;text-shadow:0 2px 10px rgba(0,0,0,.8)">{{sortieTexte}}</div></div>
+  </sc-if>
+
+  <!-- Le sac ouvert : 10 emplacements -->
+  <sc-if value="{{sacVisible}}" hint-placeholder-val="{{ false }}">
+    <button class="voile {{sacVoileCls}}" onClick="{{fermerSac}}" aria-label="Fermer le sac" style="animation-delay:{{sacVoileDelai}}s"></button>
+    <section class="sacoche {{sacCls}}" aria-label="Sac" style="filter:{{paperFilter}}">
+      <svg width="620" height="140" viewBox="0 0 620 140" aria-hidden="true" style="position:absolute;left:0;top:-60px"><path d="M60 140 C40 20 580 20 560 140" fill="none" stroke="#3a1f0e" stroke-width="22" stroke-linecap="round"></path><path d="M60 140 C40 20 580 20 560 140" fill="none" stroke="#8a5530" stroke-width="16" stroke-linecap="round"></path><path d="M60 140 C40 20 580 20 560 140" fill="none" stroke="rgba(240,214,170,.5)" stroke-width="1.6" stroke-dasharray="5 4"></path></svg>
+      <div class="sac-corps">
+        <div class="stitch" style="border-radius:18px 18px 54px 54px"></div>
+        <div class="sac-poche">
+          <sc-for list="{{sacCases}}" as="c" hint-placeholder-count="10">
+            <button class="case {{c.cls}}" style="animation-delay:{{c.delai}}s" draggable="{{c.plein}}" onDragStart="{{c.prendreDnd}}" onDragOver="{{c.survolDnd}}" onDragLeave="{{c.quitteDnd}}" onDrop="{{c.deposer}}" onDragEnd="{{c.finDnd}}" onMouseEnter="{{c.survol}}" onClick="{{c.choisir}}" aria-disabled="{{c.vide}}" aria-haspopup="menu" aria-label="{{c.nom}}">
+              <sc-if value="{{c.plein}}" hint-placeholder-val="{{ true }}"><img src="{{c.image}}" alt=""><span class="sceau qte" style="background:#6e3f22">{{c.qte}}</span></sc-if>
+            </button>
+          </sc-for>
+        </div>
+        <!-- menu d'un objet : Infos / Utiliser -->
+        <sc-if value="{{sacMenuVisible}}" hint-placeholder-val="{{ false }}">
+          <div class="sac-menu" role="menu" style="left:{{sacMenuX}}px;top:{{sacMenuY}}px" onClick="{{arreter}}">
+            <div class="sm-nom">{{sacMenuNom}}</div>
+            <sc-if value="{{sacMenuInfo}}" hint-placeholder-val="{{ false }}"><div class="sm-info">{{sacMenuTexte}}</div></sc-if>
+            <div class="sm-boutons">
+              <button class="sm-btn" role="menuitem" onClick="{{sacInfos}}" aria-pressed="{{sacMenuInfo}}">Infos</button>
+              <button class="sm-btn sm-ok" role="menuitem" onClick="{{sacUtiliser}}">Utiliser</button>
+            </div>
+          </div>
+        </sc-if>
+        <!-- ressources rapportées d'exploration -->
+        <div class="sac-info sac-ressources" aria-label="Ressources">
+          <span class="sr-titre">ressources</span>
+          <sc-for list="{{ressourcesSac}}" as="r" hint-placeholder-count="6">
+            <span class="sr {{r.cls}}" title="{{r.nom}}"><img src="{{r.image}}" alt="{{r.nom}}"><b>{{r.qte}}</b></span>
+          </sc-for>
+        </div>
+      </div>
+      <div class="sac-rabat">
+        <div class="face" style="border-radius:22px 22px 34px 34px;background:#7d4a28;box-shadow:inset 0 0 0 2px #3a1f0e,inset 0 0 0 8px #7d4a28,inset 0 0 26px rgba(30,14,4,.45),0 10px 22px rgba(10,6,2,.45)">
+          <div class="stitch" style="border-radius:16px 16px 28px 28px"></div>
+          <div style="position:absolute;left:50%;bottom:-14px;width:46px;height:56px;margin-left:-23px;border-radius:6px;background:#c9a050;box-shadow:inset 0 0 0 2.5px #3a2410,0 4px 8px rgba(0,0,0,.35)"><div style="position:absolute;left:17px;top:16px;width:12px;height:22px;border-radius:3px;background:#3a2410"></div></div>
+        </div>
+        <div class="face dos" style="border-radius:22px 22px 34px 34px;background:#4a2814;box-shadow:inset 0 0 0 2px #3a1f0e"></div>
+      </div>
+      <button onClick="{{fermerSac}}" aria-label="Fermer le sac" style="position:absolute;right:-16px;top:40px;width:46px;height:46px;border:none;border-radius:50%;background:rgba(244,234,214,.94);color:#3a1f0e;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 6px 14px rgba(0,0,0,.4);z-index:3"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"></path></svg></button>
+    </section>
+  </sc-if>
+
+  <!-- Le carnet ouvert : c'est le menu du jeu -->
+  <sc-if value="{{carnetVisible}}" hint-placeholder-val="{{ false }}">
+    <button class="voile {{voileCls}}" onClick="{{fermerCarnet}}" aria-label="Fermer le carnet"></button>
+    <section class="livre {{livreCls}}" aria-label="Carnet d'éleveur" style="filter:{{paperFilter}}">
+      <div class="l-wrap">
+        <!-- Onglets : glissent hors du carnet une fois ouvert -->
+        <nav class="l-onglets" aria-label="Pages du carnet">
+          <sc-for list="{{onglets}}" as="o" hint-placeholder-count="7">
+            <button class="l-onglet leather {{o.cls}}" style="animation-delay:{{o.delai}}s" onClick="{{o.ouvrir}}" aria-label="{{o.nom}}">
+              <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{o.icone}}"></path></svg>{{o.court}}
+            </button>
+          </sc-for>
+        </nav>
+
+        <!-- Moitié droite : plat arrière et page de droite -->
+        <div style="position:absolute;left:470px;top:0;width:470px;height:590px;border-radius:0 16px 16px 0;background:#6e3f22;box-shadow:inset 0 0 0 2px #3a1f0e,inset 0 0 0 7px #6e3f22,inset 0 0 22px rgba(30,14,4,.45),0 6px 0 #4a2814,0 22px 50px rgba(10,6,2,.6)">
+          <div class="stitch" style="border-radius:0 11px 11px 0;left:0;border-left:none"></div>
+          <svg width="34" height="34" viewBox="0 0 34 34" aria-hidden="true" style="position:absolute;right:0;top:0"><path d="M32 32V10a8 8 0 0 0-8-8H2z" fill="#c9a050" stroke="#3a2410" stroke-width="2.5"></path></svg>
+          <svg width="34" height="34" viewBox="0 0 34 34" aria-hidden="true" style="position:absolute;right:0;bottom:0"><path d="M32 2v22a8 8 0 0 1-8 8H2z" fill="#c9a050" stroke="#3a2410" stroke-width="2.5"></path></svg>
+          <div class="papier-d" style="position:absolute;left:4px;right:20px;top:16px;bottom:16px;padding:30px 30px 24px 52px;overflow:hidden;box-shadow:0 0 0 1.5px #3a1f0e,1.5px 1.5px 0 #efe4cc,3px 3px 0 #d6c4a0,4.5px 4.5px 0 #ece0c6,6px 6px 0 #cbb893,7.5px 7.5px 0 #e6d8bb,8.5px 8.5px 0 #3a1f0e">
+            <div class="contenu-page {{contenuCls}}" style="position:relative;height:100%">
+              <sc-if value="{{pSommaire}}" hint-placeholder-val="{{ true }}">
+                <div style="font-family:'Reenie Beanie',cursive;font-size:34px;line-height:1;color:#3a2a1c">Aujourd'hui</div>
+                <div style="font-family:'Alegreya SC',serif;font-size:13px;letter-spacing:2px;color:#9a7b55;margin:2px 0 12px">{{jourTexteMin}} · {{time}}</div>
+                <sc-for list="{{journalCourt}}" as="j" hint-placeholder-count="3">
+                  <div style="display:flex;gap:12px;font-size:16.5px;line-height:32px"><span style="flex:none;width:46px;font-family:'Alegreya SC',serif;font-size:13px;color:#9a7b55">{{j.heure}}</span><span>{{j.texte}}</span></div>
+                </sc-for>
+                <div style="font-family:'Reenie Beanie',cursive;font-size:28px;line-height:1;color:#9c3b2a;margin-top:22px">à ne pas oublier</div>
+                <sc-for list="{{rappels}}" as="r" hint-placeholder-count="2">
+                  <div style="font-size:16.5px;line-height:32px;display:flex;gap:10px;align-items:center"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#9c3b2a" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"></path></svg>{{r.texte}}</div>
+                </sc-for>
+              </sc-if>
+              <sc-if value="{{pJournal}}" hint-placeholder-val="{{ false }}">
+                <div style="font-family:'Reenie Beanie',cursive;font-size:30px;line-height:1;color:#3a2a1c;margin-bottom:10px">jour 3</div>
+                <div style="display:flex;gap:12px;font-size:16px;line-height:32px"><span style="flex:none;width:46px;font-family:'Alegreya SC',serif;font-size:13px;color:#9a7b55">08:10</span><span>Filo a goûté son premier champignon lumineux. Mitigé.</span></div>
+                <div style="display:flex;gap:12px;font-size:16px;line-height:32px"><span style="flex:none;width:46px;font-family:'Alegreya SC',serif;font-size:13px;color:#9a7b55">15:40</span><span>Jumpy est passé vendre des graines au ranch.</span></div>
+                <div style="display:flex;gap:12px;font-size:16px;line-height:32px"><span style="flex:none;width:46px;font-family:'Alegreya SC',serif;font-size:13px;color:#9a7b55">21:05</span><span>Filo s'est endormi contre la barrière.</span></div>
+              </sc-if>
+              <sc-if value="{{pSac}}" hint-placeholder-val="{{ false }}">
+                <div style="font-family:'Alegreya SC',serif;font-weight:700;font-size:14px;letter-spacing:2px;color:#9a7b55;margin-bottom:10px">Objets et curiosités</div>
+                <div style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px">
+                  <div class="case-sac" style="opacity:.55"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#9a8668" stroke-width="1.6" aria-hidden="true"><path d="M9.5 9a2.5 2.5 0 1 1 3.5 2.3c-.8.4-1 1-1 1.7M12 17h.01"></path></svg>???</div>
+                  <div class="case-sac" style="opacity:.55"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#9a8668" stroke-width="1.6" aria-hidden="true"><path d="M9.5 9a2.5 2.5 0 1 1 3.5 2.3c-.8.4-1 1-1 1.7M12 17h.01"></path></svg>???</div>
+                  <div class="case-sac" style="opacity:.55"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#9a8668" stroke-width="1.6" aria-hidden="true"><path d="M9.5 9a2.5 2.5 0 1 1 3.5 2.3c-.8.4-1 1-1 1.7M12 17h.01"></path></svg>???</div>
+                  <div class="case-sac" style="opacity:.55"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#9a8668" stroke-width="1.6" aria-hidden="true"><path d="M9.5 9a2.5 2.5 0 1 1 3.5 2.3c-.8.4-1 1-1 1.7M12 17h.01"></path></svg>???</div>
+                </div>
+                <div style="display:flex;align-items:center;gap:10px;margin-top:26px;font-size:18px"><span style="width:18px;height:18px;border-radius:50%;background:#c9a050;box-shadow:inset 0 0 0 2px #3a2410"></span>{{pieces}} pièces</div>
+                <div style="font-family:'Reenie Beanie',cursive;font-size:24px;line-height:1.05;color:#6b4f33;margin-top:14px">ce que l'on trouve en explorant atterrit ici</div>
+              </sc-if>
+              <sc-if value="{{pRelations}}" hint-placeholder-val="{{ false }}">
+                <div style="font-family:'Alegreya SC',serif;font-weight:700;font-size:14px;letter-spacing:2px;color:#9a7b55;margin-bottom:6px">À rencontrer</div>
+                <div style="font-size:16.5px;line-height:32px;color:#9a8668">??? — quelqu'un vit près de la rivière</div>
+                <div style="font-size:16.5px;line-height:32px;color:#9a8668">??? — une lumière dans la forêt, la nuit</div>
+                <div style="font-size:16.5px;line-height:32px;color:#9a8668">??? — l'atelier du village est fermé</div>
+              </sc-if>
+              <sc-if value="{{pCarte}}" hint-placeholder-val="{{ false }}">
+                <svg width="340" height="420" viewBox="0 0 340 420" role="img" aria-label="Carte des environs">
+                  <path d="M170 380 C160 320 120 300 110 250 S140 160 120 90" fill="none" stroke="#6e3f22" stroke-width="2.5" stroke-dasharray="7 6"></path>
+                  <path d="M170 380 C200 330 250 310 270 250" fill="none" stroke="#6e3f22" stroke-width="2.5" stroke-dasharray="7 6"></path>
+                  <path d="M20 200 C80 220 120 190 170 210 S280 200 330 220" fill="none" stroke="#2f5a7a" stroke-width="3"></path>
+                  <path d="M150 368h40l-20-18z" fill="#9c3b2a" stroke="#3a1f0e" stroke-width="1.6"></path>
+                  <text x="170" y="402" text-anchor="middle" font-family="Reenie Beanie, cursive" font-size="22" fill="#3a2a1c">le ranch</text>
+                  <path d="M100 82l10-20 10 20zM112 92l10-22 10 22z" fill="none" stroke="#566b3a" stroke-width="2"></path>
+                  <text x="122" y="56" text-anchor="middle" font-family="Reenie Beanie, cursive" font-size="22" fill="#3a2a1c">la forêt</text>
+                  <path d="M258 250h24v-14l-12-10-12 10z" fill="none" stroke="#3a1f0e" stroke-width="2"></path>
+                  <text x="272" y="280" text-anchor="middle" font-family="Reenie Beanie, cursive" font-size="22" fill="#3a2a1c">le village</text>
+                  <text x="40" y="190" font-family="Reenie Beanie, cursive" font-size="22" fill="#2f5a7a">la rivière</text>
+                  <text x="250" y="120" font-family="Reenie Beanie, cursive" font-size="26" fill="#9a8668">???</text>
+                </svg>
+              </sc-if>
+              <sc-if value="{{pMemoire}}" hint-placeholder-val="{{ false }}">
+                <div style="font-family:'Reenie Beanie',cursive;font-size:27px;line-height:1.15;color:#6b4f33;margin-top:20px">Quand un écho s'en va, il laisse ici son souvenir : sa forme, ce qu'il a appris, ce qu'il a aimé.</div>
+                <div style="font-family:'Reenie Beanie',cursive;font-size:27px;line-height:1.15;color:#6b4f33;margin-top:18px">Cette mémoire appartient à ce profil.</div>
+              </sc-if>
+              <sc-if value="{{pOptions}}" hint-placeholder-val="{{ false }}">
+                <div style="font-family:'Alegreya SC',serif;font-weight:700;font-size:14px;letter-spacing:2px;color:#9a7b55;margin-bottom:12px">Partie</div>
+                <div style="display:flex;flex-direction:column;gap:12px;align-items:flex-start">
+                  <button onClick="{{sauver}}" style="display:inline-flex;align-items:center;gap:8px;padding:10px 16px;border:none;border-radius:6px;background:#6e3f22;color:#f6ecd6;font-family:'Alegreya SC',serif;font-size:15px;letter-spacing:1px;cursor:pointer;box-shadow:inset 0 0 0 2px #3a1f0e,inset 0 0 0 4px #6e3f22,inset 0 0 0 5px rgba(240,214,170,.5)">Sauvegarder</button>
+                  <span style="font-family:'Reenie Beanie',cursive;font-size:22px;color:#3f7a3a">{{sauveTexte}}</span>
+                  <button style="display:inline-flex;align-items:center;gap:8px;padding:10px 16px;border:none;border-radius:6px;background:transparent;color:#6e3f22;font-family:'Alegreya SC',serif;font-size:15px;letter-spacing:1px;cursor:pointer;box-shadow:inset 0 0 0 2px #6e3f22">Retour au menu principal</button>
+                </div>
+              </sc-if>
+            </div>
+          </div>
+          <!-- Marque-page -->
+          <svg width="60" height="660" viewBox="0 0 60 660" aria-hidden="true" style="position:absolute;left:0;top:0;overflow:visible;filter:drop-shadow(1.5px 2.5px 1.5px rgba(30,14,4,.35))">
+            <path d="M22 4 C20 180 30 400 34 590 C35 606 30 620 22 632" fill="none" stroke="#5e1a12" stroke-width="15"></path>
+            <path d="M22 4 C20 180 30 400 34 590 C35 606 30 620 22 632" fill="none" stroke="#9c3b2a" stroke-width="12.5"></path>
+            <path d="M22 4 C20 180 30 400 34 590 C35 606 30 620 22 632" fill="none" stroke="#c65a44" stroke-width="3" opacity=".55" transform="translate(-2.5 0)"></path>
+            <path d="M27.8 635.9 L21.7 645 L19.8 635.3 L10.1 637.3 L16.2 628.1 Z" fill="#9c3b2a" stroke="#5e1a12" stroke-width="1.3" stroke-linejoin="round"></path>
+          </svg>
+        </div>
+
+        <!-- Quelques pages qui tournent à l'ouverture -->
+        <div class="l-feuillet" style="--z:1px;animation-delay:1.14s"><div class="face papier-d"></div><div class="face dos papier-g"></div></div>
+        <div class="l-feuillet" style="--z:2px;animation-delay:1s"><div class="face papier-d"></div><div class="face dos papier-g"></div></div>
+        <div class="l-feuillet" style="--z:3px;animation-delay:.86s"><div class="face papier-d"></div><div class="face dos papier-g"></div></div>
+
+        <!-- Couverture (recto), puis page de gauche (verso) -->
+        <div class="l-rabat">
+          <div class="face" style="border-radius:0 16px 16px 0;background:#6e3f22;box-shadow:inset 0 0 0 2px #3a1f0e,inset 0 0 0 7px #6e3f22,inset 0 0 26px rgba(30,14,4,.5),0 5px 0 #4a2814,0 20px 40px rgba(20,10,4,.45)">
+            <div class="stitch" style="border-radius:0 11px 11px 0"></div>
+            <svg width="34" height="34" viewBox="0 0 34 34" aria-hidden="true" style="position:absolute;right:0;top:0"><path d="M32 32V10a8 8 0 0 0-8-8H2z" fill="#c9a050" stroke="#3a2410" stroke-width="2.5"></path></svg>
+            <svg width="34" height="34" viewBox="0 0 34 34" aria-hidden="true" style="position:absolute;right:0;bottom:0"><path d="M32 2v22a8 8 0 0 1-8 8H2z" fill="#c9a050" stroke="#3a2410" stroke-width="2.5"></path></svg>
+            <div style="position:absolute;left:0;top:0;bottom:0;width:22px;background:linear-gradient(90deg,#4a2814,rgba(110,63,34,0))"></div>
+            <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px">
+              <svg width="96" height="96" viewBox="0 0 78 78" aria-hidden="true"><circle cx="39" cy="39" r="34" fill="none" stroke="rgba(30,14,4,.55)" stroke-width="2.5"></circle><path d="M39 58c-9 0-14-7-14-15s6-13 14-13 14 5 14 13-5 15-14 15zM39 30c0-6 3-10 9-12M39 30c-1-5-5-8-10-8" fill="none" stroke="rgba(30,14,4,.55)" stroke-width="2.5" stroke-linecap="round"></path></svg>
+              <div style="font-family:'Alegreya SC',serif;font-weight:700;font-size:22px;letter-spacing:5px;color:rgba(30,14,4,.5);text-shadow:0 1px 0 rgba(240,200,150,.2)">Carnet d'éleveur</div>
+            </div>
+          </div>
+          <div class="face dos" style="border-radius:16px 0 0 16px;background:#6e3f22;box-shadow:inset 0 0 0 2px #3a1f0e,inset 0 0 0 7px #6e3f22,inset 0 0 22px rgba(30,14,4,.45),0 6px 0 #4a2814,0 22px 50px rgba(10,6,2,.6)">
+            <div class="stitch" style="border-radius:11px 0 0 11px;right:0;border-right:none"></div>
+            <svg width="34" height="34" viewBox="0 0 34 34" aria-hidden="true" style="position:absolute;left:0;top:0"><path d="M2 32V10a8 8 0 0 1 8-8h22z" fill="#c9a050" stroke="#3a2410" stroke-width="2.5"></path></svg>
+            <svg width="34" height="34" viewBox="0 0 34 34" aria-hidden="true" style="position:absolute;left:0;bottom:0"><path d="M2 2v22a8 8 0 0 0 8 8h22z" fill="#c9a050" stroke="#3a2410" stroke-width="2.5"></path></svg>
+            <div class="papier-g" style="position:absolute;left:20px;right:4px;top:16px;bottom:16px;padding:30px 44px 24px 38px;overflow:hidden;box-shadow:0 0 0 1.5px #3a1f0e,-1.5px 1.5px 0 #efe4cc,-3px 3px 0 #d6c4a0,-4.5px 4.5px 0 #ece0c6,-6px 6px 0 #cbb893,-7.5px 7.5px 0 #e6d8bb,-8.5px 8.5px 0 #3a1f0e">
+              <div class="contenu-page {{contenuCls}}" style="position:relative;height:100%">
+                <div style="font-family:'Alegreya SC',serif;font-size:13px;letter-spacing:3px;color:#9a7b55">{{pageSurtitre}}</div>
+                <div style="font-family:'Reenie Beanie',cursive;font-size:44px;line-height:1;color:#3a2a1c;margin:2px 0 14px">{{pageTitre}}</div>
+                <sc-if value="{{pSommaire}}" hint-placeholder-val="{{ true }}">
+                  <sc-for list="{{sommaire}}" as="s" hint-placeholder-count="6">
+                    <button class="sommaire-ligne" onClick="{{s.ouvrir}}">
+                      <span class="num">{{s.num}}</span><span>{{s.nom}}</span>
+                      <sc-if value="{{s.aBadge}}" hint-placeholder-val="{{ false }}"><span class="sceau">{{s.badge}}</span></sc-if>
+                      <span class="points"></span><span class="num">{{s.page}}</span>
+                    </button>
+                  </sc-for>
+                </sc-if>
+                <sc-if value="{{pJournal}}" hint-placeholder-val="{{ false }}">
+                  <div style="font-family:'Reenie Beanie',cursive;font-size:30px;line-height:1;color:#3a2a1c;margin-bottom:6px">aujourd'hui</div>
+                  <sc-for list="{{journal}}" as="j" hint-placeholder-count="4">
+                    <div style="display:flex;gap:12px;font-size:16px;line-height:32px"><span style="flex:none;width:46px;font-family:'Alegreya SC',serif;font-size:13px;color:#9a7b55">{{j.heure}}</span><span>{{j.texte}}</span></div>
+                  </sc-for>
+                </sc-if>
+                <sc-if value="{{pSac}}" hint-placeholder-val="{{ false }}">
+                  <div style="font-family:'Alegreya SC',serif;font-weight:700;font-size:14px;letter-spacing:2px;color:#9a7b55;margin-bottom:10px">Nourriture</div>
+                  <div style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px">
+                    <sc-for list="{{sacNourriture}}" as="n" hint-placeholder-count="5">
+                      <div class="case-sac" style="opacity:{{n.opacite}}"><img src="{{n.image}}" alt=""><span>{{n.nom}}</span><b style="font-family:'Alegreya SC',serif;font-size:12px;color:#6b4f33">× {{n.qte}}</b></div>
+                    </sc-for>
+                  </div>
+                </sc-if>
+                <sc-if value="{{pRelations}}" hint-placeholder-val="{{ false }}">
+                  <sc-for list="{{relations}}" as="r" hint-placeholder-count="3">
+                    <div style="display:flex;align-items:baseline;gap:10px;font-size:17px;line-height:32px"><b style="font-family:'Alegreya SC',serif;letter-spacing:1.5px;color:{{r.encre}};width:84px">{{r.nom}}</b><span style="font-family:'Reenie Beanie',cursive;font-size:23px;color:#6b4f33">{{r.lien}}</span></div>
+                  </sc-for>
+                </sc-if>
+                <sc-if value="{{pCarte}}" hint-placeholder-val="{{ false }}">
+                  <sc-for list="{{lieux}}" as="l" hint-placeholder-count="4">
+                    <button class="sommaire-ligne" onClick="{{l.partir}}" disabled="{{l.off}}" style="opacity:{{l.opacite}}"><span>{{l.nom}}</span><span class="points"></span><span class="num">{{l.duree}}</span></button>
+                  </sc-for>
+                  <div style="font-family:'Reenie Beanie',cursive;font-size:23px;line-height:1.05;color:#6b4f33;margin-top:14px">on part avec {{echoNom}} ; le ranch attend votre retour</div>
+                </sc-if>
+                <sc-if value="{{pMemoire}}" hint-placeholder-val="{{ false }}">
+                  <div style="display:flex;gap:14px;align-items:center;padding:10px;border-radius:6px;background:rgba(255,255,255,.35);box-shadow:inset 0 0 0 1px rgba(122,90,58,.3)">
+                    <div style="flex:none;width:70px;height:84px;border-radius:5px;background:radial-gradient(circle at 50% 40%,#fff6df,#e8d6b0);display:flex;align-items:flex-end;justify-content:center;overflow:hidden"><img src="/_blob/f4e24910f42142c8fea4d63b7da610fd" alt="" style="height:74px;width:auto"></div>
+                    <div><div style="font-family:'Alegreya SC',serif;font-weight:700;font-size:16px;letter-spacing:2px">Filo</div><div style="font-size:15px;color:#6b4f33">Enfant · lignée Colère · jour 4</div><div style="font-family:'Reenie Beanie',cursive;font-size:22px;color:#3f7a3a">à vos côtés</div></div>
+                  </div>
+                  <div style="font-size:15.5px;color:#9a8668;margin-top:16px">Aucun autre écho pour l'instant.</div>
+                </sc-if>
+                <sc-if value="{{pOptions}}" hint-placeholder-val="{{ false }}">
+                  <div style="display:flex;flex-direction:column;gap:14px">
+                    <sc-for list="{{reglages}}" as="g" hint-placeholder-count="2">
+                      <label style="display:flex;align-items:center;justify-content:space-between;gap:12px;font-size:17px;cursor:pointer"><span>{{g.nom}}</span><input type="checkbox" checked="{{g.actif}}" onChange="{{g.basculer}}" style="width:22px;height:22px;accent-color:#6e3f22"></label>
+                    </sc-for>
+                  </div>
+                </sc-if>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Page qui tourne quand on change de section -->
+        <sc-if value="{{tourneVisible}}" hint-placeholder-val="{{ false }}">
+          <div class="page-tourne {{tourneCls}}"><div class="face papier-d"></div><div class="face dos papier-g"></div></div>
+        </sc-if>
+
+        <button onClick="{{fermerCarnet}}" aria-label="Fermer le carnet" style="position:absolute;right:-2px;top:-58px;width:46px;height:46px;border:none;border-radius:50%;background:rgba(244,234,214,.92);color:#3a1f0e;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 6px 14px rgba(0,0,0,.4)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"></path></svg></button>
+      </div>
+    </section>
+  </sc-if>
+</div>

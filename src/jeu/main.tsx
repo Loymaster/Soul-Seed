@@ -151,6 +151,9 @@ function Jeu() {
           reglages={profil.reglages}
           surReglages={(r) => P.modifierProfil(profil.id, { reglages: r })}
           sauver={(e) => { P.sauverPartie(profil.id, emplacement, e); P.noterForme(profil.id, apparence(e)); }}
+          personnage={P.chargerPersonnage(profil, emplacement)}
+          connus={profil.connus ?? []}
+          surDecouverte={(cle) => { const p = P.profilActif(); if (p && !(p.connus ?? []).includes(cle)) P.modifierProfil(p.id, { connus: [...(p.connus ?? []), cle] }); }}
           surMort={(e) => setEcran({ nom: 'mort', emplacement, etat: e })}
           surCombat={(e, nature) => setEcran({ nom: 'combat', emplacement, etat: e, ...preparerCombat(e, nature) })}
           surQuitter={menu} />

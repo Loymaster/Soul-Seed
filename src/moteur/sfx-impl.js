@@ -278,5 +278,50 @@ export const SFX = {
   aube() { const c = this.get(); if (!c) return; const t = c.currentTime;
     this.noise(t, 4, { f: 400, fTo: 6000, q: 0.5, gain: 0.07, attack: 3.2, send: this.bright, sendGain: 0.6 });
     [261.63, 329.63, 392, 523.25, 659.25, 783.99, 1046.5, 1318.5, 1567.98].forEach((f, i) => this.tone(f, t + 0.6 + i * 0.32, 2.6, { gain: 0.035, attack: 0.08, lp: 5000, send: this.bright, sendGain: 0.6 }));
-    [130.81, 196, 261.63].forEach((f) => this.tone(f, t + 2.4, 4.5, { gain: 0.04, attack: 1.2, send: this.bright, sendGain: 0.6 })); }
+    [130.81, 196, 261.63].forEach((f) => this.tone(f, t + 2.4, 4.5, { gain: 0.04, attack: 1.2, send: this.bright, sendGain: 0.6 })); },
+  // ——— sons du ranch (maquette v7) : balai, sacoche, scènes d'action
+  pas(v) { const c = this.get(); if (!c) return; const t = c.currentTime; v = v || 1;
+    this.noise(t, 0.08, { type: 'lowpass', f: 380 + Math.random() * 160, q: 0.8, gain: 0.07 * v, attack: 0.004 });
+    this.noise(t + 0.006, 0.06, { f: 2600 + Math.random() * 800, q: 1.4, gain: 0.009 * v, attack: 0.003, grain: 0.003 }); },
+  balai() { const c = this.get(); if (!c) return; const t = c.currentTime;
+    const coup = (t0, dur, v, sens) => {
+      const n = Math.ceil(c.sampleRate * dur); const buf = c.createBuffer(1, n, c.sampleRate); const d = buf.getChannelData(0);
+      for (let i = 0; i < n; i++) {
+        const x = i / n; const env = Math.pow(Math.sin(Math.PI * Math.pow(x, 0.6)), 1.4);
+        const brin = Math.random() < 0.07 ? (Math.random() * 2 - 1) : 0;
+        d[i] = (brin * 0.95 + (Math.random() * 2 - 1) * 0.3) * env;
+      }
+      const s = c.createBufferSource(); s.buffer = buf;
+      const hp = c.createBiquadFilter(); hp.type = 'highpass'; hp.frequency.value = 1700;
+      const pk = c.createBiquadFilter(); pk.type = 'peaking'; pk.Q.value = 0.9; pk.gain.value = 7;
+      pk.frequency.setValueAtTime(sens > 0 ? 3000 : 5400, t0); pk.frequency.linearRampToValueAtTime(sens > 0 ? 5400 : 3000, t0 + dur);
+      const lp = c.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 9500;
+      const g = c.createGain(); g.gain.value = v;
+      s.connect(hp); hp.connect(pk); pk.connect(lp); lp.connect(g); g.connect(this.master); s.start(t0);
+    };
+    coup(t, 0.27, 0.2, 1); coup(t + 0.31, 0.22, 0.17, -1); coup(t + 0.58, 0.32, 0.15, 1); },
+  // sac en bandoulière : fermoir de laiton (deux petits « tic » métalliques) et rabat de cuir souple qui frotte,
+  sacoche(ouvre) { const c = this.get(); if (!c) return; const t = c.currentTime;
+    const clic = (t0, v) => { this.tone(2900, t0, 0.05, { type: 'triangle', gain: 0.035 * v, attack: 0.002 }); this.tone(4370, t0 + 0.004, 0.035, { gain: 0.018 * v, attack: 0.002 }); this.noise(t0, 0.018, { type: 'highpass', f: 4200, gain: 0.03 * v }); };
+    const rabat = (t0) => { this.noise(t0, 0.26, { f: 1250, fTo: 650, q: 0.6, gain: 0.06, attack: 0.06, grain: 0.004, soft: 3400 }); this.noise(t0 + 0.05, 0.16, { type: 'highpass', f: 3500, gain: 0.012, attack: 0.04 }); };
+    if (ouvre) { clic(t, 1); clic(t + 0.07, 0.8); rabat(t + 0.12); } else { rabat(t); clic(t + 0.24, 1); clic(t + 0.3, 0.8); } },
+  // un objet qu'on repose dans le sac : feutré, sans résonance
+  // eau qui se déverse : souffle grave et clapotis,
+  eau() { const c = this.get(); if (!c) return; const t = c.currentTime;
+    this.noise(t, 0.9, { type: 'lowpass', f: 1400, fTo: 600, gain: 0.12, attack: 0.08, grain: 0.012 });
+    for (let i = 0; i < 6; i++) this.tone(500 + Math.random() * 500, t + 0.1 + i * 0.12, 0.08, { to: 900 + Math.random() * 600, gain: 0.03, type: 'sine' }); },
+  brosse() { const c = this.get(); if (!c) return; const t = c.currentTime;
+    [0, 0.42].forEach((o) => this.noise(t + o, 0.32, { f: 2800, fTo: 4200, q: 0.8, gain: 0.05, attack: 0.06, grain: 0.0018 })); },
+  croque() { const c = this.get(); if (!c) return; const t = c.currentTime;
+    for (let i = 0; i < 3; i++) this.noise(t + i * 0.05, 0.05, { f: 1800 + Math.random() * 1500, q: 1.5, gain: 0.09, grain: 0.003 }); },
+  rebond() { const c = this.get(); if (!c) return; const t = c.currentTime;
+    this.tone(260, t, 0.22, { to: 520, gain: 0.07, type: 'triangle' }); },
+  bulles() { const c = this.get(); if (!c) return; const t = c.currentTime;
+    for (let i = 0; i < 6; i++) this.tone(900 + Math.random() * 900, t + i * 0.35, 0.06, { to: 1800 + Math.random() * 800, gain: 0.03 }); },
+  marteau() { const c = this.get(); if (!c) return; const t = c.currentTime;
+    this.noise(t, 0.09, { type: 'lowpass', f: 700, gain: 0.18 }); this.tone(180, t, 0.12, { gain: 0.08, type: 'triangle' }); },
+  berceuse() { const c = this.get(); if (!c) return; const t = c.currentTime;
+    [523, 659, 587, 494].forEach((f, i) => this.tone(f, t + i * 0.55, 0.9, { gain: 0.035, attack: 0.08, type: 'sine' })); },
+  sacPose() { const c = this.get(); if (!c) return; const t = c.currentTime;
+    this.noise(t, 0.08, { type: 'lowpass', f: 900, gain: 0.07, attack: 0.004 }); this.noise(t, 0.05, { f: 2400, q: 0.8, gain: 0.015 }); }
 };
