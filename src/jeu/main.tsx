@@ -278,6 +278,7 @@ function Jeu() {
           surCombat={(e, m, rencontre) => setEcran({ nom: 'combat', emplacement, etat: e, ...preparerCombatExploration(rencontre), exploration: { monde: m, zone: rencontre.zone, historique: ecran.historique, bilan, rencontre } })}
           surRanch={(e, m) => { sauver(e, m); setEcran({ nom: 'ranch', emplacement, etat: e }); }}
           surVillage={(e, m) => { sauver(e, m); setEcran({ nom: 'monde', emplacement, etat: e, monde: m, lieu: 'foret' }); }}
+          surReglages={(r) => { P.modifierProfil(profil.id, { reglages: r }); rafraichir(); }} surMenu={menu}
           surMort={(e) => setEcran({ nom: 'mort', emplacement, etat: e })} />
       );
     }
@@ -290,6 +291,7 @@ function Jeu() {
           sauver={sauver}
           surRanch={(e, m) => { sauver(e, m); setEcran({ nom: 'ranch', emplacement, etat: e }); }}
           surExploration={(e, m) => { sauver(e, m); setEcran({ nom: 'exploration', emplacement, etat: e, monde: m, zone: DEPART, historique: [], bilan: bilanDepart(e, m) }); }}
+          surReglages={(r) => { P.modifierProfil(profil.id, { reglages: r }); rafraichir(); }} surMenu={menu}
           surMort={(e) => { sauver(e, monde); setEcran({ nom: 'mort', emplacement, etat: e }); }} />
       );
     }

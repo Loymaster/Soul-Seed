@@ -134,7 +134,7 @@ export function VueExploration({ v }: { v: any }) {
             {v.region}
           </div>
         </div>
-        {/* la carte et le sac */}
+        {/* la carte (le sac et le carnet : InterfaceRanch) */}
         <button className={`cote ${v.coteCls}`} style={{ top: "18px" } as CSSProperties} onClick={v.ouvrirCarte} aria-label="Ouvrir la carte">
           <svg width="96" height="92" viewBox="0 0 96 92" aria-hidden="true">
             <path d="M14 22l22-8 24 8 22-8v54l-22 8-24-8-22 8z" fill="#e6d4a8" stroke="#3a2a16" strokeWidth="2.2" strokeLinejoin="round" />
@@ -145,21 +145,6 @@ export function VueExploration({ v }: { v: any }) {
           </svg>
           <span className="etiq">
             carte
-          </span>
-        </button>
-        <button className={`cote ${v.coteCls}`} style={{ top: "128px" } as CSSProperties} onClick={v.ouvrirSac} aria-label="Ouvrir le sac">
-          <svg width="96" height="92" viewBox="0 0 86 92" aria-hidden="true">
-            <path d="M14 44 C10 10 76 10 72 44" fill="none" stroke="#3a1f0e" strokeWidth="8" strokeLinecap="round" />
-            <path d="M14 44 C10 10 76 10 72 44" fill="none" stroke="#8a5530" strokeWidth="5" strokeLinecap="round" />
-            <path d="M14 44 C10 10 76 10 72 44" fill="none" stroke="rgba(240,214,170,.55)" strokeWidth="1.2" strokeDasharray="3 3" />
-            <path d="M10 42h66l-4 34c-1 6-5 9-11 9H25c-6 0-10-3-11-9z" fill="#6e3f22" stroke="#3a1f0e" strokeWidth="2.2" strokeLinejoin="round" />
-            <path d="M16 48h54l-3 26c-1 4-3 6-7 6H26c-4 0-6-2-7-6z" fill="none" stroke="rgba(240,214,170,.55)" strokeWidth="1.4" strokeDasharray="4 3" />
-            <path d="M9 40h68v12c0 6-5 10-11 10H20c-6 0-11-4-11-10z" fill="#7d4a28" stroke="#3a1f0e" strokeWidth="2.2" strokeLinejoin="round" />
-            <rect x="37" y="54" width="12" height="14" rx="2.5" fill="#c9a050" stroke="#3a2410" strokeWidth="1.8" />
-            <rect x="41" y="58" width="4" height="6" rx="1" fill="#3a2410" />
-          </svg>
-          <span className="etiq">
-            sac
           </span>
         </button>
         {/* gestes de terrain */}
@@ -550,9 +535,29 @@ export function VueExploration({ v }: { v: any }) {
                     </Fragment>
                   ))}
                 </mask>
+                <filter id="dechire" x="-4%" y="-4%" width="108%" height="108%">
+                  <feTurbulence type="fractalNoise" baseFrequency="0.016" numOctaves="3" seed="11" result="bruit" />
+                  <feDisplacementMap in="SourceGraphic" in2="bruit" scale="30" xChannelSelector="R" yChannelSelector="G" result="bord" />
+                  <feGaussianBlur in="bord" stdDeviation="2.2" />
+                </filter>
+                <mask id="papier" maskUnits="userSpaceOnUse" x="0" y="0" width="1586" height="992">
+                  <rect x="40" y="36" width="1506" height="920" rx="10" fill="#fff" filter="url(#dechire)" />
+                </mask>
+                <radialGradient id="bruni" cx="50%" cy="50%" r="72%">
+                  <stop offset=".62" stopColor="#8a5a2a" stopOpacity="0" />
+                  <stop offset=".9" stopColor="#7a4a1e" stopOpacity=".38" />
+                  <stop offset="1" stopColor="#4a2a10" stopOpacity=".7" />
+                </radialGradient>
+                <filter id="ombrePin" x="-50%" y="-50%" width="200%" height="200%">
+                  <feDropShadow dx="3" dy="5" stdDeviation="3" floodColor="#1a0d05" floodOpacity=".55" />
+                </filter>
               </defs>
-              <image href={v.carte.image} x="0" y="0" width="1586" height="992" preserveAspectRatio="none" />
-              <image className="brume" href={v.carte.brume} x="0" y="0" width="1586" height="992" preserveAspectRatio="none" mask="url(#brume)" />
+              <g mask="url(#papier)">
+                <rect className="dessous" x="0" y="0" width="1586" height="992" fill="#e9d9b2" />
+                <image href={v.carte.image} x="0" y="0" width="1586" height="992" preserveAspectRatio="none" />
+                <image className="brume" href={v.carte.brume} x="0" y="0" width="1586" height="992" preserveAspectRatio="none" mask="url(#brume)" />
+                <rect className="bruni" x="0" y="0" width="1586" height="992" fill="url(#bruni)" />
+              </g>
               {(v.carte.lieux || []).map((xL15: any, i15: number) => (
                 <Fragment key={i15}>
                   <g className={xL15.cls} transform={`translate(${xL15.x},${xL15.y})`}>
@@ -571,11 +576,12 @@ export function VueExploration({ v }: { v: any }) {
                   </g>
                 </Fragment>
               ))}
-              <g className="epingle" transform={`translate(${v.carte.piqueX},${v.carte.piqueY})`}>
-                <ellipse cx="3" cy="2" rx="9" ry="4" fill="rgba(0,0,0,.35)" />
-                <path d="M0 0 L-3 -40 L3 -40z" fill="#5a5a5a" />
-                <circle cx="0" cy="-46" r="12" fill="#a33a22" stroke="#5e1c0e" strokeWidth="2" />
-                <circle cx="-4" cy="-50" r="3.5" fill="rgba(255,255,255,.5)" />
+              <g transform={`translate(${v.carte.piqueX},${v.carte.piqueY})`}>
+                <circle className="onde" r="18" />
+                <g className="epingle">
+                  <ellipse cx="2" cy="1" rx="14" ry="5" fill="rgba(30,14,4,.45)" />
+                  <image href={v.carte.repere} x="-30" y="-86" width="60" height="88" filter="url(#ombrePin)" />
+                </g>
               </g>
             </svg>
             <div className="cartouche">
@@ -586,91 +592,8 @@ export function VueExploration({ v }: { v: any }) {
                 se découvre au fil de vos pas
               </div>
             </div>
-            <i className="punaise" style={{ left: "18px", top: "-6px" } as CSSProperties} />
-            <i className="punaise" style={{ right: "18px", top: "-6px" } as CSSProperties} />
-            <i className="punaise" style={{ left: "18px", top: "auto", bottom: "-8px" } as CSSProperties} />
-            <i className="punaise" style={{ right: "18px", top: "auto", bottom: "-8px" } as CSSProperties} />
             <button className="fermer" onClick={v.fermerCarte} aria-label="Fermer la carte">
               ×
-            </button>
-          </section>
-        </>) : null}
-        {/* Le sac ouvert : 10 emplacements */}
-        {v.sacVisible ? (<>
-          <button className={`voile ${v.sacVoileCls}`} onClick={v.fermerSac} aria-label="Fermer le sac" style={{ animationDelay: `${v.sacVoileDelai}s` } as CSSProperties} />
-          <section className={`sacoche ${v.sacCls}`} aria-label="Sac" style={{ filter: v.paperFilter } as CSSProperties}>
-            <svg width="620" height="140" viewBox="0 0 620 140" aria-hidden="true" style={{ position: "absolute", left: "0", top: "-60px" } as CSSProperties}>
-              <path d="M60 140 C40 20 580 20 560 140" fill="none" stroke="#3a1f0e" strokeWidth="22" strokeLinecap="round" />
-              <path d="M60 140 C40 20 580 20 560 140" fill="none" stroke="#8a5530" strokeWidth="16" strokeLinecap="round" />
-              <path d="M60 140 C40 20 580 20 560 140" fill="none" stroke="rgba(240,214,170,.5)" strokeWidth="1.6" strokeDasharray="5 4" />
-            </svg>
-            <div className="sac-corps">
-              <div className="stitch" style={{ borderRadius: "18px 18px 54px 54px" } as CSSProperties} />
-              <div className="sac-poche">
-                {(v.sacCases || []).map((xC16: any, i16: number) => (
-                  <Fragment key={i16}>
-                    <button className={`case ${xC16.cls}`} style={{ animationDelay: `${xC16.delai}s` } as CSSProperties} draggable={xC16.plein} onDragStart={xC16.prendreDnd} onDragOver={xC16.survolDnd} onDragLeave={xC16.quitteDnd} onDrop={xC16.deposer} onDragEnd={xC16.finDnd} onMouseEnter={xC16.survol} onClick={xC16.choisir} aria-disabled={!!(xC16.vide)} aria-haspopup="menu" aria-label={xC16.nom}>
-                      {xC16.plein ? (<>
-                        <img src={xC16.image} alt="" />
-                        <span className="sceau qte" style={{ background: "#6e3f22" } as CSSProperties}>
-                          {xC16.qte}
-                        </span>
-                      </>) : null}
-                    </button>
-                  </Fragment>
-                ))}
-              </div>
-              {/* menu d'un objet : Infos / Utiliser */}
-              {v.sacMenuVisible ? (<>
-                <div className="sac-menu" role="menu" style={{ left: `${v.sacMenuX}px`, top: `${v.sacMenuY}px` } as CSSProperties} onClick={v.arreter}>
-                  <div className="sm-nom">
-                    {v.sacMenuNom}
-                  </div>
-                  {v.sacMenuInfo ? (<>
-                    <div className="sm-info">
-                      {v.sacMenuTexte}
-                    </div>
-                  </>) : null}
-                  <div className="sm-boutons">
-                    <button className="sm-btn" role="menuitem" onClick={v.sacInfos} aria-pressed={v.sacMenuInfo}>
-                      Infos
-                    </button>
-                    <button className="sm-btn sm-ok" role="menuitem" onClick={v.sacUtiliser}>
-                      Utiliser
-                    </button>
-                  </div>
-                </div>
-              </>) : null}
-              {/* ressources rapportées d'exploration */}
-              <div className="sac-info sac-ressources" aria-label="Ressources">
-                <span className="sr-titre">
-                  ressources
-                </span>
-                {(v.ressourcesSac || []).map((xR17: any, i17: number) => (
-                  <Fragment key={i17}>
-                    <span className={`sr ${xR17.cls}`} title={xR17.nom}>
-                      <img src={xR17.image} alt={xR17.nom} />
-                      <b>
-                        {xR17.qte}
-                      </b>
-                    </span>
-                  </Fragment>
-                ))}
-              </div>
-            </div>
-            <div className="sac-rabat">
-              <div className="face" style={{ borderRadius: "22px 22px 34px 34px", background: "#7d4a28", boxShadow: "inset 0 0 0 2px #3a1f0e,inset 0 0 0 8px #7d4a28,inset 0 0 26px rgba(30,14,4,.45),0 10px 22px rgba(10,6,2,.45)" } as CSSProperties}>
-                <div className="stitch" style={{ borderRadius: "16px 16px 28px 28px" } as CSSProperties} />
-                <div style={{ position: "absolute", left: "50%", bottom: "-14px", width: "46px", height: "56px", marginLeft: "-23px", borderRadius: "6px", background: "#c9a050", boxShadow: "inset 0 0 0 2.5px #3a2410,0 4px 8px rgba(0,0,0,.35)" } as CSSProperties}>
-                  <div style={{ position: "absolute", left: "17px", top: "16px", width: "12px", height: "22px", borderRadius: "3px", background: "#3a2410" } as CSSProperties} />
-                </div>
-              </div>
-              <div className="face dos" style={{ borderRadius: "22px 22px 34px 34px", background: "#4a2814", boxShadow: "inset 0 0 0 2px #3a1f0e" } as CSSProperties} />
-            </div>
-            <button onClick={v.fermerSac} aria-label="Fermer le sac" style={{ position: "absolute", right: "-16px", top: "40px", width: "46px", height: "46px", border: "none", borderRadius: "50%", background: "rgba(244,234,214,.94)", color: "#3a1f0e", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 6px 14px rgba(0,0,0,.4)", zIndex: "3" } as CSSProperties}>
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" aria-hidden="true">
-                <path d="M6 6l12 12M18 6L6 18" />
-              </svg>
             </button>
           </section>
         </>) : null}
@@ -698,19 +621,19 @@ export function VueExploration({ v }: { v: any }) {
               </div>
             </>) : null}
             <div className="objets">
-              {(v.fin.objets || []).map((xO18: any, i18: number) => (
-                <Fragment key={i18}>
+              {(v.fin.objets || []).map((xO16: any, i16: number) => (
+                <Fragment key={i16}>
                   <span className="objet">
-                    <img src={xO18.icone} alt="" />
-                    {xO18.texte}
+                    <img src={xO16.icone} alt="" />
+                    {xO16.texte}
                   </span>
                 </Fragment>
               ))}
-              {(v.fin.materiaux || []).map((xO19: any, i19: number) => (
-                <Fragment key={i19}>
+              {(v.fin.materiaux || []).map((xO17: any, i17: number) => (
+                <Fragment key={i17}>
                   <span className="objet">
-                    <img src={xO19.icone} alt="" />
-                    {xO19.texte}
+                    <img src={xO17.icone} alt="" />
+                    {xO17.texte}
                   </span>
                 </Fragment>
               ))}
