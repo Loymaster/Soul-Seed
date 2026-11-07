@@ -46,8 +46,8 @@ Laver, brosser, coucher, manger, jeux, entraînements et corvées se jouent dans
 ## Combat
 Moteur prêt dans `src/moteur/combat/` (règles du prototype, temps réel, déterministe avec une graine). Reste :
 - [ ] Écran de combat (maquettes : page « Combat » du canevas, branchées sur le vrai moteur), en trois registres :
-  - **exploration** (carnet de terrain : carte punaisée, toile kaki, étiquettes de bois) pour les combats courants en forêt, en exploration et à l'entraînement — musique *exploration* (Misty Trees) ;
-  - **magie sainte** (verre et filigrane, lumière qui monte) pour l'arène et les combats importants — musique *combat* ;
+  - **exploration** (carnet de terrain : carte punaisée, toile kaki, étiquettes de bois) pour les combats courants en forêt, en exploration et à l'entraînement — musique *combat* (Early Game Battle) ;
+  - **magie sainte** (verre et filigrane, lumière qui monte) pour l'arène et les combats importants — musique *combat* (Early Game Battle) pour l’instant ; *combat-arena* (Free Duel) ou *combat-garry* (Minor Battle) possibles pour la distinguer ;
   - **magie corrompue** (obsidienne fêlée, cendres qui tombent, pas de fuite possible) pour les boss — musique *morthen* (Dark Reality).
   Le combat ne démarre qu'au bouton « Commencer le combat ».
 - [ ] Sons des coups, esquives, parades (synthétisés dans les maquettes, plus graves en registre corrompu).

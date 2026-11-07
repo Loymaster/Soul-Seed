@@ -102,7 +102,7 @@ export function EcranCombat({ echo, allie, adversaire, registre, terrain, musiqu
   const plus = (ms: number, f: () => void) => { minuteurs.current.push(window.setTimeout(f, ms)); };
   useEffect(() => () => { minuteurs.current.forEach(clearTimeout); }, []);
   useEffect(() => { SonsCombat.grave(CORROMPU); }, [CORROMPU]);
-  useMusique(CORROMPU ? 'morthen' : EXPLO ? 'exploration' : 'combat', { volume: 0.38, active: musique && phase !== 'attente', montee: 1500 });
+  useMusique(CORROMPU ? 'morthen' : 'combat', { volume: 0.38, active: musique && phase !== 'attente', montee: 1500 });
 
   // Particules : elles montent (magie sainte), tombent (corruption) ou dérivent au vent (exploration).
   const [particules] = useState<Particule[]>(() => {
