@@ -1,6 +1,8 @@
-// Objets du sac : aliments (donnees/aliments.ts) et objets divers (repris de HEAL_ITEMS / ITEM_LABELS).
+// Objets du sac : aliments (donnees/aliments.ts, poissons de donnees/exploration.ts) et objets divers
+// (repris de HEAL_ITEMS / ITEM_LABELS, curiosités et petites bêtes de l'exploration, outils).
 import type { Aliment, CaseInventaire, Etat } from './types';
 import { ALIMENTS } from './donnees/aliments';
+import { CURIOSITES, PETITES_BETES, POISSONS } from './donnees/exploration';
 
 export interface ObjetDivers {
   id: string;
@@ -9,6 +11,10 @@ export interface ObjetDivers {
   icone: string;
   /** Ce que l'objet fait au ranch ; absent = utilisable seulement en combat ou plus tard. */
   usage?: 'pansement' | 'medicament' | 'appat';
+  /** Famille d'objet sans usage au ranch : outil d'exploration, curiosité, petite bête. */
+  nature?: 'outil' | 'curiosite' | 'bete';
+  /** Prix de revente (curiosités, petites bêtes). */
+  revente?: number;
   description: string;
 }
 
@@ -24,9 +30,17 @@ export const OBJETS_DIVERS: ObjetDivers[] = [
   { id: 'appat_echo', nom: 'Appât à écho', prix: 45, icone: 'objets/divers/appat-echo.png', usage: 'appat', description: 'Attire un écho sauvage au ranch.' },
   { id: 'repousse', nom: 'Repousse', prix: 30, icone: 'objets/divers/repousse.png', description: 'Tient les échos agressifs à distance en exploration.' },
   { id: 'pierre_ardente', nom: 'Pierre ardente', prix: 55, icone: 'objets/divers/pierre-ardente.png', description: 'Une chaleur qui revigore, en combat.' },
+  // outils d'exploration
+  { id: 'canne_peche', nom: 'Canne à pêche', prix: 60, icone: 'objets/divers/canne-peche.png', nature: 'outil', description: 'Pour pêcher là où il y a de l’eau, en exploration.' },
+  { id: 'tente', nom: 'Tente', prix: 60, icone: 'interface/icones/tente.png', nature: 'outil', description: 'Un abri à planter en exploration pour nourrir, laver, soigner son écho et le laisser dormir.' },
+  ...CURIOSITES,
+  ...PETITES_BETES,
 ];
 
-const PAR_ID_ALIMENT = new Map(ALIMENTS.map(a => [a.id, a]));
+/** Tout ce qui se mange : les aliments de la boutique et les poissons crus de la pêche. */
+export const TOUS_ALIMENTS: Aliment[] = [...ALIMENTS, ...POISSONS];
+
+const PAR_ID_ALIMENT = new Map(TOUS_ALIMENTS.map(a => [a.id, a]));
 const PAR_ID_DIVERS = new Map(OBJETS_DIVERS.map(o => [o.id, o]));
 
 export const aliment = (id: string): Aliment | undefined => PAR_ID_ALIMENT.get(id);
@@ -34,7 +48,7 @@ export const objetDivers = (id: string): ObjetDivers | undefined => PAR_ID_DIVER
 
 export function descriptionObjet(id: string): { nom: string; icone: string; description: string } | null {
   const a = aliment(id);
-  if (a) return { nom: a.nom, icone: a.icone, description: a.categories.join(' · ') };
+  if (a) return { nom: a.nom, icone: a.icone, description: a.categories.includes('Poisson') ? 'Un poisson tout frais : ça se mange.' : a.categories.join(' · ') };
   const o = objetDivers(id);
   return o ? { nom: o.nom, icone: o.icone, description: o.description } : null;
 }

@@ -141,8 +141,9 @@ export function creerEcho(o: OptionsCreation, rng: Aleatoire = Math.random): Eta
 }
 
 /** generateWildEcho (sans les formes rares d'exploration). */
-export function creerEchoSauvage(rng: Aleatoire, ageMin = 1, ageMax = 3): EchoSauvage {
-  const graine = piocher(['joy', 'wrath', 'disgust', 'sorrow', 'fear'] as const, rng);
+export function creerEchoSauvage(rng: Aleatoire, ageMin = 1, ageMax = 3, graines?: readonly Graine[]): EchoSauvage {
+  // graines possibles (les échos d'un lieu d'exploration) ; par défaut, toutes
+  const graine = piocher(graines?.length ? graines : (['joy', 'wrath', 'disgust', 'sorrow', 'fear'] as const), rng);
   const lignee = tirerLignee(rng);
   const ageJours = ageMin + Math.floor(rng() * (ageMax - ageMin + 1));
   const mult = centieme(0.8 + rng() * 0.4) * (1 + ageJours / 8);

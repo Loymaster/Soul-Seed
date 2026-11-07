@@ -69,6 +69,8 @@ class Convertisseur:
 
     def chemin(self, p):
         p = p.strip()
+        if p.startswith('!'):
+            return '!' + self.chemin(p[1:])
         if p in ('true', 'false', 'null') or re.fullmatch(r'-?\d+(\.\d+)?', p):
             return p
         if re.fullmatch(r"'[^']*'", p):

@@ -6,7 +6,8 @@ export { lireSignes, ICONE_BESOIN, type Signes, type SigneBesoin, type Besoin, t
 export { etatEmotionnel, ETATS_EMOTIONNELS, type EtatEmotionnel } from './emotions';
 export { apparence, determinerAdolescent, determinerAdulte } from './evolution';
 export { texteComportement } from './comportements';
-export { aliment, objetDivers, descriptionObjet, OBJETS_DIVERS } from './objets';
+export { aliment, objetDivers, descriptionObjet, OBJETS_DIVERS, TOUS_ALIMENTS, type ObjetDivers } from './objets';
+export { POISSONS, CURIOSITES, PETITES_BETES } from './donnees/exploration';
 export { regimeCompatible } from './alimentation';
 export { ALIMENTS } from './donnees/aliments';
 export { ENTRAINEMENTS, CORVEES } from './donnees/activites';
