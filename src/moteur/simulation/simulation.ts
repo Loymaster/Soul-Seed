@@ -907,6 +907,12 @@ export class Simulation {
     return r.apprises;
   }
 
+  /** Retire un exemplaire de l'objet `id` du sac (objet utilisé en combat). */
+  retirerObjet(id: string): boolean {
+    const i = this.etat.inventaire.findIndex((c) => c?.id === id);
+    return i >= 0 && consommer(this.etat, i);
+  }
+
   /** Après un combat gagné ou perdu (applyCombatOutcome) : progrès, or, éducation, émotions, une heure qui passe. */
   terminerCombat(b: BilanCombat, adversaire?: string) {
     const e = this.etat;

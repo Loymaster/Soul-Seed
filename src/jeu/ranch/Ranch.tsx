@@ -41,9 +41,9 @@ const COURT: Record<ReponseComportement, string> = {
   feliciter: 'Féliciter', gronder: 'Gronder', rien: 'Se taire', encourager: 'Encourager', prevenir: 'Prévenir', remercier: 'Remercier', critiquer: 'Critiquer',
 };
 const DESTINATIONS = [
-  { nom: 'Au village', duree: '20 min', icone: IC.village, texte: 'En route pour le village…' },
-  { nom: 'Au magasin', duree: '10 min', icone: IC.magasin, texte: 'Direction le magasin…' },
-  { nom: 'En exploration', duree: 'selon le chemin', icone: IC.exploration, texte: 'Le sentier vous attend…' },
+  { nom: 'Au village', duree: '20 min', icone: IC.village, texte: 'En route pour le village…', combat: false },
+  { nom: 'Au magasin', duree: '10 min', icone: IC.magasin, texte: 'Direction le magasin…', combat: false },
+  { nom: 'En exploration', duree: 'selon le chemin', icone: IC.exploration, texte: 'Le sentier vous attend…', combat: true },
 ];
 
 interface Choix {
@@ -71,9 +71,11 @@ export interface ProprietesRanch {
   surReglages?: (r: Reglages) => void;
   /** L'écho s'est éteint : la séquence du « dernier souffle » prend le relais. */
   surMort?: (e: Etat) => void;
+  /** Un combat commence (exploration ou entraînement) : l'écran de combat prend le relais. */
+  surCombat?: (e: Etat, nature: 'exploration' | 'entrainement') => void;
 }
 
-export function Ranch({ etat, sauver: sauverProp, surQuitter, reglages, surReglages, surMort }: ProprietesRanch) {
+export function Ranch({ etat, sauver: sauverProp, surQuitter, reglages, surReglages, surMort, surCombat }: ProprietesRanch) {
   const sauverRef = useRef(sauverProp); sauverRef.current = sauverProp;
   const surMortRef = useRef(surMort); surMortRef.current = surMort;
   const sauver = useCallback((x: Etat) => sauverRef.current(x), []);
@@ -428,6 +430,9 @@ export function Ranch({ etat, sauver: sauverProp, surQuitter, reglages, surRegla
             rafraichir();
           },
         })),
+        { cle: 'r-combat', nom: 'Combat', rubrique: true },
+        { cle: 'combat-entr', nom: 'Combat d’entraînement', icone: IC.course, detail: surCombat ? 'contre un écho de passage' : 'à venir', off: !surCombat,
+          prendre: () => { if (!surCombat) return; sauver(s.etat); surCombat(s.etat, 'entrainement'); } },
         { cle: 'r-corv', nom: 'Corvées', rubrique: true },
         ...CORVEES.map((c) => ({ cle: c.id, nom: c.nom, image: asset(c.icone), off: true, detail: 'à remettre en état' })),
       ];
@@ -565,7 +570,11 @@ export function Ranch({ etat, sauver: sauverProp, surQuitter, reglages, surRegla
           <div className="quitter">
             <div style={{ position: 'relative', fontFamily: "'Reenie Beanie',cursive", fontSize: 26, lineHeight: 1, color: '#6b4f33', margin: '0 0 6px 6px' }}>Quitter le ranch</div>
             {DESTINATIONS.map((d) => (
-              <button key={d.nom} className="choix" onMouseEnter={() => son('paperTick')} onClick={() => { setQuitter(false); son('woosh'); montrerPassage({ titre: d.texte, sous: 'ce chemin n’est pas encore ouvert dans cette version' }, 2200); }}>
+              <button key={d.nom} className="choix" onMouseEnter={() => son('paperTick')} onClick={() => {
+                setQuitter(false); son('woosh');
+                if (d.combat && surCombat && !e.mort) { sauver(e); montrerPassage({ titre: d.texte, sous: 'quelque chose bouge dans les fourrés…', bloquant: false }, 1600); plusTard(() => surCombat(e, 'exploration'), 1700); return; }
+                montrerPassage({ titre: d.texte, sous: 'ce chemin n’est pas encore ouvert dans cette version' }, 2200);
+              }}>
                 <span className="vign"><Encre d={d.icone} /></span>
                 <span>{d.nom}</span><span className="det">{d.duree}</span>
               </button>

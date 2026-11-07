@@ -9,7 +9,9 @@ import donnees from '@contenu/generes/assets.json';
 import type { Catalogue } from '@/contenu/types';
 import { SCENES } from '@/contenu/scenes';
 import { analyserScene } from '@/moteur/scene/analyseur';
-import { apparence, type Etat } from '@/moteur/simulation';
+import { Simulation, ageJours, apparence, creerEchoSauvage, type Etat } from '@/moteur/simulation';
+import { bilanCombat, descriptionDepuisEtat, descriptionSauvage } from '@/moteur/combat';
+import { EcranCombat, type AdversaireCombat, type IssueCombat, type Registre } from './combat/EcranCombat';
 import { SFX } from '@/moteur/sfx';
 import { SceneDialogue } from './scene/SceneDialogue';
 import { Ranch } from './ranch/Ranch';
@@ -39,7 +41,34 @@ type Ecran =
   | { nom: 'graines'; emplacement: number; personnage: P.Personnage; contexte: 'nouvelle' | 'apres' }
   | { nom: 'mort'; emplacement: number; etat: Etat }
   | { nom: 'ranch'; emplacement: number; etat: Etat }
+  | { nom: 'combat'; emplacement: number; etat: Etat; adversaire: AdversaireCombat; registre: Registre; terrain: string; entrainement: boolean }
   | { nom: 'scene'; id: string };
+
+/** Terrains des combats d'exploration (décors du chemin). */
+const TERRAINS = ['02-passage-foret', '07-riviere', '16-chemin-foret', '17-foret-detruite', '10-champ-rochers', '31-sentier-bord-lac'];
+
+/** Un écho sauvage de l'âge du sien (un peu plus jeune ou un peu plus vieux), prêt à combattre. */
+function preparerCombat(etat: Etat, nature: 'exploration' | 'entrainement') {
+  const age = ageJours(etat);
+  let s = creerEchoSauvage(Math.random, Math.max(1, age - 1), age + 2);
+  // jamais deux échos du même nom face à face
+  for (let i = 0; i < 8 && s.nom === etat.nom; i++) s = creerEchoSauvage(Math.random, Math.max(1, age - 1), age + 2);
+  const description = descriptionSauvage(s, Math.random, nature === 'entrainement' ? { min: 0.8, max: 0.95 } : undefined);
+  const adversaire: AdversaireCombat = { description, image: apparence({ ...s, evolution: null }) };
+  const terrain = `decors/exploration/${nature === 'entrainement' ? '10-champ-rochers' : TERRAINS[Math.floor(Math.random() * TERRAINS.length)]}.png`;
+  return { adversaire, registre: 'exploration' as Registre, terrain, entrainement: nature === 'entrainement' };
+}
+
+/** Ce que le combat laisse à l'écho : objets utilisés, puis progrès, or, émotions, blessure (ou seulement la fatigue d'une fuite). */
+function appliquerCombat(etat: Etat, issue: IssueCombat, adversaire: AdversaireCombat, entrainement: boolean) {
+  const sim = new Simulation(etat);
+  issue.objetsUtilises.forEach((id) => sim.retirerObjet(id));
+  const d = adversaire.description;
+  if (issue.resultat === 'fuite') { etat.pvCombat = issue.pv; return; }
+  const b = bilanCombat(issue.resultat, etat.caracs, { stade: d.stade, lignee: d.lignee, ageJours: d.ageJours ?? null }, issue.pv, Math.random,
+    entrainement ? { risqueBlessure: 0 } : {});
+  sim.terminerCombat(b, d.nom);
+}
 
 /** Portrait du personnage : son avatar s'il est déjà dessiné, sinon le portrait de repli. */
 function portrait(p: P.Personnage): string | undefined {
@@ -123,7 +152,21 @@ function Jeu() {
           surReglages={(r) => P.modifierProfil(profil.id, { reglages: r })}
           sauver={(e) => { P.sauverPartie(profil.id, emplacement, e); P.noterForme(profil.id, apparence(e)); }}
           surMort={(e) => setEcran({ nom: 'mort', emplacement, etat: e })}
+          surCombat={(e, nature) => setEcran({ nom: 'combat', emplacement, etat: e, ...preparerCombat(e, nature) })}
           surQuitter={menu} />
+      );
+    }
+    case 'combat': {
+      const { emplacement, etat, adversaire, registre, terrain, entrainement } = ecran;
+      return (
+        <EcranCombat key={`combat-${etat.naissance}-${adversaire.description.nom}`} echo={etat} allie={descriptionDepuisEtat(etat)} adversaire={adversaire}
+          registre={registre} terrain={terrain} musique={musique}
+          surFin={(issue) => {
+            appliquerCombat(etat, issue, adversaire, entrainement);
+            if (emplacement !== ESSAI) { P.sauverPartie(profil.id, emplacement, etat); P.noterForme(profil.id, apparence(etat)); }
+            if (etat.mort) setEcran({ nom: 'mort', emplacement, etat });
+            else setEcran({ nom: 'ranch', emplacement, etat });
+          }} />
       );
     }
     case 'scene': {
