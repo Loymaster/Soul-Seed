@@ -12,6 +12,7 @@ import { imagesScene, precharger } from '../commun/prechargement';
 import { afficherValeur } from '@/moteur/scene/expressions';
 import { JOUEUR, NARRATION, type Resonance, type Scene, type Valeur } from '@/moteur/scene/types';
 import { APPARENCE_RESONANCES } from './resonances';
+import { cadrage, styleCadre } from './cadrages';
 import './scene.css';
 
 export interface PropsSceneDialogue {
@@ -39,6 +40,8 @@ export interface PropsSceneDialogue {
   surAction?: (nom: string, argument: string | undefined, reprendre: (variables?: Record<string, Valeur>) => void) => void;
   /** ce que le jeu dessine par-dessus la scène pendant ses actions (repère 1280 × 800) */
   calque?: ReactNode;
+  /** scène jouée par-dessus l'écran du jeu (tutoriel du ranch) : pas de fond, le jeu reste visible derrière */
+  transparent?: boolean;
 }
 
 interface PersoAffiche { qui: string; place: Place; expression?: string; etat: 'dehors' | 'la' | 'sort'; arrive: boolean }
@@ -49,6 +52,8 @@ type Affichage =
   | { type: 'action'; nom: string }
   | null;
 
+/** Durée de l'estompe de fin de scène (ms), accordée à l'animation `sc-sortie` de scene.css. */
+const DUREE_SORTIE = 1000;
 const VOIX_NARRATION = { note: 330, rythme: 1.05, timbre: TIMBRES.narration.reglages };
 const VOIX_JOUEUR = { note: 262, rythme: 1, timbre: TIMBRES.doux.reglages };
 
@@ -70,6 +75,8 @@ export function SceneDialogue(props: PropsSceneDialogue) {
   const [vars, setVars] = useState<{ nom: string; valeur: string; cle: number }[]>([]);
   const [carte, setCarte] = useState(false);
   const [image, setImage] = useState<{ chemin: string; cle: number } | null>(null);
+  /** fin de scène : tout s'estompe en douceur, puis la scène rend la main */
+  const [sortie, setSortie] = useState(false);
 
   const lecteur = useRef<LecteurScene | null>(null);
   const minuteurs = useRef<ReturnType<typeof setTimeout>[]>([]);
@@ -229,11 +236,15 @@ export function SceneDialogue(props: PropsSceneDialogue) {
         });
         break;
       }
-      case 'fin':
+      case 'fin': {
+        // pas de « fin de scène » écrite : le cadre et les personnages s'estompent, puis le jeu reprend la main
         setCarte(false);
         setAff({ type: 'fin', suite: ev.suite });
-        if (!propsRef.current.apercu) propsRef.current.surFin?.({ suite: ev.suite, variables: { ...lecteur.current!.etat.variables } });
+        setSortie(true);
+        const variables = { ...lecteur.current!.etat.variables };
+        if (!propsRef.current.apercu) plusTard(() => propsRef.current.surFin?.({ suite: ev.suite, variables }), DUREE_SORTIE);
         break;
+      }
     }
   };
 
@@ -253,7 +264,7 @@ export function SceneDialogue(props: PropsSceneDialogue) {
     const p = propsRef.current;
     const l = new LecteurScene(p.scene, { variables: { ...(p.echo ? { 'echo.nom': p.echo.nom } : {}), ...(p.variables || {}) }, depuisLigne: p.depuisLigne });
     lecteur.current = l;
-    setAff(null); affRef.current = null; setEmotion(null); setBulle(false); setCarte(false); setImage(null);
+    setAff(null); affRef.current = null; setEmotion(null); setBulle(false); setCarte(false); setImage(null); setSortie(false);
     setVars(Object.entries(p.variables || {}).filter(([k]) => k !== 'echo.nom').map(([nom, v]) => ({ nom, valeur: afficherValeur(v), cle: ++compteur.current })));
     setDecor((d) => ({ chemin: l.etat.decor ? cheminDecor(l.etat.decor, decors) : undefined, cle: d.cle + 1 }));
     setAncienDecor(null);
@@ -341,8 +352,8 @@ export function SceneDialogue(props: PropsSceneDialogue) {
   const encreParleur = parleur && catalogue.pnj[parleur] ? catalogue.pnj[parleur].encre : '#6b4f33';
 
   return (
-    <div className="sc-cadre" ref={cadre}>
-      <div className="sc-repere" style={{ transform: `translate(-50%, -50%) scale(${echelle})` }} onClick={cliquer}>
+    <div className={`sc-cadre${props.transparent ? ' transparent' : ''}`} ref={cadre}>
+      <div className={`sc-repere ${sortie ? 'sortie' : ''}`} style={{ transform: `translate(-50%, -50%) scale(${echelle})` }} onClick={cliquer}>
         {assetAncien && <div key={'a' + ancienDecor!.cle} className="sc-decor sort" style={{ backgroundImage: `url(${assetAncien.url})` }} />}
         {assetDecor && <div key={'d' + decor.cle} className="sc-decor" style={{ backgroundImage: `url(${assetDecor.url})` }} />}
         <div className="sc-vignettage" />
@@ -387,7 +398,7 @@ export function SceneDialogue(props: PropsSceneDialogue) {
           {aff?.type === 'choix' && (
             <div className="sc-choix">
               <div className="sc-question">{aff.question || 'Que répondre ?'}</div>
-              <div className="sc-options">
+              <div className={`sc-options ${aff.options.length > 4 ? 'serre' : ''}`}>
                 {aff.options.map((o, i) => {
                   const r = APPARENCE_RESONANCES[o.resonance];
                   const etat = aff.choisie >= 0 ? (aff.choisie === o.index ? 'choisie' : 'estompee') : aff.active === o.index ? 'active' : '';
@@ -399,7 +410,7 @@ export function SceneDialogue(props: PropsSceneDialogue) {
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden><path d={r.icone} /></svg>
                       </span>
                       <span className="type" style={{ color: r.couleur }}>{r.nom}</span>
-                      <span>{o.texte}</span>
+                      <span className="texte">{o.texte}</span>
                       {aff.choisie < 0 && <span className="touche">{i + 1}</span>}
                       {aff.choisie === o.index && (
                         <svg className="sc-tampon-ok" viewBox="0 0 40 40" aria-hidden><circle cx="20" cy="20" r="16.5" fill="rgba(63,122,58,.08)" stroke="#3f7a3a" strokeWidth="3" /><path d="M12.5 20.5l5 5 10-11" fill="none" stroke="#3f7a3a" strokeWidth="3.6" strokeLinecap="round" strokeLinejoin="round" /></svg>
@@ -410,16 +421,23 @@ export function SceneDialogue(props: PropsSceneDialogue) {
               </div>
             </div>
           )}
-          {aff?.type === 'fin' && (
-            <div className="sc-fin">
-              <div className="mot">{aff.suite ? `Suite : ${aff.suite}` : 'Fin de la scène.'}</div>
-              {apercu && <button className="sc-bouton-cuir" onClick={(e) => { e.stopPropagation(); demarrer(); }}>Rejouer la scène</button>}
-            </div>
-          )}
         </div>
 
+        {aff?.type === 'fin' && apercu && (
+          <div className="sc-rejouer">
+            {aff.suite && <div className="mot">Suite : {aff.suite}</div>}
+            <button className="sc-bouton-cuir" onClick={(e) => { e.stopPropagation(); demarrer(); }}>Rejouer la scène</button>
+          </div>
+        )}
+
         {carte && assetJoueur && (
-          <div className="sc-carte"><img src={assetJoueur.url} alt="Vous" /><div>vous</div></div>
+          <div className="sc-carte">
+            <div className="portrait">
+              <img src={assetJoueur.url} alt="Vous" draggable={false}
+                style={assetJoueur.l && assetJoueur.h ? styleCadre(cadrageCarte(assetJoueur), assetJoueur.l, assetJoueur.h, 134, 150) : { width: '100%' }} />
+            </div>
+            <div className="legende">vous</div>
+          </div>
         )}
       </div>
     </div>
@@ -457,15 +475,15 @@ function Personnage({ perso, fiche, assets, parle, tape, estompe }: { perso: Per
   );
 }
 
+/** Cadrage du portrait sur la carte « vous » : le visage centré, un peu plus de buste que dans les pastilles. */
+function cadrageCarte(a: Asset) {
+  const c = cadrage(a.chemin, a.l!, a.h!, a.boite);
+  return { ...c, y: c.y + 0.04, d: c.d * 1.12 };
+}
+
 function Loupe({ echo, nom, decor, emotion, cleEmotion }: { echo?: Asset; nom: string; decor?: Asset; emotion?: Asset; cleEmotion?: number }) {
-  // On cadre le haut du corps : la largeur utile de l'écho remplit un peu plus que la loupe.
-  let visage: React.CSSProperties | undefined, image: React.CSSProperties | undefined;
-  if (echo?.l && echo.h) {
-    const b = echo.boite && echo.boite.l ? echo.boite : { x: 0, y: 0, l: echo.l, h: echo.h };
-    const k = Math.min(165 / b.l, 260 / b.h);
-    visage = { left: 75 - (b.l * k) / 2, top: 10, width: b.l * k, height: b.h * k };
-    image = { width: echo.l * k, height: echo.h * k, left: -b.x * k, top: -b.y * k };
-  }
+  // Le visage de l'écho au centre de la loupe : cadrage propre à chaque image (src/jeu/scene/cadrages.ts).
+  const image = echo?.l && echo.h ? styleCadre(cadrage(echo.chemin, echo.l, echo.h, echo.boite), echo.l, echo.h, 150, 150) : undefined;
   return (
     <div className="sc-echo">
       <div className="perle" style={{ left: 96, top: 146, width: 10, height: 10 }} />
@@ -473,7 +491,7 @@ function Loupe({ echo, nom, decor, emotion, cleEmotion }: { echo?: Asset; nom: s
       <div className="perle" style={{ left: 124, top: 170, width: 4, height: 4, opacity: 0.6 }} />
       <div className="sc-loupe">
         {decor && <div className="fond" style={{ backgroundImage: `url(${decor.url})` }} />}
-        {echo && visage && <div className="visage" style={visage}><img src={echo.url} alt={nom} style={image} draggable={false} /></div>}
+        {echo && image && <div className="visage"><img src={echo.url} alt={nom} style={image} draggable={false} /></div>}
         <div className="bord" />
         <div className="reflet" />
       </div>

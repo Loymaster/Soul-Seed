@@ -1,7 +1,7 @@
 // Volumes de la musique et des bruitages (réglages du profil), réglables séparément, de 0 à 1.
 import { SFX } from '../../moteur/sfx';
 
-const etat = { musique: 0.8, bruitages: 0.8 };
+const etat = { musique: 0.5, bruitages: 0.8 }; // défauts des profils (src/jeu/profils.ts)
 const ecouteurs = new Set<() => void>();
 
 export const volumeMusique = () => etat.musique;

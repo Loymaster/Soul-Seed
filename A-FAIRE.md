@@ -37,7 +37,7 @@ Maquette : plateau « Ranch » (page v7) du canevas.
 ## Scènes d'action (fenêtre centrale)
 Laver, brosser, coucher, manger, jeux, entraînements et corvées se jouent dans une fenêtre au centre de l'écran : l'écho y saute depuis sa place au ranch, l'action se joue (accessoires et légères déformations du sprite), puis une feuille volante résume ce qu'on devine, sans chiffre (« Il semble apprécier. Il lui reste un petit creux. »). Maquette : plateau « Ranch » (page v7) du canevas.
 - [x] Porter la scène d'action dans le jeu (repas, bain, interactions, entraînements ; textes tirés de `lireSignes()` et de la simulation).
-- [ ] Brosser (pas encore dans la simulation : grisé « bientôt » dans Soins).
+- [x] Brosser (1 h, propreté sans remplacer le bain, un peu d'humeur ; valeurs choisies faute de modèle dans le prototype).
 - [x] Ressources d'exploration (bois, pierre, fibres, résine, ferraille, cristaux) : gardées par le monde de la partie (`src/moteur/monde`, plafond de 5), rapportées par « Récolter », montrées dans le sac du ranch et de l'exploration.
 - [ ] Préférences de l'écho entre deux actions qui comblent le même besoin : brosser ou laver pour la propreté (il peut préférer l'une à l'autre), et plus largement aliments, jeux. À découvrir par le joueur au fil des feuilles volantes.
 - [ ] Remplacer les accessoires dessinés provisoires (seau, brosse, balle, buissons, livre, bûche, marteau…) par des visuels définitifs.
@@ -55,20 +55,32 @@ Moteur prêt dans `src/moteur/combat/` (règles du prototype, temps réel, déte
 - [ ] Carnet : page des techniques (apprises, trois équipées, description en mots).
 - [x] Combats d'exploration : l'écho sauvage du lieu (âge et graines de la zone) ; on revient au même lieu avec l'issue.
 - [x] Combats contre les PNJ (`src/jeu/monde/adversaires.ts`, lancés par `action: combat <pnj>` dans les scènes) : Jumpy (entraînement), Lady Roger, Hevann et Garry (magie sainte, musique de Garry pour lui), Bourbella, Phil et Hibert (à deux). L'écran de combat accepte plusieurs adversaires (`renforts`) et une piste (`piste`).
-- [ ] Brancher les combats : échos sauvages (événement « invité »), mode Arène.
+- [x] Combat contre l'écho de passage au ranch (« Affronter … » en cliquant sur lui ; sans risque de blessure). L'activité « Combat d'entraînement » contre un écho de passage est retirée.
+- [ ] Brancher les combats : mode Arène.
 - [ ] Équilibrage : à caractéristiques égales, un combat de bébés dure environ 1 min 30, d'adolescents moyens 1 min 20 (essai sur 40 combats).
 - [ ] Décider : les adultes gardent-ils les techniques de leur adolescence (comme le jeu du prototype) ou prennent-ils les pools adultes (mode Arène du prototype) ? Le moteur permet les deux (`poolsAdultes`).
 
+## Ranch : visites, évolution, tutoriel
+- [x] Événements aléatoires du prototype (bruit de Garry, nouvel écho, retour d'un écho connu) ; le visiteur entre et repart à pied, à l'échelle de son stade.
+- [x] Relations avec les échos sauvages (affect du prototype) : paliers en mots dans le carnet (Relations) et au journal ; les deux échos interagissent aussi d'eux-mêmes (jeu, dispute, partage, repos).
+- [x] Séquence d'évolution (Evolution.tsx) et tutoriel de Jumpy à la première arrivée au ranch.
+- [ ] Décider : un écho sauvage qui revient au fil des jours reste à son stade de départ (comme dans le prototype) ou grandit avec son âge.
+- [ ] Sons propres aux gestes à deux (bousculade, partage) ; une vignette dessinée pour la poussière.
+
 ## Simulation et contenu
 - [ ] Héritage entre générations (7–12 % des caractéristiques) : calculé puis remis à zéro dans le prototype — décider s’il devient réel.
-- [ ] Mini-jeux des corvées et réparations d’Ash.
+- [ ] Mini-jeux des corvées et réparations d’Ash (aujourd'hui elles se déroulent seules, comme dans le prototype).
+- [ ] Décider : nourrir fait passer 30 min (choix fait sur le retour « donner à manger ne fait pas passer de temps » ; le prototype n'en faisait pas passer).
+- [ ] Seuils des paliers de combat de la fiche (frêle → légendaire) à ajuster.
+- [ ] Accessoires des scènes d'action placés pour un enfant ou un adulte : avec un bébé, la pierre et le seau flottent un peu au-dessus de lui.
+- [ ] Magasin : le poteau ne mène qu'au ranch (pas de passage vers le village).
 - [x] Village et magasin : écran du monde (`src/jeu/monde`) ouvert par le poteau du ranch — village, forêt du village, sanctuaire, atelier, boutique de Jumpy ; PNJ selon l'heure et les quêtes, scènes, combats, étal, stand, coffre, travaux d'Ash, sac.
 
 ## Village (à reprendre ou à décider)
 - [x] PNJ d'exploration branchés (`src/jeu/exploration/pnj.ts`, tableau dans `contenu/scenes/LISEZMOI.md`) : Hevann (16, bloque le chemin, la fouille et l'envoi), Garry (17, étiquette rouge), Morthen (2, sa musique), Bourbella (5), Phil et Hibert (6, la nuit ; « Inspecter la cabane » le jour ; « Récupérer le marteau »), Tourby (7), Ash (11, le chemin de droite remonte), Grimp (23, le trou vers le 27 ; il rejoint le village quand Glamp est rentrée), « Déblayer le passage » et Glamp (28, décor 28 bis), Nyxara (32, « Au secours ! » à l'arrivée). Vérifiés de bout en bout dans le navigateur.
 - [x] Gélatine de Bourbella : + 15 points sur la prise d'un poisson ferré à temps, et l'appât tenu un peu plus longtemps, tant que `maintenant < peche.bonus_jusqua`.
 - [x] « Revenir au village » depuis la Sortie du village (flèche de gauche) → page de retour → forêt du village ; « Partir en exploration » depuis la forêt → Sortie du village.
-- [ ] Corvées réparées par Ash (`monde.corvees`, niveaux 1 à 3) : le ranch ne les lit pas encore (toutes les corvées y sont jouables ; le niveau devrait fixer le nombre de tentatives et le gain d'expérience).
+- [x] Corvées réparées par Ash (`monde.corvees`, niveaux 1 à 3) : jouables au ranch une fois par jour, essais réglés selon le trait et l'expérience, gains selon le niveau.
 - [ ] Bâtiments du village payés en or (dojo, fontaine, arène…) : construits mais sans effet, comme dans le prototype. « Améliorer l'entraînement » (Hevann), « Demander un service » (Glamp), Finn « Partir en exploration » / « Discuter », Bourbella « Discuter », Myhra « le monde » : « En développement ».
 - [ ] Décider : l'or et le sac appartiennent à l'écho (`Etat`) et repartent de zéro avec la graine suivante, alors que le prototype gardait l'or d'un écho à l'autre.
 - [ ] Décider : le plafond de 5 par ressource portée (prototype) oblige à passer par le coffre de Maïko avant l'atelier ; le garder ?

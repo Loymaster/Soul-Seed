@@ -2,17 +2,18 @@
 // Le temps s'écoule à 1 minute de jeu par seconde réelle ; les règles du prototype s'appliquent à chaque
 // heure pleine (_tickHourCore). Les actions qui « prennent du temps » font avancer l'horloge d'autant.
 import type {
-  Aleatoire, CategorieInteraction, CauseMort, CleTemperament, CleCarac, Emotions, Etat, OptionInteraction,
+  Aleatoire, CategorieInteraction, CauseMort, CleTemperament, CleCarac, EchoSauvage, Emotions, Etat, OptionInteraction,
   ReponseComportement, Sortie, Stade,
 } from './types';
 import {
   AGE_EVOLUTION, AGE_MORT, CARESSES_PAR_JOUR, CLES_CARACS, CLES_TEMPERAMENT, CONSTANTE_GUERISON_MALADIE,
-  DUREE_VISITE_HEURES, EMOTION_DE_TEMPERAMENT, MAX_ECHOS_SAUVAGES, MAX_PAR_STADE, MULT_ENTRAINEMENT,
+  DUREE_BROSSAGE_HEURES, DUREE_REPAS_HEURES, DUREE_VISITE_HEURES, ESSAIS_CORVEE, MULT_CORVEE, EMOTION_DE_TEMPERAMENT, MAX_ECHOS_SAUVAGES, MAX_PAR_STADE, MULT_ENTRAINEMENT,
   MULT_GUERISON_BLESSURE, NOM_STADE, PLAGES_RYTHME, SALETE_MAX, TRAIT_DE_TEMPERAMENT, TRAIT_D_EMOTION,
   TRAIT_D_EMOTION_EDUCATIVE,
 } from './constantes';
 import { accord, accorderTexte, ageJours, borne, centieme, dixieme, heureDuJour, heureTotale, piocher } from './outils';
 import { appliquerEmotions, deltaAjuste } from './emotions';
+import { CHANCE_INTERACTION_VISITE, changerAffect, compatibilite, probaEntente, texteDepart, texteRetour, tirerInteractionVisite } from './visites';
 import { regimeCompatible } from './alimentation';
 import { aliment, consommer, objetDivers, ranger } from './objets';
 import { creerEchoSauvage } from './creation';
@@ -272,9 +273,14 @@ export class Simulation {
 
     // Visiteur qui repart
     if (e.visiteur && maintenant >= e.visiteur.departA) {
+      const id = e.visiteur.id;
+      const v = e.echosSauvages.find((x) => x.id === id);
       e.visiteur = null;
-      const t = 'L’écho invité est reparti.';
-      this.noter(t); this.emettre({ type: 'visiteur-parti', texte: t });
+      const t = v ? texteDepart(e, v) : 'L’écho invité est reparti.';
+      this.noter(t); this.emettre({ type: 'visiteur-parti', texte: t, id });
+    } else if (e.visiteur && !o.repos && !e.mort && rng() < CHANCE_INTERACTION_VISITE) {
+      // pendant la visite, les deux échos font parfois quelque chose ensemble, d'eux-mêmes
+      this.interactionSpontanee();
     }
 
     // Évolutions (entre 12 h et 18 h, à l'heure tirée à la naissance, au plus tard à 18 h)
@@ -375,7 +381,7 @@ export class Simulation {
     } else {
       const s = piocher(e.echosSauvages, this.rng);
       e.visiteur = { id: s.id, departA: maintenant + DUREE_VISITE_HEURES };
-      texte = `${s.nom} revient vous rendre visite !`;
+      texte = texteRetour(e, s);
     }
     this.noter(texte);
     this.emettre({ type: 'evenement', nature, texte });
@@ -486,6 +492,31 @@ export class Simulation {
       : repu ? `${this.Nom} mange du bout des lèvres…`
       : saveur ? `${this.Nom} se régale.` : `${this.Nom} mange tranquillement.`;
     this.message(texte, prefere || saveur ? 'bien' : deteste || !compatible || repu ? 'mal' : 'note');
+    // Le repas prend du temps (retour de test : nourrir ne faisait pas passer le temps).
+    this.avancer(DUREE_REPAS_HEURES);
+    return { ok: true, texte };
+  }
+
+  /**
+   * Brosser : une heure. Pas dans le prototype ; effet cohérent avec les soins et les câlins :
+   * l'écho est un peu plus propre (sans remplacer un bain), apaisé, et le lien se resserre.
+   */
+  brosser(): Reussi<{ texte: string }> | Refus {
+    const e = this.etat;
+    const etaitSale = e.proprete <= 20;
+    this.avancer(DUREE_BROSSAGE_HEURES);
+    if (e.mort) return { ok: false, raison: '' };
+    e.proprete = borne(e.proprete + 30);
+    e.humeur = borne(e.humeur + 6);
+    e.manqueAffection = Math.max(0, e.manqueAffection - 20);
+    e.besoinAffection = e.manqueAffection > 70;
+    e.anxiete = Math.max(0, e.anxiete - 5);
+    appliquerEmotions(e, { joie: 8, degout: -8, peur: -3 });
+    this.eduquer('socio', null);
+    this.noter(`Vous avez brossé ${e.nom}.`);
+    const texte = etaitSale ? `${this.Nom} se laisse faire, mais un bon bain ne serait pas de trop.`
+      : `${this.Nom} ferme les yeux de plaisir sous la brosse.`;
+    this.message(texte, 'bien');
     return { ok: true, texte };
   }
 
@@ -571,7 +602,7 @@ export class Simulation {
       else {
         const s = e.echosSauvages.find(x => x.id === choix.id)!;
         e.visiteur = { id: s.id, departA: heureTotale(e) + DUREE_VISITE_HEURES };
-        const texte = `L’appât attire ${s.nom}, qui revient vous rendre visite !`;
+        const texte = texteRetour(e, s, true);
         this.noter(texte); this.emettre({ type: 'evenement', nature: 'visite', texte });
       }
       return { ok: true };
@@ -795,20 +826,21 @@ export class Simulation {
    * Corvée : `reussis` / `total` est le score du mini-jeu (finishChoreGame).
    * Fait passer une heure, avec l'humeur et les émotions selon le palier.
    */
-  corvee(id: string, reussis: number, total: number): Reussi<{ palier: 'Parfait' | 'Bon' | 'Mauvais' | 'Horrible' }> | Refus {
+  corvee(id: string, reussis: number, total: number, niveau = 1): Reussi<{ palier: 'Parfait' | 'Bon' | 'Mauvais' | 'Horrible' }> | Refus {
     const e = this.etat;
     const c = CORVEES.find(x => x.id === id);
     if (!c) return { ok: false, raison: '' };
+    const mult = MULT_CORVEE[Math.max(0, Math.min(3, niveau))];
     let palier: 'Parfait' | 'Bon' | 'Mauvais' | 'Horrible', secondaire: number, gain: number, humeur: number, d: Partial<Emotions>, emo: 'joy' | 'sorrow' | 'wrath';
     if (reussis === total) { palier = 'Parfait'; secondaire = 6 + this.rng() * 2; gain = 28 + this.rng() * 8; humeur = 20; d = { joie: 20, surprise: 10 }; emo = 'joy'; }
     else if (reussis >= total / 2) { palier = 'Bon'; secondaire = 3 + this.rng() * 2; gain = 14 + this.rng() * 6; humeur = 10; d = { joie: 10 }; emo = 'joy'; }
     else if (reussis >= 1) { palier = 'Mauvais'; secondaire = 1 + this.rng(); gain = 4 + this.rng() * 4; humeur = -8; d = { tristesse: 10, colere: 5, joie: -5 }; emo = 'sorrow'; }
     else { palier = 'Horrible'; secondaire = 0; gain = 0; humeur = -20; d = { tristesse: 20, colere: 10, peur: 5, joie: -15 }; emo = 'wrath'; }
-    // (Les niveaux d'amélioration des corvées, construits par Ash, ne sont pas encore repris : multiplicateur 1.)
+    // Les niveaux de remise en état (travaux d'Ash) multiplient les gains (corveeXpMult).
     this.eduquer('cognitif', emo);
     this.avancer(1, { gainHumeur: humeur, emotions: d, message: `${this.Nom} : ${c.nom.toLowerCase()} (${palier.toLowerCase()}).` });
-    e.caracs[c.carac] = dixieme(e.caracs[c.carac] + dixieme(gain));
-    if (!c.sansSecondaire) e.caracs.intelligence = dixieme(e.caracs.intelligence + dixieme(secondaire));
+    e.caracs[c.carac] = Math.min(999, dixieme(e.caracs[c.carac] + dixieme(gain * mult)));
+    if (!c.sansSecondaire) e.caracs.intelligence = Math.min(999, dixieme(e.caracs.intelligence + dixieme(secondaire * mult)));
     e.experienceCorvees[id] = (e.experienceCorvees[id] ?? 0) + 1;
     e.derniereCorvee[id] = e.jour;
     const succes = palier === 'Parfait' || palier === 'Bon';
@@ -816,6 +848,24 @@ export class Simulation {
     e.reussite = succes;
     e.betise = !succes;
     return { ok: true, palier };
+  }
+
+  /**
+   * Une corvée jouée d'un bout à l'autre (les mini-jeux du prototype se déroulaient seuls) : chaque essai réussit
+   * selon le trait associé et l'expérience acquise sur cette corvée ; une fois par jour ; `niveau` : remise en état (1 à 3).
+   */
+  jouerCorvee(id: string, niveau = 1): Reussi<{ palier: 'Parfait' | 'Bon' | 'Mauvais' | 'Horrible'; essais: boolean[] }> | Refus {
+    const e = this.etat;
+    const c = CORVEES.find(x => x.id === id);
+    if (!c) return { ok: false, raison: '' };
+    if (e.malade) return { ok: false, raison: `${this.Nom} est ${this.a('malade', 'malade')} et ne peut pas faire de corvée.` };
+    if (e.derniereCorvee[id] === e.jour) return { ok: false, raison: 'Cette corvée a déjà été faite aujourd’hui. Revenez demain !' };
+    const trait = e.traits[c.trait] ?? 0;
+    const experience = e.experienceCorvees[id] ?? 0;
+    const proba = Math.max(0.15, Math.min(0.95, 0.35 + trait / 250 + Math.min(0.5, experience * 0.02)));
+    const essais = Array.from({ length: ESSAIS_CORVEE[Math.max(0, Math.min(3, niveau))] }, () => this.rng() < proba);
+    const r = this.corvee(id, essais.filter(Boolean).length, essais.length, niveau);
+    return r.ok ? { ok: true, palier: r.palier, essais } : r;
   }
 
   /** « Laisser le temps passer » (timePass) : l'écho s'ennuie. */
@@ -830,17 +880,34 @@ export class Simulation {
     return v ? this.etat.echosSauvages.find(s => s.id === v.id) ?? null : null;
   }
 
-  /** echoCompatibilite : écart moyen de personnalité (0 = identiques). */
+  /** echoCompatibilite : écart moyen de personnalité (0 = identiques), moins le bonus d'inspiration. */
   compatibilite(id: string) {
     const s = this.etat.echosSauvages.find(x => x.id === id);
-    if (!s) return 5;
-    const p = this.etat.personnalite;
-    const cles = Object.keys(p) as (keyof typeof p)[];
-    return centieme(cles.reduce((a, k) => a + Math.abs(s.personnalite[k] - p[k]), 0) / cles.length);
+    return s ? compatibilite(this.etat.personnalite, s) : 5;
+  }
+
+  /** Change l'affect envers un écho sauvage ; un palier franchi s'écrit au journal. */
+  private affect(s: EchoSauvage, plus: number, moins: number) {
+    const r = changerAffect(this.etat, s, plus, moins);
+    if (r) { this.noter(r.texte); this.emettre({ type: 'relation', id: s.id, niveau: r.niveau, sens: r.sens, texte: r.texte }); }
+  }
+
+  /** Notre écho et son visiteur font quelque chose ensemble, d'eux-mêmes (sans que l'heure passe). */
+  interactionSpontanee() {
+    const e = this.etat; const s = this.visiteur;
+    if (!s || e.mort) return null;
+    const r = tirerInteractionVisite(e, s, this.rng);
+    appliquerEmotions(e, r.emotions);
+    if (r.education) this.eduquer(r.education.processus, r.education.emotion);
+    this.noter(r.texte);
+    this.emettre({ type: 'visite', nature: r.nature, reussi: r.reussi, sens: r.sens, texte: r.texte, spontane: true });
+    this.affect(s, r.plus, r.moins);
+    return r;
   }
 
   /** spendTimeTogether */
   passerDuTempsAvecVisiteur(): Reussi<{ texte: string }> | Refus {
+    const e = this.etat;
     const s = this.visiteur;
     if (!s) return { ok: false, raison: `${this.Nom} n’a personne avec qui passer du temps.` };
     const compat = this.compatibilite(s.id);
@@ -849,9 +916,15 @@ export class Simulation {
     else if (compat < 2) { plus = 3; humeur = 15; d = { joie: 15, tristesse: -5, peur: -3 }; texte = `${this.Nom} et ${s.nom} ont l’air de bien s’entendre.`; }
     else if (compat < 3) { plus = 2; humeur = 8; d = { joie: 8 }; texte = `${this.Nom} et ${s.nom} ne font pas vraiment la paire, mais cela pourrait être pire.`; }
     else { plus = 1; humeur = 0; d = {}; texte = `On a rarement vu deux échos aussi différents que ${this.etat.nom} et ${s.nom}.`; }
-    s.affectPositif = borne(s.affectPositif + plus);
+    this.affect(s, plus, 0);
     if (humeur > 0) { this.avancer(1, { gainHumeur: humeur, emotions: d, message: `${this.Nom} a passé du temps avec ${s.nom}.` }); this.eduquer('socio', 'joy'); }
     else this.noter(`${this.Nom} a passé du temps avec ${s.nom}.`);
+    // advanceSpendTimeModal : une fois sur dix, un « signe d'inspiration » rapproche leurs personnalités
+    if (compat > 0 && this.rng() < 0.1) {
+      s.compatBonus = centieme((s.compatBonus ?? 0) + 0.2);
+      texte += ` ${s.nom} regarde ${e.nom} avec intérêt. Vous ne savez pas pourquoi, mais vous y voyez un signe d’inspiration.`;
+    }
+    this.emettre({ type: 'visite', nature: 'temps', reussi: true, sens: humeur > 0 ? 1 : 0, texte, spontane: false });
     return { ok: true, texte };
   }
 
@@ -861,13 +934,9 @@ export class Simulation {
     const s = this.visiteur;
     if (!s) return { ok: false, raison: `${this.Nom} n’a personne avec qui ${nature === 'jeu' ? 'jouer' : 'se bagarrer'}.` };
     const compat = this.compatibilite(s.id);
-    const x = compat + 1 + (5 - s.personnalite.extraversion) + (5 - s.personnalite.agreabilite) - (1 - s.affectPositif / 100 + s.affectNegatif / 100);
-    const proba = borne((14 - x) / 14 + (e.personnalite.agreabilite - 1) / 100, 0, 1);
-    const succes = this.rng() < proba;
+    const succes = this.rng() < probaEntente(e, s, compat);
     const perteSante = nature === 'bagarre' && this.rng() < 1 / 3 ? 1 : 0;
     const debutBlessure = nature === 'bagarre' && !e.blesse && this.rng() < 1 / 5;
-    s.affectPositif = borne(s.affectPositif + (succes ? 5 - compat : 0));
-    s.affectNegatif = borne(s.affectNegatif + (succes ? -(5 - compat) : 2 + compat));
     let texte: string;
     if (nature === 'bagarre') {
       if (succes) {
@@ -888,6 +957,9 @@ export class Simulation {
       texte = `${s.nom} n’a pas voulu jouer avec ${e.nom}.`;
       this.avancer(1, { message: texte, emotions: { tristesse: 20, peur: 10, colere: 10 } });
     }
+    // finishDuoAnim : l'affect change une fois l'heure passée
+    this.affect(s, succes ? 5 - compat : 0, succes ? -(5 - compat) : 2 + compat);
+    this.emettre({ type: 'visite', nature: nature === 'jeu' ? 'jeu' : 'bagarre', reussi: succes, sens: succes ? 1 : -1, texte, spontane: false });
     return { ok: true, texte, succes };
   }
 

@@ -16,7 +16,7 @@ import donnees from '@contenu/generes/assets.json';
 import type { Catalogue } from '@/contenu/types';
 import { SCENES } from '@/contenu/scenes';
 import { analyserScene } from '@/moteur/scene/analyseur';
-import { Simulation, ageJours, apparence, creerEchoSauvage, heureDuJour, type Etat } from '@/moteur/simulation';
+import { Simulation, ageJours, apparence, creerEchoSauvage, heureDuJour, type EchoSauvage, type Etat } from '@/moteur/simulation';
 import { bilanCombat, descriptionDepuisEtat, descriptionSauvage } from '@/moteur/combat';
 import { EcranCombat, type AdversaireCombat, type IssueCombat, type Registre } from './combat/EcranCombat';
 import { SFX } from '@/moteur/sfx';
@@ -24,14 +24,14 @@ import { SceneDialogue } from './scene/SceneDialogue';
 import { Ranch } from './ranch/Ranch';
 import { nouvellePartie } from './ranch/sauvegarde';
 import { MenuPrincipal } from './menu/MenuPrincipal';
-import { Introduction } from './menu/Introduction';
+import { Introduction, NouveauProfil } from './menu/Introduction';
 import { ChoixGraine } from './graines/ChoixGraine';
 import { DernierSouffle } from './mort/DernierSouffle';
 import { EntreDeuxMondes } from './intro/EntreDeuxMondes';
 import { ID_SCENE_SANCTUAIRE, Sanctuaire } from './intro/Sanctuaire';
 import { Exploration, bilanDepart, reprendreTrouvailles, type BilanSortie, type RencontreExploration, type RetourCombat } from './exploration/Exploration';
 import { DEPART, ZONES } from './exploration/zones';
-import { creerMonde, heureAbsolue, type Monde } from '@/moteur/monde';
+import { creerMonde, heureAbsolue, poser, vrai, type Monde } from '@/moteur/monde';
 import { Monde as EcranMonde } from './monde/Monde';
 import { imagesLieu, lieuxVoisins, type ContexteLieu, type IdLieu } from './monde/lieux';
 import { imagesZone } from './exploration/pnj';
@@ -44,6 +44,8 @@ import './base.css';
 import { fixerVolumes } from './commun/volumes';
 
 const catalogue = donnees as unknown as Catalogue;
+// publié dans un sous-dossier (GitHub Pages : /Soul-Seed/) : les adresses du catalogue suivent la base du site
+if (import.meta.env.BASE_URL !== '/') for (const a of catalogue.assets) if (a.url?.startsWith('/')) a.url = import.meta.env.BASE_URL + a.url.slice(1);
 const DISPONIBLES = new Set(catalogue.assets.map((a) => a.chemin));
 initialiserPrechargement(catalogue);
 /** Emplacement fictif des essais lancés depuis les outils de développement : rien n'est enregistré. */
@@ -76,8 +78,15 @@ function preparerCombatExploration(r: RencontreExploration) {
 /** Terrains des combats d'exploration (décors du chemin). */
 const TERRAINS = ['02-passage-foret', '07-riviere', '16-chemin-foret', '17-foret-detruite', '10-champ-rochers', '31-sentier-bord-lac'];
 
-/** Un écho sauvage de l'âge du sien (un peu plus jeune ou un peu plus vieux), prêt à combattre. */
-function preparerCombat(etat: Etat, nature: 'exploration' | 'entrainement') {
+/**
+ * Un écho sauvage de l'âge du sien (un peu plus jeune ou un peu plus vieux), prêt à combattre ;
+ * ou l'écho de passage au ranch (`sauvage`), tel qu'il est, sur le décor du ranch.
+ */
+function preparerCombat(etat: Etat, nature: 'exploration' | 'entrainement', sauvage?: EchoSauvage) {
+  if (sauvage) {
+    const description = descriptionSauvage(sauvage, Math.random);
+    return { adversaire: { description, image: apparence({ ...sauvage, evolution: null }) } as AdversaireCombat, registre: 'exploration' as Registre, terrain: 'decors/ranch/journee.png', entrainement: true };
+  }
   const age = ageJours(etat);
   let s = creerEchoSauvage(Math.random, Math.max(1, age - 1), age + 2);
   // jamais deux échos du même nom face à face
@@ -175,9 +184,9 @@ function Jeu() {
   if (ecran.nom === 'intro' || !profil) {
     const premier = !profil || (ecran.nom === 'intro' && ecran.premier);
     return (
-      <Introduction disponibles={DISPONIBLES}
+      <NouveauProfil
         surAnnuler={premier ? undefined : () => setEcran({ nom: 'menu' })}
-        surFin={(nom, avatar, pronom) => { P.creerProfil(nom, avatar, pronom); rafraichir(); setEcran({ nom: 'menu' }); }} />
+        surFin={(nom) => { P.creerProfil(nom); rafraichir(); setEcran({ nom: 'menu' }); }} />
     );
   }
 
@@ -185,7 +194,7 @@ function Jeu() {
   /** Le monde d'un emplacement (un essai n'a pas de monde enregistré). */
   const chargerMonde = (emplacement: number) => (emplacement === ESSAI ? creerMonde() : P.chargerMonde(profil.id, emplacement));
   SFX.on = sons;
-  fixerVolumes({ musique: (profil.reglages.volumeMusique ?? 80) / 100, bruitages: (profil.reglages.volumeBruitages ?? 80) / 100 });
+  fixerVolumes({ musique: P.volumeMusiqueDe(profil.reglages) / 100, bruitages: P.volumeBruitagesDe(profil.reglages) / 100 });
   const menu = () => { rafraichir(); setEcran({ nom: 'menu' }); };
   const lancer = (emplacement: number, etat: Etat) => {
     if (emplacement === ESSAI) { menu(); return; }
@@ -215,7 +224,7 @@ function Jeu() {
   switch (ecran.nom) {
     case 'personnage':
       return garde(
-        <Introduction mode="personnage" disponibles={DISPONIBLES} initial={{ nom: profil.nom, pronom: profil.pronom, avatar: profil.avatar }}
+        <Introduction disponibles={DISPONIBLES}
           surAnnuler={() => setEcran({ nom: 'menu' })}
           surFin={(nom, avatar, pronom) => setEcran({ nom: 'graines', emplacement: ecran.emplacement, personnage: { nom, avatar, pronom }, contexte: 'nouvelle' })} />
       );
@@ -247,14 +256,18 @@ function Jeu() {
       return garde(
         <Ranch key={`${profil.id}-${emplacement}-${ecran.etat.naissance}-${ecran.etat.graine}-${ecran.etat.nom}`} etat={ecran.etat}
           reglages={profil.reglages}
-          surReglages={(r) => P.modifierProfil(profil.id, { reglages: r })}
+          surReglages={(r) => P.modifierProfil(profil.id, { reglages: { ...(P.profilActif()?.reglages ?? profil.reglages), ...r } })}
           sauver={(e) => { P.sauverPartie(profil.id, emplacement, e); P.noterForme(profil.id, apparence(e)); }}
           personnage={P.chargerPersonnage(profil, emplacement)}
           connus={profil.connus ?? []}
           surDecouverte={(cle) => { const p = P.profilActif(); if (p && !(p.connus ?? []).includes(cle)) P.modifierProfil(p.id, { connus: [...(p.connus ?? []), cle] }); }}
           surMort={(e) => setEcran({ nom: 'mort', emplacement, etat: e })}
-          surCombat={(e, nature) => setEcran({ nom: 'combat', emplacement, etat: e, ...preparerCombat(e, nature) })}
+          surCombat={(e, nature, sauvage) => setEcran({ nom: 'combat', emplacement, etat: e, ...preparerCombat(e, nature, sauvage) })}
+          catalogue={catalogue}
+          tutoriel={emplacement !== ESSAI && !vrai(chargerMonde(emplacement), 'ranch.tutoriel_vu')}
+          surTutorielVu={() => { if (emplacement === ESSAI) return; const m = chargerMonde(emplacement); poser(m, 'ranch.tutoriel_vu'); P.sauverMonde(profil.id, emplacement, m); }}
           ressources={chargerMonde(emplacement).ressources}
+          corvees={chargerMonde(emplacement).corvees}
           surPartir={(e, lieu) => {
             const monde = chargerMonde(emplacement);
             // le village (centre) ou la boutique de Jumpy
@@ -276,6 +289,7 @@ function Jeu() {
           surCombat={(e, m, rencontre) => setEcran({ nom: 'combat', emplacement, etat: e, ...preparerCombatExploration(rencontre), exploration: { monde: m, zone: rencontre.zone, historique: ecran.historique, bilan, rencontre } })}
           surRanch={(e, m) => { sauver(e, m); setEcran({ nom: 'ranch', emplacement, etat: e }); }}
           surVillage={(e, m) => { sauver(e, m); setEcran({ nom: 'monde', emplacement, etat: e, monde: m, lieu: 'foret' }); }}
+          surReglages={(r) => { P.modifierProfil(profil.id, { reglages: r }); rafraichir(); }} surMenu={menu}
           surMort={(e) => setEcran({ nom: 'mort', emplacement, etat: e })} />
       );
     }
@@ -288,6 +302,7 @@ function Jeu() {
           sauver={sauver}
           surRanch={(e, m) => { sauver(e, m); setEcran({ nom: 'ranch', emplacement, etat: e }); }}
           surExploration={(e, m) => { sauver(e, m); setEcran({ nom: 'exploration', emplacement, etat: e, monde: m, zone: DEPART, historique: [], bilan: bilanDepart(e, m) }); }}
+          surReglages={(r) => { P.modifierProfil(profil.id, { reglages: r }); rafraichir(); }} surMenu={menu}
           surMort={(e) => { sauver(e, monde); setEcran({ nom: 'mort', emplacement, etat: e }); }} />
       );
     }
@@ -316,14 +331,14 @@ function Jeu() {
       if (!scene) break;
       const derniere = P.dernierePartie(profil.id);
       const echo = derniere?.etat;
-      const perso = derniere ? P.chargerPersonnage(profil, derniere.emplacement) : { nom: profil.nom, pronom: profil.pronom, avatar: profil.avatar };
+      const perso = derniere ? P.chargerPersonnage(profil, derniere.emplacement) : P.personnageDeRepli(profil);
       return garde(
         <div style={{ position: 'fixed', inset: 0 }}>
           <SceneDialogue scene={scene} catalogue={catalogue} sons={sons} musique={musique}
             echo={{ nom: echo?.nom ?? 'Filo', chemin: echo ? apparence(echo) : 'echos/enfant/wrath.png' }}
             joueur={portrait(perso)}
             variables={{ 'joueur.nom': perso.nom, 'joueur.pronom': perso.pronom, 'echo.genre': echo?.genre ?? 'm', 'graine.nom': 'graine tellurique' }}
-            surFin={({ suite }) => setTimeout(() => setEcran(suite && SCENES.some((x) => x.id === suite) ? { nom: 'scene', id: suite } : { nom: 'menu' }), 1800)} />
+            surFin={({ suite }) => setEcran(suite && SCENES.some((x) => x.id === suite) ? { nom: 'scene', id: suite } : { nom: 'menu' })} />
         </div>
       );
     }

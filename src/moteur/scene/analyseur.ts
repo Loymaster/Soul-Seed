@@ -51,6 +51,7 @@ export const ACTIONS: Record<string, string> = {
   eclosion: 'la graine tremble, s’ouvre dans un éclair et l’écho naît',
   'nommer-echo': 'le joueur donne un nom à son écho ({echo.nom} ensuite)',
   image: 'épingle une image au-dessus de la scène (« action: image pnj/garry/attaque-jumpy », « action: image aucune »)',
+  montrer: 'tutoriel du ranch : met en lumière un élément de l’écran (« action: montrer sac » : echo, onglets, carnet, heure, sac, poteau ; « action: montrer aucun »)',
   // — Actions du monde (village, exploration) : jouées par src/jeu/monde/actions.ts
   donner: 'range un objet dans le sac (« action: donner canne_peche », « action: donner pomme 2 ») ; {action.ok} vaut faux si le sac est plein',
   retirer: 'retire un objet du sac (« action: retirer poisson_anguille », « action: retirer aliment » = le premier aliment) ; {action.ok}, {action.objet}',
@@ -232,7 +233,7 @@ export function analyserScene(source: string, id: string): ResultatAnalyse {
         if (opt) options.push({ ...opt, corps });
       }
       if (!options.length) signaler(l, 'Choix sans réponse : ajoutez des lignes « > résonance « texte » » décalées en dessous.');
-      if (options.length > 4) signaler(l, `${options.length} réponses : la feuille de dialogue n'en affiche que 4 à la fois.`, 'alerte');
+      if (options.length > 6) signaler(l, `${options.length} réponses : la feuille de dialogue en affiche 6 au plus.`, 'alerte');
       return { type: 'choix', ligne: l.n, question: m[1]?.trim() || undefined, options };
     }
     if (t.startsWith('>')) { signaler(l, 'Réponse « > » en dehors d’un choix.'); bloc(l.indent); return null; }

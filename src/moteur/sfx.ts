@@ -40,7 +40,7 @@ export interface MoteurSons {
   stamp: Son; leather: Son; page: (volume?: number) => void; woosh: Son; bookArrive: Son;
   pencil: Son; paperTick: Son; slide: Son; pop: Son;
   caresse: Son; refus: Son;
-  balai: Son; berceuse: Son; brosse: Son; bulles: Son; croque: Son; eau: Son; marteau: Son; rebond: Son; sacPose: Son;
+  balai: Son; berceuse: Son; berceuseLongue: Son; brosse: Son; bulles: Son; croque: Son; eau: Son; marteau: Son; rebond: Son; sacPose: Son;
   pas: (volume?: number) => void; sacoche: (ouvre: boolean) => void;
   foulee: (profil: { demarche: string; taille: number; poids: number }, volume: number, patte: number) => void;
   glisse: (profil: { demarche: string; taille: number; poids: number }, volume: number, duree: number) => void;
@@ -50,6 +50,10 @@ export interface MoteurSons {
   chant: (i: number) => void; pose: Son; eveil: Son; ouverture: Son; cri: Son;
   pouls: Son; secousse: Son; vent: (duree: number) => void; repli: Son; formeGraine: Son; survolDoux: Son;
   motVoix: (i: number) => void; sceau: (i: number) => void; aube: Son;
+  /** Validation de l'introduction : une note unique, neutre et mystérieuse. */
+  mystere: Son;
+  // évolution de l'écho
+  evoMontee: (duree: number) => void; evoBattement: (i: number) => void; evoEclat: Son; evoRevelation: Son;
 }
 
 export const SFX = brut as unknown as MoteurSons;

@@ -1,6 +1,7 @@
 // Profils de joueur et emplacements de partie, enregistrés dans le navigateur.
-// Un profil = une personne qui joue : son nom, son avatar, son pronom, ses réglages et sa mémoire des échos.
-// Chaque profil a ses propres emplacements de partie.
+// Un profil = une personne qui joue : un simple nom de profil, ses réglages et sa mémoire des échos.
+// Chaque profil a ses propres emplacements de partie ; chaque partie a son personnage (nom, pronom, avatar),
+// et toutes les parties d'un profil partagent sa mémoire des échos.
 import type { Etat } from '@/moteur/simulation';
 import { normaliserMonde, type Monde } from '@/moteur/monde';
 
@@ -24,19 +25,30 @@ export const PRONOMS: { id: Pronom; nom: string; exemple: string }[] = [
   { id: 'iel', nom: 'iel', exemple: 'Iel est prêt·e pour l’aventure.' },
 ];
 
-/** Réglages du profil. Les volumes vont de 0 à 100 (80 par défaut). */
+/** Volumes par défaut (0–100) : la musique à moitié, les bruitages un peu plus haut. */
+export const VOLUME_MUSIQUE_DEFAUT = 50;
+export const VOLUME_BRUITAGES_DEFAUT = 80;
+
+/** Réglages du profil. Les volumes vont de 0 à 100. */
 export interface Reglages {
   sons: boolean;
   musique: boolean;
   volumeMusique?: number;
   volumeBruitages?: number;
+  /** Version des réglages par défaut appliqués (2 : musique à 50 %). */
+  defauts?: number;
 }
+export const volumeMusiqueDe = (r: Reglages) => r.volumeMusique ?? VOLUME_MUSIQUE_DEFAUT;
+export const volumeBruitagesDe = (r: Reglages) => r.volumeBruitages ?? VOLUME_BRUITAGES_DEFAUT;
 
 export interface Profil {
   id: string;
+  /** Nom du profil (la personne qui joue), distinct du personnage de chaque partie. */
   nom: string;
-  avatar: IdAvatar;
-  pronom: Pronom;
+  /** Anciens profils seulement (avant que le personnage ne soit propre à chaque partie). */
+  avatar?: IdAvatar;
+  /** Anciens profils seulement. */
+  pronom?: Pronom;
   creeLe: string;
   vuLe: string;
   reglages: Reglages;
@@ -79,7 +91,19 @@ function retirer(cle: string) {
 
 export function registre(): Registre {
   const r = lire<Registre>(CLE_REGISTRE);
-  return r && r.version === 1 && Array.isArray(r.profils) ? r : { version: 1, actif: null, profils: [] };
+  if (!(r && r.version === 1 && Array.isArray(r.profils))) return { version: 1, actif: null, profils: [] };
+  // nouveaux réglages par défaut : la musique passe de 80 à 50 % si elle n'avait jamais été réglée autrement
+  let modifie = false;
+  for (const p of r.profils) {
+    p.reglages = p.reglages ?? { sons: true, musique: true };
+    if ((p.reglages.defauts ?? 1) < 2) {
+      if (p.reglages.volumeMusique == null || p.reglages.volumeMusique === 80) p.reglages.volumeMusique = VOLUME_MUSIQUE_DEFAUT;
+      p.reglages.defauts = 2;
+      modifie = true;
+    }
+  }
+  if (modifie) enregistrer(r);
+  return r;
 }
 const enregistrer = (r: Registre) => ecrire(CLE_REGISTRE, r);
 
@@ -97,13 +121,14 @@ export function choisirProfil(id: string) {
   enregistrer(r);
 }
 
-export function creerProfil(nom: string, avatar: IdAvatar, pronom: Pronom): Profil {
+/** Un profil ne demande qu'un nom : le personnage (nom, pronom, avatar) se choisit à chaque nouvelle partie. */
+export function creerProfil(nom: string): Profil {
   const r = registre();
   const maintenant = new Date().toISOString();
   const p: Profil = {
     id: 'p' + Date.now().toString(36) + Math.floor(Math.random() * 1e4).toString(36),
-    nom: nom.trim(), avatar, pronom, creeLe: maintenant, vuLe: maintenant,
-    reglages: { sons: true, musique: true, volumeMusique: 80, volumeBruitages: 80 }, memoire: [],
+    nom: nom.trim(), creeLe: maintenant, vuLe: maintenant,
+    reglages: { sons: true, musique: true, volumeMusique: VOLUME_MUSIQUE_DEFAUT, volumeBruitages: VOLUME_BRUITAGES_DEFAUT, defauts: 2 }, memoire: [],
   };
   r.profils.push(p);
   r.actif = p.id;
@@ -164,10 +189,13 @@ export function sauverMonde(profil: string, emplacement: number, m: Monde) {
   return ecrire(cleMonde(profil, emplacement), m);
 }
 
-/** Le personnage d'un emplacement ; pour les parties d'avant les personnages, celui du profil. */
+/** Personnage de repli d'un profil (parties d'avant les personnages, essais de développement). */
+export const personnageDeRepli = (profil: Profil): Personnage => ({ nom: profil.nom, pronom: profil.pronom ?? 'iel', avatar: profil.avatar ?? 'nb-1' });
+
+/** Le personnage d'un emplacement ; pour les parties d'avant les personnages, celui de l'ancien profil. */
 export function chargerPersonnage(profil: Profil, emplacement: number): Personnage {
   const p = lire<Personnage>(clePersonnage(profil.id, emplacement));
-  return p && p.nom ? p : { nom: profil.nom, pronom: profil.pronom, avatar: profil.avatar };
+  return p && p.nom ? p : personnageDeRepli(profil);
 }
 export function sauverPersonnage(profil: string, emplacement: number, p: Personnage) {
   return ecrire(clePersonnage(profil, emplacement), p);

@@ -4,6 +4,8 @@ import { resolve } from 'node:path';
 import atelier from './outils/atelier/plugin.mjs';
 
 export default defineConfig({
+  // GitHub Pages sert le jeu sous /Soul-Seed/ (variable BASE du déploiement) ; en local, à la racine
+  base: process.env.BASE ?? '/',
   plugins: [react(), atelier()],
   resolve: { alias: { '@': resolve(__dirname, 'src'), '@contenu': resolve(__dirname, 'contenu') } },
   build: {

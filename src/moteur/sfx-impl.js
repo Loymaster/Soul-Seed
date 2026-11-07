@@ -268,7 +268,12 @@ export const SFX = {
   // la voix de l'homme mystérieux : une note feutrée, grave et lointaine par mot
   motVoix(i) { const c = this.get(); if (!c) return; const t = c.currentTime;
     const gamme = [196, 220, 246.94, 293.66, 329.63]; const f = gamme[(i * 3) % gamme.length];
-    this.tone(f, t, 0.9, { gain: 0.016, attack: 0.05, lp: 1400, send: this.bright, sendGain: 0.9 }); },
+    this.tone(f, t, 0.9, { gain: 0.011, attack: 0.05, lp: 1300, send: this.bright, sendGain: 0.8 }); },
+  // validation dans l'introduction (homme mystérieux) : une seule note, douce et voilée, qui se perd dans la réverbe
+  // — un ré grave, sans attaque ni harmonique marquée, pour ne pas rivaliser avec la musique
+  mystere() { const c = this.get(); if (!c) return; const t = c.currentTime;
+    this.tone(293.66, t, 2.6, { gain: 0.045, attack: 0.09, lp: 1100, send: this.bright, sendGain: 0.9 });
+    this.tone(293.66, t, 2.2, { gain: 0.012, attack: 0.12, detune: 7, lp: 900, dry: false, send: this.bright, sendGain: 1 }); },
   // la réponse qui décide de la graine se dissipe : un souffle cristallin, puis l'emblème qui se révèle
   sceau(i) { const c = this.get(); if (!c) return; const t = c.currentTime;
     const f = [523.25, 587.33, 659.25, 783.99, 880][i] || 659.25;
@@ -322,6 +327,49 @@ export const SFX = {
     this.noise(t, 0.09, { type: 'lowpass', f: 700, gain: 0.18 }); this.tone(180, t, 0.12, { gain: 0.08, type: 'triangle' }); },
   berceuse() { const c = this.get(); if (!c) return; const t = c.currentTime;
     [523, 659, 587, 494].forEach((f, i) => this.tone(f, t + i * 0.55, 0.9, { gain: 0.035, attack: 0.08, type: 'sine' })); },
+  // berceuse de boîte à musique (environ 4 s) : quand l'écho s'endort, la musique se tait pour elle
+  berceuseLongue() { const c = this.get(); if (!c) return; const t = c.currentTime + 0.05;
+    const n = (k) => 261.63 * Math.pow(2, k / 12);
+    // mélodie (3/4, noire = 0,3 s) : mi mi sol | mi mi sol | mi sol do' si la | la sol… puis la note tenue
+    const melodie = [[4, 0], [4, 0.3], [7, 0.6], [4, 0.9], [4, 1.2], [7, 1.5], [4, 1.8], [7, 2.0], [12, 2.2], [11, 2.5], [9, 2.8], [9, 3.1], [7, 3.35]];
+    melodie.forEach(([k, d]) => {
+      this.tone(n(k + 12), t + d, 0.9, { gain: 0.05, attack: 0.004, send: this.bright, sendGain: 0.5 });
+      this.tone(n(k + 24), t + d, 0.35, { gain: 0.012, attack: 0.002, type: 'triangle' });
+    });
+    // basse douce : do, fa, do, sol
+    [[0, 0], [5, 0.9], [0, 1.8], [7, 2.7]].forEach(([k, d]) => this.tone(n(k - 12), t + d, 1.1, { gain: 0.03, attack: 0.08 }));
+    // accord final qui s'éteint
+    [0, 4, 7, 12].forEach((k, i) => this.tone(n(k + 12), t + 3.6 + i * 0.04, 1.6, { gain: 0.03, attack: 0.02, send: this.bright, sendGain: 0.6 })); },
   sacPose() { const c = this.get(); if (!c) return; const t = c.currentTime;
-    this.noise(t, 0.08, { type: 'lowpass', f: 900, gain: 0.07, attack: 0.004 }); this.noise(t, 0.05, { f: 2400, q: 0.8, gain: 0.015 }); }
+    this.noise(t, 0.08, { type: 'lowpass', f: 900, gain: 0.07, attack: 0.004 }); this.noise(t, 0.05, { f: 2400, q: 0.8, gain: 0.015 }); },
+
+  // ——— évolution de l'écho (magie sainte) : la lumière monte, la silhouette bat, l'éclat, la nouvelle forme
+  // la montée : un bourdon grave qui s'ouvre et monte, un souffle lumineux qui enfle (durée en secondes)
+  evoMontee(dur) { const c = this.get(); if (!c) return; const t = c.currentTime; dur = dur || 6;
+    [[65.41, 0], [98, 4], [130.81, -5]].forEach(([f, d]) => {
+      const o = c.createOscillator(); o.type = 'sawtooth'; o.frequency.setValueAtTime(f, t); o.frequency.exponentialRampToValueAtTime(f * 2, t + dur); o.detune.value = d;
+      const lp = c.createBiquadFilter(); lp.type = 'lowpass'; lp.Q.value = 3; lp.frequency.setValueAtTime(160, t); lp.frequency.exponentialRampToValueAtTime(2400, t + dur);
+      const g = c.createGain(); g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.05, t + dur * 0.5); g.gain.exponentialRampToValueAtTime(0.09, t + dur * 0.97); g.gain.exponentialRampToValueAtTime(0.0001, t + dur + 0.25);
+      o.connect(lp); lp.connect(g); g.connect(this.master); const s = c.createGain(); s.gain.value = 0.5; g.connect(s); s.connect(this.bright);
+      o.start(t); o.stop(t + dur + 0.4);
+    });
+    this.noise(t, dur + 0.2, { f: 500, fTo: 7000, q: 0.7, gain: 0.07, attack: dur * 0.9, send: this.bright, sendGain: 0.7 });
+    const notes = [523.25, 659.25, 783.99, 1046.5, 1318.5, 1567.98, 2093];
+    for (let i = 0; i < 18; i++) { const u = i / 17; this.tone(notes[Math.floor(Math.random() * (2 + u * 5))], t + 0.3 + u * dur * 0.9, 0.9, { gain: 0.012 + 0.016 * u, attack: 0.01, send: this.bright, sendGain: 0.8 }); } },
+  // un battement de la silhouette : une petite note de verre, de plus en plus aiguë
+  evoBattement(i) { const c = this.get(); if (!c) return; const t = c.currentTime; i = i || 0;
+    const f = 440 * Math.pow(2, Math.min(i, 24) / 12);
+    this.tone(f, t, 0.18, { type: 'triangle', gain: 0.035, attack: 0.004, lp: 5000, send: this.bright, sendGain: 0.5 });
+    this.tone(f * 2, t, 0.1, { gain: 0.012, attack: 0.003 }); },
+  // l'éclat : un coup de cristal et de souffle, une basse qui tient
+  evoEclat() { const c = this.get(); if (!c) return; const t = c.currentTime;
+    this.noise(t, 1.6, { type: 'highpass', f: 2400, gain: 0.16, attack: 0.004, send: this.bright, sendGain: 1 });
+    this.noise(t, 0.5, { type: 'lowpass', f: 300, gain: 0.25, attack: 0.002 });
+    this.tone(55, t, 2.4, { gain: 0.14, attack: 0.01, to: 41 });
+    [1046.5, 1318.5, 1567.98, 2093, 2637].forEach((f, i) => this.tone(f, t + i * 0.012, 2.6, { gain: 0.04, attack: 0.003, send: this.bright, sendGain: 0.9 })); },
+  // la révélation : un arpège clair qui retombe en accord, chaud et tenu
+  evoRevelation() { const c = this.get(); if (!c) return; const t = c.currentTime;
+    [523.25, 659.25, 783.99, 1046.5, 1318.5, 1567.98].forEach((f, i) => this.tone(f, t + i * 0.11, 2.2, { gain: 0.04, attack: 0.01, lp: 6000, send: this.bright, sendGain: 0.7 }));
+    [130.81, 196, 261.63, 329.63].forEach((f) => this.tone(f, t + 0.5, 4.2, { gain: 0.04, attack: 0.6, send: this.bright, sendGain: 0.6 }));
+    this.noise(t + 0.4, 2.5, { f: 3000, fTo: 8000, q: 0.5, gain: 0.03, attack: 0.8, send: this.bright, sendGain: 0.7 }); }
 };

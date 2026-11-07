@@ -1,0 +1,44 @@
+// Tutoriel du ranch : Jumpy accueille le joueur à sa première arrivée au ranch (une fois par partie,
+// drapeau du monde « ranch.tutoriel_vu »). La scène se joue par-dessus le ranch, qui reste visible.
+// « action: montrer … » met en lumière un élément de l'écran : echo, onglets, carnet, heure, sac, poteau, aucun.
+titre: Bienvenue au ranch
+décor: aucun
+places: jumpy D2
+
+jumpy [rit]: Ohé ! Tu dois être {joueur.nom} ! Myhra m’a dit que tu arriverais aujourd’hui.
+jumpy: Moi, c’est Jumpy. Je tiens la boutique du village… et ce ranch, je le connais comme ma poche.
+
+choix: Jumpy propose de vous faire visiter.
+  > neutre « Avec plaisir, je t’écoute ! »
+    jumpy [daccord]: Parfait ! Suis le guide.
+  > neutre « Merci, je vais me débrouiller. »
+    jumpy [rit]: Comme tu veux ! Si tu te perds, tout est écrit dans ton carnet. Passe me voir à la boutique !
+    fin
+
+action: montrer echo
+jumpy [daccord]: Voilà {echo.nom}. À partir d’aujourd’hui, {echo:il|elle} compte sur toi pour tout.
+jumpy [pensif]: Un écho ne parle pas, mais il en dit long : sa mine, sa démarche, les petits signes qui tournent autour de lui…
+jumpy [pensif]: C’est comme ça qu’{echo:il|elle} te dira {echo:s’il|si elle} a faim, sommeil, ou besoin d’un câlin.
+jumpy: Clique sur {echo:lui|elle} pour {echo:le|la} caresser. Et si un « ! » apparaît au-dessus de sa tête, c’est qu’{echo:il|elle} vient de faire quelque chose… à toi de réagir !
+
+action: montrer onglets
+jumpy: Ces onglets de cuir, c’est tout ce que tu peux faire pour {echo.nom} : {echo:le|la} nourrir, {echo:le|la} laver, {echo:le|la} coucher, jouer, s’entraîner, tenir le ranch propre…
+jumpy [rit]: Chaque chose prend du temps. Choisis bien !
+
+action: montrer carnet
+jumpy: Et voici ton carnet d’éleveur. Tout ce qui se passe au ranch s’y écrit : le journal, les échos que vous croiserez, tes réglages.
+
+action: montrer heure
+jumpy [pensif]: Ici, le temps file : une heure passe en une petite minute. Matin, soir, nuit… {echo.nom} vit à ce rythme-là.
+jumpy: Les repas, le sommeil, les visites : tout suit le soleil. Garde un œil sur l’écriteau !
+
+action: montrer sac
+jumpy [daccord]: Ton sac. La nourriture, les remèdes, tout ce que tu rapporteras de tes balades. C’est là que tu prendras de quoi nourrir {echo.nom}.
+
+action: montrer poteau
+jumpy [rit]: Et le poteau, c’est pour partir : le village, ma boutique — passe me voir ! — ou l’exploration, avec {echo.nom} sur les talons.
+
+action: montrer aucun
+jumpy [pensif]: Dernière chose : des échos sauvages passent parfois par ici. Sois {joueur:accueillant|accueillante|accueillant·e}… {echo.nom} s’y fera peut-être des amis.
+jumpy [rit]: Allez, je file, la boutique ne va pas s’ouvrir toute seule ! Prends bien soin {echo:de lui|d’elle} !
+sort: jumpy
