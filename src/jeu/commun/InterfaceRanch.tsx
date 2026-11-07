@@ -13,6 +13,8 @@ import { fixerVolumes } from './volumes';
 import { VOLUME_BRUITAGES_DEFAUT, VOLUME_MUSIQUE_DEFAUT, type Reglages } from '../profils';
 import '../ranch/ranch.css';
 import './interface.css';
+import type { Monde } from '@/moteur/monde';
+import { CHIFFRES_ROMAINS, GABARIT_PETIT, ICONE_ASTUCES, THEMES_ASTUCES, compteTheme, lignesTheme, paginer } from './astuces';
 
 const asset = (chemin: string) => `${import.meta.env.BASE_URL}assets/${chemin}`;
 /** Le filtre « papier » du ranch : la nuit bleuit et assombrit l'interface (matrice de couleur de ciel.ts) ; défini par le calque. */
@@ -334,10 +336,15 @@ export interface ProprietesPetitCarnet {
   surMenu?: () => void;
   /** Le carnet a fini de se refermer. */
   surFerme: () => void;
+  /** Le monde de la partie : ses drapeaux dévoilent des astuces. */
+  monde?: Pick<Monde, 'drapeaux' | 'corvees'> | null;
 }
 
 /** Deux pages : à gauche l'écho tel qu'on le perçoit (jamais de chiffre), à droite les options et la partie. */
-export function PetitCarnet({ etat, portrait, reglages, surReglages, sauver, surMenu, surFerme }: ProprietesPetitCarnet) {
+export function PetitCarnet({ etat, portrait, reglages, surReglages, sauver, surMenu, surFerme, monde }: ProprietesPetitCarnet) {
+  /** Les astuces s'ouvrent par-dessus les deux pages : thème et page affichés (null : l'écho et les options). */
+  const [astuces, setAstuces] = useState<{ theme: number; page: number } | null>(null);
+  const [tourne, setTourne] = useState(false);
   const [r, setR] = useState<Required<Reglages>>({ sons: reglages.sons !== false, musique: reglages.musique !== false, volumeMusique: reglages.volumeMusique ?? VOLUME_MUSIQUE_DEFAUT, volumeBruitages: reglages.volumeBruitages ?? VOLUME_BRUITAGES_DEFAUT, defauts: reglages.defauts ?? 2 });
   const [ferme, setFerme] = useState(false);
   const [sauve, setSauve] = useState('');
@@ -357,6 +364,11 @@ export function PetitCarnet({ etat, portrait, reglages, surReglages, sauver, sur
     setFerme(true);
     plus(520, surFerme);
   };
+  const feuilleter = (n: { theme: number; page: number } | null) => {
+    if (tourne) return;
+    son('page', 0.8); setTourne(true);
+    plus(220, () => { setAstuces(n); setTourne(false); });
+  };
   const g = lireSignes(etat);
   const indices = g.besoins.filter((b) => b.urgence >= 2 || b.besoin === 'maladie' || b.besoin === 'blessure');
   const bouton: CSSProperties = { display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '10px 16px', border: 'none', borderRadius: '6px', fontFamily: "'Alegreya SC',serif", fontSize: '15px', letterSpacing: '1px', cursor: 'pointer' };
@@ -365,6 +377,7 @@ export function PetitCarnet({ etat, portrait, reglages, surReglages, sauver, sur
       <button className={`voile ${ferme ? 'part' : ''}`} onClick={fermer} aria-label="Fermer le carnet" style={{ animationDelay: ferme ? '0.1s' : '0s' }} />
       <section className={`ic-livre ${ferme ? 'ferme' : ''}`} aria-label="Carnet d'éleveur" style={{ filter: FILTRE }}>
         <div className="ic-couv"><div className="stitch" style={{ borderRadius: '14px' }} /></div>
+        {astuces ? <PagesAstuces etat={etat} monde={monde} vue={astuces} tourne={tourne} feuilleter={feuilleter} /> : (<>
         <div className="ic-page papier-g gauche">
           <div className="ic-surtitre">Carnet d’éleveur</div>
           <h2 className="ic-titre">{etat.nom}</h2>
@@ -378,6 +391,10 @@ export function PetitCarnet({ etat, portrait, reglages, surReglages, sauver, sur
           <div className="ic-rubrique">Ce que vous remarquez</div>
           {indices.length ? indices.slice(0, 4).map((b) => <div key={b.besoin} className="ic-indice">{b.indice}</div>)
             : <div className="ic-indice calme">Rien d’inquiétant pour l’instant.</div>}
+          <button className="ic-lien" onClick={() => feuilleter({ theme: 0, page: 0 })}>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d={ICONE_ASTUCES} /></svg>
+            Astuces d’éleveur
+          </button>
           <div className="ic-note">Le journal, les relations et la mémoire des échos se consultent au ranch.</div>
         </div>
         <div className="ic-page papier-d droite">
@@ -405,6 +422,7 @@ export function PetitCarnet({ etat, portrait, reglages, surReglages, sauver, sur
             {surMenu && <button style={{ ...bouton, background: 'transparent', color: '#6e3f22', boxShadow: 'inset 0 0 0 2px #6e3f22' }} onClick={() => { sauver(); surMenu(); }}>Retour au menu principal</button>}
           </div>
         </div>
+        </>)}
         <svg className="ic-signet" width="40" height="420" viewBox="0 0 40 420" aria-hidden="true">
           <path d="M20 0 C18 120 24 260 22 380" fill="none" stroke="#5e1a12" strokeWidth="13" />
           <path d="M20 0 C18 120 24 260 22 380" fill="none" stroke="#9c3b2a" strokeWidth="10.5" />
@@ -414,6 +432,62 @@ export function PetitCarnet({ etat, portrait, reglages, surReglages, sauver, sur
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" /></svg>
         </button>
       </section>
+    </>
+  );
+}
+
+/** Les astuces dans le petit carnet : à gauche les thèmes, à droite les conseils (mêmes classes que le grand carnet). */
+function PagesAstuces({ etat, monde, vue, tourne, feuilleter }: {
+  etat: Etat; monde?: Pick<Monde, 'drapeaux' | 'corvees'> | null; vue: { theme: number; page: number }; tourne: boolean;
+  feuilleter: (n: { theme: number; page: number } | null) => void;
+}) {
+  const c = { e: etat, m: monde ?? null };
+  const pages = THEMES_ASTUCES.map((t) => paginer(lignesTheme(t, c), GABARIT_PETIT));
+  const ti = Math.min(vue.theme, THEMES_ASTUCES.length - 1), t = THEMES_ASTUCES[ti];
+  const pi = Math.min(vue.page, pages[ti].length - 1);
+  const prec = pi > 0 ? { theme: ti, page: pi - 1 } : ti > 0 ? { theme: ti - 1, page: pages[ti - 1].length - 1 } : null;
+  const suiv = pi < pages[ti].length - 1 ? { theme: ti, page: pi + 1 } : ti < THEMES_ASTUCES.length - 1 ? { theme: ti + 1, page: 0 } : null;
+  const fleche = (d: string) => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d={d} /></svg>;
+  return (
+    <>
+      <div className="ic-page papier-g gauche">
+        <div className="ic-surtitre">Conseils d’éleveur</div>
+        <h2 className="ic-titre">Astuces</h2>
+        <div className={`contenu-page ${tourne ? 'cache' : ''}`} style={{ position: 'relative', height: 'calc(100% - 64px)' }}>
+          <div className="ast-intro">Ce que les éleveurs se transmettent, et ce que vous découvrirez en chemin.</div>
+          {THEMES_ASTUCES.map((x, i) => {
+            const n = compteTheme(x, c);
+            return (
+              <button key={x.k} className={`sommaire-ligne ast-ligne ${i === ti ? 'ici' : ''}`} aria-current={i === ti ? 'page' : undefined} onClick={() => i !== ti && feuilleter({ theme: i, page: 0 })}>
+                <span className="num">{CHIFFRES_ROMAINS[i]}</span><span>{x.nom}</span><span className="points" /><span className="num">{n.vues < n.total ? `${n.vues}/${n.total}` : n.total}</span>
+              </button>
+            );
+          })}
+          <button className="ic-lien" style={{ marginTop: '10px' }} onClick={() => feuilleter(null)}>{fleche('M15 5l-7 7 7 7')}Revenir à {etat.nom || 'l’écho'}</button>
+          <div className="ast-mot">{t.mot}</div>
+        </div>
+      </div>
+      <div className="ic-page papier-d droite">
+        <div className={`contenu-page ast-page ${tourne ? 'cache' : ''}`}>
+          <div className="ast-entete">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d={t.icone} /></svg>
+            <span className="ast-theme">{t.nom}</span>
+          </div>
+          <div className="ast-liste">
+            {pages[ti][pi].map((l, i) => (
+              <div key={`${ti}-${pi}-${i}`} className={`ast ${l.cachee ? 'cachee' : ''}`}>
+                <svg className="ast-puce" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
+                <span className="ast-texte">{l.texte}{l.piste && <em className="ast-piste">— {l.piste}</em>}</span>
+              </div>
+            ))}
+          </div>
+          <div className="ast-pages">
+            <button className="ast-fleche" disabled={!prec} onClick={() => prec && feuilleter(prec)} aria-label="Page précédente">{fleche('M15 5l-7 7 7 7')}</button>
+            <span className="ast-folio">{pages[ti].length > 1 ? `${CHIFFRES_ROMAINS[ti]} · page ${pi + 1} / ${pages[ti].length}` : CHIFFRES_ROMAINS[ti]}</span>
+            <button className="ast-fleche" disabled={!suiv} onClick={() => suiv && feuilleter(suiv)} aria-label="Page suivante">{fleche('M9 5l7 7-7 7')}</button>
+          </div>
+        </div>
+      </div>
     </>
   );
 }
