@@ -60,7 +60,7 @@ Moteur prêt dans `src/moteur/combat/` (règles du prototype, temps réel, déte
 ## Simulation et contenu
 - [ ] Héritage entre générations (7–12 % des caractéristiques) : calculé puis remis à zéro dans le prototype — décider s’il devient réel.
 - [ ] Mini-jeux des corvées et réparations d’Ash.
-- [ ] Village, magasin, exploration.
+- [ ] Village, magasin, exploration (maquette « Exploration » v12 du canevas à valider : panneaux de chemin, fouille à cinq cachettes, pêche au bouchon, Filo envoyé, camp, carte qui se dessine ; durées de marche et risques proposés).
 - [ ] Jardin et cuisine.
 - [ ] Échos de mémoire.
 - [ ] Démarche propre à chaque forme d’écho.
