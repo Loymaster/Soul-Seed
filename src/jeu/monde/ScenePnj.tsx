@@ -145,7 +145,7 @@ export function ScenePnj(props: ProprietesScenePnj) {
             retenirVariables(monde, initiales, variables);
             synchroniser(etat, monde);
             props.sauver();
-            setTimeout(() => props.surFin({ sortie: sortie.current }), 300);
+            setTimeout(() => props.surFin({ sortie: sortie.current }), 100);
           }} />
       </div>
       {panneau && (

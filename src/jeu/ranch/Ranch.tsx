@@ -17,7 +17,7 @@ import { profilEcho, volumePas, type Profil } from './demarche';
 import { saison } from './lumiere';
 import { REP, TAMPON, TEMPERAMENTS, GLYPHE_INCONNU, cleEvenement, consequence, noteSens, parole, phraseReponse } from './evenements';
 import { ecouterVolumes, fixerVolumes, volumeMusique } from '../commun/volumes';
-import type { Personnage, Reglages } from '../profils';
+import { VOLUME_BRUITAGES_DEFAUT, VOLUME_MUSIQUE_DEFAUT, type Personnage, type Reglages } from '../profils';
 import './ranch.css';
 
 export const asset = (chemin: string) => `${import.meta.env.BASE_URL}assets/${chemin}`;
@@ -149,7 +149,7 @@ export class Ranch extends Component<ProprietesRanch, EtatUI> {
     this.sim = new Simulation(p.etat);
     const r = p.reglages;
     this.state = {
-      t: 0, sons: r?.sons ?? true, musique: r?.musique ?? true, volumeMusique: r?.volumeMusique ?? 80, volumeBruitages: r?.volumeBruitages ?? 80,
+      t: 0, sons: r?.sons ?? true, musique: r?.musique ?? true, volumeMusique: r?.volumeMusique ?? VOLUME_MUSIQUE_DEFAUT, volumeBruitages: r?.volumeBruitages ?? VOLUME_BRUITAGES_DEFAUT,
       ex: 520, ey: 290, eDur: 0, eSens: '', marche: false,
       survol: -1, ouvert: null, actif: -1, tamponne: null, anim: '', bulle: null, bulleImg: '', coeurs: [], flottants: [],
       carnet: false, ferme: false, section: 'sommaire', contenuCache: false, tourne: null, sauve: '', carnetLeve: false,

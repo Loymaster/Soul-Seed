@@ -76,7 +76,8 @@ const ALLURE = {
   vaillant: ['vaillant', 'vaillante'], entame: ['entamé', 'entamée'], eprouve: ['éprouvé', 'éprouvée'],
   chancelant: ['chancelant', 'chancelante'], ko: ['à terre', 'à terre'],
 } as const;
-const VITESSES = [1, 1.5, 2] as const;
+/** Les combats se jouent toujours deux fois plus vite que le temps du moteur (réglage fixe, sans contrôle). */
+const VITESSE = 2;
 
 interface Effet { cls: string; x: number; y: number; t?: number; dx?: number; src?: string; fin: number; halo?: { id: string; c: string } }
 interface Etiquette { nom: string; icone: string; x: number; y: number; fin: number }
@@ -100,8 +101,6 @@ export function EcranCombat({ echo, allie, adversaire, registre, terrain, musiqu
   const [banniere, setBanniere] = useState<string | null>(null);
   const [toast, setToast] = useState<{ texte: string; cle: number } | null>(null);
   const [fin, setFin] = useState<{ titre: string; lignes: string[] } | null>(null);
-  const [vitesse, setVitesse] = useState(1);
-  const vitesseRef = useRef(vitesse); vitesseRef.current = vitesse;
   const secoue = useRef(0);
   const effets = useRef<Effet[]>([]);
   const etiquettes = useRef<Etiquette[]>([]);
@@ -202,7 +201,7 @@ export function EcranCombat({ echo, allie, adversaire, registre, terrain, musiqu
       const dt = Math.min(100, now - (dernier || now));
       dernier = now;
       if (phaseRef.current === 'combat' && !C.termine) {
-        C.avancer(dt * vitesseRef.current);
+        C.avancer(dt * VITESSE);
         traiterRef.current(C.vider(), now);
       }
       effets.current = effets.current.filter((x) => x.fin > now);
@@ -395,11 +394,6 @@ export function EcranCombat({ echo, allie, adversaire, registre, terrain, musiqu
                   <span className="lib">Fuir le combat<em>{dFuite.pret ? 'Tenter de s’échapper' : 'Pas encore…'}</em></span>
                 </button>
               )}
-              <span className="sep" />
-              <button className="ordre" aria-label="Vitesse du combat" onClick={() => { SonsCombat.ordre(); setVitesse(VITESSES[(VITESSES.indexOf(vitesse as 1) + 1) % VITESSES.length]); }}>
-                <span className="rond" style={{ fontFamily: "'Alegreya SC',serif", fontWeight: 700, fontSize: 19, color: 'var(--ivoire)' }}>×{String(vitesse).replace('.', ',')}</span>
-                <span className="lib">Vitesse<em>Accélérer le combat</em></span>
-              </button>
             </div>
             {menu === 'tech' && (
               <div className="cbEventail" style={{ left: 430 }}>

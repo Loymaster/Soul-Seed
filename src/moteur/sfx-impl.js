@@ -268,7 +268,12 @@ export const SFX = {
   // la voix de l'homme mystérieux : une note feutrée, grave et lointaine par mot
   motVoix(i) { const c = this.get(); if (!c) return; const t = c.currentTime;
     const gamme = [196, 220, 246.94, 293.66, 329.63]; const f = gamme[(i * 3) % gamme.length];
-    this.tone(f, t, 0.9, { gain: 0.016, attack: 0.05, lp: 1400, send: this.bright, sendGain: 0.9 }); },
+    this.tone(f, t, 0.9, { gain: 0.011, attack: 0.05, lp: 1300, send: this.bright, sendGain: 0.8 }); },
+  // validation dans l'introduction (homme mystérieux) : une seule note, douce et voilée, qui se perd dans la réverbe
+  // — un ré grave, sans attaque ni harmonique marquée, pour ne pas rivaliser avec la musique
+  mystere() { const c = this.get(); if (!c) return; const t = c.currentTime;
+    this.tone(293.66, t, 2.6, { gain: 0.045, attack: 0.09, lp: 1100, send: this.bright, sendGain: 0.9 });
+    this.tone(293.66, t, 2.2, { gain: 0.012, attack: 0.12, detune: 7, lp: 900, dry: false, send: this.bright, sendGain: 1 }); },
   // la réponse qui décide de la graine se dissipe : un souffle cristallin, puis l'emblème qui se révèle
   sceau(i) { const c = this.get(); if (!c) return; const t = c.currentTime;
     const f = [523.25, 587.33, 659.25, 783.99, 880][i] || 659.25;

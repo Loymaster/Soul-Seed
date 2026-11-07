@@ -1,4 +1,6 @@
 // Introduction, première partie : entre deux mondes (registre « magie sainte »), portage de la maquette validée.
+// Bruitages sobres : la musique porte la scène ; chaque réponse est validée par une seule note (SFX.mystere),
+// aucun son au survol ; restent la voix feutrée de l'homme (une note très douce par mot) et le réveil.
 // L'homme mystérieux demande le nom du personnage, son pronom, l'astre en qui il a confiance (→ son image)
 // et ce qui compte le plus pour lui (→ la Soul Seed que lui remettra Myhra). Puis le joueur s'éveille.
 import { useEffect, useRef, useState, type CSSProperties } from 'react';
@@ -112,18 +114,17 @@ export function EntreDeuxMondes({ surFin, musique = true }: { surFin: (r: Result
   };
   const validerNom = () => {
     const n = capitaliser(nom); if (!n) return;
-    SFX.holyClick(); setNom(n); nomRef.current = n; dire(etape + 1);
+    SFX.mystere(); setNom(n); nomRef.current = n; dire(etape + 1);
   };
-  const choisirPronom = (k: Pronom) => { SFX.holyClick(); setPronom(k); pronomRef.current = k; dire(etape + 1); };
+  const choisirPronom = (k: Pronom) => { SFX.mystere(); setPronom(k); pronomRef.current = k; dire(etape + 1); };
   const choisirAstre = (i: number) => {
     if (astre) return;
-    SFX.chant(i === 0 ? 4 : 1); setAstre(ASTRES[i].k);
-    plusTard(() => SFX.holyClick(), 350);
+    SFX.mystere(); setAstre(ASTRES[i].k);
     plusTard(() => dire(etape + 1), 1900);
   };
   const choisirPriorite = (i: number) => {
     if (priorite >= 0) return;
-    SFX.sceau(i); setPriorite(i); setLoin(false);
+    SFX.mystere(); setPriorite(i); setLoin(false);
     plusTard(() => setLoin(true), 900);
     plusTard(() => dire(etape + 1), 2600);
   };
@@ -177,14 +178,14 @@ export function EntreDeuxMondes({ surFin, musique = true }: { surFin: (r: Result
             <form className="reponse" style={v({ '--d': '.1s' })} onSubmit={(e) => { e.preventDefault(); validerNom(); }}>
               <div className="champ-ligne">
                 <input className="champ" value={nom} onChange={(e) => setNom(e.target.value.slice(0, 16))} placeholder="votre nom" maxLength={16} aria-label="Votre nom" autoFocus />
-                <button className="bouton-saint" type="submit" onMouseEnter={() => SFX.holyHover()} disabled={!nom.trim()}>Valider</button>
+                <button className="bouton-saint" type="submit" disabled={!nom.trim()}>Valider</button>
               </div>
             </form>
           )}
 
           {q === 'pronom' && (
             <div className="reponse" style={v({ '--d': '.1s' })}>
-              {PRONOMS.map((p) => <button key={p.k} className="eclat" onMouseEnter={() => SFX.holyHover()} onClick={() => choisirPronom(p.k)}><b>{p.label}</b><i>{p.exemple}</i></button>)}
+              {PRONOMS.map((p) => <button key={p.k} className="eclat" onClick={() => choisirPronom(p.k)}><b>{p.label}</b><i>{p.exemple}</i></button>)}
             </div>
           )}
 
@@ -192,7 +193,7 @@ export function EntreDeuxMondes({ surFin, musique = true }: { surFin: (r: Result
             <div className="reponse" style={v({ '--d': '.1s', gap: 40 })}>
               {ASTRES.map((a, i) => (
                 <button key={a.k} className={`astre ${astre ? (astre === a.k ? 'pris' : 'ecarte') : survolA === i ? 'sur' : ''}`} style={v({ '--c': a.c })}
-                  onMouseEnter={() => { if (!astre && survolA !== i) { SFX.holyHover(); setSurvolA(i); } }} onClick={() => choisirAstre(i)}>
+                  onMouseEnter={() => { if (!astre && survolA !== i) setSurvolA(i); }} onClick={() => choisirAstre(i)}>
                   <svg viewBox="0 0 64 64" aria-hidden="true"><path d={a.icone} fill="currentColor" fillRule="evenodd" /></svg>
                   <b>{a.nom}</b>
                 </button>
@@ -204,7 +205,7 @@ export function EntreDeuxMondes({ surFin, musique = true }: { surFin: (r: Result
             <div className={`reponse ${priorite >= 0 ? (departPriorite ? 'verrou part' : 'verrou') : ''}`} style={v({ '--d': '.1s' })}>
               {PRIORITES.map((p, i) => (
                 <button key={p.k} className={`lame ${priorite >= 0 ? (priorite === i ? 'pris' : 'ecarte' + (loin ? ' loin' : '')) : survolP === i ? 'sur' : ''}`} style={v({ '--c': p.c })}
-                  onMouseEnter={() => { if (priorite < 0 && survolP !== i) { SFX.chant(i); setSurvolP(i); } }} onClick={() => choisirPriorite(i)}>
+                  onMouseEnter={() => { if (priorite < 0 && survolP !== i) setSurvolP(i); }} onClick={() => choisirPriorite(i)}>
                   <span className="texte">{p.texte}</span>
                   <i className="etincelles">{ETINCELLES.map((e, k) => <b key={k} className="etincelle" style={v({ '--x': `${e.x}%`, '--y': `${e.y}%`, '--t': `${e.t}px`, '--dx': `${e.dx}px`, '--dy': `${e.dy}px`, '--du': `${e.du.toFixed(2)}s`, '--de': `${e.de.toFixed(2)}s` })} />)}</i>
                   <Embleme graine={p.k} className="embleme" />

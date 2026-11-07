@@ -2,8 +2,8 @@
 import { useState, type CSSProperties, type ReactNode } from 'react';
 import { NOM_STADE, ageJours, apparence, type Etat } from '@/moteur/simulation';
 import { SFX } from '@/moteur/sfx';
-import { AVATARS, NB_EMPLACEMENTS, PRONOMS, type Profil } from '../profils';
-import { Avatar } from './Avatar';
+import { NB_EMPLACEMENTS, volumeBruitagesDe, volumeMusiqueDe, type Profil } from '../profils';
+import { Monogramme } from './Avatar';
 import { useMusique } from '../commun/musique';
 import './menu.css';
 
@@ -75,7 +75,7 @@ export function MenuPrincipal(p: ProprietesMenu) {
 
       <div className="mp-haut">
         <button className="pill" style={{ padding: '6px 14px 6px 6px' }} onMouseEnter={() => SFX.holyHover()} onClick={() => ouvrir('profils')} aria-label="Changer de profil">
-          <Avatar id={profil.avatar} taille={30} disponibles={p.disponibles} />
+          <Monogramme nom={profil.nom} taille={30} />
           <span style={{ textAlign: 'left', lineHeight: 1.1 }}><span style={{ display: 'block', fontSize: 10, letterSpacing: 2, color: '#9fb3c6' }}>Profil</span>{profil.nom}</span>
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true" style={{ marginLeft: 4 }}><path d="M7 10l5 5 5-5" /></svg>
         </button>
@@ -113,12 +113,12 @@ export function MenuPrincipal(p: ProprietesMenu) {
 
             {panneau === 'profils' && <>
               <h2>Profils</h2>
-              <div className="chapeau">Chaque profil garde ses parties, ses réglages et sa mémoire des échos.</div>
+              <div className="chapeau">Chaque profil garde ses parties, ses réglages et la mémoire des échos que partagent ses parties.</div>
               {p.profils.map((x) => (
                 <div key={x.id} style={{ position: 'relative' }}>
                   <button className={`ligne-verre ${x.id === profil.id ? 'choisi' : ''}`} onMouseEnter={() => SFX.holyHover()} onClick={() => { SFX.holyClick(); p.surChoisirProfil(x.id); setPanneau(null); }}>
-                    <Avatar id={x.avatar} taille={52} disponibles={p.disponibles} />
-                    <span><span className="nom">{x.nom}</span><br /><span className="det">{x.id === profil.id ? 'profil actuel' : `dernière visite le ${dateCourte(x.vuLe)}`} · {x.pronom}</span></span>
+                    <Monogramme nom={x.nom} taille={52} />
+                    <span><span className="nom">{x.nom}</span><br /><span className="det">{x.id === profil.id ? 'profil actuel' : `dernière visite le ${dateCourte(x.vuLe)}`}</span></span>
                   </button>
                   <div style={{ position: 'absolute', right: 10, top: 20 }}>
                     {aConfirmer === x.id
@@ -184,23 +184,8 @@ export function MenuPrincipal(p: ProprietesMenu) {
               <div className="chapeau">Réglages du profil de {profil.nom}.</div>
               <label className="interrupteur"><span>Musique</span><input type="checkbox" checked={musique} onChange={() => p.surModifierProfil({ reglages: { ...profil.reglages, musique: !musique } })} /></label>
               <label className="interrupteur"><span>Bruitages</span><input type="checkbox" checked={sons} onChange={() => { SFX.on = !sons; p.surModifierProfil({ reglages: { ...profil.reglages, sons: !sons } }); }} /></label>
-              <label className="curseur"><span>Volume de la musique</span><input type="range" min={0} max={100} step={5} value={profil.reglages.volumeMusique ?? 80} onChange={(ev) => p.surModifierProfil({ reglages: { ...profil.reglages, volumeMusique: Number(ev.target.value) } })} /></label>
-              <label className="curseur"><span>Volume des bruitages</span><input type="range" min={0} max={100} step={5} value={profil.reglages.volumeBruitages ?? 80} onChange={(ev) => { p.surModifierProfil({ reglages: { ...profil.reglages, volumeBruitages: Number(ev.target.value) } }); }} onPointerUp={() => SFX.holyHover()} /></label>
-              <div style={{ position: 'relative', margin: '18px 0 8px', fontFamily: "'Alegreya SC',serif", letterSpacing: 2, color: '#bfe6ff', fontSize: 13 }}>Avatar</div>
-              <div style={{ position: 'relative', display: 'flex', gap: 10, flexWrap: 'wrap' }}>
-                {AVATARS.map((a) => (
-                  <button key={a.id} onClick={() => { SFX.holyHover(); p.surModifierProfil({ avatar: a.id }); }} aria-label={a.nom} aria-pressed={profil.avatar === a.id}
-                    style={{ border: 'none', background: 'transparent', padding: 2, cursor: 'pointer', borderRadius: '50%', boxShadow: profil.avatar === a.id ? '0 0 0 2px #fff,0 0 16px rgba(168,220,255,.8)' : 'none', opacity: profil.avatar === a.id ? 1 : 0.7 }}>
-                    <Avatar id={a.id} taille={50} disponibles={p.disponibles} />
-                  </button>
-                ))}
-              </div>
-              <div style={{ position: 'relative', margin: '18px 0 8px', fontFamily: "'Alegreya SC',serif", letterSpacing: 2, color: '#bfe6ff', fontSize: 13 }}>Pronom</div>
-              <div style={{ position: 'relative', display: 'flex', gap: 10 }}>
-                {PRONOMS.map((x) => (
-                  <button key={x.id} className={`pronom ${profil.pronom === x.id ? 'choisi' : ''}`} style={{ minWidth: 90, padding: '8px 12px' }} onClick={() => { SFX.holyHover(); p.surModifierProfil({ pronom: x.id }); }}><b style={{ fontSize: 20 }}>{x.nom}</b></button>
-                ))}
-              </div>
+              <label className="curseur"><span>Volume de la musique</span><input type="range" min={0} max={100} step={5} value={volumeMusiqueDe(profil.reglages)} onChange={(ev) => p.surModifierProfil({ reglages: { ...profil.reglages, volumeMusique: Number(ev.target.value) } })} /></label>
+              <label className="curseur"><span>Volume des bruitages</span><input type="range" min={0} max={100} step={5} value={volumeBruitagesDe(profil.reglages)} onChange={(ev) => { p.surModifierProfil({ reglages: { ...profil.reglages, volumeBruitages: Number(ev.target.value) } }); }} onPointerUp={() => SFX.holyHover()} /></label>
               {p.outilsDev && <div style={{ position: 'relative', marginTop: 22 }}>{p.outilsDev}</div>}
             </>}
 
@@ -222,7 +207,7 @@ export function MenuPrincipal(p: ProprietesMenu) {
               <h2>Notes de version</h2>
               <div className="chapeau">v0.5 — la refonte</div>
               <ul style={{ position: 'relative', margin: 0, paddingLeft: 20, lineHeight: 1.6, color: '#e9f4fc' }}>
-                <li>Profils : nom, avatar et pronom, chacun avec ses parties.</li>
+                <li>Profils : un nom, ses parties (chacune avec son personnage) et la mémoire des échos qu’elles partagent.</li>
                 <li>Le ranch : une scène vivante, sans jauges ; on lit son écho à son attitude.</li>
                 <li>Le carnet d’éleveur devient le menu du jeu.</li>
                 <li>Les dialogues : un nouveau moteur de scènes.</li>

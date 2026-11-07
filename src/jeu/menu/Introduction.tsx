@@ -1,6 +1,8 @@
-// Faire connaissance : nom, avatar, pronom.
-// — mode « profil » : la personne qui joue (crée un profil) ;
-// — mode « personnage » : le personnage d'une partie lancée sans l'introduction (personnage, pronom, nom).
+// Faire connaissance.
+// — NouveauProfil : la personne qui joue ne donne qu'un nom de profil (le profil porte les réglages et la
+//   mémoire des échos, partagée par toutes ses parties) ;
+// — Introduction : le personnage d'une partie lancée sans l'introduction (image, pronom, nom). Avec l'introduction,
+//   c'est l'homme mystérieux qui pose ces questions (src/jeu/intro/EntreDeuxMondes.tsx).
 import { useState } from 'react';
 import { SFX } from '@/moteur/sfx';
 import { AVATARS, PRONOMS, type IdAvatar, type Pronom } from '../profils';
@@ -13,15 +15,50 @@ const APERCU: Record<Pronom, (nom: string) => string> = {
 };
 type Etape = 'nom' | 'avatar' | 'pronom';
 
-export function Introduction({ disponibles, surFin, surAnnuler, mode = 'profil', initial }: {
-  disponibles: Set<string>;
-  surFin: (nom: string, avatar: IdAvatar, pronom: Pronom) => void;
+const Poussiere = () => (
+  <>
+    {[12, 26, 41, 57, 70, 84].map((x, k) => (
+      <span key={k} className="poussiere" style={{ left: `${x}%`, width: 3 + (k % 2), height: 3 + (k % 2), background: k % 2 ? '#fff3c4' : '#e8f6ff', boxShadow: `0 0 10px ${k % 2 ? '#ffd27a' : '#a8dcff'}`, animationDelay: `${-k * 1.4}s`, ['--dx' as string]: `${(k % 3 - 1) * 14}px` }} />
+    ))}
+  </>
+);
+
+/** Création d'un profil : un nom, rien d'autre. */
+export function NouveauProfil({ surFin, surAnnuler }: {
+  surFin: (nom: string) => void;
   /** Absent au tout premier lancement : on ne peut pas jouer sans profil. */
   surAnnuler?: () => void;
-  mode?: 'profil' | 'personnage';
+}) {
+  const [nom, setNom] = useState('');
+  const nomPropre = nom.trim();
+  const survol = () => SFX.holyHover();
+  return (
+    <div className="intro">
+      <Poussiere />
+      <div className="intro-carte">
+        <div className="intro-voix">Avant que tout commence</div>
+        <form onSubmit={(ev) => { ev.preventDefault(); if (!nomPropre) return; SFX.holyClick(); surFin(nomPropre); }}>
+          <div className="intro-question">Quel nom donner à ce profil ?</div>
+          <div className="intro-aide">Le profil garde vos réglages et la mémoire des échos. Chaque partie aura son propre personnage.</div>
+          <input className="intro-champ" value={nom} onChange={(e) => setNom(e.target.value.slice(0, 18))} placeholder="Nom du profil" autoFocus aria-label="Nom du profil" />
+          <div className="intro-actions">
+            {surAnnuler && <button type="button" className="bouton-saint discret" onMouseEnter={survol} onClick={surAnnuler}>Annuler</button>}
+            <button type="submit" className="bouton-saint" onMouseEnter={survol} disabled={!nomPropre}>Créer le profil</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
+
+/** Création du personnage d'une partie lancée sans l'introduction : image, pronom, nom. */
+export function Introduction({ disponibles, surFin, surAnnuler, initial }: {
+  disponibles: Set<string>;
+  surFin: (nom: string, avatar: IdAvatar, pronom: Pronom) => void;
+  surAnnuler?: () => void;
   initial?: { nom?: string; avatar?: IdAvatar; pronom?: Pronom };
 }) {
-  const ordre: Etape[] = mode === 'personnage' ? ['avatar', 'pronom', 'nom'] : ['nom', 'avatar', 'pronom'];
+  const ordre: Etape[] = ['avatar', 'pronom', 'nom'];
   const [i, setI] = useState(0);
   const [nom, setNom] = useState(initial?.nom ?? '');
   const [avatar, setAvatar] = useState<IdAvatar | null>(initial?.avatar ?? null);
@@ -38,31 +75,29 @@ export function Introduction({ disponibles, surFin, surAnnuler, mode = 'profil',
   };
   const retour = i > 0
     ? <button type="button" className="bouton-saint discret" onMouseEnter={survol} onClick={() => setI(i - 1)}>Retour</button>
-    : surAnnuler && <button type="button" className="bouton-saint discret" onMouseEnter={survol} onClick={surAnnuler}>{mode === 'personnage' ? 'Menu' : 'Annuler'}</button>;
+    : surAnnuler && <button type="button" className="bouton-saint discret" onMouseEnter={survol} onClick={surAnnuler}>Menu</button>;
   const valider = <button type={etape === 'nom' ? 'submit' : 'button'} className="bouton-saint" onMouseEnter={survol} disabled={!pret} onClick={etape === 'nom' ? undefined : suivant}>{derniere ? 'C’est moi' : 'Continuer'}</button>;
 
   return (
     <div className="intro">
-      {[12, 26, 41, 57, 70, 84].map((x, k) => (
-        <span key={k} className="poussiere" style={{ left: `${x}%`, width: 3 + (k % 2), height: 3 + (k % 2), background: k % 2 ? '#fff3c4' : '#e8f6ff', boxShadow: `0 0 10px ${k % 2 ? '#ffd27a' : '#a8dcff'}`, animationDelay: `${-k * 1.4}s`, ['--dx' as string]: `${(k % 3 - 1) * 14}px` }} />
-      ))}
+      <Poussiere />
       <div className="intro-carte" key={etape}>
         <div className="intro-etapes" aria-hidden="true">{ordre.map((_, k) => <i key={k} className={k <= i ? 'fait' : ''} />)}</div>
-        <div className="intro-voix">{mode === 'personnage' ? 'Votre personnage' : 'Avant que tout commence'}</div>
+        <div className="intro-voix">Votre personnage</div>
 
         {etape === 'nom' && (
           <form onSubmit={(ev) => { ev.preventDefault(); suivant(); }}>
-            <div className="intro-question">{mode === 'personnage' ? 'Comment s’appelle votre personnage ?' : 'Comment vous appelez-vous ?'}</div>
+            <div className="intro-question">Comment s’appelle votre personnage ?</div>
             <div className="intro-aide">C’est ainsi que l’on vous appellera, au ranch comme au village.</div>
-            <input className="intro-champ" value={nom} onChange={(e) => setNom(e.target.value.slice(0, 18))} placeholder={mode === 'personnage' ? 'Son nom' : 'Votre nom'} autoFocus aria-label="Nom" />
+            <input className="intro-champ" value={nom} onChange={(e) => setNom(e.target.value.slice(0, 18))} placeholder="Son nom" autoFocus aria-label="Nom" />
             <div className="intro-actions">{retour}{valider}</div>
           </form>
         )}
 
         {etape === 'avatar' && (
           <>
-            <div className="intro-question">{mode === 'personnage' ? 'Qui incarnez-vous ?' : 'À quoi ressemblez-vous ?'}</div>
-            <div className="intro-aide">{mode === 'personnage' ? 'Votre personnage dans le monde des Échos.' : 'Vous pourrez en changer plus tard.'}</div>
+            <div className="intro-question">Qui incarnez-vous ?</div>
+            <div className="intro-aide">Votre personnage dans le monde des Échos.</div>
             <div className="avatars" role="radiogroup" aria-label="Avatar">
               {AVATARS.map((a) => (
                 <button key={a.id} role="radio" aria-checked={avatar === a.id} className={`avatar-choix ${avatar === a.id ? 'choisi' : ''}`}

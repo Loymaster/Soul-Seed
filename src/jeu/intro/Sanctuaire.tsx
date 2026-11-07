@@ -98,7 +98,7 @@ export function Sanctuaire({ personnage, echo, catalogue, portrait, sons, musiqu
       <SceneDialogue scene={scene} catalogue={catalogue} variables={variables} sons={sons} musique={musique}
         echo={nomEcho ? { nom: nomEcho, chemin: apparence(echo) } : null} joueur={portrait}
         surAction={surAction} calque={calque}
-        surFin={() => setTimeout(() => surFin({ ...echo, nom: nomEcho || echo.nom }), 1200)} />
+        surFin={() => setTimeout(() => surFin({ ...echo, nom: nomEcho || echo.nom }), 200)} />
     </div>
   );
 }

@@ -24,7 +24,7 @@ import { SceneDialogue } from './scene/SceneDialogue';
 import { Ranch } from './ranch/Ranch';
 import { nouvellePartie } from './ranch/sauvegarde';
 import { MenuPrincipal } from './menu/MenuPrincipal';
-import { Introduction } from './menu/Introduction';
+import { Introduction, NouveauProfil } from './menu/Introduction';
 import { ChoixGraine } from './graines/ChoixGraine';
 import { DernierSouffle } from './mort/DernierSouffle';
 import { EntreDeuxMondes } from './intro/EntreDeuxMondes';
@@ -177,9 +177,9 @@ function Jeu() {
   if (ecran.nom === 'intro' || !profil) {
     const premier = !profil || (ecran.nom === 'intro' && ecran.premier);
     return (
-      <Introduction disponibles={DISPONIBLES}
+      <NouveauProfil
         surAnnuler={premier ? undefined : () => setEcran({ nom: 'menu' })}
-        surFin={(nom, avatar, pronom) => { P.creerProfil(nom, avatar, pronom); rafraichir(); setEcran({ nom: 'menu' }); }} />
+        surFin={(nom) => { P.creerProfil(nom); rafraichir(); setEcran({ nom: 'menu' }); }} />
     );
   }
 
@@ -187,7 +187,7 @@ function Jeu() {
   /** Le monde d'un emplacement (un essai n'a pas de monde enregistré). */
   const chargerMonde = (emplacement: number) => (emplacement === ESSAI ? creerMonde() : P.chargerMonde(profil.id, emplacement));
   SFX.on = sons;
-  fixerVolumes({ musique: (profil.reglages.volumeMusique ?? 80) / 100, bruitages: (profil.reglages.volumeBruitages ?? 80) / 100 });
+  fixerVolumes({ musique: P.volumeMusiqueDe(profil.reglages) / 100, bruitages: P.volumeBruitagesDe(profil.reglages) / 100 });
   const menu = () => { rafraichir(); setEcran({ nom: 'menu' }); };
   const lancer = (emplacement: number, etat: Etat) => {
     if (emplacement === ESSAI) { menu(); return; }
@@ -217,7 +217,7 @@ function Jeu() {
   switch (ecran.nom) {
     case 'personnage':
       return garde(
-        <Introduction mode="personnage" disponibles={DISPONIBLES} initial={{ nom: profil.nom, pronom: profil.pronom, avatar: profil.avatar }}
+        <Introduction disponibles={DISPONIBLES}
           surAnnuler={() => setEcran({ nom: 'menu' })}
           surFin={(nom, avatar, pronom) => setEcran({ nom: 'graines', emplacement: ecran.emplacement, personnage: { nom, avatar, pronom }, contexte: 'nouvelle' })} />
       );
@@ -249,7 +249,7 @@ function Jeu() {
       return garde(
         <Ranch key={`${profil.id}-${emplacement}-${ecran.etat.naissance}-${ecran.etat.graine}-${ecran.etat.nom}`} etat={ecran.etat}
           reglages={profil.reglages}
-          surReglages={(r) => P.modifierProfil(profil.id, { reglages: r })}
+          surReglages={(r) => P.modifierProfil(profil.id, { reglages: { ...(P.profilActif()?.reglages ?? profil.reglages), ...r } })}
           sauver={(e) => { P.sauverPartie(profil.id, emplacement, e); P.noterForme(profil.id, apparence(e)); }}
           personnage={P.chargerPersonnage(profil, emplacement)}
           connus={profil.connus ?? []}
@@ -318,14 +318,14 @@ function Jeu() {
       if (!scene) break;
       const derniere = P.dernierePartie(profil.id);
       const echo = derniere?.etat;
-      const perso = derniere ? P.chargerPersonnage(profil, derniere.emplacement) : { nom: profil.nom, pronom: profil.pronom, avatar: profil.avatar };
+      const perso = derniere ? P.chargerPersonnage(profil, derniere.emplacement) : P.personnageDeRepli(profil);
       return garde(
         <div style={{ position: 'fixed', inset: 0 }}>
           <SceneDialogue scene={scene} catalogue={catalogue} sons={sons} musique={musique}
             echo={{ nom: echo?.nom ?? 'Filo', chemin: echo ? apparence(echo) : 'echos/enfant/wrath.png' }}
             joueur={portrait(perso)}
             variables={{ 'joueur.nom': perso.nom, 'joueur.pronom': perso.pronom, 'echo.genre': echo?.genre ?? 'm', 'graine.nom': 'graine tellurique' }}
-            surFin={({ suite }) => setTimeout(() => setEcran(suite && SCENES.some((x) => x.id === suite) ? { nom: 'scene', id: suite } : { nom: 'menu' }), 1800)} />
+            surFin={({ suite }) => setEcran(suite && SCENES.some((x) => x.id === suite) ? { nom: 'scene', id: suite } : { nom: 'menu' })} />
         </div>
       );
     }
