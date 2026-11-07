@@ -2,6 +2,7 @@
 // Un profil = une personne qui joue : son nom, son avatar, son pronom, ses réglages et sa mémoire des échos.
 // Chaque profil a ses propres emplacements de partie.
 import type { Etat } from '@/moteur/simulation';
+import { normaliserMonde, type Monde } from '@/moteur/monde';
 
 export type Pronom = 'il' | 'elle' | 'iel';
 export type IdAvatar = 'garcon-1' | 'garcon-2' | 'fille-1' | 'fille-2' | 'nb-1' | 'nb-2';
@@ -62,6 +63,7 @@ interface Registre { version: 1; actif: string | null; profils: Profil[] }
 const CLE_REGISTRE = 'soulseed:profils';
 const clePartie = (profil: string, emplacement: number) => `soulseed:partie:${profil}:${emplacement}`;
 const clePersonnage = (profil: string, emplacement: number) => `soulseed:personnage:${profil}:${emplacement}`;
+const cleMonde = (profil: string, emplacement: number) => `soulseed:monde:${profil}:${emplacement}`;
 /** Ancienne sauvegarde unique (avant les profils). */
 const CLE_ANCIENNE = 'soulseed:partie';
 
@@ -127,7 +129,7 @@ export function supprimerProfil(id: string) {
   r.profils = r.profils.filter((p) => p.id !== id);
   if (r.actif === id) r.actif = r.profils[0]?.id ?? null;
   enregistrer(r);
-  for (let i = 0; i < NB_EMPLACEMENTS; i++) { retirer(clePartie(id, i)); retirer(clePersonnage(id, i)); }
+  for (let i = 0; i < NB_EMPLACEMENTS; i++) { retirer(clePartie(id, i)); retirer(clePersonnage(id, i)); retirer(cleMonde(id, i)); }
 }
 
 /** Note les formes rencontrées (une seule fois chacune). */
@@ -151,6 +153,15 @@ export function sauverPartie(profil: string, emplacement: number, e: Etat) {
 export function effacerPartie(profil: string, emplacement: number) {
   retirer(clePartie(profil, emplacement));
   retirer(clePersonnage(profil, emplacement));
+  retirer(cleMonde(profil, emplacement));
+}
+
+/** Le monde d'un emplacement (quêtes, ressources, lieux découverts…) : il survit aux échos, comme le personnage. */
+export function chargerMonde(profil: string, emplacement: number): Monde {
+  return normaliserMonde(lire<Monde>(cleMonde(profil, emplacement)));
+}
+export function sauverMonde(profil: string, emplacement: number, m: Monde) {
+  return ecrire(cleMonde(profil, emplacement), m);
 }
 
 /** Le personnage d'un emplacement ; pour les parties d'avant les personnages, celui du profil. */
