@@ -1,0 +1,439 @@
+body{margin:0;background:#120c08}
+.ex{position:relative;width:1280px;height:800px;overflow:hidden;background:#120c08;font-family:'Alegreya',serif;color:#2f2a1f;user-select:none;
+  --kraft:#d8c39a;--encre:#2f2a1f;--encre2:#5b4b33;--kaki:#5c6238;--laiton:radial-gradient(circle at 35% 30%,#f3d48a,#b8893c 55%,#6d4c1c);--sang:#9c3b2a}
+.main{font-family:'Reenie Beanie',cursive}
+button{font:inherit;color:inherit}
+
+/* —— le décor ; la lumière s'applique au cadre entier, elle ne se réinitialise donc jamais pendant une transition —— */
+.ex-cadre{position:absolute;inset:0;transition:filter 2.5s linear}
+.ex-fond,.ex-ancien{position:absolute;inset:-16px;background-size:cover;background-position:center 60%}
+.ex-fond{animation:respire 30s ease-in-out infinite}
+@keyframes respire{0%,100%{transform:scale(1.02)}50%{transform:scale(1.045) translate(-8px,-3px)}}
+.ex-fond.entre-avant{animation:entreAvant 1.5s cubic-bezier(.3,.6,.3,1) both}
+@keyframes entreAvant{0%{opacity:0;transform:scale(.93);filter:blur(3px)}100%{opacity:1;transform:scale(1.02);filter:blur(0)}}
+.ex-fond.entre-arriere{animation:entreArriere 1.5s cubic-bezier(.3,.6,.3,1) both}
+@keyframes entreArriere{0%{opacity:0;transform:scale(1.12);filter:blur(3px)}100%{opacity:1;transform:scale(1.02);filter:blur(0)}}
+.ex-ancien.sort-avant{animation:sortAvant 1.5s cubic-bezier(.5,0,.6,1) both}
+@keyframes sortAvant{0%{transform:scale(1.02)}100%{transform:scale(1.2);filter:blur(4px)}}
+.ex-ancien.sort-arriere{animation:sortArriere 1.5s cubic-bezier(.5,0,.6,1) both}
+@keyframes sortArriere{0%{transform:scale(1.02)}100%{transform:scale(.94);filter:blur(4px)}}
+.teinte{position:absolute;inset:0;pointer-events:none;mix-blend-mode:multiply;transition:background 2.5s linear}
+.chaleur{position:absolute;inset:0;pointer-events:none;mix-blend-mode:soft-light;background:radial-gradient(ellipse 90% 60% at 80% 18%,rgba(255,170,90,1),rgba(255,140,70,.4) 50%,transparent 80%);transition:opacity 2.5s linear}
+.ex-vignette{position:absolute;inset:0;pointer-events:none;background:radial-gradient(ellipse 80% 70% at 50% 58%,transparent 52%,rgba(24,16,6,.5) 100%),linear-gradient(180deg,rgba(30,20,8,.3),transparent 22%,transparent 74%,rgba(24,16,6,.5))}
+.lanterne{position:absolute;width:620px;height:560px;margin:-380px 0 0 -310px;pointer-events:none;mix-blend-mode:screen;background:radial-gradient(closest-side,rgba(255,176,90,.32),rgba(255,140,60,.1) 55%,transparent);animation:vacille 2.6s ease-in-out infinite;transition:left 1.1s,top 1.1s}
+@keyframes vacille{0%,100%{opacity:.85}30%{opacity:1}55%{opacity:.78}80%{opacity:.95}}
+.mote{position:absolute;left:-20px;top:var(--y);width:calc(var(--t) * 2.2);height:var(--t);border-radius:60% 0 60% 0;background:var(--c);opacity:.75;pointer-events:none;animation:derive var(--d) linear infinite}
+@keyframes derive{0%{transform:translate(0,0) rotate(0);opacity:0}8%{opacity:.8}50%{transform:translate(680px,calc(var(--dx) * 1.2)) rotate(200deg)}100%{transform:translate(1340px,var(--dx)) rotate(420deg);opacity:0}}
+.caverne .mote{left:auto;top:auto;bottom:-10px;width:var(--t);height:var(--t);border-radius:50%;box-shadow:0 0 8px 2px var(--c);animation:monte var(--d) linear infinite}
+.caverne .mote:nth-child(odd){margin-left:calc(var(--y) * 1.6)}
+.caverne .mote:nth-child(even){margin-left:calc(var(--y) * 1.1 + 200px)}
+@keyframes monte{0%{transform:translate(0,0);opacity:0}15%{opacity:.7}100%{transform:translate(var(--dx),-760px);opacity:0}}
+.montagne .mote{border-radius:50%;width:var(--t);opacity:.5}
+
+/* —— carnet : la page du jour, glissée hors du carnet d'éleveur —— */
+.carnet{position:absolute;left:22px;top:18px;width:400px;height:136px;transform:rotate(-1.6deg);transform-origin:30px 20px;animation:carnetIn .7s cubic-bezier(.3,1.3,.5,1) both;filter:drop-shadow(0 12px 16px rgba(0,0,0,.45))}
+@keyframes carnetIn{from{opacity:0;transform:translateY(-30px) rotate(-6deg)}}
+.carnet .cuir{position:absolute;left:0;top:-4px;bottom:-4px;width:40px;border-radius:7px 3px 3px 7px;background:repeating-linear-gradient(177deg,rgba(255,220,170,.04) 0 3px,transparent 3px 7px),linear-gradient(90deg,#5a321a,#7d4a28 60%,#6e3f22);box-shadow:inset 0 0 0 2px #3a1f0e}
+.carnet .cuir::before{content:"";position:absolute;inset:5px;border:1.5px dashed rgba(240,214,170,.55);border-radius:4px}
+.carnet .feuillet{position:absolute;left:34px;right:0;top:0;bottom:0;border-radius:2px 6px 6px 2px;
+  background:linear-gradient(transparent 31px,rgba(80,110,150,.18) 31px,rgba(80,110,150,.18) 32px,transparent 32px) 0 6px/100% 32px,linear-gradient(90deg,transparent 30px,rgba(170,60,40,.3) 30px,rgba(170,60,40,.3) 31.5px,transparent 31.5px),linear-gradient(170deg,#f4ead2,#e8d8b4)}
+.carnet .feuillet::after{content:"";position:absolute;right:0;top:0;bottom:0;width:18px;background:linear-gradient(90deg,transparent,rgba(120,90,50,.18));border-radius:0 6px 6px 0}
+.carnet .ruban{position:absolute;right:22px;top:-2px;width:14px;height:158px;background:linear-gradient(90deg,#8e2a1e,#b23a28 50%,#8e2a1e);clip-path:polygon(0 0,100% 0,100% 100%,50% 92%,0 100%);box-shadow:0 2px 3px rgba(0,0,0,.3)}
+.carnet .date{position:absolute;left:78px;top:8px;font-family:'Reenie Beanie',cursive;font-size:23px;line-height:1;color:#5b4b33}
+.carnet .lieu{position:absolute;left:76px;top:36px;right:44px;font-family:'Reenie Beanie',cursive;font-size:38px;line-height:1;color:#3a2412;white-space:nowrap;animation:ecrire 1.3s steps(24) both}
+@keyframes ecrire{from{clip-path:inset(0 100% 0 0)}to{clip-path:inset(0 0 0 0)}}
+.carnet .heure{position:absolute;left:78px;top:86px;font-family:'Reenie Beanie',cursive;font-size:27px;line-height:1;color:#6b6258}
+.carnet .tampon-region{position:absolute;right:56px;top:90px;padding:3px 8px 2px;border:2px solid rgba(92,98,56,.65);border-radius:4px;transform:rotate(-7deg);font-family:'Alegreya SC',serif;font-weight:700;font-size:10.5px;letter-spacing:2px;color:rgba(92,98,56,.85)}
+
+/* —— la carte et le sac —— */
+.cote{position:absolute;right:26px;width:96px;height:104px;border:none;background:transparent;padding:0;cursor:pointer;transition:transform .3s cubic-bezier(.3,1.4,.5,1),opacity .3s}
+.cote:hover{transform:translateY(-4px) rotate(-3deg)}
+.cote.cache{opacity:0;pointer-events:none}
+.cote .etiq{position:absolute;left:50%;bottom:-4px;transform:translateX(-50%);font-family:'Reenie Beanie',cursive;font-size:24px;line-height:1;color:#fbf3e2;text-shadow:0 1px 3px rgba(0,0,0,.85);white-space:nowrap}
+
+/* —— passages : une flèche tracée à la craie sur le décor ; le nom n'apparaît qu'au survol —— */
+.passage{position:absolute;width:0;height:0;z-index:20;animation:apparait .8s ease both;transition:opacity .4s}
+@keyframes apparait{from{opacity:0}}
+.passage.cache,.retour.cache{opacity:0;pointer-events:none}
+.passage button,.retour button{position:absolute;left:-46px;top:-46px;width:92px;height:92px;border:none;padding:0;background:transparent;cursor:pointer;border-radius:50%}
+.passage .halo,.retour .halo{position:absolute;left:-60px;top:-30px;width:120px;height:60px;border-radius:50%;background:radial-gradient(closest-side,rgba(255,236,190,.38),rgba(255,236,190,0));pointer-events:none;animation:souffle 3.2s ease-in-out infinite;transition:opacity .3s}
+@keyframes souffle{0%,100%{opacity:.45;transform:scale(.9)}50%{opacity:.9;transform:scale(1.08)}}
+.fleche{position:absolute;left:-44px;top:-44px;width:88px;height:88px;overflow:visible;pointer-events:none;transition:transform .3s}
+.fleche g{animation:pousse 2.2s ease-in-out infinite}
+@keyframes pousse{0%,100%{transform:translateY(4px);opacity:.75}50%{transform:translateY(-6px);opacity:1}}
+.fleche path{fill:none;stroke:#fbf3dc;stroke-width:5.5;stroke-linecap:round;stroke-linejoin:round;filter:drop-shadow(0 1px 2px rgba(0,0,0,.85)) drop-shadow(0 0 5px rgba(255,230,170,.5))}
+.fleche path.ombre{stroke:rgba(20,12,4,.35);stroke-width:9;filter:none}
+.passage.survol .fleche path,.retour.survol .fleche path{stroke:#fff6d8;filter:drop-shadow(0 1px 2px rgba(0,0,0,.85)) drop-shadow(0 0 10px rgba(255,220,140,.95))}
+.passage.survol .halo,.retour.survol .halo{opacity:1;animation:none;transform:scale(1.25)}
+.passage.inconnu .fleche path:not(.ombre){stroke-dasharray:9 7}
+.passage.bloque .fleche{opacity:.45}
+.passage.bloque .fleche path:not(.ombre){stroke:#d9cbb0}
+.passage .croix{display:none}
+.passage.bloque .croix{display:block}
+.etiq-passage,.retour .etiq-passage{position:absolute;top:-22px;white-space:nowrap;font-family:'Reenie Beanie',cursive;font-size:32px;line-height:1;color:#fbf3dc;text-shadow:0 2px 4px rgba(0,0,0,.95),0 0 14px rgba(0,0,0,.6);opacity:0;transform:translateY(6px);transition:opacity .25s,transform .25s;pointer-events:none}
+.etiq-passage.droite{left:48px}
+.etiq-passage.gauche{right:48px;text-align:right}
+.passage.survol .etiq-passage,.retour.survol .etiq-passage{opacity:1;transform:none}
+.passage.inconnu .etiq-passage{font-style:italic;color:#e9dcc0}
+.retour{position:absolute;left:640px;top:752px;width:0;height:0;z-index:22;transition:opacity .4s}
+.retour .etiq-passage{left:44px;top:-18px;font-size:28px}
+
+/* —— Filo : il marche d'un lieu à l'autre, sa taille suit la profondeur et il regarde où il va —— */
+.filo{position:absolute;width:0;height:0;z-index:30;transition-property:left,top,transform,opacity;transition-timing-function:cubic-bezier(.4,.1,.4,1)}
+.filo-ombre{position:absolute;left:-75px;top:-14px;width:150px;height:30px;border-radius:50%;background:radial-gradient(closest-side,rgba(10,6,2,.6),transparent)}
+.filo-corps{position:absolute;left:0;bottom:0;transform-origin:50% 100%;animation:respireFilo 2.4s ease-in-out infinite}
+.filo-corps img{display:block;height:215px;transform-origin:50% 100%;filter:drop-shadow(0 6px 6px rgba(0,0,0,.35));transition:transform .25s}
+@keyframes respireFilo{0%,100%{transform:scaleY(1)}50%{transform:scaleY(1.025) scaleX(.99)}}
+.filo.marche .filo-corps{animation:trotte .34s ease-in-out infinite}
+.filo.fuite .filo-corps{animation:trotte .18s ease-in-out infinite}
+@keyframes trotte{0%,100%{transform:translateY(0) rotate(-2deg)}50%{transform:translateY(-12px) rotate(2deg)}}
+.filo.boitille .filo-corps{animation:boite 1.8s ease-in-out infinite}
+@keyframes boite{0%,100%{transform:rotate(-4deg) scaleY(.95)}50%{transform:rotate(2deg) scaleY(.97)}}
+.orbite{position:absolute;left:0;top:-250px;width:0;height:0}
+.signe{position:absolute;width:46px;height:46px;margin:-23px;border-radius:50%;background:rgba(244,234,214,.9);box-shadow:0 4px 10px rgba(0,0,0,.4);animation:flotte 3s ease-in-out infinite}
+.signe img{width:100%;height:100%;object-fit:contain}
+@keyframes flotte{0%,100%{transform:translateY(0)}50%{transform:translateY(-7px)}}
+.bulle{position:absolute;left:50px;top:-290px;width:64px;height:64px;border-radius:50%;background:#f4ead6;box-shadow:0 6px 14px rgba(0,0,0,.45);animation:bulleIn 2.2s cubic-bezier(.3,1.5,.5,1) both}
+.bulle::after{content:"";position:absolute;left:4px;bottom:-6px;width:14px;height:14px;border-radius:50%;background:#f4ead6}
+.bulle img{position:absolute;inset:6px;width:52px;height:52px;object-fit:contain}
+@keyframes bulleIn{0%{opacity:0;transform:scale(.3) translateY(20px)}12%{opacity:1;transform:scale(1)}85%{opacity:1}100%{opacity:0;transform:translateY(-10px)}}
+
+/* —— gestes de terrain : une trousse de toile kaki ; les noms ne viennent qu'au survol —— */
+.gestes{position:absolute;right:22px;bottom:20px;z-index:25;display:flex;gap:14px;padding:12px 16px;border-radius:10px;transition:opacity .3s;
+  background:repeating-linear-gradient(45deg,rgba(255,255,255,.03) 0 2px,transparent 2px 4px),repeating-linear-gradient(-45deg,rgba(0,0,0,.06) 0 2px,transparent 2px 4px),linear-gradient(180deg,#666c40,#4c5030);box-shadow:inset 0 1px 0 rgba(255,250,210,.18),0 12px 22px rgba(0,0,0,.45)}
+.gestes::before{content:"";position:absolute;inset:6px;border:1.5px dashed rgba(240,226,180,.45);border-radius:6px;pointer-events:none}
+.geste{position:relative;width:72px;height:72px;border:none;padding:0;background:transparent;cursor:pointer;animation:gesteIn .5s cubic-bezier(.3,1.4,.5,1) both;transition:transform .3s cubic-bezier(.3,1.5,.5,1)}
+@keyframes gesteIn{from{opacity:0;transform:translateY(16px)}}
+.geste img{width:72px;height:72px;border-radius:12px;box-shadow:0 3px 6px rgba(0,0,0,.45);transition:filter .3s,box-shadow .3s}
+.geste:hover{transform:translateY(-6px) rotate(-2deg)}
+.geste:hover img{box-shadow:0 0 0 2px #f1e2b8,0 8px 12px rgba(0,0,0,.45)}
+.geste .lib{position:absolute;left:50%;bottom:calc(100% + 12px);transform:translateX(-50%) translateY(6px) rotate(-2deg);white-space:nowrap;text-align:center;padding:5px 14px 3px;border-radius:3px;background:#efe3c3;box-shadow:0 6px 12px rgba(0,0,0,.4);opacity:0;pointer-events:none;transition:opacity .2s,transform .2s;z-index:3}
+.geste .lib b{display:block;font-family:'Alegreya SC',serif;font-weight:700;font-size:14px;letter-spacing:1.5px;color:#2f2a1f}
+.geste .lib i{display:block;font-family:'Reenie Beanie',cursive;font-style:normal;font-size:20px;line-height:1;color:#6b5a3e}
+.geste:hover .lib{opacity:1;transform:translateX(-50%) rotate(-2deg)}
+.geste.fait img,.geste.off img{filter:grayscale(.8) brightness(.62)}
+.geste.fait::after{content:"";position:absolute;right:-6px;top:-6px;width:24px;height:24px;border-radius:50%;background:var(--laiton);box-shadow:0 2px 3px rgba(0,0,0,.5)}
+.geste.fait::before{content:"";position:absolute;right:2px;top:-1px;width:6px;height:11px;border-right:3px solid #3b2a16;border-bottom:3px solid #3b2a16;transform:rotate(40deg);z-index:2}
+
+.toast{position:absolute;left:50%;bottom:118px;z-index:70;transform:translateX(-50%) rotate(-1deg);padding:8px 26px 5px;font-family:'Reenie Beanie',cursive;font-size:29px;line-height:1;color:#2f2a1f;white-space:nowrap;
+  background:linear-gradient(170deg,#e2cfa4,#cdb17f);box-shadow:0 8px 16px rgba(0,0,0,.4);animation:toastIn .35s cubic-bezier(.3,1.4,.5,1) both}
+@keyframes toastIn{from{opacity:0;transform:translateX(-50%) translateY(14px)}}
+
+/* —— récolter —— */
+.recolte-travail{position:absolute;left:0;right:0;top:320px;z-index:60;text-align:center;font-size:40px;color:#f6edd6;text-shadow:0 2px 8px rgba(0,0,0,.9);animation:fondu .4s both;pointer-events:none}
+.ressources-gagnees{display:flex;gap:18px;margin:14px 0 6px}
+.ressources-gagnees span{display:flex;align-items:center;gap:6px;font-family:'Reenie Beanie',cursive;font-size:28px}
+.ressources-gagnees img{width:46px;height:46px;object-fit:contain;animation:saute .7s cubic-bezier(.3,1.6,.5,1) both}
+
+/* —— la tente : on s'y glisse avec Filo pour s'en occuper —— */
+.tente{position:absolute;inset:0;z-index:92;overflow:hidden;animation:tenteIn .9s cubic-bezier(.3,.8,.3,1) both}
+@keyframes tenteIn{from{opacity:0;transform:scale(1.25)}}
+.tente.sortie{animation:tenteOut .6s ease-in both}
+@keyframes tenteOut{to{opacity:0;transform:scale(1.2)}}
+.tente .dehors{position:absolute;inset:-20px;background-size:cover;background-position:center 60%;filter:blur(5px) brightness(.85)}
+.tente .toile{position:absolute;inset:0;box-shadow:inset 0 0 160px 40px rgba(60,38,16,.55);background:
+  linear-gradient(to bottom right,transparent 49.6%,rgba(60,40,18,.5) 49.8%,transparent 50.4%) 0 0/50% 100% no-repeat,
+  linear-gradient(to bottom left,transparent 49.6%,rgba(60,40,18,.5) 49.8%,transparent 50.4%) 100% 0/50% 100% no-repeat,
+  radial-gradient(ellipse 60% 55% at 50% 30%,rgba(255,200,120,.35),transparent 70%),
+  repeating-linear-gradient(100deg,rgba(255,255,255,.035) 0 3px,transparent 3px 9px),
+  linear-gradient(180deg,#d7c39a,#b79c6c 55%,#8f7448);
+  clip-path:polygon(0 0,100% 0,100% 100%,62% 100%,50% 32%,38% 100%,0 100%)}
+.tente .couture{position:absolute;left:50%;top:0;width:3px;height:32%;margin-left:-1.5px;background:#6d5430}
+.tente .sol{position:absolute;left:0;right:0;bottom:0;height:150px;background:radial-gradient(ellipse 70% 100% at 50% 100%,#7d6644,#5b4a30 70%,#3a2e1c)}
+.tente .natte{position:absolute;left:330px;right:330px;bottom:40px;height:90px;border-radius:50%;background:repeating-linear-gradient(90deg,#a8864e 0 8px,#94743f 8px 16px);box-shadow:inset 0 0 0 3px rgba(60,40,18,.5),0 6px 12px rgba(0,0,0,.3)}
+.tente .lampe{position:absolute;left:50%;top:70px;width:28px;height:40px;margin-left:-14px;border-radius:6px 6px 10px 10px;background:radial-gradient(circle at 50% 60%,#fff2b0,#ffb44a 60%,#a5621c);box-shadow:0 0 30px 12px rgba(255,190,90,.55),0 0 90px 40px rgba(255,170,80,.25);animation:vacille 2.2s ease-in-out infinite}
+.tente .lampe::before{content:"";position:absolute;left:12px;top:-34px;width:3px;height:34px;background:#4a3a22}
+.tente.sommeil .nuit{opacity:1}
+.tente .nuit{position:absolute;inset:0;background:rgba(10,8,24,.7);opacity:0;transition:opacity 1.2s;pointer-events:none}
+.tente .grand-filo{position:absolute;left:640px;top:690px;width:0;height:0}
+.tente .grand-filo .filo-ombre{left:-150px;top:-22px;width:300px;height:44px}
+.tente .grand-filo img{position:absolute;left:0;bottom:0;height:390px;transform:translateX(-50%);transform-origin:50% 100%;filter:drop-shadow(0 10px 10px rgba(0,0,0,.35));animation:respireFilo 2.4s ease-in-out infinite}
+.tente.mange .grand-filo img{animation:mache .3s ease-in-out 5}
+@keyframes mache{50%{transform:translateX(-50%) scaleY(.94) scaleX(1.03)}}
+.tente.lave .grand-filo img{animation:ebroue .12s linear 8}
+@keyframes ebroue{0%,100%{transform:translateX(-50%) rotate(-3deg)}50%{transform:translateX(-50%) rotate(3deg)}}
+.tente.dort .grand-filo img,.tente.sommeil .grand-filo img{animation:dort 3s ease-in-out infinite}
+@keyframes dort{0%,100%{transform:translateX(-50%) scaleY(.9)}50%{transform:translateX(-50%) scaleY(.93)}}
+.tente .zzz{position:absolute;left:720px;top:300px;font-family:'Reenie Beanie',cursive;font-size:48px;color:#f3e8c8;opacity:0;text-shadow:0 2px 6px rgba(0,0,0,.6)}
+.tente.sommeil .zzz{animation:zzz 2.4s ease-out infinite}
+@keyframes zzz{0%{opacity:0;transform:translate(0,0)}30%{opacity:1}100%{opacity:0;transform:translate(40px,-80px)}}
+.tente .orbite{left:640px;top:250px;position:absolute}
+.tente .bulle{left:740px;top:230px;position:absolute}
+.tente .mot{position:absolute;left:50%;top:22px;transform:translateX(-50%) rotate(-1deg);max-width:760px;padding:8px 26px 5px;text-align:center;font-family:'Reenie Beanie',cursive;font-size:30px;line-height:1.05;color:#2f2a1f;background:linear-gradient(170deg,#efe3c3,#dcc79c);box-shadow:0 8px 16px rgba(0,0,0,.35);animation:toastIn .35s both}
+.tente .soins{position:absolute;left:50%;bottom:20px;transform:translateX(-50%);display:flex;gap:14px;padding:12px 16px;border-radius:10px;
+  background:repeating-linear-gradient(45deg,rgba(255,255,255,.03) 0 2px,transparent 2px 4px),linear-gradient(180deg,#666c40,#4c5030);box-shadow:inset 0 1px 0 rgba(255,250,210,.18),0 12px 22px rgba(0,0,0,.45)}
+.tente .soins::before{content:"";position:absolute;inset:6px;border:1.5px dashed rgba(240,226,180,.45);border-radius:6px;pointer-events:none}
+.tente .sortir{position:absolute;right:30px;bottom:34px}
+.repas{position:absolute;left:50%;bottom:130px;transform:translateX(-50%);display:flex;gap:10px;padding:12px 16px;border-radius:4px;background:linear-gradient(170deg,#efe3c3,#dcc79c);box-shadow:0 10px 20px rgba(0,0,0,.4);animation:toastIn .3s both}
+.repas button{position:relative;width:64px;height:64px;border:none;border-radius:10px;cursor:pointer;background:radial-gradient(circle at 50% 40%,#fbf4e3,#e7d6b2);box-shadow:inset 0 0 0 1.5px #3a1f0e;transition:transform .2s}
+.repas button:hover{transform:translateY(-4px)}
+.repas img{width:48px;height:48px;object-fit:contain}
+.repas b{position:absolute;right:-4px;bottom:-4px;min-width:20px;height:20px;border-radius:10px;background:#6e3f22;color:#f6ecd6;font-size:12px;line-height:20px;text-align:center}
+
+/* —— pêche, envoi, rencontre —— */
+.peche-ligne{position:absolute;inset:0;z-index:50;pointer-events:none}
+.peche-ligne .canne{stroke:#5a3a1c;stroke-width:9;stroke-linecap:round;fill:none}
+.peche-ligne .canne2{stroke:#a87a45;stroke-width:4;stroke-linecap:round;fill:none}
+.peche-ligne .fil{stroke:rgba(250,245,230,.75);stroke-width:1.4;fill:none}
+.bouchon{position:absolute;z-index:51;width:0;height:0;pointer-events:none}
+.bouchon i{position:absolute;left:-9px;top:-22px;width:18px;height:26px;border-radius:50% 50% 45% 45%;background:linear-gradient(180deg,#f4efe4 0 45%,#c8341f 45%);box-shadow:0 2px 3px rgba(0,0,0,.4);animation:dandine 1.8s ease-in-out infinite}
+.bouchon b{position:absolute;left:-30px;top:-6px;width:60px;height:14px;border-radius:50%;border:2px solid rgba(240,248,255,.6);animation:ronds 2.2s ease-out infinite}
+@keyframes dandine{0%,100%{transform:translateY(0) rotate(-6deg)}50%{transform:translateY(3px) rotate(6deg)}}
+@keyframes ronds{0%{transform:scale(.4);opacity:.9}100%{transform:scale(2.2);opacity:0}}
+.peche.lancer .bouchon i{animation:lance .9s cubic-bezier(.3,.7,.4,1) both}
+@keyframes lance{0%{transform:translate(380px,-300px) scale(.6)}80%{transform:translate(0,0)}90%{transform:translateY(8px)}100%{transform:none}}
+.peche.touche .bouchon i{animation:plonge .25s ease-in-out infinite}
+@keyframes plonge{0%,100%{transform:translateY(10px)}50%{transform:translateY(18px)}}
+.peche.touche .bouchon b{animation-duration:.6s;border-color:rgba(255,255,255,.95)}
+.peche-panneau{position:absolute;left:50%;top:40px;z-index:85;transform:translateX(-50%);text-align:center}
+.consigne{display:inline-block;padding:8px 30px 4px;font-family:'Reenie Beanie',cursive;font-size:38px;line-height:1;color:#2f2a1f;background:linear-gradient(170deg,#e2cfa4,#cdb17f);box-shadow:0 8px 16px rgba(0,0,0,.4)}
+.peche.touche .consigne{background:linear-gradient(170deg,#f0c27a,#d9893d);animation:secoue .25s infinite}
+@keyframes secoue{0%,100%{transform:rotate(-1deg)}50%{transform:rotate(1.5deg) scale(1.04)}}
+.ferrer{position:absolute;left:50%;bottom:120px;z-index:86;transform:translateX(-50%);padding:14px 40px 11px;font-size:18px;letter-spacing:3px}
+.peche.touche .ferrer{animation:pulse .5s infinite}
+@keyframes pulse{50%{box-shadow:0 0 0 6px rgba(243,212,138,.55),0 5px 10px rgba(0,0,0,.35)}}
+.resultat{left:390px;top:190px;width:500px;padding:26px 36px 26px 62px;box-sizing:border-box;text-align:left}
+.resultat .prise{display:flex;align-items:center;gap:18px;margin:12px 0}
+.resultat .prise img{width:86px;height:86px;object-fit:contain;filter:drop-shadow(0 5px 5px rgba(0,0,0,.3));animation:saute .7s cubic-bezier(.3,1.6,.5,1) both}
+@keyframes saute{from{transform:translateY(40px) scale(.4) rotate(-30deg);opacity:0}}
+.resultat .prise b{font-family:'Alegreya SC',serif;font-size:22px;letter-spacing:1px}
+.boutons{display:flex;gap:12px;justify-content:flex-end;margin-top:16px}
+.fourres{position:absolute;z-index:40;width:0;height:0;pointer-events:none}
+.fourres i{position:absolute;width:12px;height:7px;border-radius:60% 0 60% 0;background:#7d8a3e;animation:feuille 1.2s ease-out infinite}
+.caverne .fourres i{background:#b8a27a;border-radius:2px;width:6px;height:6px}
+@keyframes feuille{0%{transform:translate(0,0) rotate(0);opacity:1}100%{transform:translate(var(--dx),-70px) rotate(260deg);opacity:0}}
+.fourres .main{position:absolute;left:-170px;top:-130px;width:340px;text-align:center;font-size:32px;color:#f6edd6;text-shadow:0 2px 6px rgba(0,0,0,.9);animation:fondu .5s both}
+.sauvage{position:absolute;width:0;height:0;z-index:31}
+.sauvage .ombre{position:absolute;left:-70px;top:-14px;width:140px;height:28px;border-radius:50%;background:radial-gradient(closest-side,rgba(10,6,2,.55),transparent)}
+.sauvage img{position:absolute;left:0;bottom:0;height:205px;transform-origin:50% 100%;filter:drop-shadow(0 6px 6px rgba(0,0,0,.4));animation:surgit .7s cubic-bezier(.3,1.5,.5,1) both}
+@keyframes surgit{0%{opacity:0;translate:0 40px;scale:.6}100%{opacity:1}}
+.rencontre.issue.victoire .sauvage,.rencontre.issue.fuite .sauvage{animation:detale 1s ease-in both}
+@keyframes detale{to{opacity:0;translate:200px 0}}
+.rencontre.issue.defaite .sauvage{animation:detale 2.2s ease-in .6s both}
+.alerte{position:absolute;z-index:32;width:40px;height:56px;margin-left:-20px;font-family:'Alegreya SC',serif;font-weight:700;font-size:54px;line-height:56px;text-align:center;color:#f3d48a;text-shadow:0 3px 0 #5e1c0e,0 0 18px rgba(255,180,80,.8);animation:alerte .6s cubic-bezier(.3,1.8,.5,1) both}
+@keyframes alerte{from{transform:scale(0) rotate(-20deg)}}
+.banniere{position:absolute;left:50%;top:300px;z-index:88;transform:translateX(-50%) rotate(-2deg);white-space:nowrap;font-family:'Alegreya SC',serif;font-weight:700;font-size:44px;letter-spacing:6px;color:#f1e6c8;text-shadow:0 3px 0 rgba(40,28,12,.85),0 0 24px rgba(0,0,0,.6);animation:tampon 1.5s ease both}
+@keyframes tampon{0%{opacity:0;transform:translateX(-50%) scale(1.6) rotate(-4deg)}14%{opacity:1;transform:translateX(-50%) scale(.96) rotate(-2deg)}22%{transform:translateX(-50%) scale(1) rotate(-2deg)}85%{opacity:1}100%{opacity:0}}
+.choix{left:330px;top:140px;width:620px;padding:24px 34px 24px 62px;box-sizing:border-box}
+.choix .nom-sauvage{font-family:'Alegreya SC',serif;font-weight:700;font-size:26px;letter-spacing:2px}
+.choix .enjeu{display:flex;align-items:center;gap:8px;margin-top:8px;font-family:'Reenie Beanie',cursive;font-size:23px;color:var(--sang)}
+.choix .enjeu img{width:34px;height:34px;object-fit:contain}
+.choix .aparte{margin-top:10px;font-family:'Alegreya',serif;font-style:italic;font-size:14px;color:var(--encre2);border-top:1px dashed rgba(60,46,26,.35);padding-top:10px}
+
+/* fouille : cinq cachettes posées sur la toile */
+.fouille{left:150px;top:150px;width:980px;padding:26px 40px 30px 62px;box-sizing:border-box}
+.cachettes{display:flex;gap:16px;margin:18px 0 14px}
+.cachette{position:relative;width:162px;height:200px;border:none;padding:0;cursor:pointer;perspective:800px;background:transparent;animation:carteIn .5s cubic-bezier(.3,1.3,.5,1) both}
+@keyframes carteIn{from{opacity:0;transform:translateY(30px) rotate(-6deg)}}
+.cachette .verso,.cachette .recto{position:absolute;inset:0;border-radius:6px;backface-visibility:hidden;transition:transform .55s cubic-bezier(.3,1.2,.5,1);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;box-shadow:0 8px 14px rgba(0,0,0,.3)}
+.cachette .verso{background:repeating-linear-gradient(45deg,rgba(255,255,255,.04) 0 2px,transparent 2px 4px),linear-gradient(180deg,#6b7244,#4c5030);color:#f3e8c8}
+.cachette .verso::before{content:"";position:absolute;inset:7px;border:1.5px dashed rgba(240,226,180,.5);border-radius:4px}
+.cachette .verso svg{width:58px;height:58px;opacity:.8}
+.cachette .verso .lieu{font-family:'Reenie Beanie',cursive;font-size:23px;line-height:1;text-align:center;padding:0 10px}
+.cachette .recto{transform:rotateY(180deg);background:linear-gradient(170deg,#f3e8cc,#e2d0a6);color:var(--encre)}
+.cachette .recto img{width:74px;height:74px;object-fit:contain;filter:drop-shadow(0 4px 4px rgba(0,0,0,.3))}
+.cachette .recto .nom{font-family:'Alegreya SC',serif;font-weight:700;font-size:14px;letter-spacing:1px;text-align:center;padding:0 8px}
+.cachette .recto .lieu{font-family:'Reenie Beanie',cursive;font-size:19px;color:var(--encre2)}
+.cachette.revele .verso{transform:rotateY(-180deg)}
+.cachette.revele .recto{transform:rotateY(0)}
+.cachette:not(.revele):hover .verso{transform:translateY(-6px) rotate(-2deg)}
+.cachette.revele{cursor:default}
+.cachette.echo .recto{background:radial-gradient(circle at 50% 42%,#3a2214,#120a06 70%);color:#f1d9b0}
+.yeux{display:flex;gap:16px}
+.yeux i{width:16px;height:9px;border-radius:50%;background:#ffd36a;box-shadow:0 0 12px 4px rgba(255,190,80,.7);animation:cligne 2s infinite}
+@keyframes cligne{0%,90%,100%{transform:scaleY(1)}95%{transform:scaleY(.1)}}
+.cachette.vide .recto svg{width:70px;height:40px}
+.cachette.eteinte{opacity:.45;pointer-events:none}
+.fouille .bas{display:flex;align-items:center;justify-content:space-between;gap:20px;min-height:46px}
+.butin{display:flex;gap:6px}
+.butin img{width:40px;height:40px;object-fit:contain;background:rgba(255,255,255,.4);border-radius:6px;padding:2px;box-shadow:inset 0 0 0 1px rgba(60,46,26,.25)}
+.sac-rabat .face{position:absolute;inset:0;-webkit-backface-visibility:hidden;backface-visibility:hidden}
+.sac-rabat .face.dos{transform:rotateY(180deg)}
+
+.tente .toile::after{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 80% 70% at 50% 20%,transparent 40%,rgba(50,30,12,.5));pointer-events:none}
+
+.carnet .lieu.long{font-size:31px;top:40px}
+
+/* —— panneaux superposés : page de carnet quadrillée —— */
+.voile-noir{position:absolute;inset:0;z-index:80;background:rgba(20,14,6,.45);animation:fondu .3s both}
+@keyframes fondu{from{opacity:0}}
+.page{position:absolute;z-index:85;border-radius:2px;color:var(--encre);box-shadow:0 26px 50px rgba(0,0,0,.55);
+  background:linear-gradient(rgba(85,96,58,.13) 1px,transparent 1px) 0 0/22px 22px,linear-gradient(90deg,rgba(85,96,58,.13) 1px,transparent 1px) 0 0/22px 22px,linear-gradient(170deg,#efe3c3,#e2d1a8);animation:pageIn .5s cubic-bezier(.3,1.25,.5,1) both}
+.page::before{content:"";position:absolute;left:36px;top:0;bottom:0;border-left:1.5px solid rgba(160,60,40,.32);pointer-events:none}
+@keyframes pageIn{from{opacity:0;transform:translateY(60px) rotate(3deg)}}
+.page h2{margin:0;font-family:'Reenie Beanie',cursive;font-weight:400;font-size:44px;line-height:1;color:var(--kaki)}
+.page .ligne{font-family:'Reenie Beanie',cursive;font-size:27px;line-height:1.1;color:var(--encre)}
+.punaise{position:absolute;top:-8px;width:18px;height:18px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#e98a6c,#a33a22 60%,#5e1c0e);box-shadow:0 3px 3px rgba(0,0,0,.5)}
+.btn{white-space:nowrap;border:none;cursor:pointer;padding:9px 20px 7px;border-radius:4px;font-family:'Alegreya SC',serif;font-weight:700;font-size:14px;letter-spacing:1.5px;color:#f3ead0;
+  background:linear-gradient(180deg,#6b7244,#4c5030);box-shadow:inset 0 0 0 1.5px rgba(240,226,180,.35),0 5px 10px rgba(0,0,0,.35);transition:transform .2s,filter .2s}
+.btn:hover{transform:translateY(-2px);filter:brightness(1.1)}
+.btn.bois{color:#2c1507;background:repeating-linear-gradient(177deg,rgba(60,28,8,0) 0 6px,rgba(60,28,8,.13) 6px 7px,rgba(60,28,8,0) 7px 15px),linear-gradient(180deg,#c08a55,#94612f);box-shadow:inset 0 0 0 2px #3a1f0e,0 5px 10px rgba(0,0,0,.35)}
+.btn.rouge{background:linear-gradient(180deg,#a8513c,#7b2f20)}
+.fermer{position:absolute;right:-14px;top:-14px;width:40px;height:40px;border:none;border-radius:50%;cursor:pointer;background:#f4ead6;color:#3a1f0e;font-size:22px;line-height:1;box-shadow:0 5px 12px rgba(0,0,0,.45)}
+
+/* fouille : cinq cachettes posées sur la toile */
+.fouille{left:150px;top:150px;width:980px;padding:26px 40px 30px 62px;box-sizing:border-box}
+.cachettes{display:flex;gap:16px;margin:18px 0 14px}
+.cachette{position:relative;width:162px;height:200px;border:none;padding:0;cursor:pointer;perspective:800px;background:transparent;animation:carteIn .5s cubic-bezier(.3,1.3,.5,1) both}
+@keyframes carteIn{from{opacity:0;transform:translateY(30px) rotate(-6deg)}}
+.cachette .dos,.cachette .face{position:absolute;inset:0;border-radius:6px;backface-visibility:hidden;transition:transform .55s cubic-bezier(.3,1.2,.5,1);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;box-shadow:0 8px 14px rgba(0,0,0,.3)}
+.cachette .dos{background:repeating-linear-gradient(45deg,rgba(255,255,255,.04) 0 2px,transparent 2px 4px),linear-gradient(180deg,#6b7244,#4c5030);color:#f3e8c8}
+.cachette .dos::before{content:"";position:absolute;inset:7px;border:1.5px dashed rgba(240,226,180,.5);border-radius:4px}
+.cachette .dos svg{width:58px;height:58px;opacity:.8}
+.cachette .dos .lieu{font-family:'Reenie Beanie',cursive;font-size:23px;line-height:1;text-align:center;padding:0 10px}
+.cachette .face{transform:rotateY(180deg);background:linear-gradient(170deg,#f3e8cc,#e2d0a6);color:var(--encre)}
+.cachette .face img{width:74px;height:74px;object-fit:contain;filter:drop-shadow(0 4px 4px rgba(0,0,0,.3))}
+.cachette .face .nom{font-family:'Alegreya SC',serif;font-weight:700;font-size:14px;letter-spacing:1px;text-align:center;padding:0 8px}
+.cachette .face .lieu{font-family:'Reenie Beanie',cursive;font-size:19px;color:var(--encre2)}
+.cachette.revele .dos{transform:rotateY(-180deg)}
+.cachette.revele .face{transform:rotateY(0)}
+.cachette:not(.revele):hover .dos{transform:translateY(-6px) rotate(-2deg)}
+.cachette.revele{cursor:default}
+.cachette.echo .face{background:radial-gradient(circle at 50% 42%,#3a2214,#120a06 70%);color:#f1d9b0}
+.yeux{display:flex;gap:16px}
+.yeux i{width:16px;height:9px;border-radius:50%;background:#ffd36a;box-shadow:0 0 12px 4px rgba(255,190,80,.7);animation:cligne 2s infinite}
+@keyframes cligne{0%,90%,100%{transform:scaleY(1)}95%{transform:scaleY(.1)}}
+.cachette.vide .face svg{width:70px;height:40px}
+.cachette.eteinte{opacity:.45;pointer-events:none}
+.fouille .bas{display:flex;align-items:center;justify-content:space-between;gap:20px;min-height:46px}
+.butin{display:flex;gap:6px}
+.butin img{width:40px;height:40px;object-fit:contain;background:rgba(255,255,255,.4);border-radius:6px;padding:2px;box-shadow:inset 0 0 0 1px rgba(60,46,26,.25)}
+
+/* pêche */
+.peche-ligne{position:absolute;inset:0;z-index:50;pointer-events:none}
+.peche-ligne .canne{stroke:#5a3a1c;stroke-width:9;stroke-linecap:round;fill:none}
+.peche-ligne .canne2{stroke:#a87a45;stroke-width:4;stroke-linecap:round;fill:none}
+.peche-ligne .fil{stroke:rgba(250,245,230,.75);stroke-width:1.4;fill:none}
+.bouchon{position:absolute;z-index:51;width:0;height:0;pointer-events:none}
+.bouchon i{position:absolute;left:-9px;top:-22px;width:18px;height:26px;border-radius:50% 50% 45% 45%;background:linear-gradient(180deg,#f4efe4 0 45%,#c8341f 45%);box-shadow:0 2px 3px rgba(0,0,0,.4);animation:dandine 1.8s ease-in-out infinite}
+.bouchon b{position:absolute;left:-30px;top:-6px;width:60px;height:14px;border-radius:50%;border:2px solid rgba(240,248,255,.6);animation:ronds 2.2s ease-out infinite}
+@keyframes dandine{0%,100%{transform:translateY(0) rotate(-6deg)}50%{transform:translateY(3px) rotate(6deg)}}
+@keyframes ronds{0%{transform:scale(.4);opacity:.9}100%{transform:scale(2.2);opacity:0}}
+.peche.lancer .bouchon i{animation:lance .9s cubic-bezier(.3,.7,.4,1) both}
+@keyframes lance{0%{transform:translate(380px,-300px) scale(.6)}80%{transform:translate(0,0)}90%{transform:translateY(8px)}100%{transform:none}}
+.peche.touche .bouchon i{animation:plonge .25s ease-in-out infinite}
+@keyframes plonge{0%,100%{transform:translateY(10px)}50%{transform:translateY(18px)}}
+.peche.touche .bouchon b{animation-duration:.6s;border-color:rgba(255,255,255,.95)}
+.peche-panneau{position:absolute;left:50%;top:40px;z-index:85;transform:translateX(-50%);text-align:center}
+.consigne{display:inline-block;padding:8px 30px 4px;font-family:'Reenie Beanie',cursive;font-size:38px;line-height:1;color:#2f2a1f;background:linear-gradient(170deg,#e2cfa4,#cdb17f);box-shadow:0 8px 16px rgba(0,0,0,.4)}
+.peche.touche .consigne{background:linear-gradient(170deg,#f0c27a,#d9893d);animation:secoue .25s infinite}
+@keyframes secoue{0%,100%{transform:rotate(-1deg)}50%{transform:rotate(1.5deg) scale(1.04)}}
+.ferrer{position:absolute;left:50%;bottom:120px;z-index:86;transform:translateX(-50%);padding:14px 40px 11px;font-size:18px;letter-spacing:3px}
+.peche.touche .ferrer{animation:pulse .5s infinite}
+@keyframes pulse{50%{box-shadow:0 0 0 6px rgba(243,212,138,.55),0 5px 10px rgba(0,0,0,.35)}}
+.resultat{left:390px;top:190px;width:500px;padding:26px 36px 26px 62px;box-sizing:border-box;text-align:left}
+.resultat .prise{display:flex;align-items:center;gap:18px;margin:12px 0}
+.resultat .prise img{width:86px;height:86px;object-fit:contain;filter:drop-shadow(0 5px 5px rgba(0,0,0,.3));animation:saute .7s cubic-bezier(.3,1.6,.5,1) both}
+@keyframes saute{from{transform:translateY(40px) scale(.4) rotate(-30deg);opacity:0}}
+.resultat .prise b{font-family:'Alegreya SC',serif;font-size:22px;letter-spacing:1px}
+.boutons{display:flex;gap:12px;justify-content:flex-end;margin-top:16px}
+
+/* envoi : les fourrés qui bougent là où Filo fouine */
+.fourres{position:absolute;z-index:40;width:0;height:0;pointer-events:none}
+.fourres i{position:absolute;width:12px;height:7px;border-radius:60% 0 60% 0;background:#7d8a3e;animation:feuille 1.2s ease-out infinite}
+.caverne .fourres i{background:#b8a27a;border-radius:2px;width:6px;height:6px}
+@keyframes feuille{0%{transform:translate(0,0) rotate(0);opacity:1}100%{transform:translate(var(--dx),-70px) rotate(260deg);opacity:0}}
+.fourres .main{position:absolute;left:-150px;top:-120px;width:300px;text-align:center;font-size:30px;color:#f6edd6;text-shadow:0 2px 6px rgba(0,0,0,.9);animation:fondu .5s both}
+
+/* rencontre */
+.sauvage{position:absolute;left:1000px;top:690px;width:0;height:0;z-index:31}
+.sauvage img{position:absolute;left:0;bottom:0;height:190px;transform:translateX(-50%) scaleX(-1);filter:drop-shadow(0 6px 6px rgba(0,0,0,.4));animation:surgit .7s cubic-bezier(.3,1.5,.5,1) both}
+@keyframes surgit{0%{opacity:0;transform:translateX(30%) translateY(40px) scaleX(-1) scale(.6)}100%{opacity:1}}
+.rencontre.issue.victoire .sauvage img,.rencontre.issue.fuite .sauvage img{animation:detale 1s ease-in both}
+@keyframes detale{to{opacity:0;transform:translateX(200px) scaleX(-1) scale(.7)}}
+.rencontre.issue.defaite .sauvage img{animation:detale 2.2s ease-in .6s both}
+.alerte{position:absolute;left:1000px;top:470px;z-index:32;width:40px;height:56px;margin-left:-20px;font-family:'Alegreya SC',serif;font-weight:700;font-size:54px;line-height:56px;text-align:center;color:#f3d48a;text-shadow:0 3px 0 #5e1c0e,0 0 18px rgba(255,180,80,.8);animation:alerte .6s cubic-bezier(.3,1.8,.5,1) both}
+@keyframes alerte{from{transform:scale(0) rotate(-20deg)}}
+.banniere{position:absolute;left:50%;top:300px;z-index:88;transform:translateX(-50%) rotate(-2deg);white-space:nowrap;font-family:'Alegreya SC',serif;font-weight:700;font-size:44px;letter-spacing:6px;color:#f1e6c8;text-shadow:0 3px 0 rgba(40,28,12,.85),0 0 24px rgba(0,0,0,.6);animation:tampon 1.5s ease both}
+@keyframes tampon{0%{opacity:0;transform:translateX(-50%) scale(1.6) rotate(-4deg)}14%{opacity:1;transform:translateX(-50%) scale(.96) rotate(-2deg)}22%{transform:translateX(-50%) scale(1) rotate(-2deg)}85%{opacity:1}100%{opacity:0}}
+.choix{left:330px;top:140px;width:620px;padding:24px 34px 24px 62px;box-sizing:border-box}
+.choix .nom-sauvage{font-family:'Alegreya SC',serif;font-weight:700;font-size:26px;letter-spacing:2px}
+.choix .enjeu{display:flex;align-items:center;gap:8px;margin-top:8px;font-family:'Reenie Beanie',cursive;font-size:23px;color:var(--sang)}
+.choix .enjeu img{width:34px;height:34px;object-fit:contain}
+.choix .aparte{margin-top:10px;font-family:'Alegreya',serif;font-style:italic;font-size:14px;color:var(--encre2);border-top:1px dashed rgba(60,46,26,.35);padding-top:10px}
+
+/* carte : l'illustration, sous une brume qui se lève au fil des découvertes */
+.carte{left:100px;top:52px;width:1080px;height:676px;padding:10px;box-sizing:border-box;background:linear-gradient(170deg,#e8d6ac,#cdb37e)}
+.carte::before{display:none}
+.carte svg.plan{display:block;width:1060px;height:656px;border-radius:2px;box-shadow:inset 0 0 0 1px rgba(60,40,18,.4)}
+.plan .brume{opacity:.97}
+.plan .lieu{cursor:default}
+.plan .lieu .zone-survol{fill:transparent}
+.plan .lieu .point{fill:#c9a050;stroke:#3a2410;stroke-width:3.5}
+.plan .lieu.eau .point{fill:#7fb6c9}
+.plan .lieu.ici .point{fill:#f3d48a}
+.plan .lieu.entrevu .point{fill:rgba(240,228,200,.85);stroke:#5b4b33;stroke-width:2.5;stroke-dasharray:4 3}
+.plan .lieu .q{font-family:'Alegreya SC',serif;font-weight:700;font-size:18px;fill:#5b4b33}
+.plan .lieu .nom{font-family:'Reenie Beanie',cursive;font-size:34px;fill:#2a1a0c;paint-order:stroke;stroke:#f4ead2;stroke-width:6px;stroke-linejoin:round;opacity:0;transition:opacity .2s}
+.plan .lieu:hover .nom,.plan .lieu.ici .nom{opacity:1}
+.plan .lieu.ici .nom{transform:translateY(-42px)}
+.plan .epingle{animation:epingle .6s cubic-bezier(.3,1.6,.5,1) .3s both}
+@keyframes epingle{from{transform:translateY(-30px);opacity:0}}
+.carte .cartouche{position:absolute;left:30px;top:24px;padding:8px 22px 6px;transform:rotate(-1.5deg);background:linear-gradient(170deg,#f4ead2,#e2cfa4);box-shadow:0 6px 12px rgba(0,0,0,.35)}
+.carte .cartouche h2{font-size:38px}
+.carte .legende{font-family:'Reenie Beanie',cursive;font-size:22px;line-height:1;color:var(--encre2)}
+/* retour au ranch : la page du carnet */
+.fin{left:300px;top:90px;width:680px;padding:28px 40px 30px 64px;box-sizing:border-box}
+.fin .objets{display:flex;flex-wrap:wrap;gap:10px 18px;margin:14px 0}
+.fin .objet{display:flex;align-items:center;gap:6px;font-family:'Reenie Beanie',cursive;font-size:24px}
+.fin .objet img{width:38px;height:38px;object-fit:contain}
+.fin .tampon{position:absolute;right:30px;top:24px;width:96px;height:96px;border-radius:50%;border:3px solid rgba(92,98,56,.7);color:rgba(92,98,56,.85);display:flex;align-items:center;justify-content:center;text-align:center;font-family:'Alegreya SC',serif;font-weight:700;font-size:12px;letter-spacing:1.5px;transform:rotate(-14deg);animation:tamponne .5s cubic-bezier(.3,1.6,.5,1) .5s both}
+@keyframes tamponne{from{transform:scale(1.8) rotate(-14deg);opacity:0}}
+
+/* —— le sac du ranch, à l’identique —— */
+.stitch{position:absolute;inset:7px;border:2px dashed rgba(240,214,170,.62);border-radius:inherit;pointer-events:none}
+.evc .stitch{position:absolute;inset:7px;border:2px dashed rgba(240,214,170,.65);border-radius:inherit;pointer-events:none}
+.pc-couv .stitch{border-radius:4px 10px 10px 4px}
+.sacoche{position:absolute;left:330px;top:150px;width:620px;height:470px;z-index:970;perspective:1600px;animation:sacIn .5s cubic-bezier(.3,1.15,.5,1) both}
+.sacoche.ferme{animation:sacOut .42s cubic-bezier(.55,0,.75,.35) .62s both}
+.sac-corps{position:absolute;left:0;right:0;top:70px;bottom:0;border-radius:24px 24px 60px 60px;background:#6e3f22;box-shadow:inset 0 0 0 2px #3a1f0e,inset 0 0 0 8px #6e3f22,inset 0 0 30px rgba(30,14,4,.5),0 8px 0 #4a2814,0 26px 50px rgba(10,6,2,.6)}
+.sac-poche{position:absolute;left:34px;right:34px;top:30px;bottom:86px;border-radius:14px;transform-origin:50% 0;animation:pocheIn .42s cubic-bezier(.3,1.2,.5,1) .72s both;background:radial-gradient(ellipse at 50% 0%,#3a2010,#26140a 75%);box-shadow:inset 0 10px 24px rgba(0,0,0,.6),0 0 0 2px #3a1f0e;padding:26px 22px 18px;display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:14px 12px;align-content:start}
+.case{position:relative;height:92px;border:none;border-radius:12px;padding:0;cursor:pointer;background:radial-gradient(circle at 50% 40%,#fbf4e3,#e7d6b2);box-shadow:inset 0 0 0 1.5px #3a1f0e,inset 0 0 0 5px rgba(255,255,255,.35),0 4px 0 #1a0d05;display:flex;align-items:center;justify-content:center;transition:transform .25s cubic-bezier(.3,1.4,.5,1),filter .25s;animation:caseIn .35s cubic-bezier(.3,1.4,.5,1) both}
+.sacoche.ferme .sac-poche{animation:pocheOut .3s cubic-bezier(.5,0,.7,.4) .06s both}
+.sacoche.ferme .case{animation:caseOut .16s ease-in both;animation-delay:0s !important}
+.sacoche .sac-info{animation:fondu .3s ease 1s both}
+.sac-ressources{position:absolute;left:40px;right:40px;bottom:20px;height:52px;display:flex;align-items:center;justify-content:center;gap:12px}
+.sr-titre{font-family:'Reenie Beanie',cursive;font-size:25px;line-height:1;color:#f6ecd6;margin-right:4px}
+.sr{position:relative;display:flex;align-items:center;gap:3px;height:42px;padding:0 9px 0 4px;border-radius:21px;background:rgba(20,10,4,.38);box-shadow:inset 0 0 0 1.5px rgba(240,214,170,.28)}
+.sr img{width:34px;height:34px;object-fit:contain;filter:drop-shadow(0 2px 2px rgba(0,0,0,.4))}
+.sr b{font-family:'Alegreya SC',serif;font-size:15px;color:#f6ecd6;min-width:10px;text-align:center}
+.sr.vide{opacity:.4}
+.sr.vide img{filter:grayscale(1)}
+.sac-menu{position:absolute;z-index:6;width:190px;transform:translate(-50%,-100%);padding:10px 12px 11px;border-radius:7px;background:linear-gradient(180deg,#f7eedb,#ecdcbc);box-shadow:0 0 0 1.5px #3a1f0e,0 12px 24px rgba(10,6,2,.55);transform-origin:50% 100%;animation:smIn .24s cubic-bezier(.3,1.5,.5,1) both}
+.sac-menu::after{content:"";position:absolute;left:50%;bottom:-8px;width:14px;height:14px;margin-left:-7px;background:#ecdcbc;transform:rotate(45deg);box-shadow:1.5px 1.5px 0 #3a1f0e}
+.sm-nom{font-family:'Alegreya SC',serif;font-weight:700;font-size:15px;letter-spacing:.6px;color:#2b2118;text-align:center}
+.sm-info{margin:5px 0 2px;font-family:'Alegreya',serif;font-style:italic;font-size:14px;line-height:1.3;color:#5a4330;text-align:center}
+.sm-boutons{display:flex;gap:8px;margin-top:8px}
+.sm-btn{flex:1;height:32px;border:none;border-radius:6px;cursor:pointer;font-family:'Alegreya SC',serif;font-weight:700;font-size:13px;letter-spacing:.5px;color:#3a1f0e;background:#e4d2ad;box-shadow:inset 0 0 0 1.5px #3a1f0e,0 2px 0 #3a1f0e;transition:transform .15s,filter .15s}
+.sm-btn:hover{filter:brightness(1.06);transform:translateY(-1px)}
+.sm-btn[aria-pressed="true"]{background:#d6c095}
+.sm-ok{color:#fbf3e2;background:#3f7a3a;text-shadow:0 1px 0 rgba(0,0,0,.4)}
+.sacoche.ferme .sac-info{animation:fonduOut .15s ease both}
+.case:hover{transform:translateY(-5px) scale(1.05);filter:drop-shadow(0 0 10px rgba(255,214,140,.6))}
+.case img{max-width:58px;max-height:58px}
+.case .qte{position:absolute;right:-6px;bottom:-6px}
+.case.vide{background:transparent;box-shadow:inset 0 0 0 2px rgba(240,214,170,.28);cursor:default}
+.case.vide:hover{transform:none;filter:none}
+.case.souleve{opacity:.35;transform:scale(.9);filter:none}
+.case.choisi{transform:translateY(-3px);box-shadow:inset 0 0 0 2px #e6b85a,0 0 0 3px rgba(230,184,90,.55),0 7px 0 #1a0d05}
+.case.cible{transform:scale(1.07);box-shadow:inset 0 0 0 2px #e6b85a,0 0 0 3px rgba(230,184,90,.55),0 0 18px rgba(255,210,120,.7)}
+.case.vide.cible::after{border-color:rgba(255,220,150,.8)}
+.case.vide::after{content:'';position:absolute;inset:8px;border-radius:8px;border:1.5px dashed rgba(240,214,170,.25)}
+.sac-rabat{position:absolute;left:-6px;right:-6px;top:52px;height:200px;transform-origin:50% 0;transform-style:preserve-3d;animation:rabatSac .55s cubic-bezier(.4,.1,.3,1) .38s both}
+.sacoche.ferme .sac-rabat{animation:rabatSacFerme .3s cubic-bezier(.4,.1,.3,1) .34s both}
+.sceau{display:inline-flex;align-items:center;justify-content:center;min-width:22px;height:22px;padding:0 5px;border-radius:11px;background:#9c3b2a;color:#fbe9d8;font-family:'Alegreya SC',serif;font-weight:700;font-size:12px;box-shadow:inset 0 0 0 2px rgba(0,0,0,.18),0 2px 4px rgba(0,0,0,.35)}
+.voile{position:absolute;inset:0;width:100%;height:100%;border:none;padding:0;background:rgba(14,8,4,.55);cursor:default;z-index:960;animation:fondu .4s ease both}
+.voile.part{animation:fonduOut .5s ease .35s both}
+.case-sac{display:flex;flex-direction:column;align-items:center;gap:2px;padding:8px 4px 6px;border-radius:6px;background:rgba(255,255,255,.35);box-shadow:inset 0 0 0 1px rgba(122,90,58,.3);font-size:13px}
+.case-sac img{width:40px;height:40px;object-fit:contain}
+@keyframes sacIn{0%{opacity:0;transform:translate(567px,-313px) scale(.14)}35%{opacity:1}100%{opacity:1;transform:none}}
+@keyframes sacOut{0%{opacity:1;transform:none}75%{opacity:1}100%{opacity:0;transform:translate(567px,-313px) scale(.14)}}
+@keyframes caseIn{from{opacity:0;transform:translateY(10px) scale(.8)}to{opacity:1;transform:none}}
+@keyframes pocheIn{from{clip-path:inset(0 0 100% 0 round 14px);opacity:.4}to{clip-path:inset(0 0 0 0 round 14px);opacity:1}}
+@keyframes pocheOut{from{clip-path:inset(0 0 0 0 round 14px);opacity:1}to{clip-path:inset(0 0 100% 0 round 14px);opacity:.3}}
+@keyframes caseOut{from{opacity:1;transform:none}to{opacity:0;transform:translateY(-8px) scale(.85)}}
+@keyframes smIn{from{opacity:0;transform:translate(-50%,-100%) translateY(8px) scale(.85)}to{opacity:1;transform:translate(-50%,-100%)}}
+@keyframes rabatSac{0%{transform:rotateX(0deg);opacity:1}70%{opacity:1}100%{transform:rotateX(-96deg);opacity:0}}
+@keyframes rabatSacFerme{0%{transform:rotateX(-96deg);opacity:0}30%{opacity:1}100%{transform:rotateX(0deg);opacity:1}}
+@keyframes fondu{from{opacity:0}to{opacity:1}}
+@keyframes fonduOut{from{opacity:1}to{opacity:0}}

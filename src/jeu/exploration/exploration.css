@@ -1,0 +1,420 @@
+/* Exploration (maquette v12 du canevas), portée sous .ex12 — généré par outils/maquettes/exploration/construire.py, ne pas modifier à la main. */
+.ex12 .ex{position:relative;width:1280px;height:800px;overflow:hidden;background:#120c08;font-family:'Alegreya',serif;color:#2f2a1f;user-select:none;
+  --kraft:#d8c39a;--encre:#2f2a1f;--encre2:#5b4b33;--kaki:#5c6238;--laiton:radial-gradient(circle at 35% 30%,#f3d48a,#b8893c 55%,#6d4c1c);--sang:#9c3b2a}
+.ex12 .main{font-family:'Reenie Beanie',cursive}
+.ex12 button{font:inherit;color:inherit}
+/* —— le décor ; la lumière s'applique au cadre entier, elle ne se réinitialise donc jamais pendant une transition —— */
+.ex12 .ex-cadre{position:absolute;inset:0;transition:filter 2.5s linear}
+.ex12 .ex-fond,.ex12 .ex-ancien{position:absolute;inset:-16px;background-size:cover;background-position:center 60%}
+.ex12 .ex-fond{animation:ex12Respire 30s ease-in-out infinite}
+@keyframes ex12Respire{0%,100%{transform:scale(1.02)}50%{transform:scale(1.045) translate(-8px,-3px)}}
+.ex12 .ex-fond.entre-avant{animation:ex12EntreAvant 1.5s cubic-bezier(.3,.6,.3,1) both}
+@keyframes ex12EntreAvant{0%{opacity:0;transform:scale(.93);filter:blur(3px)}100%{opacity:1;transform:scale(1.02);filter:blur(0)}}
+.ex12 .ex-fond.entre-arriere{animation:ex12EntreArriere 1.5s cubic-bezier(.3,.6,.3,1) both}
+@keyframes ex12EntreArriere{0%{opacity:0;transform:scale(1.12);filter:blur(3px)}100%{opacity:1;transform:scale(1.02);filter:blur(0)}}
+.ex12 .ex-ancien.sort-avant{animation:ex12SortAvant 1.5s cubic-bezier(.5,0,.6,1) both}
+@keyframes ex12SortAvant{0%{transform:scale(1.02)}100%{transform:scale(1.2);filter:blur(4px)}}
+.ex12 .ex-ancien.sort-arriere{animation:ex12SortArriere 1.5s cubic-bezier(.5,0,.6,1) both}
+@keyframes ex12SortArriere{0%{transform:scale(1.02)}100%{transform:scale(.94);filter:blur(4px)}}
+.ex12 .teinte{position:absolute;inset:0;pointer-events:none;mix-blend-mode:multiply;transition:background 2.5s linear}
+.ex12 .chaleur{position:absolute;inset:0;pointer-events:none;mix-blend-mode:soft-light;background:radial-gradient(ellipse 90% 60% at 80% 18%,rgba(255,170,90,1),rgba(255,140,70,.4) 50%,transparent 80%);transition:opacity 2.5s linear}
+.ex12 .ex-vignette{position:absolute;inset:0;pointer-events:none;background:radial-gradient(ellipse 80% 70% at 50% 58%,transparent 52%,rgba(24,16,6,.5) 100%),linear-gradient(180deg,rgba(30,20,8,.3),transparent 22%,transparent 74%,rgba(24,16,6,.5))}
+.ex12 .lanterne{position:absolute;width:620px;height:560px;margin:-380px 0 0 -310px;pointer-events:none;mix-blend-mode:screen;background:radial-gradient(closest-side,rgba(255,176,90,.32),rgba(255,140,60,.1) 55%,transparent);animation:ex12Vacille 2.6s ease-in-out infinite;transition:left 1.1s,top 1.1s}
+@keyframes ex12Vacille{0%,100%{opacity:.85}30%{opacity:1}55%{opacity:.78}80%{opacity:.95}}
+.ex12 .mote{position:absolute;left:-20px;top:var(--y);width:calc(var(--t) * 2.2);height:var(--t);border-radius:60% 0 60% 0;background:var(--c);opacity:.75;pointer-events:none;animation:ex12Derive var(--d) linear infinite}
+@keyframes ex12Derive{0%{transform:translate(0,0) rotate(0);opacity:0}8%{opacity:.8}50%{transform:translate(680px,calc(var(--dx) * 1.2)) rotate(200deg)}100%{transform:translate(1340px,var(--dx)) rotate(420deg);opacity:0}}
+.ex12 .caverne .mote{left:auto;top:auto;bottom:-10px;width:var(--t);height:var(--t);border-radius:50%;box-shadow:0 0 8px 2px var(--c);animation:ex12Monte var(--d) linear infinite}
+.ex12 .caverne .mote:nth-child(odd){margin-left:calc(var(--y) * 1.6)}
+.ex12 .caverne .mote:nth-child(even){margin-left:calc(var(--y) * 1.1 + 200px)}
+@keyframes ex12Monte{0%{transform:translate(0,0);opacity:0}15%{opacity:.7}100%{transform:translate(var(--dx),-760px);opacity:0}}
+.ex12 .montagne .mote{border-radius:50%;width:var(--t);opacity:.5}
+/* —— carnet : la page du jour, glissée hors du carnet d'éleveur —— */
+.ex12 .carnet{position:absolute;left:22px;top:18px;width:400px;height:136px;transform:rotate(-1.6deg);transform-origin:30px 20px;animation:ex12CarnetIn .7s cubic-bezier(.3,1.3,.5,1) both;filter:drop-shadow(0 12px 16px rgba(0,0,0,.45))}
+@keyframes ex12CarnetIn{from{opacity:0;transform:translateY(-30px) rotate(-6deg)}}
+.ex12 .carnet .cuir{position:absolute;left:0;top:-4px;bottom:-4px;width:40px;border-radius:7px 3px 3px 7px;background:repeating-linear-gradient(177deg,rgba(255,220,170,.04) 0 3px,transparent 3px 7px),linear-gradient(90deg,#5a321a,#7d4a28 60%,#6e3f22);box-shadow:inset 0 0 0 2px #3a1f0e}
+.ex12 .carnet .cuir::before{content:"";position:absolute;inset:5px;border:1.5px dashed rgba(240,214,170,.55);border-radius:4px}
+.ex12 .carnet .feuillet{position:absolute;left:34px;right:0;top:0;bottom:0;border-radius:2px 6px 6px 2px;
+  background:linear-gradient(transparent 31px,rgba(80,110,150,.18) 31px,rgba(80,110,150,.18) 32px,transparent 32px) 0 6px/100% 32px,linear-gradient(90deg,transparent 30px,rgba(170,60,40,.3) 30px,rgba(170,60,40,.3) 31.5px,transparent 31.5px),linear-gradient(170deg,#f4ead2,#e8d8b4)}
+.ex12 .carnet .feuillet::after{content:"";position:absolute;right:0;top:0;bottom:0;width:18px;background:linear-gradient(90deg,transparent,rgba(120,90,50,.18));border-radius:0 6px 6px 0}
+.ex12 .carnet .ruban{position:absolute;right:22px;top:-2px;width:14px;height:158px;background:linear-gradient(90deg,#8e2a1e,#b23a28 50%,#8e2a1e);clip-path:polygon(0 0,100% 0,100% 100%,50% 92%,0 100%);box-shadow:0 2px 3px rgba(0,0,0,.3)}
+.ex12 .carnet .date{position:absolute;left:78px;top:8px;font-family:'Reenie Beanie',cursive;font-size:23px;line-height:1;color:#5b4b33}
+.ex12 .carnet .lieu{position:absolute;left:76px;top:36px;right:44px;font-family:'Reenie Beanie',cursive;font-size:38px;line-height:1;color:#3a2412;white-space:nowrap;animation:ex12Ecrire 1.3s steps(24) both}
+@keyframes ex12Ecrire{from{clip-path:inset(0 100% 0 0)}to{clip-path:inset(0 0 0 0)}}
+.ex12 .carnet .heure{position:absolute;left:78px;top:86px;font-family:'Reenie Beanie',cursive;font-size:27px;line-height:1;color:#6b6258}
+.ex12 .carnet .tampon-region{position:absolute;right:56px;top:90px;padding:3px 8px 2px;border:2px solid rgba(92,98,56,.65);border-radius:4px;transform:rotate(-7deg);font-family:'Alegreya SC',serif;font-weight:700;font-size:10.5px;letter-spacing:2px;color:rgba(92,98,56,.85)}
+/* —— la carte et le sac —— */
+.ex12 .cote{position:absolute;right:26px;width:96px;height:104px;border:none;background:transparent;padding:0;cursor:pointer;transition:transform .3s cubic-bezier(.3,1.4,.5,1),opacity .3s}
+.ex12 .cote:hover{transform:translateY(-4px) rotate(-3deg)}
+.ex12 .cote.cache{opacity:0;pointer-events:none}
+.ex12 .cote .etiq{position:absolute;left:50%;bottom:-4px;transform:translateX(-50%);font-family:'Reenie Beanie',cursive;font-size:24px;line-height:1;color:#fbf3e2;text-shadow:0 1px 3px rgba(0,0,0,.85);white-space:nowrap}
+/* —— passages : une flèche tracée à la craie sur le décor ; le nom n'apparaît qu'au survol —— */
+.ex12 .passage{position:absolute;width:0;height:0;z-index:20;animation:ex12Apparait .8s ease both;transition:opacity .4s}
+@keyframes ex12Apparait{from{opacity:0}}
+.ex12 .passage.cache,.ex12 .retour.cache{opacity:0;pointer-events:none}
+.ex12 .passage button,.ex12 .retour button{position:absolute;left:-46px;top:-46px;width:92px;height:92px;border:none;padding:0;background:transparent;cursor:pointer;border-radius:50%}
+.ex12 .passage .halo,.ex12 .retour .halo{position:absolute;left:-60px;top:-30px;width:120px;height:60px;border-radius:50%;background:radial-gradient(closest-side,rgba(255,236,190,.38),rgba(255,236,190,0));pointer-events:none;animation:ex12Souffle 3.2s ease-in-out infinite;transition:opacity .3s}
+@keyframes ex12Souffle{0%,100%{opacity:.45;transform:scale(.9)}50%{opacity:.9;transform:scale(1.08)}}
+.ex12 .fleche{position:absolute;left:-44px;top:-44px;width:88px;height:88px;overflow:visible;pointer-events:none;transition:transform .3s}
+.ex12 .fleche g{animation:ex12Pousse 2.2s ease-in-out infinite}
+@keyframes ex12Pousse{0%,100%{transform:translateY(4px);opacity:.75}50%{transform:translateY(-6px);opacity:1}}
+.ex12 .fleche path{fill:none;stroke:#fbf3dc;stroke-width:5.5;stroke-linecap:round;stroke-linejoin:round;filter:drop-shadow(0 1px 2px rgba(0,0,0,.85)) drop-shadow(0 0 5px rgba(255,230,170,.5))}
+.ex12 .fleche path.ombre{stroke:rgba(20,12,4,.35);stroke-width:9;filter:none}
+.ex12 .passage.survol .fleche path,.ex12 .retour.survol .fleche path{stroke:#fff6d8;filter:drop-shadow(0 1px 2px rgba(0,0,0,.85)) drop-shadow(0 0 10px rgba(255,220,140,.95))}
+.ex12 .passage.survol .halo,.ex12 .retour.survol .halo{opacity:1;animation:none;transform:scale(1.25)}
+.ex12 .passage.inconnu .fleche path:not(.ombre){stroke-dasharray:9 7}
+.ex12 .passage.bloque .fleche{opacity:.45}
+.ex12 .passage.bloque .fleche path:not(.ombre){stroke:#d9cbb0}
+.ex12 .passage .croix{display:none}
+.ex12 .passage.bloque .croix{display:block}
+.ex12 .etiq-passage,.ex12 .retour .etiq-passage{position:absolute;top:-22px;white-space:nowrap;font-family:'Reenie Beanie',cursive;font-size:32px;line-height:1;color:#fbf3dc;text-shadow:0 2px 4px rgba(0,0,0,.95),0 0 14px rgba(0,0,0,.6);opacity:0;transform:translateY(6px);transition:opacity .25s,transform .25s;pointer-events:none}
+.ex12 .etiq-passage.droite{left:48px}
+.ex12 .etiq-passage.gauche{right:48px;text-align:right}
+.ex12 .passage.survol .etiq-passage,.ex12 .retour.survol .etiq-passage{opacity:1;transform:none}
+.ex12 .passage.inconnu .etiq-passage{font-style:italic;color:#e9dcc0}
+.ex12 .retour{position:absolute;left:640px;top:752px;width:0;height:0;z-index:22;transition:opacity .4s}
+.ex12 .retour .etiq-passage{left:44px;top:-18px;font-size:28px}
+/* —— Filo : il marche d'un lieu à l'autre, sa taille suit la profondeur et il regarde où il va —— */
+.ex12 .filo{position:absolute;width:0;height:0;z-index:30;transition-property:left,top,transform,opacity;transition-timing-function:cubic-bezier(.4,.1,.4,1)}
+.ex12 .filo-ombre{position:absolute;left:-75px;top:-14px;width:150px;height:30px;border-radius:50%;background:radial-gradient(closest-side,rgba(10,6,2,.6),transparent)}
+.ex12 .filo-corps{position:absolute;left:0;bottom:0;transform-origin:50% 100%;animation:ex12RespireFilo 2.4s ease-in-out infinite}
+.ex12 .filo-corps img{display:block;height:215px;transform-origin:50% 100%;filter:drop-shadow(0 6px 6px rgba(0,0,0,.35));transition:transform .25s}
+@keyframes ex12RespireFilo{0%,100%{transform:scaleY(1)}50%{transform:scaleY(1.025) scaleX(.99)}}
+.ex12 .filo.marche .filo-corps{animation:ex12Trotte .34s ease-in-out infinite}
+.ex12 .filo.fuite .filo-corps{animation:ex12Trotte .18s ease-in-out infinite}
+@keyframes ex12Trotte{0%,100%{transform:translateY(0) rotate(-2deg)}50%{transform:translateY(-12px) rotate(2deg)}}
+.ex12 .filo.boitille .filo-corps{animation:ex12Boite 1.8s ease-in-out infinite}
+@keyframes ex12Boite{0%,100%{transform:rotate(-4deg) scaleY(.95)}50%{transform:rotate(2deg) scaleY(.97)}}
+.ex12 .orbite{position:absolute;left:0;top:-250px;width:0;height:0}
+.ex12 .signe{position:absolute;width:46px;height:46px;margin:-23px;border-radius:50%;background:rgba(244,234,214,.9);box-shadow:0 4px 10px rgba(0,0,0,.4);animation:ex12Flotte 3s ease-in-out infinite}
+.ex12 .signe img{width:100%;height:100%;object-fit:contain}
+@keyframes ex12Flotte{0%,100%{transform:translateY(0)}50%{transform:translateY(-7px)}}
+.ex12 .bulle{position:absolute;left:50px;top:-290px;width:64px;height:64px;border-radius:50%;background:#f4ead6;box-shadow:0 6px 14px rgba(0,0,0,.45);animation:ex12BulleIn 2.2s cubic-bezier(.3,1.5,.5,1) both}
+.ex12 .bulle::after{content:"";position:absolute;left:4px;bottom:-6px;width:14px;height:14px;border-radius:50%;background:#f4ead6}
+.ex12 .bulle img{position:absolute;inset:6px;width:52px;height:52px;object-fit:contain}
+@keyframes ex12BulleIn{0%{opacity:0;transform:scale(.3) translateY(20px)}12%{opacity:1;transform:scale(1)}85%{opacity:1}100%{opacity:0;transform:translateY(-10px)}}
+/* —— gestes de terrain : une trousse de toile kaki ; les noms ne viennent qu'au survol —— */
+.ex12 .gestes{position:absolute;right:22px;bottom:20px;z-index:25;display:flex;gap:14px;padding:12px 16px;border-radius:10px;transition:opacity .3s;
+  background:repeating-linear-gradient(45deg,rgba(255,255,255,.03) 0 2px,transparent 2px 4px),repeating-linear-gradient(-45deg,rgba(0,0,0,.06) 0 2px,transparent 2px 4px),linear-gradient(180deg,#666c40,#4c5030);box-shadow:inset 0 1px 0 rgba(255,250,210,.18),0 12px 22px rgba(0,0,0,.45)}
+.ex12 .gestes::before{content:"";position:absolute;inset:6px;border:1.5px dashed rgba(240,226,180,.45);border-radius:6px;pointer-events:none}
+.ex12 .geste{position:relative;width:72px;height:72px;border:none;padding:0;background:transparent;cursor:pointer;animation:ex12GesteIn .5s cubic-bezier(.3,1.4,.5,1) both;transition:transform .3s cubic-bezier(.3,1.5,.5,1)}
+@keyframes ex12GesteIn{from{opacity:0;transform:translateY(16px)}}
+.ex12 .geste img{width:72px;height:72px;border-radius:12px;box-shadow:0 3px 6px rgba(0,0,0,.45);transition:filter .3s,box-shadow .3s}
+.ex12 .geste:hover{transform:translateY(-6px) rotate(-2deg)}
+.ex12 .geste:hover img{box-shadow:0 0 0 2px #f1e2b8,0 8px 12px rgba(0,0,0,.45)}
+.ex12 .geste .lib{position:absolute;left:50%;bottom:calc(100% + 12px);transform:translateX(-50%) translateY(6px) rotate(-2deg);white-space:nowrap;text-align:center;padding:5px 14px 3px;border-radius:3px;background:#efe3c3;box-shadow:0 6px 12px rgba(0,0,0,.4);opacity:0;pointer-events:none;transition:opacity .2s,transform .2s;z-index:3}
+.ex12 .geste .lib b{display:block;font-family:'Alegreya SC',serif;font-weight:700;font-size:14px;letter-spacing:1.5px;color:#2f2a1f}
+.ex12 .geste .lib i{display:block;font-family:'Reenie Beanie',cursive;font-style:normal;font-size:20px;line-height:1;color:#6b5a3e}
+.ex12 .geste:hover .lib{opacity:1;transform:translateX(-50%) rotate(-2deg)}
+.ex12 .geste.fait img,.ex12 .geste.off img{filter:grayscale(.8) brightness(.62)}
+.ex12 .geste.fait::after{content:"";position:absolute;right:-6px;top:-6px;width:24px;height:24px;border-radius:50%;background:var(--laiton);box-shadow:0 2px 3px rgba(0,0,0,.5)}
+.ex12 .geste.fait::before{content:"";position:absolute;right:2px;top:-1px;width:6px;height:11px;border-right:3px solid #3b2a16;border-bottom:3px solid #3b2a16;transform:rotate(40deg);z-index:2}
+.ex12 .toast{position:absolute;left:50%;bottom:118px;z-index:70;transform:translateX(-50%) rotate(-1deg);padding:8px 26px 5px;font-family:'Reenie Beanie',cursive;font-size:29px;line-height:1;color:#2f2a1f;white-space:nowrap;
+  background:linear-gradient(170deg,#e2cfa4,#cdb17f);box-shadow:0 8px 16px rgba(0,0,0,.4);animation:ex12ToastIn .35s cubic-bezier(.3,1.4,.5,1) both}
+@keyframes ex12ToastIn{from{opacity:0;transform:translateX(-50%) translateY(14px)}}
+/* —— récolter —— */
+.ex12 .recolte-travail{position:absolute;left:0;right:0;top:320px;z-index:60;text-align:center;font-size:40px;color:#f6edd6;text-shadow:0 2px 8px rgba(0,0,0,.9);animation:ex12Fondu .4s both;pointer-events:none}
+.ex12 .ressources-gagnees{display:flex;gap:18px;margin:14px 0 6px}
+.ex12 .ressources-gagnees span{display:flex;align-items:center;gap:6px;font-family:'Reenie Beanie',cursive;font-size:28px}
+.ex12 .ressources-gagnees img{width:46px;height:46px;object-fit:contain;animation:ex12Saute .7s cubic-bezier(.3,1.6,.5,1) both}
+/* —— la tente : on s'y glisse avec Filo pour s'en occuper —— */
+.ex12 .tente{position:absolute;inset:0;z-index:92;overflow:hidden;animation:ex12TenteIn .9s cubic-bezier(.3,.8,.3,1) both}
+@keyframes ex12TenteIn{from{opacity:0;transform:scale(1.25)}}
+.ex12 .tente.sortie{animation:ex12TenteOut .6s ease-in both}
+@keyframes ex12TenteOut{to{opacity:0;transform:scale(1.2)}}
+.ex12 .tente .dehors{position:absolute;inset:-20px;background-size:cover;background-position:center 60%;filter:blur(5px) brightness(.85)}
+.ex12 .tente .toile{position:absolute;inset:0;box-shadow:inset 0 0 160px 40px rgba(60,38,16,.55);background:
+  linear-gradient(to bottom right,transparent 49.6%,rgba(60,40,18,.5) 49.8%,transparent 50.4%) 0 0/50% 100% no-repeat,
+  linear-gradient(to bottom left,transparent 49.6%,rgba(60,40,18,.5) 49.8%,transparent 50.4%) 100% 0/50% 100% no-repeat,
+  radial-gradient(ellipse 60% 55% at 50% 30%,rgba(255,200,120,.35),transparent 70%),
+  repeating-linear-gradient(100deg,rgba(255,255,255,.035) 0 3px,transparent 3px 9px),
+  linear-gradient(180deg,#d7c39a,#b79c6c 55%,#8f7448);
+  clip-path:polygon(0 0,100% 0,100% 100%,62% 100%,50% 32%,38% 100%,0 100%)}
+.ex12 .tente .couture{position:absolute;left:50%;top:0;width:3px;height:32%;margin-left:-1.5px;background:#6d5430}
+.ex12 .tente .sol{position:absolute;left:0;right:0;bottom:0;height:150px;background:radial-gradient(ellipse 70% 100% at 50% 100%,#7d6644,#5b4a30 70%,#3a2e1c)}
+.ex12 .tente .natte{position:absolute;left:330px;right:330px;bottom:40px;height:90px;border-radius:50%;background:repeating-linear-gradient(90deg,#a8864e 0 8px,#94743f 8px 16px);box-shadow:inset 0 0 0 3px rgba(60,40,18,.5),0 6px 12px rgba(0,0,0,.3)}
+.ex12 .tente .lampe{position:absolute;left:50%;top:70px;width:28px;height:40px;margin-left:-14px;border-radius:6px 6px 10px 10px;background:radial-gradient(circle at 50% 60%,#fff2b0,#ffb44a 60%,#a5621c);box-shadow:0 0 30px 12px rgba(255,190,90,.55),0 0 90px 40px rgba(255,170,80,.25);animation:ex12Vacille 2.2s ease-in-out infinite}
+.ex12 .tente .lampe::before{content:"";position:absolute;left:12px;top:-34px;width:3px;height:34px;background:#4a3a22}
+.ex12 .tente.sommeil .nuit{opacity:1}
+.ex12 .tente .nuit{position:absolute;inset:0;background:rgba(10,8,24,.7);opacity:0;transition:opacity 1.2s;pointer-events:none}
+.ex12 .tente .grand-filo{position:absolute;left:640px;top:690px;width:0;height:0}
+.ex12 .tente .grand-filo .filo-ombre{left:-150px;top:-22px;width:300px;height:44px}
+.ex12 .tente .grand-filo img{position:absolute;left:0;bottom:0;height:390px;transform:translateX(-50%);transform-origin:50% 100%;filter:drop-shadow(0 10px 10px rgba(0,0,0,.35));animation:ex12RespireFilo 2.4s ease-in-out infinite}
+.ex12 .tente.mange .grand-filo img{animation:ex12Mache .3s ease-in-out 5}
+@keyframes ex12Mache{50%{transform:translateX(-50%) scaleY(.94) scaleX(1.03)}}
+.ex12 .tente.lave .grand-filo img{animation:ex12Ebroue .12s linear 8}
+@keyframes ex12Ebroue{0%,100%{transform:translateX(-50%) rotate(-3deg)}50%{transform:translateX(-50%) rotate(3deg)}}
+.ex12 .tente.dort .grand-filo img,.ex12 .tente.sommeil .grand-filo img{animation:ex12Dort 3s ease-in-out infinite}
+@keyframes ex12Dort{0%,100%{transform:translateX(-50%) scaleY(.9)}50%{transform:translateX(-50%) scaleY(.93)}}
+.ex12 .tente .zzz{position:absolute;left:720px;top:300px;font-family:'Reenie Beanie',cursive;font-size:48px;color:#f3e8c8;opacity:0;text-shadow:0 2px 6px rgba(0,0,0,.6)}
+.ex12 .tente.sommeil .zzz{animation:ex12Zzz 2.4s ease-out infinite}
+@keyframes ex12Zzz{0%{opacity:0;transform:translate(0,0)}30%{opacity:1}100%{opacity:0;transform:translate(40px,-80px)}}
+.ex12 .tente .orbite{left:640px;top:250px;position:absolute}
+.ex12 .tente .bulle{left:740px;top:230px;position:absolute}
+.ex12 .tente .mot{position:absolute;left:50%;top:22px;transform:translateX(-50%) rotate(-1deg);max-width:760px;padding:8px 26px 5px;text-align:center;font-family:'Reenie Beanie',cursive;font-size:30px;line-height:1.05;color:#2f2a1f;background:linear-gradient(170deg,#efe3c3,#dcc79c);box-shadow:0 8px 16px rgba(0,0,0,.35);animation:ex12ToastIn .35s both}
+.ex12 .tente .soins{position:absolute;left:50%;bottom:20px;transform:translateX(-50%);display:flex;gap:14px;padding:12px 16px;border-radius:10px;
+  background:repeating-linear-gradient(45deg,rgba(255,255,255,.03) 0 2px,transparent 2px 4px),linear-gradient(180deg,#666c40,#4c5030);box-shadow:inset 0 1px 0 rgba(255,250,210,.18),0 12px 22px rgba(0,0,0,.45)}
+.ex12 .tente .soins::before{content:"";position:absolute;inset:6px;border:1.5px dashed rgba(240,226,180,.45);border-radius:6px;pointer-events:none}
+.ex12 .tente .sortir{position:absolute;right:30px;bottom:34px}
+.ex12 .repas{position:absolute;left:50%;bottom:130px;transform:translateX(-50%);display:flex;gap:10px;padding:12px 16px;border-radius:4px;background:linear-gradient(170deg,#efe3c3,#dcc79c);box-shadow:0 10px 20px rgba(0,0,0,.4);animation:ex12ToastIn .3s both}
+.ex12 .repas button{position:relative;width:64px;height:64px;border:none;border-radius:10px;cursor:pointer;background:radial-gradient(circle at 50% 40%,#fbf4e3,#e7d6b2);box-shadow:inset 0 0 0 1.5px #3a1f0e;transition:transform .2s}
+.ex12 .repas button:hover{transform:translateY(-4px)}
+.ex12 .repas img{width:48px;height:48px;object-fit:contain}
+.ex12 .repas b{position:absolute;right:-4px;bottom:-4px;min-width:20px;height:20px;border-radius:10px;background:#6e3f22;color:#f6ecd6;font-size:12px;line-height:20px;text-align:center}
+/* —— pêche, envoi, rencontre —— */
+.ex12 .peche-ligne{position:absolute;inset:0;z-index:50;pointer-events:none}
+.ex12 .peche-ligne .canne{stroke:#5a3a1c;stroke-width:9;stroke-linecap:round;fill:none}
+.ex12 .peche-ligne .canne2{stroke:#a87a45;stroke-width:4;stroke-linecap:round;fill:none}
+.ex12 .peche-ligne .fil{stroke:rgba(250,245,230,.75);stroke-width:1.4;fill:none}
+.ex12 .bouchon{position:absolute;z-index:51;width:0;height:0;pointer-events:none}
+.ex12 .bouchon i{position:absolute;left:-9px;top:-22px;width:18px;height:26px;border-radius:50% 50% 45% 45%;background:linear-gradient(180deg,#f4efe4 0 45%,#c8341f 45%);box-shadow:0 2px 3px rgba(0,0,0,.4);animation:ex12Dandine 1.8s ease-in-out infinite}
+.ex12 .bouchon b{position:absolute;left:-30px;top:-6px;width:60px;height:14px;border-radius:50%;border:2px solid rgba(240,248,255,.6);animation:ex12Ronds 2.2s ease-out infinite}
+@keyframes ex12Dandine{0%,100%{transform:translateY(0) rotate(-6deg)}50%{transform:translateY(3px) rotate(6deg)}}
+@keyframes ex12Ronds{0%{transform:scale(.4);opacity:.9}100%{transform:scale(2.2);opacity:0}}
+.ex12 .peche.lancer .bouchon i{animation:ex12Lance .9s cubic-bezier(.3,.7,.4,1) both}
+@keyframes ex12Lance{0%{transform:translate(380px,-300px) scale(.6)}80%{transform:translate(0,0)}90%{transform:translateY(8px)}100%{transform:none}}
+.ex12 .peche.touche .bouchon i{animation:ex12Plonge .25s ease-in-out infinite}
+@keyframes ex12Plonge{0%,100%{transform:translateY(10px)}50%{transform:translateY(18px)}}
+.ex12 .peche.touche .bouchon b{animation-duration:.6s;border-color:rgba(255,255,255,.95)}
+.ex12 .peche-panneau{position:absolute;left:50%;top:40px;z-index:85;transform:translateX(-50%);text-align:center}
+.ex12 .consigne{display:inline-block;padding:8px 30px 4px;font-family:'Reenie Beanie',cursive;font-size:38px;line-height:1;color:#2f2a1f;background:linear-gradient(170deg,#e2cfa4,#cdb17f);box-shadow:0 8px 16px rgba(0,0,0,.4)}
+.ex12 .peche.touche .consigne{background:linear-gradient(170deg,#f0c27a,#d9893d);animation:ex12Secoue .25s infinite}
+@keyframes ex12Secoue{0%,100%{transform:rotate(-1deg)}50%{transform:rotate(1.5deg) scale(1.04)}}
+.ex12 .ferrer{position:absolute;left:50%;bottom:120px;z-index:86;transform:translateX(-50%);padding:14px 40px 11px;font-size:18px;letter-spacing:3px}
+.ex12 .peche.touche .ferrer{animation:ex12Pulse .5s infinite}
+@keyframes ex12Pulse{50%{box-shadow:0 0 0 6px rgba(243,212,138,.55),0 5px 10px rgba(0,0,0,.35)}}
+.ex12 .resultat{left:390px;top:190px;width:500px;padding:26px 36px 26px 62px;box-sizing:border-box;text-align:left}
+.ex12 .resultat .prise{display:flex;align-items:center;gap:18px;margin:12px 0}
+.ex12 .resultat .prise img{width:86px;height:86px;object-fit:contain;filter:drop-shadow(0 5px 5px rgba(0,0,0,.3));animation:ex12Saute .7s cubic-bezier(.3,1.6,.5,1) both}
+@keyframes ex12Saute{from{transform:translateY(40px) scale(.4) rotate(-30deg);opacity:0}}
+.ex12 .resultat .prise b{font-family:'Alegreya SC',serif;font-size:22px;letter-spacing:1px}
+.ex12 .boutons{display:flex;gap:12px;justify-content:flex-end;margin-top:16px}
+.ex12 .fourres{position:absolute;z-index:40;width:0;height:0;pointer-events:none}
+.ex12 .fourres i{position:absolute;width:12px;height:7px;border-radius:60% 0 60% 0;background:#7d8a3e;animation:ex12Feuille 1.2s ease-out infinite}
+.ex12 .caverne .fourres i{background:#b8a27a;border-radius:2px;width:6px;height:6px}
+@keyframes ex12Feuille{0%{transform:translate(0,0) rotate(0);opacity:1}100%{transform:translate(var(--dx),-70px) rotate(260deg);opacity:0}}
+.ex12 .fourres .main{position:absolute;left:-170px;top:-130px;width:340px;text-align:center;font-size:32px;color:#f6edd6;text-shadow:0 2px 6px rgba(0,0,0,.9);animation:ex12Fondu .5s both}
+.ex12 .sauvage{position:absolute;width:0;height:0;z-index:31}
+.ex12 .sauvage .ombre{position:absolute;left:-70px;top:-14px;width:140px;height:28px;border-radius:50%;background:radial-gradient(closest-side,rgba(10,6,2,.55),transparent)}
+.ex12 .sauvage img{position:absolute;left:0;bottom:0;height:205px;transform-origin:50% 100%;filter:drop-shadow(0 6px 6px rgba(0,0,0,.4));animation:ex12Surgit .7s cubic-bezier(.3,1.5,.5,1) both}
+@keyframes ex12Surgit{0%{opacity:0;translate:0 40px;scale:.6}100%{opacity:1}}
+.ex12 .rencontre.issue.victoire .sauvage,.ex12 .rencontre.issue.fuite .sauvage{animation:ex12Detale 1s ease-in both}
+@keyframes ex12Detale{to{opacity:0;translate:200px 0}}
+.ex12 .rencontre.issue.defaite .sauvage{animation:ex12Detale 2.2s ease-in .6s both}
+.ex12 .alerte{position:absolute;z-index:32;width:40px;height:56px;margin-left:-20px;font-family:'Alegreya SC',serif;font-weight:700;font-size:54px;line-height:56px;text-align:center;color:#f3d48a;text-shadow:0 3px 0 #5e1c0e,0 0 18px rgba(255,180,80,.8);animation:ex12Alerte .6s cubic-bezier(.3,1.8,.5,1) both}
+@keyframes ex12Alerte{from{transform:scale(0) rotate(-20deg)}}
+.ex12 .banniere{position:absolute;left:50%;top:300px;z-index:88;transform:translateX(-50%) rotate(-2deg);white-space:nowrap;font-family:'Alegreya SC',serif;font-weight:700;font-size:44px;letter-spacing:6px;color:#f1e6c8;text-shadow:0 3px 0 rgba(40,28,12,.85),0 0 24px rgba(0,0,0,.6);animation:ex12Tampon 1.5s ease both}
+@keyframes ex12Tampon{0%{opacity:0;transform:translateX(-50%) scale(1.6) rotate(-4deg)}14%{opacity:1;transform:translateX(-50%) scale(.96) rotate(-2deg)}22%{transform:translateX(-50%) scale(1) rotate(-2deg)}85%{opacity:1}100%{opacity:0}}
+.ex12 .choix{left:330px;top:140px;width:620px;padding:24px 34px 24px 62px;box-sizing:border-box}
+.ex12 .choix .nom-sauvage{font-family:'Alegreya SC',serif;font-weight:700;font-size:26px;letter-spacing:2px}
+.ex12 .choix .enjeu{display:flex;align-items:center;gap:8px;margin-top:8px;font-family:'Reenie Beanie',cursive;font-size:23px;color:var(--sang)}
+.ex12 .choix .enjeu img{width:34px;height:34px;object-fit:contain}
+.ex12 .choix .aparte{margin-top:10px;font-family:'Alegreya',serif;font-style:italic;font-size:14px;color:var(--encre2);border-top:1px dashed rgba(60,46,26,.35);padding-top:10px}
+/* fouille : cinq cachettes posées sur la toile */
+.ex12 .fouille{left:150px;top:150px;width:980px;padding:26px 40px 30px 62px;box-sizing:border-box}
+.ex12 .cachettes{display:flex;gap:16px;margin:18px 0 14px}
+.ex12 .cachette{position:relative;width:162px;height:200px;border:none;padding:0;cursor:pointer;perspective:800px;background:transparent;animation:ex12CarteIn .5s cubic-bezier(.3,1.3,.5,1) both}
+@keyframes ex12CarteIn{from{opacity:0;transform:translateY(30px) rotate(-6deg)}}
+.ex12 .cachette .verso,.ex12 .cachette .recto{position:absolute;inset:0;border-radius:6px;backface-visibility:hidden;transition:transform .55s cubic-bezier(.3,1.2,.5,1);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;box-shadow:0 8px 14px rgba(0,0,0,.3)}
+.ex12 .cachette .verso{background:repeating-linear-gradient(45deg,rgba(255,255,255,.04) 0 2px,transparent 2px 4px),linear-gradient(180deg,#6b7244,#4c5030);color:#f3e8c8}
+.ex12 .cachette .verso::before{content:"";position:absolute;inset:7px;border:1.5px dashed rgba(240,226,180,.5);border-radius:4px}
+.ex12 .cachette .verso svg{width:58px;height:58px;opacity:.8}
+.ex12 .cachette .verso .lieu{font-family:'Reenie Beanie',cursive;font-size:23px;line-height:1;text-align:center;padding:0 10px}
+.ex12 .cachette .recto{transform:rotateY(180deg);background:linear-gradient(170deg,#f3e8cc,#e2d0a6);color:var(--encre)}
+.ex12 .cachette .recto img{width:74px;height:74px;object-fit:contain;filter:drop-shadow(0 4px 4px rgba(0,0,0,.3))}
+.ex12 .cachette .recto .nom{font-family:'Alegreya SC',serif;font-weight:700;font-size:14px;letter-spacing:1px;text-align:center;padding:0 8px}
+.ex12 .cachette .recto .lieu{font-family:'Reenie Beanie',cursive;font-size:19px;color:var(--encre2)}
+.ex12 .cachette.revele .verso{transform:rotateY(-180deg)}
+.ex12 .cachette.revele .recto{transform:rotateY(0)}
+.ex12 .cachette:not(.revele):hover .verso{transform:translateY(-6px) rotate(-2deg)}
+.ex12 .cachette.revele{cursor:default}
+.ex12 .cachette.echo .recto{background:radial-gradient(circle at 50% 42%,#3a2214,#120a06 70%);color:#f1d9b0}
+.ex12 .yeux{display:flex;gap:16px}
+.ex12 .yeux i{width:16px;height:9px;border-radius:50%;background:#ffd36a;box-shadow:0 0 12px 4px rgba(255,190,80,.7);animation:ex12Cligne 2s infinite}
+@keyframes ex12Cligne{0%,90%,100%{transform:scaleY(1)}95%{transform:scaleY(.1)}}
+.ex12 .cachette.vide .recto svg{width:70px;height:40px}
+.ex12 .cachette.eteinte{opacity:.45;pointer-events:none}
+.ex12 .fouille .bas{display:flex;align-items:center;justify-content:space-between;gap:20px;min-height:46px}
+.ex12 .butin{display:flex;gap:6px}
+.ex12 .butin img{width:40px;height:40px;object-fit:contain;background:rgba(255,255,255,.4);border-radius:6px;padding:2px;box-shadow:inset 0 0 0 1px rgba(60,46,26,.25)}
+.ex12 .sac-rabat .face{position:absolute;inset:0;-webkit-backface-visibility:hidden;backface-visibility:hidden}
+.ex12 .sac-rabat .face.dos{transform:rotateY(180deg)}
+.ex12 .tente .toile::after{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 80% 70% at 50% 20%,transparent 40%,rgba(50,30,12,.5));pointer-events:none}
+.ex12 .carnet .lieu.long{font-size:31px;top:40px}
+/* —— panneaux superposés : page de carnet quadrillée —— */
+.ex12 .voile-noir{position:absolute;inset:0;z-index:80;background:rgba(20,14,6,.45);animation:ex12Fondu .3s both}
+@keyframes ex12Fondu{from{opacity:0}}
+.ex12 .page{position:absolute;z-index:85;border-radius:2px;color:var(--encre);box-shadow:0 26px 50px rgba(0,0,0,.55);
+  background:linear-gradient(rgba(85,96,58,.13) 1px,transparent 1px) 0 0/22px 22px,linear-gradient(90deg,rgba(85,96,58,.13) 1px,transparent 1px) 0 0/22px 22px,linear-gradient(170deg,#efe3c3,#e2d1a8);animation:ex12PageIn .5s cubic-bezier(.3,1.25,.5,1) both}
+.ex12 .page::before{content:"";position:absolute;left:36px;top:0;bottom:0;border-left:1.5px solid rgba(160,60,40,.32);pointer-events:none}
+@keyframes ex12PageIn{from{opacity:0;transform:translateY(60px) rotate(3deg)}}
+.ex12 .page h2{margin:0;font-family:'Reenie Beanie',cursive;font-weight:400;font-size:44px;line-height:1;color:var(--kaki)}
+.ex12 .page .ligne{font-family:'Reenie Beanie',cursive;font-size:27px;line-height:1.1;color:var(--encre)}
+.ex12 .punaise{position:absolute;top:-8px;width:18px;height:18px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#e98a6c,#a33a22 60%,#5e1c0e);box-shadow:0 3px 3px rgba(0,0,0,.5)}
+.ex12 .btn{white-space:nowrap;border:none;cursor:pointer;padding:9px 20px 7px;border-radius:4px;font-family:'Alegreya SC',serif;font-weight:700;font-size:14px;letter-spacing:1.5px;color:#f3ead0;
+  background:linear-gradient(180deg,#6b7244,#4c5030);box-shadow:inset 0 0 0 1.5px rgba(240,226,180,.35),0 5px 10px rgba(0,0,0,.35);transition:transform .2s,filter .2s}
+.ex12 .btn:hover{transform:translateY(-2px);filter:brightness(1.1)}
+.ex12 .btn.bois{color:#2c1507;background:repeating-linear-gradient(177deg,rgba(60,28,8,0) 0 6px,rgba(60,28,8,.13) 6px 7px,rgba(60,28,8,0) 7px 15px),linear-gradient(180deg,#c08a55,#94612f);box-shadow:inset 0 0 0 2px #3a1f0e,0 5px 10px rgba(0,0,0,.35)}
+.ex12 .btn.rouge{background:linear-gradient(180deg,#a8513c,#7b2f20)}
+.ex12 .fermer{position:absolute;right:-14px;top:-14px;width:40px;height:40px;border:none;border-radius:50%;cursor:pointer;background:#f4ead6;color:#3a1f0e;font-size:22px;line-height:1;box-shadow:0 5px 12px rgba(0,0,0,.45)}
+/* fouille : cinq cachettes posées sur la toile */
+.ex12 .fouille{left:150px;top:150px;width:980px;padding:26px 40px 30px 62px;box-sizing:border-box}
+.ex12 .cachettes{display:flex;gap:16px;margin:18px 0 14px}
+.ex12 .cachette{position:relative;width:162px;height:200px;border:none;padding:0;cursor:pointer;perspective:800px;background:transparent;animation:ex12CarteIn .5s cubic-bezier(.3,1.3,.5,1) both}
+@keyframes ex12CarteIn{from{opacity:0;transform:translateY(30px) rotate(-6deg)}}
+.ex12 .cachette .dos,.ex12 .cachette .face{position:absolute;inset:0;border-radius:6px;backface-visibility:hidden;transition:transform .55s cubic-bezier(.3,1.2,.5,1);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;box-shadow:0 8px 14px rgba(0,0,0,.3)}
+.ex12 .cachette .dos{background:repeating-linear-gradient(45deg,rgba(255,255,255,.04) 0 2px,transparent 2px 4px),linear-gradient(180deg,#6b7244,#4c5030);color:#f3e8c8}
+.ex12 .cachette .dos::before{content:"";position:absolute;inset:7px;border:1.5px dashed rgba(240,226,180,.5);border-radius:4px}
+.ex12 .cachette .dos svg{width:58px;height:58px;opacity:.8}
+.ex12 .cachette .dos .lieu{font-family:'Reenie Beanie',cursive;font-size:23px;line-height:1;text-align:center;padding:0 10px}
+.ex12 .cachette .face{transform:rotateY(180deg);background:linear-gradient(170deg,#f3e8cc,#e2d0a6);color:var(--encre)}
+.ex12 .cachette .face img{width:74px;height:74px;object-fit:contain;filter:drop-shadow(0 4px 4px rgba(0,0,0,.3))}
+.ex12 .cachette .face .nom{font-family:'Alegreya SC',serif;font-weight:700;font-size:14px;letter-spacing:1px;text-align:center;padding:0 8px}
+.ex12 .cachette .face .lieu{font-family:'Reenie Beanie',cursive;font-size:19px;color:var(--encre2)}
+.ex12 .cachette.revele .dos{transform:rotateY(-180deg)}
+.ex12 .cachette.revele .face{transform:rotateY(0)}
+.ex12 .cachette:not(.revele):hover .dos{transform:translateY(-6px) rotate(-2deg)}
+.ex12 .cachette.revele{cursor:default}
+.ex12 .cachette.echo .face{background:radial-gradient(circle at 50% 42%,#3a2214,#120a06 70%);color:#f1d9b0}
+.ex12 .yeux{display:flex;gap:16px}
+.ex12 .yeux i{width:16px;height:9px;border-radius:50%;background:#ffd36a;box-shadow:0 0 12px 4px rgba(255,190,80,.7);animation:ex12Cligne 2s infinite}
+@keyframes ex12Cligne{0%,90%,100%{transform:scaleY(1)}95%{transform:scaleY(.1)}}
+.ex12 .cachette.vide .face svg{width:70px;height:40px}
+.ex12 .cachette.eteinte{opacity:.45;pointer-events:none}
+.ex12 .fouille .bas{display:flex;align-items:center;justify-content:space-between;gap:20px;min-height:46px}
+.ex12 .butin{display:flex;gap:6px}
+.ex12 .butin img{width:40px;height:40px;object-fit:contain;background:rgba(255,255,255,.4);border-radius:6px;padding:2px;box-shadow:inset 0 0 0 1px rgba(60,46,26,.25)}
+/* pêche */
+.ex12 .peche-ligne{position:absolute;inset:0;z-index:50;pointer-events:none}
+.ex12 .peche-ligne .canne{stroke:#5a3a1c;stroke-width:9;stroke-linecap:round;fill:none}
+.ex12 .peche-ligne .canne2{stroke:#a87a45;stroke-width:4;stroke-linecap:round;fill:none}
+.ex12 .peche-ligne .fil{stroke:rgba(250,245,230,.75);stroke-width:1.4;fill:none}
+.ex12 .bouchon{position:absolute;z-index:51;width:0;height:0;pointer-events:none}
+.ex12 .bouchon i{position:absolute;left:-9px;top:-22px;width:18px;height:26px;border-radius:50% 50% 45% 45%;background:linear-gradient(180deg,#f4efe4 0 45%,#c8341f 45%);box-shadow:0 2px 3px rgba(0,0,0,.4);animation:ex12Dandine 1.8s ease-in-out infinite}
+.ex12 .bouchon b{position:absolute;left:-30px;top:-6px;width:60px;height:14px;border-radius:50%;border:2px solid rgba(240,248,255,.6);animation:ex12Ronds 2.2s ease-out infinite}
+@keyframes ex12Dandine{0%,100%{transform:translateY(0) rotate(-6deg)}50%{transform:translateY(3px) rotate(6deg)}}
+@keyframes ex12Ronds{0%{transform:scale(.4);opacity:.9}100%{transform:scale(2.2);opacity:0}}
+.ex12 .peche.lancer .bouchon i{animation:ex12Lance .9s cubic-bezier(.3,.7,.4,1) both}
+@keyframes ex12Lance{0%{transform:translate(380px,-300px) scale(.6)}80%{transform:translate(0,0)}90%{transform:translateY(8px)}100%{transform:none}}
+.ex12 .peche.touche .bouchon i{animation:ex12Plonge .25s ease-in-out infinite}
+@keyframes ex12Plonge{0%,100%{transform:translateY(10px)}50%{transform:translateY(18px)}}
+.ex12 .peche.touche .bouchon b{animation-duration:.6s;border-color:rgba(255,255,255,.95)}
+.ex12 .peche-panneau{position:absolute;left:50%;top:40px;z-index:85;transform:translateX(-50%);text-align:center}
+.ex12 .consigne{display:inline-block;padding:8px 30px 4px;font-family:'Reenie Beanie',cursive;font-size:38px;line-height:1;color:#2f2a1f;background:linear-gradient(170deg,#e2cfa4,#cdb17f);box-shadow:0 8px 16px rgba(0,0,0,.4)}
+.ex12 .peche.touche .consigne{background:linear-gradient(170deg,#f0c27a,#d9893d);animation:ex12Secoue .25s infinite}
+@keyframes ex12Secoue{0%,100%{transform:rotate(-1deg)}50%{transform:rotate(1.5deg) scale(1.04)}}
+.ex12 .ferrer{position:absolute;left:50%;bottom:120px;z-index:86;transform:translateX(-50%);padding:14px 40px 11px;font-size:18px;letter-spacing:3px}
+.ex12 .peche.touche .ferrer{animation:ex12Pulse .5s infinite}
+@keyframes ex12Pulse{50%{box-shadow:0 0 0 6px rgba(243,212,138,.55),0 5px 10px rgba(0,0,0,.35)}}
+.ex12 .resultat{left:390px;top:190px;width:500px;padding:26px 36px 26px 62px;box-sizing:border-box;text-align:left}
+.ex12 .resultat .prise{display:flex;align-items:center;gap:18px;margin:12px 0}
+.ex12 .resultat .prise img{width:86px;height:86px;object-fit:contain;filter:drop-shadow(0 5px 5px rgba(0,0,0,.3));animation:ex12Saute .7s cubic-bezier(.3,1.6,.5,1) both}
+@keyframes ex12Saute{from{transform:translateY(40px) scale(.4) rotate(-30deg);opacity:0}}
+.ex12 .resultat .prise b{font-family:'Alegreya SC',serif;font-size:22px;letter-spacing:1px}
+.ex12 .boutons{display:flex;gap:12px;justify-content:flex-end;margin-top:16px}
+/* envoi : les fourrés qui bougent là où Filo fouine */
+.ex12 .fourres{position:absolute;z-index:40;width:0;height:0;pointer-events:none}
+.ex12 .fourres i{position:absolute;width:12px;height:7px;border-radius:60% 0 60% 0;background:#7d8a3e;animation:ex12Feuille 1.2s ease-out infinite}
+.ex12 .caverne .fourres i{background:#b8a27a;border-radius:2px;width:6px;height:6px}
+@keyframes ex12Feuille{0%{transform:translate(0,0) rotate(0);opacity:1}100%{transform:translate(var(--dx),-70px) rotate(260deg);opacity:0}}
+.ex12 .fourres .main{position:absolute;left:-150px;top:-120px;width:300px;text-align:center;font-size:30px;color:#f6edd6;text-shadow:0 2px 6px rgba(0,0,0,.9);animation:ex12Fondu .5s both}
+/* rencontre */
+.ex12 .sauvage{position:absolute;left:1000px;top:690px;width:0;height:0;z-index:31}
+.ex12 .sauvage img{position:absolute;left:0;bottom:0;height:190px;transform:translateX(-50%) scaleX(-1);filter:drop-shadow(0 6px 6px rgba(0,0,0,.4));animation:ex12Surgit .7s cubic-bezier(.3,1.5,.5,1) both}
+@keyframes ex12Surgit{0%{opacity:0;transform:translateX(30%) translateY(40px) scaleX(-1) scale(.6)}100%{opacity:1}}
+.ex12 .rencontre.issue.victoire .sauvage img,.ex12 .rencontre.issue.fuite .sauvage img{animation:ex12Detale 1s ease-in both}
+@keyframes ex12Detale{to{opacity:0;transform:translateX(200px) scaleX(-1) scale(.7)}}
+.ex12 .rencontre.issue.defaite .sauvage img{animation:ex12Detale 2.2s ease-in .6s both}
+.ex12 .alerte{position:absolute;left:1000px;top:470px;z-index:32;width:40px;height:56px;margin-left:-20px;font-family:'Alegreya SC',serif;font-weight:700;font-size:54px;line-height:56px;text-align:center;color:#f3d48a;text-shadow:0 3px 0 #5e1c0e,0 0 18px rgba(255,180,80,.8);animation:ex12Alerte .6s cubic-bezier(.3,1.8,.5,1) both}
+@keyframes ex12Alerte{from{transform:scale(0) rotate(-20deg)}}
+.ex12 .banniere{position:absolute;left:50%;top:300px;z-index:88;transform:translateX(-50%) rotate(-2deg);white-space:nowrap;font-family:'Alegreya SC',serif;font-weight:700;font-size:44px;letter-spacing:6px;color:#f1e6c8;text-shadow:0 3px 0 rgba(40,28,12,.85),0 0 24px rgba(0,0,0,.6);animation:ex12Tampon 1.5s ease both}
+@keyframes ex12Tampon{0%{opacity:0;transform:translateX(-50%) scale(1.6) rotate(-4deg)}14%{opacity:1;transform:translateX(-50%) scale(.96) rotate(-2deg)}22%{transform:translateX(-50%) scale(1) rotate(-2deg)}85%{opacity:1}100%{opacity:0}}
+.ex12 .choix{left:330px;top:140px;width:620px;padding:24px 34px 24px 62px;box-sizing:border-box}
+.ex12 .choix .nom-sauvage{font-family:'Alegreya SC',serif;font-weight:700;font-size:26px;letter-spacing:2px}
+.ex12 .choix .enjeu{display:flex;align-items:center;gap:8px;margin-top:8px;font-family:'Reenie Beanie',cursive;font-size:23px;color:var(--sang)}
+.ex12 .choix .enjeu img{width:34px;height:34px;object-fit:contain}
+.ex12 .choix .aparte{margin-top:10px;font-family:'Alegreya',serif;font-style:italic;font-size:14px;color:var(--encre2);border-top:1px dashed rgba(60,46,26,.35);padding-top:10px}
+/* carte : l'illustration, sous une brume qui se lève au fil des découvertes */
+.ex12 .carte{left:100px;top:52px;width:1080px;height:676px;padding:10px;box-sizing:border-box;background:linear-gradient(170deg,#e8d6ac,#cdb37e)}
+.ex12 .carte::before{display:none}
+.ex12 .carte svg.plan{display:block;width:1060px;height:656px;border-radius:2px;box-shadow:inset 0 0 0 1px rgba(60,40,18,.4)}
+.ex12 .plan .brume{opacity:.97}
+.ex12 .plan .lieu{cursor:default}
+.ex12 .plan .lieu .zone-survol{fill:transparent}
+.ex12 .plan .lieu .point{fill:#c9a050;stroke:#3a2410;stroke-width:3.5}
+.ex12 .plan .lieu.eau .point{fill:#7fb6c9}
+.ex12 .plan .lieu.ici .point{fill:#f3d48a}
+.ex12 .plan .lieu.entrevu .point{fill:rgba(240,228,200,.85);stroke:#5b4b33;stroke-width:2.5;stroke-dasharray:4 3}
+.ex12 .plan .lieu .q{font-family:'Alegreya SC',serif;font-weight:700;font-size:18px;fill:#5b4b33}
+.ex12 .plan .lieu .nom{font-family:'Reenie Beanie',cursive;font-size:34px;fill:#2a1a0c;paint-order:stroke;stroke:#f4ead2;stroke-width:6px;stroke-linejoin:round;opacity:0;transition:opacity .2s}
+.ex12 .plan .lieu:hover .nom,.ex12 .plan .lieu.ici .nom{opacity:1}
+.ex12 .plan .lieu.ici .nom{transform:translateY(-42px)}
+.ex12 .plan .epingle{animation:ex12Epingle .6s cubic-bezier(.3,1.6,.5,1) .3s both}
+@keyframes ex12Epingle{from{transform:translateY(-30px);opacity:0}}
+.ex12 .carte .cartouche{position:absolute;left:30px;top:24px;padding:8px 22px 6px;transform:rotate(-1.5deg);background:linear-gradient(170deg,#f4ead2,#e2cfa4);box-shadow:0 6px 12px rgba(0,0,0,.35)}
+.ex12 .carte .cartouche h2{font-size:38px}
+.ex12 .carte .legende{font-family:'Reenie Beanie',cursive;font-size:22px;line-height:1;color:var(--encre2)}
+/* retour au ranch : la page du carnet */
+.ex12 .fin{left:300px;top:90px;width:680px;padding:28px 40px 30px 64px;box-sizing:border-box}
+.ex12 .fin .objets{display:flex;flex-wrap:wrap;gap:10px 18px;margin:14px 0}
+.ex12 .fin .objet{display:flex;align-items:center;gap:6px;font-family:'Reenie Beanie',cursive;font-size:24px}
+.ex12 .fin .objet img{width:38px;height:38px;object-fit:contain}
+.ex12 .fin .tampon{position:absolute;right:30px;top:24px;width:96px;height:96px;border-radius:50%;border:3px solid rgba(92,98,56,.7);color:rgba(92,98,56,.85);display:flex;align-items:center;justify-content:center;text-align:center;font-family:'Alegreya SC',serif;font-weight:700;font-size:12px;letter-spacing:1.5px;transform:rotate(-14deg);animation:ex12Tamponne .5s cubic-bezier(.3,1.6,.5,1) .5s both}
+@keyframes ex12Tamponne{from{transform:scale(1.8) rotate(-14deg);opacity:0}}
+/* —— le sac du ranch, à l’identique —— */
+.ex12 .stitch{position:absolute;inset:7px;border:2px dashed rgba(240,214,170,.62);border-radius:inherit;pointer-events:none}
+.ex12 .evc .stitch{position:absolute;inset:7px;border:2px dashed rgba(240,214,170,.65);border-radius:inherit;pointer-events:none}
+.ex12 .pc-couv .stitch{border-radius:4px 10px 10px 4px}
+.ex12 .sacoche{position:absolute;left:330px;top:150px;width:620px;height:470px;z-index:970;perspective:1600px;animation:ex12SacIn .5s cubic-bezier(.3,1.15,.5,1) both}
+.ex12 .sacoche.ferme{animation:ex12SacOut .42s cubic-bezier(.55,0,.75,.35) .62s both}
+.ex12 .sac-corps{position:absolute;left:0;right:0;top:70px;bottom:0;border-radius:24px 24px 60px 60px;background:#6e3f22;box-shadow:inset 0 0 0 2px #3a1f0e,inset 0 0 0 8px #6e3f22,inset 0 0 30px rgba(30,14,4,.5),0 8px 0 #4a2814,0 26px 50px rgba(10,6,2,.6)}
+.ex12 .sac-poche{position:absolute;left:34px;right:34px;top:30px;bottom:86px;border-radius:14px;transform-origin:50% 0;animation:ex12PocheIn .42s cubic-bezier(.3,1.2,.5,1) .72s both;background:radial-gradient(ellipse at 50% 0%,#3a2010,#26140a 75%);box-shadow:inset 0 10px 24px rgba(0,0,0,.6),0 0 0 2px #3a1f0e;padding:26px 22px 18px;display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:14px 12px;align-content:start}
+.ex12 .case{position:relative;height:92px;border:none;border-radius:12px;padding:0;cursor:pointer;background:radial-gradient(circle at 50% 40%,#fbf4e3,#e7d6b2);box-shadow:inset 0 0 0 1.5px #3a1f0e,inset 0 0 0 5px rgba(255,255,255,.35),0 4px 0 #1a0d05;display:flex;align-items:center;justify-content:center;transition:transform .25s cubic-bezier(.3,1.4,.5,1),filter .25s;animation:ex12CaseIn .35s cubic-bezier(.3,1.4,.5,1) both}
+.ex12 .sacoche.ferme .sac-poche{animation:ex12PocheOut .3s cubic-bezier(.5,0,.7,.4) .06s both}
+.ex12 .sacoche.ferme .case{animation:ex12CaseOut .16s ease-in both;animation-delay:0s !important}
+.ex12 .sacoche .sac-info{animation:ex12Fondu .3s ease 1s both}
+.ex12 .sac-ressources{position:absolute;left:40px;right:40px;bottom:20px;height:52px;display:flex;align-items:center;justify-content:center;gap:12px}
+.ex12 .sr-titre{font-family:'Reenie Beanie',cursive;font-size:25px;line-height:1;color:#f6ecd6;margin-right:4px}
+.ex12 .sr{position:relative;display:flex;align-items:center;gap:3px;height:42px;padding:0 9px 0 4px;border-radius:21px;background:rgba(20,10,4,.38);box-shadow:inset 0 0 0 1.5px rgba(240,214,170,.28)}
+.ex12 .sr img{width:34px;height:34px;object-fit:contain;filter:drop-shadow(0 2px 2px rgba(0,0,0,.4))}
+.ex12 .sr b{font-family:'Alegreya SC',serif;font-size:15px;color:#f6ecd6;min-width:10px;text-align:center}
+.ex12 .sr.vide{opacity:.4}
+.ex12 .sr.vide img{filter:grayscale(1)}
+.ex12 .sac-menu{position:absolute;z-index:6;width:190px;transform:translate(-50%,-100%);padding:10px 12px 11px;border-radius:7px;background:linear-gradient(180deg,#f7eedb,#ecdcbc);box-shadow:0 0 0 1.5px #3a1f0e,0 12px 24px rgba(10,6,2,.55);transform-origin:50% 100%;animation:ex12SmIn .24s cubic-bezier(.3,1.5,.5,1) both}
+.ex12 .sac-menu::after{content:"";position:absolute;left:50%;bottom:-8px;width:14px;height:14px;margin-left:-7px;background:#ecdcbc;transform:rotate(45deg);box-shadow:1.5px 1.5px 0 #3a1f0e}
+.ex12 .sm-nom{font-family:'Alegreya SC',serif;font-weight:700;font-size:15px;letter-spacing:.6px;color:#2b2118;text-align:center}
+.ex12 .sm-info{margin:5px 0 2px;font-family:'Alegreya',serif;font-style:italic;font-size:14px;line-height:1.3;color:#5a4330;text-align:center}
+.ex12 .sm-boutons{display:flex;gap:8px;margin-top:8px}
+.ex12 .sm-btn{flex:1;height:32px;border:none;border-radius:6px;cursor:pointer;font-family:'Alegreya SC',serif;font-weight:700;font-size:13px;letter-spacing:.5px;color:#3a1f0e;background:#e4d2ad;box-shadow:inset 0 0 0 1.5px #3a1f0e,0 2px 0 #3a1f0e;transition:transform .15s,filter .15s}
+.ex12 .sm-btn:hover{filter:brightness(1.06);transform:translateY(-1px)}
+.ex12 .sm-btn[aria-pressed="true"]{background:#d6c095}
+.ex12 .sm-ok{color:#fbf3e2;background:#3f7a3a;text-shadow:0 1px 0 rgba(0,0,0,.4)}
+.ex12 .sacoche.ferme .sac-info{animation:ex12FonduOut .15s ease both}
+.ex12 .case:hover{transform:translateY(-5px) scale(1.05);filter:drop-shadow(0 0 10px rgba(255,214,140,.6))}
+.ex12 .case img{max-width:58px;max-height:58px}
+.ex12 .case .qte{position:absolute;right:-6px;bottom:-6px}
+.ex12 .case.vide{background:transparent;box-shadow:inset 0 0 0 2px rgba(240,214,170,.28);cursor:default}
+.ex12 .case.vide:hover{transform:none;filter:none}
+.ex12 .case.souleve{opacity:.35;transform:scale(.9);filter:none}
+.ex12 .case.choisi{transform:translateY(-3px);box-shadow:inset 0 0 0 2px #e6b85a,0 0 0 3px rgba(230,184,90,.55),0 7px 0 #1a0d05}
+.ex12 .case.cible{transform:scale(1.07);box-shadow:inset 0 0 0 2px #e6b85a,0 0 0 3px rgba(230,184,90,.55),0 0 18px rgba(255,210,120,.7)}
+.ex12 .case.vide.cible::after{border-color:rgba(255,220,150,.8)}
+.ex12 .case.vide::after{content:'';position:absolute;inset:8px;border-radius:8px;border:1.5px dashed rgba(240,214,170,.25)}
+.ex12 .sac-rabat{position:absolute;left:-6px;right:-6px;top:52px;height:200px;transform-origin:50% 0;transform-style:preserve-3d;animation:ex12RabatSac .55s cubic-bezier(.4,.1,.3,1) .38s both}
+.ex12 .sacoche.ferme .sac-rabat{animation:ex12RabatSacFerme .3s cubic-bezier(.4,.1,.3,1) .34s both}
+.ex12 .sceau{display:inline-flex;align-items:center;justify-content:center;min-width:22px;height:22px;padding:0 5px;border-radius:11px;background:#9c3b2a;color:#fbe9d8;font-family:'Alegreya SC',serif;font-weight:700;font-size:12px;box-shadow:inset 0 0 0 2px rgba(0,0,0,.18),0 2px 4px rgba(0,0,0,.35)}
+.ex12 .voile{position:absolute;inset:0;width:100%;height:100%;border:none;padding:0;background:rgba(14,8,4,.55);cursor:default;z-index:960;animation:ex12Fondu .4s ease both}
+.ex12 .voile.part{animation:ex12FonduOut .5s ease .35s both}
+.ex12 .case-sac{display:flex;flex-direction:column;align-items:center;gap:2px;padding:8px 4px 6px;border-radius:6px;background:rgba(255,255,255,.35);box-shadow:inset 0 0 0 1px rgba(122,90,58,.3);font-size:13px}
+.ex12 .case-sac img{width:40px;height:40px;object-fit:contain}
+@keyframes ex12SacIn{0%{opacity:0;transform:translate(567px,-313px) scale(.14)}35%{opacity:1}100%{opacity:1;transform:none}}
+@keyframes ex12SacOut{0%{opacity:1;transform:none}75%{opacity:1}100%{opacity:0;transform:translate(567px,-313px) scale(.14)}}
+@keyframes ex12CaseIn{from{opacity:0;transform:translateY(10px) scale(.8)}to{opacity:1;transform:none}}
+@keyframes ex12PocheIn{from{clip-path:inset(0 0 100% 0 round 14px);opacity:.4}to{clip-path:inset(0 0 0 0 round 14px);opacity:1}}
+@keyframes ex12PocheOut{from{clip-path:inset(0 0 0 0 round 14px);opacity:1}to{clip-path:inset(0 0 100% 0 round 14px);opacity:.3}}
+@keyframes ex12CaseOut{from{opacity:1;transform:none}to{opacity:0;transform:translateY(-8px) scale(.85)}}
+@keyframes ex12SmIn{from{opacity:0;transform:translate(-50%,-100%) translateY(8px) scale(.85)}to{opacity:1;transform:translate(-50%,-100%)}}
+@keyframes ex12RabatSac{0%{transform:rotateX(0deg);opacity:1}70%{opacity:1}100%{transform:rotateX(-96deg);opacity:0}}
+@keyframes ex12RabatSacFerme{0%{transform:rotateX(-96deg);opacity:0}30%{opacity:1}100%{transform:rotateX(0deg);opacity:1}}
+@keyframes ex12Fondu{from{opacity:0}to{opacity:1}}
+@keyframes ex12FonduOut{from{opacity:1}to{opacity:0}}
+.ex12 button:focus-visible{outline:2px solid #f3d48a;outline-offset:2px}
