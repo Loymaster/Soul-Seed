@@ -237,6 +237,8 @@ export class Exploration extends Component<ProprietesExploration, EtatUI> {
   }
   /** Fin d'une scène de PNJ : les drapeaux sont déjà dans le monde ; `sortie` dit où aller ensuite. */
   finScene(sortie?: string) {
+    // la scène s'avance au clavier : le PNJ cliqué garderait le focus (et son cadre) en revenant
+    (document.activeElement as HTMLElement | null)?.blur?.();
     this.sauver();
     this.setState({ scene: null, combatScene: false, nyxara: false, appel: false }, () => {
       if (!sortie) return;
@@ -283,12 +285,15 @@ export class Exploration extends Component<ProprietesExploration, EtatUI> {
     this.musiqueOK = true;
     this.sauver();
     if (this.props.retourCombat) this.retourDeCombat(this.props.retourCombat);
+    // essais (développement) : __explo.surgir() fait surgir un écho sauvage, __explo.jouer('morthen') joue une scène de PNJ
+    if (import.meta.env.DEV) (window as unknown as { __explo?: unknown }).__explo = { surgir: () => this.surgir([]), jouer: (id: string, sujet?: string) => this.ouvrirScene(id, sujet), monde: this.monde, etat: this.e };
   }
   componentWillUnmount() {
     this.vivant = false;
     this.minuteurs.forEach(clearTimeout);
     clearInterval(this.horloge); clearInterval(this.boucleMusique); clearTimeout(this.tPeche); clearTimeout(this.tToast); clearTimeout(this.tBulle);
     this.desabonner?.();
+    if (import.meta.env.DEV) delete (window as unknown as { __explo?: unknown }).__explo;
     if (this.pistes) Object.values(this.pistes).forEach((a) => a.pause());
     this.pistes = null;
   }

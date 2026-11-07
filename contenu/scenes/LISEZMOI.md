@@ -80,9 +80,11 @@ Variables fournies par le jeu (en lecture) : `maintenant` (heure absolue : jour 
 | `action: journal …` | une ligne au journal | |
 | `action: ranch` · `action: lieu sanctuaire` · `action: lieu zone 27` | à la fin de la scène, le joueur rentre au ranch ou part ailleurs | |
 
-### Brancher un PNJ d'exploration
+### Les PNJ d'exploration
 
-Afficher `<ScenePnj id="hevann-chemin" etat={…} monde={…} personnage={…} catalogue={…} sauver={…} surMort={…} surFin={({ sortie }) => …} />` (`src/jeu/monde/ScenePnj.tsx`) par-dessus l'écran : elle joue la scène, ses combats (l'écran de combat se pose dessus, puis la scène reprend) et ses panneaux, enregistre les drapeaux, et rend la main avec `sortie` (« ranch », « zone 27 »…). Couper la musique du lieu pendant `surCombat(true)` et pendant la scène de Nyxara (qui a la sienne).
+Ils sont branchés dans `src/jeu/exploration/pnj.ts` (lieu, heures, conditions, scène, sujet) : `PNJ_EXPLORATION` pour ceux qu'on voit dans le décor (on clique dessus), `BOUTONS_EXPLORATION` pour les étiquettes de bois clouées dans le décor (« Partir affronter Garry »…). Pour en ajouter un, une ligne suffit ; sa scène se joue par-dessus l'exploration avec `<ScenePnj …/>` (`src/jeu/monde/ScenePnj.tsx`), qui joue aussi ses combats et ses panneaux, enregistre les drapeaux et rend la main avec `sortie` : `action: ranch` ramène au ranch par la page de retour, `action: lieu zone 27` mène à un autre lieu d'exploration. L'horloge s'arrête pendant la scène ; la musique du lieu se tait pendant un combat de scène et pendant la cinématique de Nyxara (qui a la sienne) ; Morthen a la sienne tant qu'il est là. Un PNJ marqué `combat` ne se laisse pas aborder par un écho à bout de forces (tombé au dernier combat et pas encore reposé) ; dans une scène, `action: combat …` sur un écho à bout de forces ne lance pas le combat et rend `combat.issue = "fuite"`.
+
+Chemins soumis à un drapeau (`zones.ts`) : 16 → 17 attend `hevann.vaincu`, 28 → 29 attend `trefonds.deblaye` (et le décor du 28 devient le 28 bis).
 
 | PNJ | Où, quand (spécification du monde) | Scène | Condition |
 |---|---|---|---|
@@ -98,6 +100,7 @@ Afficher `<ScenePnj id="hevann-chemin" etat={…} monde={…} personnage={…} c
 | Grimp | lieu 23, à partir de 12 h (ou dès que Glamp est rentrée) | `grimp-caverne` | `non grimp.recrute` ; sortie « zone 27 » : le trou (bébé ou enfant) |
 | — | lieu 28 : bouton « Déblayer le passage » | `trefonds-deblayer` | `grimp.accepte et non trefonds.deblaye` (décor 28bis ensuite) |
 | Glamp | lieu 28, passage déblayé | `glamp-trefonds` | `trefonds.deblaye et non glamp.recrutee` |
-| Nyxara, Vinland, Finn | lieu 32, 8 h – 20 h, en y arrivant (« Au secours ! » → « Aller voir ») | `nyxara` | `non nyxara.vue` |
+| Glamp → Grimp | lieu 23, une fois Glamp rentrée | `grimp-caverne` | `glamp.recrutee et non grimp.recrute` : Grimp rejoint le village |
+| Nyxara, Vinland, Finn | lieu 32, 8 h – 20 h, en y arrivant depuis le 31 (« Au secours ! » → « Aller voir ») | `nyxara` | `non nyxara.vue` |
 
-Pêche : tant que `maintenant < peche.bonus_jusqua` (Bourbella), la chance de prise gagne 15 points. Un écho bébé ou enfant passe par le trou de Grimp.
+Pêche : tant que `maintenant < peche.bonus_jusqua` (Bourbella), la prise d'un poisson bien ferré gagne 15 points (80 → 95 %) et le poisson garde l'appât un peu plus longtemps. Un écho bébé ou enfant passe par le trou de Grimp. Repousse (objet du sac, « Utiliser » en exploration) : drapeau `repousse.jusqua` (heure absolue, 12 heures).
