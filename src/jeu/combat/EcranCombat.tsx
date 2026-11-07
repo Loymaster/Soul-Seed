@@ -32,8 +32,21 @@ export interface IssueCombat {
   objetsUtilises: string[];
 }
 
+/** Mode Arène (menu principal) : combattants configurés, soins d'arène, « Mettre fin au combat » au lieu de la fuite. */
+export interface ModeArene {
+  /** Image de l'allié 1 (celui que l'on dirige). */
+  imageAllie: string;
+  /** Les autres alliés (deux au plus). */
+  compagnons: AdversaireCombat[];
+  /** Soins d'arène disponibles (chacun rend 30 % de la vie de l'allié 1). */
+  soins: number;
+  /** « Mettre fin au combat » : arrêt immédiat, sans vainqueur ni vaincu. */
+  surArret: () => void;
+}
+
 export interface ProprietesCombat {
-  echo: Etat;
+  /** L'écho de la partie (absent en mode Arène). */
+  echo?: Etat;
   /** Description de l'écho du joueur en combat (descriptionDepuisEtat). */
   allie: DescriptionCombattant;
   adversaire: AdversaireCombat;
@@ -46,6 +59,10 @@ export interface ProprietesCombat {
   /** Piste du combat (public/assets/sons/musiques) au lieu de celle du registre (ex. « combat-garry »). */
   piste?: string;
   surFin: (issue: IssueCombat) => void;
+  /** Mode Arène. */
+  arene?: ModeArene;
+  /** Le combat commence sans attendre « Commencer le combat » (après le compte à rebours de l'arène). */
+  demarrageAuto?: boolean;
 }
 
 const asset = (chemin: string) => `${import.meta.env.BASE_URL}assets/${chemin}`;
@@ -72,6 +89,12 @@ const ORDRES_UI = [
   { cle: 'protege', lib: 'Défends-toi !', icone: 'protege', aide: 'Pare plus souvent', cri: () => 'Protège-toi !' },
   { cle: 'distance', lib: 'Reste à distance !', icone: 'reste-distance', aide: 'Préfère les techniques à distance', cri: () => 'Tiens-le à distance !' },
 ] as const;
+/** Cible (« Change de cible ! ») : un viseur dessiné, faute d'icône peinte. */
+const VISEUR = (
+  <svg viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" aria-hidden="true">
+    <circle cx="12" cy="12" r="7.5" /><circle cx="12" cy="12" r="2.2" /><path d="M12 1.5v4M12 18.5v4M1.5 12h4M18.5 12h4" />
+  </svg>
+);
 const ALLURE = {
   vaillant: ['vaillant', 'vaillante'], entame: ['entamé', 'entamée'], eprouve: ['éprouvé', 'éprouvée'],
   chancelant: ['chancelant', 'chancelante'], ko: ['à terre', 'à terre'],
@@ -83,17 +106,22 @@ interface Effet { cls: string; x: number; y: number; t?: number; dx?: number; sr
 interface Etiquette { nom: string; icone: string; x: number; y: number; fin: number }
 interface Particule { x: number; y: number; t: number; d: number; dx: number; c: string; delai: number }
 
-export function EcranCombat({ echo, allie, adversaire, registre, terrain, musique = true, renforts = [], piste, surFin }: ProprietesCombat) {
+export function EcranCombat({ echo, allie, adversaire, registre, terrain, musique = true, renforts = [], piste, surFin, arene, demarrageAuto }: ProprietesCombat) {
   const CORROMPU = registre === 'corrompue', EXPLO = registre === 'exploration';
-  const nom = echo.nom;
-  const a = (m: string, f: string) => accord(echo, m, f);
+  const nom = echo?.nom ?? allie.nom;
+  const a = (m: string, f: string) => accord(echo ?? allie, m, f);
   const combat = useRef<Combat | null>(null);
   const enFace = [adversaire, ...renforts];
-  if (!combat.current) combat.current = Combat.creer([allie], enFace.map((x) => x.description));
+  const compagnons = arene?.compagnons ?? [];
+  if (!combat.current) combat.current = Combat.creer([allie, ...compagnons.map((x) => x.description)], enFace.map((x) => x.description), { soinsArene: arene?.soins ?? 0 });
   const C = combat.current;
   /** L'adversaire (image, taille) d'un combattant d'en face, d'après son rang (« adversaire1 », « adversaire2 »…). */
   const nomsEnFace = C.etat.adversaires.map((c) => c.nom).join(' et ');
-  const adversaireDe = (c: Combattant) => enFace[Math.max(0, (parseInt(c.id.replace(/\D/g, ''), 10) || 1) - 1)] ?? adversaire;
+  const rangDe = (c: Combattant) => Math.max(0, (parseInt(c.id.replace(/\D/g, ''), 10) || 1) - 1);
+  const adversaireDe = (c: Combattant) => enFace[rangDe(c)] ?? adversaire;
+  /** Un allié de l'arène autre que celui que l'on dirige (son image, sa taille). */
+  const compagnonDe = (c: Combattant) => (c.camp === 'allies' && rangDe(c) > 0 ? compagnons[rangDe(c) - 1] ?? null : null);
+  const nomsAllies = C.etat.allies.map((c) => c.nom).join(' et ');
   const [, rafraichir] = useReducer((x: number) => (x + 1) % 1e6, 0);
   const [phase, setPhase] = useState<'attente' | 'intro' | 'combat' | 'fin'>('attente');
   const phaseRef = useRef(phase); phaseRef.current = phase;
@@ -122,7 +150,7 @@ export function EcranCombat({ echo, allie, adversaire, registre, terrain, musiqu
   });
 
   const hautDe = (c: Combattant) => {
-    const base = c.camp === 'allies' ? 226 * (TAILLES[c.stade] / TAILLES.enfant) : 216 * (TAILLES[c.stade] / TAILLES.enfant) * (adversaireDe(c).taille ?? 1);
+    const base = c.camp === 'allies' ? 226 * (TAILLES[c.stade] / TAILLES.enfant) * (compagnonDe(c)?.taille ?? 1) : 216 * (TAILLES[c.stade] / TAILLES.enfant) * (adversaireDe(c).taille ?? 1);
     return base * echelleY(c.y);
   };
 
@@ -135,7 +163,11 @@ export function EcranCombat({ echo, allie, adversaire, registre, terrain, musiqu
     const x = C.etat.allies[0], b = { nom: nomsEnFace };
     const pl = (un: string, plusieurs: string) => (enFace.length > 1 ? plusieurs : un);
     const part = x.pv / x.pvMax;
-    const f = CORROMPU ? (resultat === 'victoire'
+    const plA = (un: string, plusieurs: string) => (C.etat.allies.length > 1 ? plusieurs : un);
+    const f = arene ? (resultat === 'victoire'
+      ? { titre: `${nomsAllies} ${plA('l’emporte', 'l’emportent')} !`, lignes: [`${b.nom} ${pl('s’incline', 's’inclinent')} au milieu de l’arène.`, 'La lumière retombe doucement sur le terrain.'] }
+      : { titre: `${nomsAllies} ${plA('tombe', 'tombent')}…`, lignes: [`${b.nom} ${pl('reste', 'restent')} ${pl('seul maître', 'seuls maîtres')} de l’arène.`, 'Rien de ce combat ne compte pour vos parties.'] })
+      : CORROMPU ? (resultat === 'victoire'
       ? { titre: 'La corruption reflue', lignes: [`${b.nom} ${pl('se délite', 'se délitent')} en une fumée violette.`, part > 0.4 ? `${nom} reste debout, les yeux brillants.` : `${nom} vacille, mais la lumière lui revient.`] }
       : resultat === 'defaite'
         ? { titre: 'Les ténèbres l’emportent', lignes: [`${b.nom} ${pl('se referme', 'se referment')} sur le silence.`, `${nom} gît, très ${a('pâle', 'pâle')}. Il faut ${a('le', 'la')} ramener au ranch au plus vite.`] }
@@ -214,7 +246,7 @@ export function EcranCombat({ echo, allie, adversaire, registre, terrain, musiqu
   }, [C]);
 
   const lancer = () => {
-    if (phase !== 'attente') return;
+    if (phaseRef.current !== 'attente') return;
     SonsCombat.eveiller(); SonsCombat.ordre();
     const adv = { nom: nomsEnFace };
     setPhase('intro');
@@ -222,6 +254,9 @@ export function EcranCombat({ echo, allie, adversaire, registre, terrain, musiqu
     plus(1500, () => setBanniere(CORROMPU ? `Tiens bon, ${nom}` : 'En garde !'));
     plus(2700, () => { setBanniere(null); setPhase('combat'); });
   };
+
+  // après le compte à rebours de l'arène : pas de bouton « Commencer le combat »
+  useEffect(() => { if (demarrageAuto) lancer(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const sortir = () => {
     const r = C.etat.resultat;
@@ -249,8 +284,8 @@ export function EcranCombat({ echo, allie, adversaire, registre, terrain, musiqu
   const pa = plaque(x0), pb = plaque(C.etat.adversaires.find((c) => !c.ko) ?? C.etat.adversaires[0]);
 
   // Objets de soin présents dans le sac de l'écho (moins ceux déjà utilisés pendant ce combat).
-  const sac = Object.keys(SOINS_COMBAT).map((id) => {
-    const total = echo.inventaire.filter((c) => c?.id === id).reduce((s, c) => s + (c?.qte ?? 0), 0);
+  const sac = (arene || !echo ? [] : Object.keys(SOINS_COMBAT)).map((id) => {
+    const total = echo!.inventaire.filter((c) => c?.id === id).reduce((s, c) => s + (c?.qte ?? 0), 0);
     const reste = total - utilises.current.filter((u) => u === id).length;
     const d = descriptionObjet(id);
     return { id, reste, nom: d?.nom ?? SOINS_COMBAT[id].nom, icone: d ? asset(d.icone) : '', desc: d?.description ?? '' };
@@ -259,6 +294,8 @@ export function EcranCombat({ echo, allie, adversaire, registre, terrain, musiqu
   const dSoin = C.disponibilite('soin');
   const dFuite = C.disponibilite('fuirCombat');
   const dTech = C.disponibilite('technique', x0.techniques[0]);
+  const dCible = C.disponibilite('cible');
+  const dSoinArene = C.disponibilite('soinArene');
   const nePasComprendre = `${nom} ne comprend pas encore cet ordre`;
 
   return (
@@ -280,7 +317,9 @@ export function EcranCombat({ echo, allie, adversaire, registre, terrain, musiqu
             if (c.touche - t > 350) classes.push('touche');
             const elan = Math.round(c.jauge * 360);
             const garde = c.paradeJusqua > t || c.ordre?.type === 'protege';
-            const image = c.camp === 'allies' ? asset(cheminEcho(echo)) : asset(adversaireDe(c).image);
+            const image = c.camp === 'allies'
+              ? asset(compagnonDe(c)?.image ?? arene?.imageAllie ?? (echo ? cheminEcho(echo) : 'echos/ame.png'))
+              : asset(adversaireDe(c).image);
             return (
               <div key={c.id} className={`ec ${c.camp !== 'allies' && CORROMPU ? 'boss' : ''}`} style={{ left: Math.round(p.x), top: Math.round(p.y), zIndex: Math.round(c.y * 10) }}>
                 <div className="ec-ombre" style={{ width: Math.round(160 * k), height: Math.round(38 * k) }} />
@@ -369,6 +408,27 @@ export function EcranCombat({ echo, allie, adversaire, registre, terrain, musiqu
                   <span className="lib">Techniques<em>{dTech.debloque ? 'Lui souffler une technique' : nePasComprendre}</em></span>
                 </button>
               )}
+              {enFace.length > 1 && (
+                <button className={`ordre ${!dCible.debloque ? 'verrou' : dCible.pret ? '' : 'attend'}`} aria-label="Change de cible" onClick={() => {
+                  if (!dCible.debloque || !dCible.pret) { SonsCombat.refus(); return; }
+                  if (C.changerCible()) { SonsCombat.ordre(); dire('Change de cible !'); }
+                }}>
+                  <span className="rond viseur">{VISEUR}</span>
+                  <span className="rech" style={{ '--deg': `${Math.round(dCible.recharge * 360)}deg`, borderRadius: '50%' } as CSSProperties} />
+                  <span className="lib">Change de cible !<em>{!dCible.debloque ? nePasComprendre : dCible.pret ? 'Tous sur le suivant' : 'Pas tout de suite…'}</em></span>
+                </button>
+              )}
+              {arene ? (
+                <button className={`ordre ${dSoinArene.pret ? '' : 'attend'}`} aria-label="Soin d’arène" onClick={() => {
+                  if (!dSoinArene.pret) { SonsCombat.refus(); if (!dSoinArene.debloque) dire('Plus aucun soin d’arène.'); return; }
+                  if (C.soinArene()) dire(`${nom} reprend des forces.`);
+                }}>
+                  <span className="rond"><img src={asset('objets/divers/pansement.png')} alt="" /></span>
+                  <span className="rech" style={{ '--deg': `${Math.round(dSoinArene.recharge * 360)}deg`, borderRadius: '50%' } as CSSProperties} />
+                  {C.etat.soinsArene > 0 && <span className="qte-soins">× {C.etat.soinsArene}</span>}
+                  <span className="lib">Soin d’arène<em>{!dSoinArene.debloque ? 'Plus aucun soin' : dSoinArene.pret ? 'Rend un peu de forces' : 'Pas tout de suite…'}</em></span>
+                </button>
+              ) : (
               <button className={`ordre ${menu === 'sac' ? 'actif' : dSoin.pret && sac.length ? '' : 'attend'}`} aria-label="Soins" onClick={() => {
                 if (!dSoin.pret || !sac.length) { SonsCombat.refus(); if (!sac.length) dire('Rien pour soigner dans le sac.'); return; }
                 setMenu(menu === 'sac' ? null : 'sac');
@@ -377,8 +437,14 @@ export function EcranCombat({ echo, allie, adversaire, registre, terrain, musiqu
                 <span className="rech" style={{ '--deg': `${Math.round(dSoin.recharge * 360)}deg`, borderRadius: '50%' } as CSSProperties} />
                 <span className="lib">Soins<em>{!sac.length ? 'Le sac n’a rien pour soigner' : dSoin.pret ? 'Un objet du sac' : 'Pas tout de suite…'}</em></span>
               </button>
+              )}
               <span className="sep" />
-              {adversaire.sansFuite ? (
+              {arene ? (
+                <button className="ordre" aria-label="Mettre fin au combat" onClick={() => { SonsCombat.ordre(); arene.surArret(); }}>
+                  <img src={asset('interface/ordres/fuir-combat.png')} alt="" />
+                  <span className="lib">Mettre fin au combat<em>Arrêter tout de suite, sans vainqueur</em></span>
+                </button>
+              ) : adversaire.sansFuite ? (
                 <button className="ordre verrou" aria-label="Fuir le combat" onClick={() => { SonsCombat.refus(); dire(adversaire.sansFuite!); }}>
                   <img src={asset('interface/ordres/fuir-combat.png')} alt="" />
                   <span className="lib">Fuir le combat<em>{adversaire.sansFuite}</em></span>
@@ -427,7 +493,7 @@ export function EcranCombat({ echo, allie, adversaire, registre, terrain, musiqu
           </>
         )}
 
-        {phase === 'attente' && (
+        {phase === 'attente' && !demarrageAuto && (
           <div className="depart">
             <div className="depart-titre">{CORROMPU ? `${nomsEnFace} vous attend` : EXPLO ? `${nomsEnFace} vous ${enFace.length > 1 ? 'barrent' : 'barre'} le chemin` : `${nomsEnFace} ${enFace.length > 1 ? 'relèvent' : 'relève'} le défi`}</div>
             <button className="btn-depart" onClick={lancer}>Commencer le combat</button>

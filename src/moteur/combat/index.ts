@@ -10,3 +10,4 @@ export { lireSignesCombat, type SignesCombat, type PostureCombat, type AllureCom
 export { TECHNIQUES, CATEGORIES_TECHNIQUE } from './donnees/techniques';
 export { SOINS_COMBAT } from './donnees/soins';
 export { aBoutDeForces, descriptionDepuisEtat, descriptionSauvage } from './depuis';
+export * as Arene from './arene';

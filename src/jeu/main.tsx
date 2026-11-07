@@ -10,6 +10,7 @@
 //   Du ranch encore, « Le village » et « Le magasin » ouvrent l'écran du monde (src/jeu/monde : village, forêt,
 //   sanctuaire, atelier, boutique) ; ses PNJ jouent leurs scènes et leurs combats sur place, puis on rentre au ranch
 //   (ou, depuis la forêt du village, « Partir en exploration »).
+//   Du menu principal, « Mode Arène » : combats libres configurés de toutes pièces, sans incidence sur les parties.
 import { StrictMode, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { createRoot } from 'react-dom/client';
 import donnees from '@contenu/generes/assets.json';
@@ -17,8 +18,9 @@ import type { Catalogue } from '@/contenu/types';
 import { SCENES } from '@/contenu/scenes';
 import { analyserScene } from '@/moteur/scene/analyseur';
 import { Simulation, ageJours, apparence, creerEchoSauvage, heureDuJour, type EchoSauvage, type Etat } from '@/moteur/simulation';
-import { bilanCombat, descriptionDepuisEtat, descriptionSauvage } from '@/moteur/combat';
+import { Arene as RA, bilanCombat, descriptionDepuisEtat, descriptionSauvage } from '@/moteur/combat';
 import { EcranCombat, type AdversaireCombat, type IssueCombat, type Registre } from './combat/EcranCombat';
+import { Arene } from './arene/Arene';
 import { SFX } from '@/moteur/sfx';
 import { SceneDialogue } from './scene/SceneDialogue';
 import { Ranch } from './ranch/Ranch';
@@ -63,7 +65,8 @@ type Ecran =
   | { nom: 'combat'; emplacement: number; etat: Etat; adversaire: AdversaireCombat; registre: Registre; terrain: string; entrainement: boolean; exploration?: SortieExploration & { rencontre: RencontreExploration } }
   | ({ nom: 'exploration'; emplacement: number; etat: Etat; retourCombat?: RetourCombat } & SortieExploration)
   | { nom: 'monde'; emplacement: number; etat: Etat; monde: Monde; lieu: IdLieu }
-  | { nom: 'scene'; id: string };
+  | { nom: 'scene'; id: string }
+  | { nom: 'arene' };
 
 /** Une sortie en exploration : le monde de la partie, le lieu, le chemin parcouru, le sac au départ. */
 interface SortieExploration { monde: Monde; zone: number; historique: number[]; bilan: BilanSortie }
@@ -149,6 +152,7 @@ function imagesEcran(e: Ecran): { chemins: string[]; ensuite: string[] } {
       const s = SCENES.find((x) => x.id === e.id);
       return { chemins: s ? imagesScene(analyserScene(s.source, s.id).scene) : [], ensuite: [] };
     }
+    case 'arene': return { chemins: [...RA.TERRAINS_ARENE.map((t) => t.image), 'echos/adolescent/joy-m.png', 'echos/adolescent/wrath.png'], ensuite: [] };
     default: return { chemins: [], ensuite: [] };
   }
 }
@@ -344,6 +348,11 @@ function Jeu() {
         </div>
       );
     }
+    case 'arene': {
+      // Mode Arène : combats libres, sans aucune incidence sur les parties (l'écho de la dernière partie peut y entrer, en copie)
+      const derniere = P.dernierePartie(profil.id);
+      return garde(<Arene musique={musique} echoPartie={derniere?.etat ?? null} surRetour={menu} />);
+    }
     default: break;
   }
 
@@ -356,6 +365,7 @@ function Jeu() {
       surEffacerPartie={(i) => { P.effacerPartie(profil.id, i); rafraichir(); }}
       surChoisirProfil={(id) => { P.choisirProfil(id); rafraichir(); }}
       surNouveauProfil={() => setEcran({ nom: 'intro', premier: false })}
+      surArene={() => setEcran({ nom: 'arene' })}
       surSupprimerProfil={(id) => { P.supprimerProfil(id); rafraichir(); if (!P.profilActif()) setEcran({ nom: 'intro', premier: true }); }}
       surModifierProfil={(m) => { P.modifierProfil(profil.id, m); rafraichir(); }}
       outilsDev={import.meta.env.DEV ? (

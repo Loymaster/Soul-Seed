@@ -26,6 +26,8 @@ export interface ProprietesMenu {
   surNouveauProfil: () => void;
   surSupprimerProfil: (id: string) => void;
   surModifierProfil: (modif: Partial<Profil>) => void;
+  /** Mode Arène : combats libres, sans incidence sur les parties. */
+  surArene: () => void;
   /** Outils de développement (scènes de test, atelier) : seulement en mode dev. */
   outilsDev?: ReactNode;
 }
@@ -54,7 +56,7 @@ export function MenuPrincipal(p: ProprietesMenu) {
     { nom: 'Continuer', sous: p.derniere ? resume(p.derniere.etat) : 'aucune partie en cours', off: !p.derniere, agir: () => { SFX.holyClick(); p.surContinuer(); } },
     { nom: 'Charger', sous: nbParties ? `${nbParties} partie${nbParties > 1 ? 's' : ''} sur ce profil` : 'aucune partie enregistrée', off: !nbParties, agir: () => ouvrir('charger') },
     { nom: 'Nouvelle partie', sous: 'Une nouvelle Soul Seed', agir: () => { if (libre >= 0) { setEmplacement(libre); ouvrir('debut'); } else ouvrir('nouvelle'); } },
-    { nom: 'Mode Arène', sous: 'bientôt', off: true, agir: () => {} },
+    { nom: 'Mode Arène', sous: 'Combats libres, hors de vos parties', agir: () => { SFX.holyClick(); p.surArene(); } },
     { nom: 'Mémoire des échos', sous: `${profil.memoire.length} forme${profil.memoire.length > 1 ? 's' : ''} sur ${formesTotales} découvertes`, agir: () => ouvrir('memoire') },
     { nom: 'Options', agir: () => ouvrir('options') },
   ];
