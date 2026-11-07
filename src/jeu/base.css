@@ -3,3 +3,12 @@
 html, body, #racine { height: 100%; margin: 0; }
 body { background: #0d0906; color: #2b2118; font: 15px/1.4 'Alegreya', Georgia, serif; -webkit-font-smoothing: antialiased; }
 button, input, select, textarea { font: inherit; color: inherit; }
+
+/* Attente des images d'un écran (src/jeu/commun/Pret.tsx) : un fond sombre, puis une lueur discrète si cela dure. */
+.pret-attente { position: fixed; inset: 0; background: #0d0906; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 18px; }
+.pret-lueur { width: 14px; height: 14px; border-radius: 50%; background: #f3c77a; box-shadow: 0 0 18px 6px rgba(243, 199, 122, .45); animation: pret-pulse 1.6s ease-in-out infinite; opacity: 0; animation-delay: .2s; }
+@keyframes pret-pulse { 0%, 100% { opacity: .15; transform: scale(.8); } 50% { opacity: .9; transform: scale(1); } }
+.demarrage-titre { font-family: 'Alegreya SC', Georgia, serif; letter-spacing: 6px; font-size: 34px; color: #e8d3a8; text-shadow: 0 0 22px rgba(243, 199, 122, .35); }
+.demarrage-barre { width: min(320px, 70vw); height: 3px; background: rgba(232, 211, 168, .14); border-radius: 2px; overflow: hidden; }
+.demarrage-barre > span { display: block; height: 100%; background: linear-gradient(90deg, #b8864a, #f3c77a); box-shadow: 0 0 10px rgba(243, 199, 122, .6); transition: width .25s ease-out; }
+.demarrage-texte { font-style: italic; font-size: 14px; color: rgba(232, 211, 168, .6); }

@@ -8,6 +8,7 @@ import { SFX, TIMBRES, timbre } from '@/moteur/sfx';
 import { LecteurScene, type Changement, type Evenement } from '@/moteur/scene/lecteur';
 import { PLACES, placer, rogner, type Place } from '@/moteur/scene/placement';
 import { cheminDecor, cheminImage, cheminMusique } from '@/moteur/scene/valider';
+import { imagesScene, precharger } from '../commun/prechargement';
 import { afficherValeur } from '@/moteur/scene/expressions';
 import { JOUEUR, NARRATION, type Resonance, type Scene, type Valeur } from '@/moteur/scene/types';
 import { APPARENCE_RESONANCES } from './resonances';
@@ -268,6 +269,8 @@ export function SceneDialogue(props: PropsSceneDialogue) {
   }, [decors, musiques]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // (re)démarre quand la scène ou le point de départ change — `variables` doit donc être un objet stable (useMemo)
+  // décors et expressions de la scène : demandés en priorité dès son ouverture (src/jeu/commun/prechargement.ts)
+  useEffect(() => { precharger(imagesScene(scene), { urgent: true }); }, [scene]);
   useEffect(() => { demarrer(); return toutArreter; }, [scene, props.depuisLigne, props.variables, demarrer]);
 
   const choisir = (index: number) => {

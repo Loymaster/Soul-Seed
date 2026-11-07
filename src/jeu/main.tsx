@@ -10,13 +10,13 @@
 //   Du ranch encore, « Le village » et « Le magasin » ouvrent l'écran du monde (src/jeu/monde : village, forêt,
 //   sanctuaire, atelier, boutique) ; ses PNJ jouent leurs scènes et leurs combats sur place, puis on rentre au ranch
 //   (ou, depuis la forêt du village, « Partir en exploration »).
-import { StrictMode, useMemo, useState } from 'react';
+import { StrictMode, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { createRoot } from 'react-dom/client';
 import donnees from '@contenu/generes/assets.json';
 import type { Catalogue } from '@/contenu/types';
 import { SCENES } from '@/contenu/scenes';
 import { analyserScene } from '@/moteur/scene/analyseur';
-import { Simulation, ageJours, apparence, creerEchoSauvage, type Etat } from '@/moteur/simulation';
+import { Simulation, ageJours, apparence, creerEchoSauvage, heureDuJour, type Etat } from '@/moteur/simulation';
 import { bilanCombat, descriptionDepuisEtat, descriptionSauvage } from '@/moteur/combat';
 import { EcranCombat, type AdversaireCombat, type IssueCombat, type Registre } from './combat/EcranCombat';
 import { SFX } from '@/moteur/sfx';
@@ -31,9 +31,12 @@ import { EntreDeuxMondes } from './intro/EntreDeuxMondes';
 import { ID_SCENE_SANCTUAIRE, Sanctuaire } from './intro/Sanctuaire';
 import { Exploration, bilanDepart, reprendreTrouvailles, type BilanSortie, type RencontreExploration, type RetourCombat } from './exploration/Exploration';
 import { DEPART, ZONES } from './exploration/zones';
-import { creerMonde, type Monde } from '@/moteur/monde';
+import { creerMonde, heureAbsolue, type Monde } from '@/moteur/monde';
 import { Monde as EcranMonde } from './monde/Monde';
-import type { IdLieu } from './monde/lieux';
+import { imagesLieu, lieuxVoisins, type ContexteLieu, type IdLieu } from './monde/lieux';
+import { imagesZone } from './exploration/pnj';
+import { Demarrage, Pret } from './commun/Pret';
+import { imagesScene, initialiserPrechargement, lancerArrierePlan, parPrefixe, precharger } from './commun/prechargement';
 import { synchroniser } from './monde/variables';
 import * as P from './profils';
 import '@/styles/polices';
@@ -42,6 +45,7 @@ import { fixerVolumes } from './commun/volumes';
 
 const catalogue = donnees as unknown as Catalogue;
 const DISPONIBLES = new Set(catalogue.assets.map((a) => a.chemin));
+initialiserPrechargement(catalogue);
 /** Emplacement fictif des essais lancés depuis les outils de développement : rien n'est enregistré. */
 const ESSAI = -1;
 
@@ -95,12 +99,70 @@ function appliquerCombat(etat: Etat, issue: IssueCombat, adversaire: AdversaireC
   sim.terminerCombat(b, d.nom);
 }
 
+// —— Préchargement (src/jeu/commun/prechargement.ts) : ce que chaque écran montre d'emblée est chargé et décodé
+// avant de l'afficher ; ce dont il aura bientôt besoin suit, puis tout le reste en arrière-plan.
+
+/** Le socle, chargé derrière l'écran de démarrage : interface, émotions, objets, avatars, menu. */
+const SOCLE = () => parPrefixe('interface/', 'emotions/', 'objets/', 'joueur/', 'decors/menu/');
+/** Ordre de l'arrière-plan : ce qui sert le plus souvent d'abord. */
+const ORDRE_FOND = ['decors/ranch/', 'activites/', 'echos/', 'animations/', 'decors/village/', 'decors/foret/', 'decors/boutique/', 'decors/atelier/', 'pnj/', 'decors/exploration/', 'decors/'];
+
+const STADE_SUIVANT: Record<string, string> = { graines: 'bebe', bebe: 'enfant', enfant: 'adolescent', adolescent: 'adulte' };
+/** Les formes du stade de l'écho et du suivant (une évolution ne doit pas attendre son image). */
+function formesEcho(etat: Etat): string[] {
+  const dossier = apparence(etat).replace(/[^/]+$/, '');
+  const stade = dossier.split('/')[1] ?? '';
+  return parPrefixe(dossier, ...(STADE_SUIVANT[stade] ? [`echos/${STADE_SUIVANT[stade]}/`] : []));
+}
+
+/** Pour un écran : les images attendues avant de l'afficher, et celles qui suivent sans attendre. */
+function imagesEcran(e: Ecran): { chemins: string[]; ensuite: string[] } {
+  switch (e.nom) {
+    case 'ranch': return { chemins: [...parPrefixe('decors/ranch/'), apparence(e.etat)], ensuite: [...parPrefixe('activites/', 'animations/'), ...formesEcho(e.etat)] };
+    case 'exploration': {
+      const c = { m: e.monde, e: e.etat, h: heureDuJour(e.etat) };
+      const voisins = ZONES[e.zone].chemins.flatMap((ch) => (ch.vers != null && ZONES[ch.vers] ? imagesZone(ch.vers, ZONES[ch.vers].fond, c) : []));
+      return { chemins: [...imagesZone(e.zone, ZONES[e.zone].fond, c), apparence(e.etat)], ensuite: voisins };
+    }
+    case 'monde': {
+      const c: ContexteLieu = { m: e.monde, e: e.etat, h: heureDuJour(e.etat), maintenant: heureAbsolue(e.etat) };
+      return { chemins: [...imagesLieu(e.lieu, c), apparence(e.etat)], ensuite: lieuxVoisins(e.lieu, c).flatMap((l) => imagesLieu(l, c)) };
+    }
+    case 'combat': return { chemins: [e.terrain, e.adversaire.image, apparence(e.etat)], ensuite: [] };
+    case 'mort': return { chemins: ['echos/ame.png', apparence(e.etat)], ensuite: parPrefixe('echos/graines/') };
+    case 'graines': return { chemins: parPrefixe('echos/graines/'), ensuite: parPrefixe('echos/bebe/') };
+    case 'introduction': return { chemins: parPrefixe('pnj/homme-mysterieux/'), ensuite: parPrefixe('echos/graines/') };
+    case 'sanctuaire': {
+      const s = SCENES.find((x) => x.id === ID_SCENE_SANCTUAIRE);
+      return { chemins: s ? imagesScene(analyserScene(s.source, s.id).scene) : [], ensuite: [...parPrefixe('echos/graines/', 'echos/bebe/', 'decors/ranch/')] };
+    }
+    case 'scene': {
+      const s = SCENES.find((x) => x.id === e.id);
+      return { chemins: s ? imagesScene(analyserScene(s.source, s.id).scene) : [], ensuite: [] };
+    }
+    default: return { chemins: [], ensuite: [] };
+  }
+}
+
 /** Portrait du personnage : son avatar s'il est déjà dessiné, sinon le portrait de repli. */
 function portrait(p: P.Personnage): string | undefined {
   const chemin = P.cheminAvatar(p.avatar);
   if (DISPONIBLES.has(chemin)) return chemin;
   const repli = P.AVATARS.find((a) => a.id === p.avatar)?.repli;
   return repli && DISPONIBLES.has(repli) ? repli : undefined;
+}
+
+/** Le jeu ne démarre qu'une fois le socle d'images chargé ; tout le reste suit en arrière-plan. */
+function Racine() {
+  const [avancement, setAvancement] = useState({ fait: 0, total: 0, pret: false });
+  useEffect(() => {
+    let vivant = true;
+    precharger(SOCLE(), { urgent: true, delai: 20000, progression: (fait, total) => vivant && setAvancement((a) => ({ ...a, fait, total })) })
+      .then(() => { if (vivant) setAvancement((a) => ({ ...a, pret: true })); lancerArrierePlan(ORDRE_FOND); });
+    return () => { vivant = false; };
+  }, []);
+  if (!avancement.pret) return <Demarrage fait={avancement.fait} total={avancement.total} />;
+  return <Jeu />;
 }
 
 function Jeu() {
@@ -145,39 +207,44 @@ function Jeu() {
     lancer(emplacement, etat);
   };
 
+  // l'écran ne s'affiche qu'une fois ses images prêtes (même clé : il reste affiché, la liste suit ses déplacements)
+  const images = imagesEcran(ecran);
+  const cleEcran = ecran.nom === 'combat' ? `combat-${ecran.adversaire.description.nom}` : ecran.nom;
+  const garde = (vue: ReactNode) => <Pret key={cleEcran} chemins={images.chemins} ensuite={images.ensuite}>{vue}</Pret>;
+
   switch (ecran.nom) {
     case 'personnage':
-      return (
+      return garde(
         <Introduction mode="personnage" disponibles={DISPONIBLES} initial={{ nom: profil.nom, pronom: profil.pronom, avatar: profil.avatar }}
           surAnnuler={() => setEcran({ nom: 'menu' })}
           surFin={(nom, avatar, pronom) => setEcran({ nom: 'graines', emplacement: ecran.emplacement, personnage: { nom, avatar, pronom }, contexte: 'nouvelle' })} />
       );
     case 'introduction':
-      return (
+      return garde(
         <EntreDeuxMondes musique={musique}
           surFin={({ personnage, graine }) => setEcran({ nom: 'sanctuaire', emplacement: ecran.emplacement, personnage, echo: nouvellePartie(graine) })} />
       );
     case 'sanctuaire':
-      return (
+      return garde(
         <Sanctuaire personnage={ecran.personnage} echo={ecran.echo} catalogue={catalogue} portrait={portrait(ecran.personnage)} sons={sons} musique={musique}
           surFin={(etat) => accueillir(ecran.emplacement, ecran.personnage, etat)} />
       );
     case 'graines':
-      return (
+      return garde(
         <ChoixGraine key={`${ecran.emplacement}-${ecran.contexte}`} contexte={ecran.contexte} musique={musique}
           creer={(graine) => nouvellePartie(graine)}
           surRetour={ecran.contexte === 'nouvelle' ? () => setEcran({ nom: 'menu' }) : undefined}
           surFin={(etat) => accueillir(ecran.emplacement, ecran.personnage, etat)} />
       );
     case 'mort':
-      return (
+      return garde(
         <DernierSouffle echo={ecran.etat} joueur={ecran.emplacement === ESSAI ? profil.nom : P.chargerPersonnage(profil, ecran.emplacement).nom} musique={musique}
           surFin={() => setEcran({ nom: 'graines', emplacement: ecran.emplacement, personnage: ecran.emplacement === ESSAI ? P.chargerPersonnage(profil, 0) : P.chargerPersonnage(profil, ecran.emplacement), contexte: 'apres' })} />
       );
     case 'ranch': {
       const { emplacement } = ecran;
       synchroniser(ecran.etat, chargerMonde(emplacement)); // Garry vaincu : plus de bruits de ravages
-      return (
+      return garde(
         <Ranch key={`${profil.id}-${emplacement}-${ecran.etat.naissance}-${ecran.etat.graine}-${ecran.etat.nom}`} etat={ecran.etat}
           reglages={profil.reglages}
           surReglages={(r) => P.modifierProfil(profil.id, { reglages: r })}
@@ -200,7 +267,7 @@ function Jeu() {
     case 'exploration': {
       const { emplacement, etat, monde, zone, historique, bilan, retourCombat } = ecran;
       const sauver = (e: Etat, m: Monde) => { if (emplacement !== ESSAI) { P.sauverPartie(profil.id, emplacement, e); P.sauverMonde(profil.id, emplacement, m); P.noterForme(profil.id, apparence(e)); } };
-      return (
+      return garde(
         <Exploration key={`explo-${profil.id}-${emplacement}-${etat.naissance}-${etat.nom}-${retourCombat ? retourCombat.rencontre.sauvage.id : 'depart'}`}
           etat={etat} monde={monde} zone={zone} historique={historique} bilan={bilan} reglages={profil.reglages} retourCombat={retourCombat}
           personnage={P.chargerPersonnage(profil, emplacement)} catalogue={catalogue}
@@ -215,7 +282,7 @@ function Jeu() {
     case 'monde': {
       const { emplacement, etat, monde, lieu } = ecran;
       const sauver = (e: Etat, m: Monde) => { if (emplacement !== ESSAI) { P.sauverPartie(profil.id, emplacement, e); P.sauverMonde(profil.id, emplacement, m); P.noterForme(profil.id, apparence(e)); } };
-      return (
+      return garde(
         <EcranMonde key={`monde-${profil.id}-${emplacement}-${etat.naissance}-${etat.nom}`} etat={etat} monde={monde} lieu={lieu}
           personnage={P.chargerPersonnage(profil, emplacement)} catalogue={catalogue} reglages={profil.reglages}
           sauver={sauver}
@@ -226,7 +293,7 @@ function Jeu() {
     }
     case 'combat': {
       const { emplacement, etat, adversaire, registre, terrain, entrainement, exploration } = ecran;
-      return (
+      return garde(
         <EcranCombat key={`combat-${etat.naissance}-${adversaire.description.nom}`} echo={etat} allie={descriptionDepuisEtat(etat)} adversaire={adversaire}
           registre={registre} terrain={terrain} musique={musique}
           surFin={(issue) => {
@@ -250,7 +317,7 @@ function Jeu() {
       const derniere = P.dernierePartie(profil.id);
       const echo = derniere?.etat;
       const perso = derniere ? P.chargerPersonnage(profil, derniere.emplacement) : { nom: profil.nom, pronom: profil.pronom, avatar: profil.avatar };
-      return (
+      return garde(
         <div style={{ position: 'fixed', inset: 0 }}>
           <SceneDialogue scene={scene} catalogue={catalogue} sons={sons} musique={musique}
             echo={{ nom: echo?.nom ?? 'Filo', chemin: echo ? apparence(echo) : 'echos/enfant/wrath.png' }}
@@ -296,6 +363,6 @@ function Jeu() {
 
 createRoot(document.getElementById('racine')!).render(
   <StrictMode>
-    <Jeu />
+    <Racine />
   </StrictMode>
 );

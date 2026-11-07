@@ -122,3 +122,7 @@ export const fondDuLieu = (zone: number, fond: string, m: Monde) =>
 
 export const pnjDuLieu = (zone: number, c: ContexteExploration) => PNJ_EXPLORATION.filter((p) => p.zone === zone && p.visible(c));
 export const boutonsDuLieu = (zone: number, c: ContexteExploration) => BOUTONS_EXPLORATION.filter((b) => b.zone === zone && b.visible(c));
+
+/** Ce qu'un lieu d'exploration montre d'emblée (décor et PNJ présents), pour le précharger avant d'y arriver. */
+export const imagesZone = (zone: number, fond: string, c: ContexteExploration): string[] =>
+  [fondDuLieu(zone, fond, c.m), ...pnjDuLieu(zone, c).map((p) => p.calque ?? p.sprite?.image ?? '')].filter(Boolean);

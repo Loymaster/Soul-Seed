@@ -263,3 +263,13 @@ export const LIEUX: Record<IdLieu, Lieu> = {
     ],
   },
 };
+
+/** Ce qu'un lieu montre d'emblée (décor et PNJ présents), pour le précharger avant de l'afficher. */
+export function imagesLieu(id: IdLieu, c: ContexteLieu): string[] {
+  const L = LIEUX[id];
+  if (!L) return [];
+  return [L.decor(c), ...L.pnj.filter((p) => p.visible(c)).map((p) => p.image(c))];
+}
+/** Les lieux où mènent les passages (le ranch et l'exploration sont d'autres écrans). */
+export const lieuxVoisins = (id: IdLieu, c: ContexteLieu): IdLieu[] =>
+  (LIEUX[id]?.passages(c) ?? []).map((p) => p.vers).filter((v): v is IdLieu => v in LIEUX);

@@ -32,9 +32,10 @@ import { VueExploration } from './VueExploration';
 import { SonsExplo as Sons } from './sons';
 export { bilanDepart, reprendreTrouvailles, type BilanSortie, type RencontreExploration, type RetourCombat } from './regles';
 import { DEPART, ZONES, type Chemin, type Region } from './zones';
-import { ZONE_NYXARA, boutonsDuLieu, fondDuLieu, nyxaraPossible, pnjDuLieu, type BoutonExploration, type ContexteExploration, type PnjExploration } from './pnj';
+import { ZONE_NYXARA, boutonsDuLieu, fondDuLieu, imagesZone, nyxaraPossible, pnjDuLieu, type BoutonExploration, type ContexteExploration, type PnjExploration } from './pnj';
 import './exploration.css';
 
+import { estPret, precharger } from '../commun/prechargement';
 const asset = (chemin: string) => `${import.meta.env.BASE_URL}assets/${chemin}`;
 const IMG = {
   joyeux: asset('emotions/joyeux.png'), fier: asset('emotions/fier.png'), surpris: asset('emotions/surpris.png'), anxieux: asset('emotions/anxieux.png'),
@@ -395,7 +396,12 @@ export class Exploration extends Component<ProprietesExploration, EtatUI> {
     const sortie = retour || !ch ? { x: s.filo.x, y: 900, s: 1.25, o: 0 } : { x: ch.pos[0], y: ch.pos[1] + 40, s: echelle(ch.pos[1] + 40) * 0.85, o: 0 };
     Sons.pas(ZONES[depuis].grotte, 5);
     this.setState({ marche: true, survol: null, filo: { ...sortie, dir: sortie.x >= s.filo.x ? 1 : -1, cls: 'marche', duree: 1000 } });
-    this.plus(850, () => {
+    // le décor d'arrivée (et ses PNJ) doit être prêt avant de changer : déjà préchargé d'ordinaire (lieux voisins),
+    // sinon on le demande en priorité et on l'attend, au plus 3 s, l'écho déjà sorti du cadre
+    const images = imagesZone(vers, z.fond, this.ctx());
+    if (!estPret(images)) precharger(images, { urgent: true });
+    const attendre = (n: number) => (estPret(images) || n >= 60 ? arriver() : this.plus(50, () => attendre(n + 1)));
+    const arriver = () => {
       const nouveau = decouvrir(this.monde, vers);
       const [fx, fy] = this.placeEcho(vers);
       // 2) le décor change ; l'écho est replacé hors champ, du côté d'où l'on arrive
@@ -424,7 +430,14 @@ export class Exploration extends Component<ProprietesExploration, EtatUI> {
         else if (nouveau && Math.random() < 0.45) this.plus(200, () => this.bulle(IMG.surpris, 1600));
         else if (z.grotte && Math.random() < 0.2) this.plus(200, () => this.bulle(IMG.anxieux));
       });
-    });
+      this.prechargerVoisins(vers);
+    };
+    this.plus(850, () => attendre(0));
+  }
+  /** Les lieux où mènent les chemins d'ici : leur décor et leurs PNJ, chargés pendant qu'on s'y attarde. */
+  prechargerVoisins(zone: number) {
+    const c = this.ctx();
+    precharger(this.chemins(zone).flatMap((ch) => (ch.vers != null && ZONES[ch.vers] ? imagesZone(ch.vers, ZONES[ch.vers].fond, c) : [])));
   }
   revenir() {
     if (this.occupe()) return;

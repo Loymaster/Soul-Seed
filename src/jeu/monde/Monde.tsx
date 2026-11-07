@@ -12,11 +12,12 @@ import { Repere } from '../commun/Repere';
 import { useMusiqueEnchainee } from '../commun/musique';
 import { IC } from '../ranch/icones';
 import type { Personnage, Reglages } from '../profils';
-import { LIEUX, type ContexteLieu, type Destination, type EntreeMenu, type IdLieu, type PnjLieu } from './lieux';
+import { LIEUX, imagesLieu, lieuxVoisins, type ContexteLieu, type Destination, type EntreeMenu, type IdLieu, type PnjLieu } from './lieux';
 import type { Panneau } from './actions';
 import { ScenePnj } from './ScenePnj';
 import { Coffre, Etal, Sac, Stand, Travail, Travaux, asset, type Ton } from './panneaux';
 import { synchroniser } from './variables';
+import { estPret, precharger } from '../commun/prechargement';
 import './monde.css';
 
 export interface ProprietesMonde {
@@ -172,6 +173,9 @@ export function Monde(props: ProprietesMonde) {
     return () => { delete w.__monde; };
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // ——— les lieux voisins se chargent pendant qu'on est ici
+  useEffect(() => { precharger(lieuxVoisins(lieu, ctx).flatMap((l) => imagesLieu(l, ctx))); }, [lieu]); // eslint-disable-line react-hooks/exhaustive-deps
+
   // ——— déplacements
   const aller = (vers: Destination) => {
     setMenu(null);
@@ -179,7 +183,15 @@ export function Monde(props: ProprietesMonde) {
     if (vers === 'ranch') { sauver(); props.surRanch(etat, monde); return; }
     if (vers === 'exploration') { sauver(); props.surExploration(etat, monde); return; }
     setTransition(true);
-    setTimeout(() => { setLieu(vers); sauver(); setTimeout(() => setTransition(false), 60); }, 380);
+    // le lieu d'arrivée (décor et PNJ présents) doit être prêt avant de se dévoiler : on l'attend au plus 3 s
+    const images = imagesLieu(vers, ctx);
+    if (!estPret(images)) precharger(images, { urgent: true });
+    const t0 = performance.now();
+    const arriver = () => {
+      if (!estPret(images) && performance.now() - t0 < 3380) { setTimeout(arriver, 50); return; }
+      setLieu(vers); sauver(); setTimeout(() => setTransition(false), 60);
+    };
+    setTimeout(arriver, 380);
   };
 
   const ouvrirEntree = (en: EntreeMenu) => {
