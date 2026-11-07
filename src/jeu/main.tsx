@@ -4,9 +4,12 @@
 //   sans l'introduction : création du personnage → choix de la Soul Seed → ranch.
 //   Au ranch, quand l'écho s'éteint : le dernier souffle → choix de la Soul Seed (après la disparition) → ranch.
 //   Du ranch, le poteau « partir » → Explorer : l'exploration (départ à la Sortie du village) ; une rencontre ouvre
-//   l'écran de combat, qui ramène au même lieu ; la flèche « rentrer au ranch » de la Sortie du village ramène au ranch.
+//   l'écran de combat, qui ramène au même lieu ; à la Sortie du village, une flèche ramène au ranch, l'autre à la forêt
+//   du village. Les PNJ d'exploration jouent leur scène sur place. Une sortie en cours est notée dans le monde :
+//   recharger la page (ou « Continuer ») y ramène, au même lieu.
 //   Du ranch encore, « Le village » et « Le magasin » ouvrent l'écran du monde (src/jeu/monde : village, forêt,
-//   sanctuaire, atelier, boutique) ; ses PNJ jouent leurs scènes et leurs combats sur place, puis on rentre au ranch.
+//   sanctuaire, atelier, boutique) ; ses PNJ jouent leurs scènes et leurs combats sur place, puis on rentre au ranch
+//   (ou, depuis la forêt du village, « Partir en exploration »).
 import { StrictMode, useMemo, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import donnees from '@contenu/generes/assets.json';
@@ -126,8 +129,11 @@ function Jeu() {
     if (emplacement === ESSAI) { menu(); return; }
     P.marquerDernierePartie(profil.id, emplacement);
     // un écho éteint : une nouvelle graine attend le joueur
-    if (etat.mort) setEcran({ nom: 'graines', emplacement, personnage: P.chargerPersonnage(profil, emplacement), contexte: 'apres' });
-    else setEcran({ nom: 'ranch', emplacement, etat });
+    if (etat.mort) { setEcran({ nom: 'graines', emplacement, personnage: P.chargerPersonnage(profil, emplacement), contexte: 'apres' }); return; }
+    // une sortie d'exploration interrompue (page rechargée, jeu fermé) : on reprend là où l'on était
+    const monde = chargerMonde(emplacement);
+    if (monde.sortie && ZONES[monde.sortie.zone]) { setEcran({ nom: 'exploration', emplacement, etat, monde, ...monde.sortie }); return; }
+    setEcran({ nom: 'ranch', emplacement, etat });
   };
   /** Un nouvel écho entre au ranch : la partie (et son personnage) est enregistrée dans l'emplacement. */
   const accueillir = (emplacement: number, personnage: P.Personnage, etat: Etat) => {
@@ -197,10 +203,12 @@ function Jeu() {
       return (
         <Exploration key={`explo-${profil.id}-${emplacement}-${etat.naissance}-${etat.nom}-${retourCombat ? retourCombat.rencontre.sauvage.id : 'depart'}`}
           etat={etat} monde={monde} zone={zone} historique={historique} bilan={bilan} reglages={profil.reglages} retourCombat={retourCombat}
+          personnage={P.chargerPersonnage(profil, emplacement)} catalogue={catalogue}
           sauver={sauver}
           surLieu={(z, h) => setEcran((x) => (x.nom === 'exploration' ? { ...x, zone: z, historique: h, retourCombat: x.retourCombat } : x))}
           surCombat={(e, m, rencontre) => setEcran({ nom: 'combat', emplacement, etat: e, ...preparerCombatExploration(rencontre), exploration: { monde: m, zone: rencontre.zone, historique: ecran.historique, bilan, rencontre } })}
           surRanch={(e, m) => { sauver(e, m); setEcran({ nom: 'ranch', emplacement, etat: e }); }}
+          surVillage={(e, m) => { sauver(e, m); setEcran({ nom: 'monde', emplacement, etat: e, monde: m, lieu: 'foret' }); }}
           surMort={(e) => setEcran({ nom: 'mort', emplacement, etat: e })} />
       );
     }

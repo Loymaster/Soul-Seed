@@ -38,7 +38,17 @@ export interface Monde {
   reparation: { corvee: string; libelle: string; niveau: number; finA: number } | null;
   /** Niveau des corvées du ranch remises en état par Ash (0 : pas encore réparée, 1 à 3). */
   corvees: Record<string, number>;
+  /**
+   * Sortie d'exploration en cours (lieu, chemin parcouru, sac au départ) : un rechargement de la page y ramène.
+   * Effacée en rentrant au ranch ou au village, et quand l'écho s'éteint.
+   */
+  sortie: SortieEnCours | null;
 }
+
+/** Ce que le joueur avait en partant explorer (pour la page de retour : ce que la sortie a rapporté). */
+export interface BilanSortie { inventaire: Record<string, number>; ressources: Partial<Record<Ressource, number>>; decouvertes: number[] }
+/** Une sortie d'exploration en cours. */
+export interface SortieEnCours { zone: number; historique: number[]; bilan: BilanSortie }
 
 /** Un emplacement de l'étal de Jumpy. */
 export interface EmplacementEtal {
@@ -53,7 +63,7 @@ export interface EmplacementEtal {
 export function creerMonde(): Monde {
   return {
     version: 1, drapeaux: {}, quetes: {}, ressources: {}, decouvertes: [], faitAujourdhui: {}, rencontres: {}, derniereRencontre: null, structures: [], pnjConnus: [],
-    coffre: { objets: Array(CASES_COFFRE[0]).fill(null), ressources: {} }, boutique: null, chantier: null, reparation: null, corvees: {},
+    coffre: { objets: Array(CASES_COFFRE[0]).fill(null), ressources: {} }, boutique: null, chantier: null, reparation: null, corvees: {}, sortie: null,
   };
 }
 
@@ -66,6 +76,7 @@ export function normaliserMonde(m: Partial<Monde> | null | undefined): Monde {
   while (objets.length < cases) objets.push(null);
   n.coffre = { objets, ressources: { ...(c.ressources ?? {}) } };
   n.corvees = { ...(n.corvees ?? {}) };
+  n.sortie = n.sortie && typeof n.sortie.zone === 'number' ? n.sortie : null;
   return n;
 }
 
@@ -135,6 +146,17 @@ export function probaRencontre(m: Monde, zone: number, maintenant: number, o: { 
   return p;
 }
 export function noterRencontre(m: Monde, zone: number, maintenant: number) { m.rencontres[zone] = maintenant; m.derniereRencontre = maintenant; }
+
+// —— Repousse (objet du sac) : 12 heures pendant lesquelles les échos sauvages se tiennent à distance
+// (rencontres × 0,5 ; en fouillant, une chance sur deux que l'écho caché soit un objet ; envoi de l'écho : écho sauvage × 0,5).
+export const DUREE_REPOUSSE = 12;
+/** Pose la repousse (heure absolue de fin dans le drapeau « repousse.jusqua »). */
+export function poserRepousse(m: Monde, heure: number) { m.drapeaux['repousse.jusqua'] = heure + DUREE_REPOUSSE; }
+export const repousseActive = (m: Monde, heure: number) => heure < (Number(m.drapeaux['repousse.jusqua'] ?? 0) || 0);
+
+// —— Pêche : la gélatine de Bourbella (« Améliorer la pêche ») donne +15 points de réussite jusqu'à « peche.bonus_jusqua ».
+export const BONUS_PECHE = 0.15;
+export const bonusPeche = (m: Monde, heure: number) => (heure < (Number(m.drapeaux['peche.bonus_jusqua'] ?? 0) || 0) ? BONUS_PECHE : 0);
 
 // —— Village : prospérité et habitants
 /** Prospérité qu'apporte un habitant selon son stade (recruitCharacter du prototype). */

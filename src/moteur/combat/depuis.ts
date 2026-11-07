@@ -6,6 +6,12 @@ import type { Aleatoire } from './types';
 import type { DescriptionCombattant } from './combat';
 import { poolTechniques, techniquesAdversaire, techniquesEquipees } from './pools';
 
+/**
+ * À bout de forces : l'écho est tombé au dernier combat (0 PV de combat) et ne s'est pas encore reposé.
+ * Il ne peut plus se battre (une rencontre ne laisse que s'éclipser) jusqu'à un somme (tente, ranch) ou le réconfort de Myhra.
+ */
+export const aBoutDeForces = (e: Pick<Etat, 'pvCombat'>) => e.pvCombat != null && e.pvCombat <= 0;
+
 /** L'écho du joueur, tel qu'il entre en combat (malade, PV restants, lien et émotions compris). */
 export function descriptionDepuisEtat(e: Etat): DescriptionCombattant {
   const t = e.techniques ?? { connues: [], equipees: [], seuils: [] };

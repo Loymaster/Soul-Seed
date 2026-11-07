@@ -84,9 +84,10 @@ export function acheter(e: Etat, m: Monde, index: number, qte = 1): ResultatAcha
   return { ok: true, recus, cout, texte };
 }
 
-// —— Stand de Lady Roger : elle rachète les curiosités, et seulement elles.
+// —— Stand de Lady Roger : elle rachète les curiosités et les petites bêtes, et seulement elles
+// (le prototype ne rachetait que les curiosités ; les petites bêtes, sans autre usage, s'y vendent aussi).
 
-export const prixRachat = (id: string) => { const o = objetDivers(id); return o?.nature === 'curiosite' ? o.revente ?? 0 : null; };
+export const prixRachat = (id: string) => { const o = objetDivers(id); return o?.nature === 'curiosite' || o?.nature === 'bete' ? o.revente ?? 0 : null; };
 
 export type ResultatVente = { ok: true; gain: number; texte: string } | { ok: false; raison: string };
 

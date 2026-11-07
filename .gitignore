@@ -4,3 +4,4 @@ dist
 contenu/generes/
 public/assets/_corbeille/
 contenu/.corbeille/
+__pycache__/

@@ -4,6 +4,7 @@ import path from 'node:path';
 import {
   BATIMENTS_ASH, REPARATIONS, acheter, avancerTravaux, construireVillage, creerMonde, deposerObjet, deposerRessources, etalDuJour,
   genererEtal, lancerChantier, lancerReparation, niveauEntrepot, normaliserMonde, prosperite, recruter, reprendreObjet, vendreCuriosite,
+  bonusPeche, poserRepousse, repousseActive,
   casesCoffre, plafondCoffre, type Monde,
 } from '../src/moteur/monde';
 import { Simulation, aleatoireFixe, creerEcho, heureTotale, objetDivers, type Etat } from '../src/moteur/simulation';
@@ -80,13 +81,36 @@ describe('boutique de Jumpy', () => {
     expect(acheter(e, m, 0, 1)).toMatchObject({ ok: false });
   });
 
-  it('Lady Roger ne rachète que les curiosités', () => {
+  it('Lady Roger ne rachète que les curiosités et les petites bêtes', () => {
     const { e } = partie({ or: 0 });
-    e.inventaire = [{ id: 'curio_pierre_gravee', qte: 3 }, { id: 'pomme', qte: 1 }, ...Array(8).fill(null)];
+    e.inventaire = [{ id: 'curio_pierre_gravee', qte: 3 }, { id: 'pomme', qte: 1 }, { id: 'creature_faisan', qte: 1 }, { id: 'canne_peche', qte: 1 }, ...Array(6).fill(null)];
     expect(vendreCuriosite(e, 1, 1).ok).toBe(false);
+    expect(vendreCuriosite(e, 3, 1).ok).toBe(false);
     expect(vendreCuriosite(e, 0, 2)).toMatchObject({ ok: true, gain: 10 });
     expect(e.or).toBe(10);
     expect(e.inventaire[0]).toEqual({ id: 'curio_pierre_gravee', qte: 1 });
+    expect(vendreCuriosite(e, 2, 1)).toMatchObject({ ok: true, gain: 6 });
+    expect(e.inventaire[2]).toBeNull();
+  });
+
+  it('repousse et gélatine de Bourbella : actives jusqu’à l’heure dite', () => {
+    const m = normaliserMonde(null);
+    expect(repousseActive(m, 100)).toBe(false);
+    poserRepousse(m, 100);
+    expect(repousseActive(m, 111)).toBe(true);
+    expect(repousseActive(m, 112)).toBe(false);
+    m.drapeaux['peche.bonus_jusqua'] = 50;
+    expect(bonusPeche(m, 49)).toBeCloseTo(0.15);
+    expect(bonusPeche(m, 50)).toBe(0);
+  });
+
+  it('une sortie d’exploration en cours survit à la relecture du monde', () => {
+    const m = normaliserMonde(null);
+    expect(m.sortie).toBeNull();
+    m.sortie = { zone: 16, historique: [1, 2, 3], bilan: { inventaire: {}, ressources: {}, decouvertes: [1] } };
+    const relu = normaliserMonde(JSON.parse(JSON.stringify(m)));
+    expect(relu.sortie).toEqual(m.sortie);
+    expect(normaliserMonde({ sortie: { zone: 'x' } } as never).sortie).toBeNull();
   });
 });
 

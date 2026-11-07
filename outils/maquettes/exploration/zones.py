@@ -16,10 +16,14 @@ def fond(numero):
     return 'decors/exploration/' + os.path.basename(f[0])
 
 
+# chemins qui n'apparaissent qu'avec un drapeau du monde (requiresFlag du prototype ; Hevann bloque le 16 → 17)
+DRAPEAUX = {(16, 17): 'hevann.vaincu', (28, 29): 'trefonds.deblaye'}
+
 lignes = []
 for k in sorted(ZONES, key=int):
     z = dict(ZONES[k])
     z['fond'] = fond(k)
+    z['chemins'] = [dict(c, drapeau=DRAPEAUX[(int(k), c['vers'])]) if (int(k), c.get('vers')) in DRAPEAUX else c for c in z['chemins']]
     ordre = ['nom', 'fond', 'region', 'eau', 'grotte', 'carte', 'filo', 'sauvage', 'echo', 'rareFouille', 'rareEnvoi', 'chemins', 'fouille', 'envoi', 'poissons']
     z = {c: z[c] for c in ordre if c in z}
     corps = json.dumps(z, ensure_ascii=False, separators=(', ', ': '))
@@ -29,10 +33,12 @@ entete = '''// Les 34 lieux d'exploration (repris du prototype via la maquette �
 // décor, région, eau, caverne, position sur la carte illustrée (pixels de carte.png), place de l'écho et de l'écho sauvage
 // dans le décor, chemins (et position de leur flèche), pools de fouille / d'envoi / de pêche, écho sauvage du lieu.
 // Généré par outils/maquettes/exploration/zones.py ; on peut ensuite retoucher à la main.
+// Les chemins 16 → 17 et 28 → 29 n'apparaissent qu'avec leur drapeau (`hevann.vaincu`, `trefonds.deblaye`).
 
 export type Region = 'foret' | 'lac' | 'montagne' | 'caverne';
 export type Cote = 'left' | 'right' | 'center' | 'center-top-left' | 'top-left';
-export interface Chemin { cote: Cote; vers: number | null; texte: string; pos: [number, number] }
+/** Un chemin ; `drapeau` : il n'apparaît que si ce drapeau du monde est vrai (requiresFlag du prototype). */
+export interface Chemin { cote: Cote; vers: number | null; texte: string; pos: [number, number]; drapeau?: string }
 export interface Zone {
   nom: string;
   /** Décor (chemin dans public/assets). */

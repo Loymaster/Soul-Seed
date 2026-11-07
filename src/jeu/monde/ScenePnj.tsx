@@ -2,14 +2,14 @@
 // les actions de jeu (src/jeu/monde/actions.ts), les combats (écran de combat par-dessus la scène, qui reprend ensuite)
 // et les panneaux (étal, stand, coffre, travaux, petits jeux). À la fin, les drapeaux changés reviennent dans le monde.
 //
-// Elle sert au village (src/jeu/monde/Monde.tsx) et servira à l'exploration : pour brancher un PNJ d'exploration,
-// il suffit d'afficher <ScenePnj id="hevann-chemin" … /> et de suivre `surFin({ sortie })` (voir contenu/scenes/LISEZMOI.md).
+// Elle sert au village (src/jeu/monde/Monde.tsx) et en exploration (src/jeu/exploration/Exploration.tsx, PNJ de pnj.ts) :
+// afficher <ScenePnj id="hevann-chemin" … /> et suivre `surFin({ sortie })` (voir contenu/scenes/LISEZMOI.md).
 import { useMemo, useRef, useState } from 'react';
 import type { Catalogue } from '@/contenu/types';
 import { SCENES } from '@/contenu/scenes';
 import { analyserScene } from '@/moteur/scene/analyseur';
 import type { Valeur } from '@/moteur/scene/types';
-import { descriptionDepuisEtat } from '@/moteur/combat';
+import { aBoutDeForces, descriptionDepuisEtat } from '@/moteur/combat';
 import { Simulation, apparence, type Etat, type Sortie } from '@/moteur/simulation';
 import type { Monde } from '@/moteur/monde';
 import { SceneDialogue } from '../scene/SceneDialogue';
@@ -97,7 +97,15 @@ export function ScenePnj(props: ProprietesScenePnj) {
     vider();
     switch (r.type) {
       case 'suite': props.sauver(); reprendre(r.variables); break;
-      case 'combat': props.surCombat?.(true); setCombat({ c: r.combat, reprendre }); break;
+      case 'combat':
+        // à bout de forces (tombé au dernier combat, pas encore reposé) : pas de combat, la scène suit comme après une fuite
+        if (aBoutDeForces(etat)) {
+          props.surNote?.(`${etat.nom} est à bout de forces : pas de combat avant de s’être reposé.`, 'mal');
+          reprendre({ 'combat.issue': 'fuite' });
+          break;
+        }
+        props.surCombat?.(true); setCombat({ c: r.combat, reprendre });
+        break;
       case 'panneau': setPanneau({ p: r.panneau, reprendre }); break;
       case 'sortie': sortie.current = r.vers; reprendre(); break;
     }

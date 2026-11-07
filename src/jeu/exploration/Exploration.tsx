@@ -3,30 +3,36 @@
 // et tout ce qu'on apprend de lui passe par son allure (jamais de chiffre).
 // Le temps s'écoule comme au ranch (1 s réelle = 1 min de jeu) ; marcher ne coûte rien de plus, seules les actions
 // prennent du temps (fouiller 30 min, récolter 30, envoyer l'écho 20, pêcher 15 par lancer).
+// Les PNJ du lieu (pnj.ts) sont posés dans le décor ; leur scène se joue par-dessus (ScenePnj), l'horloge arrêtée.
 // La vue est générée depuis la maquette (VueExploration.tsx) ; ce fichier calcule ses valeurs et tient la logique.
 import { Component, type ReactNode } from 'react';
+import type { Catalogue } from '@/contenu/types';
+import { aBoutDeForces } from '@/moteur/combat';
 import {
   NOM_STADE, Simulation, accord, ageJours, aliment, apparence, creerEchoSauvage, descriptionObjet, lireSignes, objetDivers,
   type Etat, type Graine, type Sortie,
 } from '@/moteur/simulation';
-import { ranger as rangerObjet } from '@/moteur/simulation/objets';
+import { consommer, ranger as rangerObjet } from '@/moteur/simulation/objets';
 import {
   DUREES, MAT_POOLS, TEMPERAMENTS, groupeMat, lumiere, temperamentTerrain,
   type BilanSortie, type RencontreExploration, type RetourCombat,
 } from './regles';
 import {
-  RESSOURCES, ajouterRessource, decouvrir, facteurRecence, faitCeJour, marquerFait, minuteAbsolue, noterRencontre, probaRencontre,
+  RESSOURCES, ajouterRessource, bonusPeche, decouvrir, facteurRecence, faitCeJour, heureAbsolue, marquerFait, minuteAbsolue, noterRencontre,
+  poserRepousse, probaRencontre, repousseActive,
   type Monde, type Ressource,
 } from '@/moteur/monde';
 import { SFX } from '@/moteur/sfx';
 import { Repere } from '../commun/Repere';
 import { ecouterVolumes, fixerVolumes, volumeMusique } from '../commun/volumes';
 import { profilEcho } from '../ranch/demarche';
-import type { Reglages } from '../profils';
+import type { Personnage, Reglages } from '../profils';
+import { ScenePnj } from '../monde/ScenePnj';
 import { VueExploration } from './VueExploration';
 import { SonsExplo as Sons } from './sons';
 export { bilanDepart, reprendreTrouvailles, type BilanSortie, type RencontreExploration, type RetourCombat } from './regles';
-import { DEPART, ZONES, type Region } from './zones';
+import { DEPART, ZONES, type Chemin, type Region } from './zones';
+import { ZONE_NYXARA, boutonsDuLieu, fondDuLieu, nyxaraPossible, pnjDuLieu, type BoutonExploration, type ContexteExploration, type PnjExploration } from './pnj';
 import './exploration.css';
 
 const asset = (chemin: string) => `${import.meta.env.BASE_URL}assets/${chemin}`;
@@ -42,7 +48,7 @@ const IMG = {
 const NOMS_RESSOURCES: Record<Ressource, string> = { bois: 'Bois', pierre: 'Pierre', fibres: 'Fibres', resine: 'Résine', ferraille: 'Ferraille', cristaux: 'Cristaux' };
 const imageRessource = (r: Ressource) => asset(`objets/materiaux/${r}.png`);
 
-const MUSIQUES = { explo: 'exploration', caverne: 'glacial-zone', combat: 'combat' } as const;
+const MUSIQUES = { explo: 'exploration', caverne: 'glacial-zone', combat: 'combat', morthen: 'morthen' } as const;
 /** Probabilité de base d'une rencontre en arrivant dans un lieu (« normales » dans la maquette). */
 const BASE_RENCONTRE = 0.25;
 
@@ -63,6 +69,10 @@ const PERIODE = (h: number) => (h < 5 ? 'la nuit' : h < 12 ? 'le matin' : h < 18
 const borne = (v: number, a: number, b: number) => Math.max(a, Math.min(b, v));
 /** Profondeur : plus l'écho est loin (haut dans l'image), plus il est petit. */
 const echelle = (y: number) => borne(0.42 + ((y - 360) / (760 - 360)) * 0.58, 0.38, 1.08);
+/** Le décor couvre le cadre (inset −16 px, cover, centré à 60 % en hauteur) : un calque peint à la taille du décor s'y aligne ainsi. */
+const CADRE = { x: -16, y: -16, l: 1312, h: 832, centreY: 0.6 };
+/** Pixels du repère par mètre (comme les scènes : tous les personnages à la même échelle). */
+const PX_PAR_METRE = 245;
 /** Taille de l'écho selon son stade : l'enfant de la maquette sert de référence. */
 const tailleStade = (e: Pick<Etat, 'stade' | 'taille' | 'poids'>) => borne(profilEcho(e).echelle / 0.75, 0.7, 1.4);
 
@@ -70,6 +80,9 @@ export interface ProprietesExploration {
   etat: Etat;
   monde: Monde;
   zone: number;
+  /** Le personnage du joueur et le catalogue d'assets (scènes des PNJ, taille des calques). */
+  personnage: Personnage;
+  catalogue: Catalogue;
   /** Lieux traversés pour arriver ici (la flèche du bas ramène au précédent). */
   historique?: number[];
   bilan: BilanSortie;
@@ -82,6 +95,8 @@ export interface ProprietesExploration {
   surLieu?: (zone: number, historique: number[]) => void;
   surCombat: (e: Etat, m: Monde, r: RencontreExploration) => void;
   surRanch: (e: Etat, m: Monde) => void;
+  /** « Revenir au village » depuis la Sortie du village : la forêt du village. */
+  surVillage: (e: Etat, m: Monde) => void;
   surMort: (e: Etat) => void;
 }
 
@@ -93,7 +108,9 @@ interface Envoi { phase: 'depart' | 'fouine' | 'retour' | 'resultat'; x: number;
 type Fort = 'bien plus fort' | 'plus fort' | 'de taille';
 interface Rencontre extends RencontreExploration { phase: 'apparition' | 'choix' | 'combat' | 'issue'; fort: Fort; reaction: string; issue?: 'victoire' | 'defaite' | 'fuite'; texte?: string; coupe?: string }
 interface Tente { phase: 'entree' | 'dedans' | 'sortie'; texte: string; choixRepas: boolean; anim?: string; occupe?: boolean }
-interface Fin { titre: string; objets: { icone: string; texte: string }[]; materiaux: { icone: string; texte: string }[]; lieux: string; filo: string }
+interface Fin { titre: string; objets: { icone: string; texte: string }[]; materiaux: { icone: string; texte: string }[]; lieux: string; filo: string; vers: 'ranch' | 'village' }
+/** Un PNJ placé dans le repère : son cadre (boîte utile) et l'image entière décalée dedans. */
+interface PnjPlace { p: PnjExploration; x: number; y: number; l: number; h: number; iw: number; ih: number; ix: number; iy: number; src: string }
 
 interface EtatUI {
   t: number;
@@ -104,8 +121,15 @@ interface EtatUI {
   tente: Tente | null; carte: boolean; fin: Fin | null;
   sacOuvert: boolean; sacFerme: boolean; sacMenu: number; sacMenuInfo: boolean; dndDe: number; dndCible: number;
   toast: { texte: string; id: number } | null; bulle: { src: string; id: number } | null;
-  marche: boolean; survol: number | 'retour' | null; nouveauLieu: number | null;
+  marche: boolean; survol: number | 'retour' | 'village' | null; nouveauLieu: number | null;
   filo: Pos;
+  /** La scène d'un PNJ jouée par-dessus (cle : la rejouer de zéro). */
+  scene: { id: string; sujet?: string; cle: number } | null;
+  /** Un combat de scène est en cours (la musique du lieu se tait). */
+  combatScene: boolean;
+  /** La cinématique du sentier solitaire est engagée (musique coupée, chemins masqués) ; `appel` : « Au secours ! ». */
+  nyxara: boolean; appel: boolean;
+  survolPnj: string | null;
 }
 
 export class Exploration extends Component<ProprietesExploration, EtatUI> {
@@ -124,21 +148,103 @@ export class Exploration extends Component<ProprietesExploration, EtatUI> {
   motesRegion = '';
   desabonner: (() => void) | null = null;
   enCombat = false;
+  assets: Map<string, Catalogue['assets'][number]>;
+  compteurScene = 0;
+  repousseVue = false;
 
   constructor(p: ProprietesExploration) {
     super(p);
     this.sim = new Simulation(p.etat);
     this.monde = p.monde;
+    this.assets = new Map(p.catalogue.assets.map((a) => [a.chemin, a]));
     const z = ZONES[p.zone] ? p.zone : DEPART;
     decouvrir(this.monde, z);
-    const [fx, fy] = ZONES[z].filo;
+    const [fx, fy] = this.placeEcho(z);
+    this.repousseVue = repousseActive(this.monde, heureAbsolue(p.etat));
     this.state = {
       t: 0, zone: z, ancien: null, sens: 'avant', historique: p.historique ?? [], sommeil: false,
       fouille: null, peche: null, envoi: null, rencontre: null, recolte: null, tente: null, carte: false, fin: null,
       sacOuvert: false, sacFerme: false, sacMenu: -1, sacMenuInfo: false, dndDe: -1, dndCible: -1,
       toast: null, bulle: null, marche: false, survol: null, nouveauLieu: null,
-      filo: { x: fx, y: fy, s: echelle(fy), o: 1, dir: fx < 640 ? 1 : -1, cls: '', duree: 0 },
+      filo: { x: fx, y: fy, s: echelle(fy), o: 1, dir: this.regard(z, fx), cls: '', duree: 0 },
+      scene: null, combatScene: false, nyxara: false, appel: false, survolPnj: null,
     };
+  }
+
+  // —— les PNJ du lieu
+  ctx(): ContexteExploration { return { m: this.monde, e: this.e, h: this.heure() }; }
+  pnjIci(zone = this.state?.zone ?? this.props.zone) { return pnjDuLieu(zone, this.ctx()); }
+  /** Où se tient l'écho dans ce lieu (ailleurs si un PNJ occupe sa place habituelle). */
+  placeEcho(zone: number): [number, number] {
+    const p = this.pnjIci(zone).find((x) => x.echo);
+    return p?.echo ?? ZONES[zone].filo;
+  }
+  /** L'écho regarde le PNJ du lieu s'il y en a un, sinon vers le centre. */
+  regard(zone: number, x: number): number {
+    const p = this.pnjIci(zone).map((q) => this.placer(q)).find(Boolean);
+    return p ? (p.x + p.l / 2 >= x ? 1 : -1) : x < 640 ? 1 : -1;
+  }
+  /** Les chemins praticables d'un lieu : ceux qui attendent un drapeau n'apparaissent qu'avec lui ; un PNJ peut déplacer une flèche. */
+  chemins(zone: number): Chemin[] {
+    const deplaces = Object.assign({}, ...this.pnjIci(zone).map((p) => p.chemins ?? {})) as Record<number, [number, number]>;
+    return ZONES[zone].chemins.filter((c) => !c.drapeau || this.monde.drapeaux[c.drapeau])
+      .map((c) => (c.vers != null && deplaces[c.vers] ? { ...c, pos: deplaces[c.vers] } : c));
+  }
+  /** Décor du lieu (le passage des tréfonds une fois déblayé). */
+  fond(zone: number) { return fondDuLieu(zone, ZONES[zone].fond, this.monde); }
+  /** Un PNJ dans le repère : la boîte utile de son calque, là où elle est peinte ; ou son sprite, pieds au sol. */
+  placer(p: PnjExploration): PnjPlace | null {
+    const chemin = p.calque ?? p.sprite?.image;
+    const a = chemin ? this.assets.get(chemin) : undefined;
+    if (!a || !a.l || !a.h) return null;
+    const b = a.boite && a.boite.l && a.boite.h ? a.boite : { x: 0, y: 0, l: a.l, h: a.h };
+    let k: number, x: number, y: number;
+    if (p.calque) {
+      k = CADRE.l / a.l;
+      const haut = CADRE.y - (a.h * k - CADRE.h) * CADRE.centreY;
+      x = CADRE.x + b.x * k; y = haut + b.y * k;
+    } else {
+      const sp = p.sprite!;
+      const hauteur = sp.taille * PX_PAR_METRE * echelle(sp.pieds);
+      k = hauteur / b.h;
+      x = sp.x - (b.l * k) / 2; y = sp.pieds - hauteur;
+    }
+    const r = (n: number) => Math.round(n);
+    return { p, x: r(x), y: r(y), l: r(b.l * k), h: r(b.h * k), iw: r(a.l * k), ih: r(a.h * k), ix: r(-b.x * k), iy: r(-b.y * k), src: a.url ?? asset(chemin!) };
+  }
+  /** Place d'un écho sauvage : de l'autre côté si un PNJ se tient déjà là. */
+  placeSauvage(zone: number): [number, number] {
+    const [x, y] = ZONES[zone].sauvage;
+    const gene = this.pnjIci(zone).map((p) => this.placer(p)).some((q) => q && x > q.x - 60 && x < q.x + q.l + 60 && y > q.y && y < q.y + q.h + 80);
+    return gene ? [1280 - x, y] : [x, y];
+  }
+  bloque(): string | null { return this.pnjIci().find((p) => p.bloque)?.bloque ?? null; }
+  /** Parler à un PNJ du lieu, ou suivre une étiquette du décor : la scène se joue par-dessus. */
+  parler(q: PnjExploration | BoutonExploration) {
+    if (this.occupe()) return;
+    if (q.combat && aBoutDeForces(this.e)) {
+      Sons.clic(); this.bulle(IMG.anxieux);
+      this.dire(`${this.nom} est à bout de forces : pas de combat avant ${this.a('qu’il', 'qu’elle')} se soit ${this.a('reposé', 'reposée')}.`, 3600);
+      return;
+    }
+    this.son('paperTick');
+    const pl = 'calque' in q || 'sprite' in q ? this.placer(q as PnjExploration) : null;
+    if (pl) this.setState((s) => ({ filo: { ...s.filo, dir: pl.x + pl.l / 2 >= s.filo.x ? 1 : -1 } }));
+    this.ouvrirScene(q.scene, q.sujet);
+  }
+  ouvrirScene(id: string, sujet?: string) {
+    this.setState({ scene: { id, sujet, cle: ++this.compteurScene }, survolPnj: null, survol: null });
+  }
+  /** Fin d'une scène de PNJ : les drapeaux sont déjà dans le monde ; `sortie` dit où aller ensuite. */
+  finScene(sortie?: string) {
+    this.sauver();
+    this.setState({ scene: null, combatScene: false, nyxara: false, appel: false }, () => {
+      if (!sortie) return;
+      const z = /^zone\s+(\d+)$/.exec(sortie);
+      if (sortie === 'ranch') this.rentrer(true);
+      else if (sortie === 'village' || sortie === 'foret') this.rentrer(false, 'village');
+      else if (z && ZONES[+z[1]]) this.aller(+z[1]);
+    });
   }
 
   get e() { return this.sim.etat; }
@@ -152,7 +258,18 @@ export class Exploration extends Component<ProprietesExploration, EtatUI> {
     if (typeof f === 'function') { try { (f as (...y: unknown[]) => void).apply(SFX, x); } catch { /* bruitage indisponible */ } }
   }
   temp() { return TEMPERAMENTS[temperamentTerrain(this.e)]; }
-  sauver() { this.props.sauver(this.e, this.monde); }
+  /**
+   * Enregistre la partie et le monde, avec la sortie en cours (lieu et chemin parcouru) : un rechargement de la page
+   * ramène ici. `fin` : on rentre (ranch, village) ou l'écho s'est éteint, la sortie est close.
+   */
+  sauver(o: { zone?: number; historique?: number[]; fin?: boolean } = {}) {
+    this.monde.sortie = o.fin || this.e.mort ? null : {
+      zone: o.zone ?? this.state?.zone ?? this.props.zone, historique: o.historique ?? this.state?.historique ?? [], bilan: this.props.bilan,
+    };
+    this.props.sauver(this.e, this.monde);
+  }
+  heureAbs() { return heureAbsolue(this.e); }
+  repousse() { return repousseActive(this.monde, this.heureAbs()); }
   maintenant() { return minuteAbsolue(this.e); }
 
   componentDidMount() {
@@ -179,11 +296,17 @@ export class Exploration extends Component<ProprietesExploration, EtatUI> {
   // —— le temps s'écoule (1 s = 1 min), sauf pendant le sommeil sous la tente et sur la page de retour
   tic() {
     const s = this.state;
-    if (s.fin || s.sommeil || this.enCombat || this.e.mort) return;
+    // l'horloge s'arrête aussi pendant les scènes des PNJ et la cinématique du sentier solitaire
+    if (s.fin || s.sommeil || this.enCombat || this.e.mort || s.scene || s.nyxara) return;
     const h = Math.floor(this.e.minute / 60);
     this.sim.minute();
     this.traiter(this.sim.vider());
-    if (Math.floor(this.e.minute / 60) !== h) this.sauver();
+    if (Math.floor(this.e.minute / 60) !== h) {
+      this.sauver();
+      const r = this.repousse();
+      if (this.repousseVue && !r) this.dire('L’odeur de la repousse s’est dissipée.', 3200);
+      this.repousseVue = r;
+    }
     this.setState((x) => ({ t: x.t + 1 }));
   }
   /** Fait passer `min` minutes de jeu d'un coup (une action), règles horaires comprises. */
@@ -197,7 +320,7 @@ export class Exploration extends Component<ProprietesExploration, EtatUI> {
     for (const x of sorties) {
       switch (x.type) {
         case 'mort': {
-          this.sauver();
+          this.sauver({ fin: true });
           const fin = this.e;
           this.plus(1500, () => this.props.surMort(fin));
           break;
@@ -218,14 +341,17 @@ export class Exploration extends Component<ProprietesExploration, EtatUI> {
   pisteVoulue(): keyof typeof MUSIQUES | null {
     const s = this.state;
     if (this.props.reglages?.musique === false) return null;
+    // un combat de scène a sa propre musique ; la cinématique du sentier solitaire aussi (silence, puis Leomon)
+    if (s.combatScene || s.nyxara) return null;
     if (s.rencontre && s.rencontre.phase !== 'issue') return 'combat';
+    if (this.pnjIci().some((p) => p.id === 'morthen') || s.scene?.id === 'morthen') return 'morthen';
     return ZONES[s.zone].grotte ? 'caverne' : 'explo';
   }
   pasMusique() {
     if (!this.musiqueOK) return;
     if (!this.pistes) {
       const mk = (n: string) => { const a = new Audio(asset(`sons/musiques/${n}.mp3`)); a.loop = true; a.volume = 0; return a; };
-      this.pistes = { explo: mk(MUSIQUES.explo), caverne: mk(MUSIQUES.caverne), combat: mk(MUSIQUES.combat) };
+      this.pistes = { explo: mk(MUSIQUES.explo), caverne: mk(MUSIQUES.caverne), combat: mk(MUSIQUES.combat), morthen: mk(MUSIQUES.morthen) };
     }
     const voulue = this.pisteVoulue(), cible = 0.34 * volumeMusique();
     const autres = (Object.entries(this.pistes) as [keyof typeof MUSIQUES, HTMLAudioElement][]).filter(([k, a]) => k !== voulue && !a.paused);
@@ -242,7 +368,7 @@ export class Exploration extends Component<ProprietesExploration, EtatUI> {
 
   dire(texte: string, ms = 2600) { this.setState({ toast: { texte, id: Math.random() } }); clearTimeout(this.tToast); this.tToast = window.setTimeout(() => { if (this.vivant) this.setState({ toast: null }); }, ms); }
   bulle(src: string, ms = 2200) { this.setState({ bulle: { src, id: Math.random() } }); clearTimeout(this.tBulle); this.tBulle = window.setTimeout(() => { if (this.vivant) this.setState({ bulle: null }); }, ms); }
-  occupe() { const s = this.state; return !!(s.marche || s.fouille || s.peche || s.envoi || s.rencontre || s.recolte || s.tente || s.fin || s.carte || s.sacOuvert || this.e.mort); }
+  occupe() { const s = this.state; return !!(s.marche || s.fouille || s.peche || s.envoi || s.rencontre || s.recolte || s.tente || s.fin || s.carte || s.sacOuvert || s.scene || s.nyxara || this.e.mort); }
   heure() { return Math.floor(this.e.minute / 60) % 24; }
   nuit() { const h = this.heure(); return h >= 21 || h < 5; }
   fait(action: string) { return faitCeJour(this.monde, this.state.zone, action, this.e.jour); }
@@ -251,7 +377,7 @@ export class Exploration extends Component<ProprietesExploration, EtatUI> {
   ranger(id: string, qte = 1) { return rangerObjet(this.e, id, qte) > 0; }
   aDansLeSac(id: string) { return this.e.inventaire.some((c) => c?.id === id && c.qte > 0); }
   probaRencontre(zone: number) {
-    return probaRencontre(this.monde, zone, this.maintenant(), { base: BASE_RENCONTRE, nuitDehors: this.nuit() && !ZONES[zone].grotte, repousse: false });
+    return probaRencontre(this.monde, zone, this.maintenant(), { base: BASE_RENCONTRE, nuitDehors: this.nuit() && !ZONES[zone].grotte, repousse: this.repousse() });
   }
 
   // —— marcher : l'écho part vers le passage choisi, le décor change, il arrive à sa place dans le nouveau lieu
@@ -259,14 +385,14 @@ export class Exploration extends Component<ProprietesExploration, EtatUI> {
     if (this.occupe()) return;
     if (vers == null) { Sons.clic(); this.dire('Le passage est encore impraticable.'); return; }
     const s = this.state, depuis = s.zone, z = ZONES[vers];
-    const ch = ZONES[depuis].chemins.find((c) => c.vers === vers);
+    const ch = this.chemins(depuis).find((c) => c.vers === vers);
     // 1) l'écho s'éloigne : vers le passage (en avant) ou vers vous (en arrière)
     const sortie = retour || !ch ? { x: s.filo.x, y: 900, s: 1.25, o: 0 } : { x: ch.pos[0], y: ch.pos[1] + 40, s: echelle(ch.pos[1] + 40) * 0.85, o: 0 };
     Sons.pas(ZONES[depuis].grotte, 5);
     this.setState({ marche: true, survol: null, filo: { ...sortie, dir: sortie.x >= s.filo.x ? 1 : -1, cls: 'marche', duree: 1000 } });
     this.plus(850, () => {
       const nouveau = decouvrir(this.monde, vers);
-      const [fx, fy] = z.filo;
+      const [fx, fy] = this.placeEcho(vers);
       // 2) le décor change ; l'écho est replacé hors champ, du côté d'où l'on arrive
       const entree = retour ? { x: 640, y: 380, s: echelle(380) * 0.8, o: 0 } : { x: fx + (fx < 640 ? -80 : 80), y: 900, s: 1.2, o: 0 };
       const historique = retour ? this.state.historique.slice(0, -1) : [...this.state.historique, depuis];
@@ -275,12 +401,20 @@ export class Exploration extends Component<ProprietesExploration, EtatUI> {
         filo: { ...entree, dir: fx < 640 ? 1 : -1, cls: 'marche', duree: 0 },
       });
       this.props.surLieu?.(vers, historique);
-      this.sauver();
+      this.sauver({ zone: vers, historique });
       Sons.pas(z.grotte, 5);
       // 3) l'écho vient prendre sa place
       this.plus(260, () => this.setState({ filo: { x: fx, y: fy, s: echelle(fy), o: 1, dir: fx < 640 ? 1 : -1, cls: 'marche', duree: 1150 } }));
       this.plus(1450, () => {
-        this.setState({ marche: false, ancien: null, filo: { ...this.state.filo, cls: '', duree: 0 } });
+        this.setState({ marche: false, ancien: null, filo: { ...this.state.filo, dir: this.regard(vers, fx), cls: '', duree: 0 } });
+        // le sentier solitaire : un cri, au premier passage en journée
+        if (vers === ZONE_NYXARA && !retour && nyxaraPossible(this.ctx())) {
+          this.setState({ nyxara: true });
+          this.plus(2000, () => { Sons.rencontre(); this.bulle(IMG.surpris, 2000); this.setState({ appel: true }); });
+          return;
+        }
+        // pas d'écho sauvage qui surgisse au milieu d'une rencontre avec un PNJ
+        if (this.pnjIci(vers).length) return;
         if (z.echo && Math.random() < this.probaRencontre(vers)) this.plus(300, () => this.surgir([]));
         else if (nouveau && Math.random() < 0.45) this.plus(200, () => this.bulle(IMG.surpris, 1600));
         else if (z.grotte && Math.random() < 0.2) this.plus(200, () => this.bulle(IMG.anxieux));
@@ -293,8 +427,10 @@ export class Exploration extends Component<ProprietesExploration, EtatUI> {
     if (!h.length) { this.rentrer(); return; }
     this.aller(h[h.length - 1], true);
   }
-  /** La page de retour au ranch : ce que la sortie a rapporté. */
-  rentrer(apresDefaite = false) {
+  /** « Revenir au village » (Sortie du village) : la page de retour, puis la forêt du village. */
+  versVillage() { if (this.occupe()) return; Sons.pas(false, 3); this.rentrer(false, 'village'); }
+  /** La page de retour au ranch (ou au village) : ce que la sortie a rapporté. */
+  rentrer(apresDefaite = false, vers: 'ranch' | 'village' = 'ranch') {
     this.son('page', 0.8);
     const b = this.props.bilan, e = this.e;
     const maintenant: Record<string, number> = {};
@@ -309,11 +445,13 @@ export class Exploration extends Component<ProprietesExploration, EtatUI> {
     this.sauver();
     this.setState({
       rencontre: null, tente: null, sacOuvert: false, fin: {
-        titre: apresDefaite ? 'Retour précipité' : 'De retour au ranch',
+        vers,
+        titre: apresDefaite ? 'Retour précipité' : vers === 'village' ? 'De retour au village' : 'De retour au ranch',
         objets, materiaux,
         lieux: lieux.length ? 'Notés sur la carte : ' + lieux.slice(0, 6).join(', ') + (lieux.length > 6 ? '…' : '.') : 'Aucun lieu nouveau cette fois.',
         filo: e.blesse || e.malade ? `${this.nom} boite un peu. ${this.Il} aura besoin de repos et de soins.`
-          : apresDefaite ? `${this.nom} traîne la patte : une bonne nuit lui fera du bien.` : `${this.nom} file droit vers sa paille.`,
+          : apresDefaite ? `${this.nom} traîne la patte : une bonne nuit lui fera du bien.`
+            : vers === 'village' ? `${this.nom} trottine vers les premières maisons.` : `${this.nom} file droit vers sa paille.`,
       },
     });
   }
@@ -323,11 +461,15 @@ export class Exploration extends Component<ProprietesExploration, EtatUI> {
     const s = this.state, z = ZONES[s.zone];
     if (this.occupe()) return;
     if (!z.fouille.length) { this.dire('Il n’y a rien à fouiller ici.'); return; }
+    const garde = this.bloque();
+    if (garde) { Sons.clic(); this.dire(garde); return; }
     if (this.fait('fouiller')) { this.dire('Vous avez déjà retourné chaque recoin aujourd’hui.'); return; }
     Sons.froissement();
     const types: Carte['type'][] = ['echo', 'objet', 'objet', 'objet', 'vide'];
     // un écho déjà croisé ici depuis peu se cache moins souvent
     if (!z.echo || Math.random() > facteurRecence(this.monde.rencontres[s.zone], this.maintenant())) types[0] = 'vide';
+    // la repousse : une chance sur deux que l'écho caché laisse place à une trouvaille
+    else if (this.repousse() && Math.random() < 0.5) types[0] = 'objet';
     for (let i = types.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [types[i], types[j]] = [types[j], types[i]]; }
     const lieux = CACHETTES[z.region];
     const cartes = types.map((type, i) => ({
@@ -401,7 +543,9 @@ export class Exploration extends Component<ProprietesExploration, EtatUI> {
       this.setState({ peche: { phase: 'attente' } });
       this.tPeche = window.setTimeout(() => {
         Sons.touche(); this.setState({ peche: { phase: 'touche' } });
-        this.tPeche = window.setTimeout(() => { Sons.rate(); this.passer(DUREES.pecher); this.setState({ peche: { phase: 'echappe', texte: 'Le bouchon remonte. Le poisson a filé avec l’appât.' } }); }, 950);
+        // la gélatine de Bourbella : le poisson garde l'appât un peu plus longtemps
+        const fenetre = 950 + (bonusPeche(this.monde, this.heureAbs()) ? 350 : 0);
+        this.tPeche = window.setTimeout(() => { Sons.rate(); this.passer(DUREES.pecher); this.setState({ peche: { phase: 'echappe', texte: 'Le bouchon remonte. Le poisson a filé avec l’appât.' } }); }, fenetre);
       }, 2200 + Math.random() * 3800);
     }, 900);
   }
@@ -411,7 +555,8 @@ export class Exploration extends Component<ProprietesExploration, EtatUI> {
     if (p.phase !== 'touche') return;
     clearTimeout(this.tPeche); this.passer(DUREES.pecher);
     const z = ZONES[this.state.zone];
-    if (Math.random() < 0.8) {
+    // ferré à temps : 80 % de prises, + 15 points avec la gélatine de Bourbella (« Améliorer la pêche »)
+    if (Math.random() < Math.min(0.98, 0.8 + bonusPeche(this.monde, this.heureAbs()))) {
       const id = alea(z.poissons.length ? z.poissons : ['poisson_vairon']);
       const ok = this.ranger(id, 1); Sons.prise(); this.bulle(IMG.joyeux);
       this.setState({ peche: { phase: 'prise', objet: { nom: nomObjet(id), icone: iconeObjet(id) }, texte: ok ? `${this.nom} trépigne au bord de l’eau.` : 'Le sac est plein : vous le relâchez à regret.' } });
@@ -424,26 +569,29 @@ export class Exploration extends Component<ProprietesExploration, EtatUI> {
     const s = this.state, z = ZONES[s.zone];
     if (this.occupe()) return;
     if (!z.envoi.length) { this.dire(`${this.nom} renifle, puis revient s’asseoir : rien à flairer ici.`); return; }
+    const garde = this.bloque();
+    if (garde) { Sons.clic(); this.dire(garde); return; }
     if (this.fait('envoyer')) { Sons.clic(); this.dire(`${this.nom} a déjà ratissé les environs aujourd’hui.`); return; }
+    if (aBoutDeForces(this.e)) { this.bulle(IMG.anxieux); this.dire(`${this.nom} est à bout de forces : ${this.a('il', 'elle')} ne s’éloignera pas de vous.`, 3200); return; }
     if (this.e.blesse || this.e.malade) { this.bulle(this.e.blesse ? IMG.blesse : IMG.malade); this.dire(`${this.nom} vous regarde, puis se couche. Pas dans cet état.`); return; }
-    const [px, py] = z.sauvage;
+    const [px, py] = this.placeSauvage(s.zone);
     Sons.froissement(); this.marquer('envoyer');
     this.setState({ envoi: { phase: 'depart', x: px, y: py }, filo: { x: px, y: py, s: echelle(py) * 0.8, o: 0, dir: px >= s.filo.x ? 1 : -1, cls: 'marche', duree: 1250 } });
     this.plus(1300, () => { this.setState({ envoi: { ...this.state.envoi!, phase: 'fouine' } }); Sons.froissement(); });
     this.plus(2600, () => Sons.froissement());
     this.plus(4200, () => {
       const T = this.temp();
-      const pEcho = T.echoEnvoi * facteurRecence(this.monde.rencontres[this.state.zone], this.maintenant());
+      const pEcho = T.echoEnvoi * facteurRecence(this.monde.rencontres[this.state.zone], this.maintenant()) * (this.repousse() ? 0.5 : 1);
       const trouve = Math.random() < T.trouve;
       let res: NonNullable<Envoi['res']>;
       if (trouve && z.echo && Math.random() < pEcho) res = { type: 'echo' };
       else if (trouve) res = { type: 'objet', id: z.rareEnvoi && Math.random() < z.rareEnvoi.chance * T.rare ? z.rareEnvoi.id : alea(z.envoi), qte: Math.random() < 0.12 ? 2 : 1 };
       else res = { type: 'rien' };
-      const [fx, fy] = z.filo;
+      const [fx, fy] = this.placeEcho(this.state.zone);
       this.setState({ envoi: { ...this.state.envoi!, phase: 'retour', res }, filo: { x: fx, y: fy, s: echelle(fy), o: 1, dir: fx >= px ? 1 : -1, cls: res.type === 'echo' ? 'marche fuite' : 'marche', duree: res.type === 'echo' ? 650 : 1150 } });
       this.passer(DUREES.envoyer);
       this.plus(res.type === 'echo' ? 700 : 1250, () => {
-        this.setState({ filo: { ...this.state.filo, dir: fx < 640 ? 1 : -1, cls: '', duree: 0 } });
+        this.setState({ filo: { ...this.state.filo, dir: this.regard(this.state.zone, fx), cls: '', duree: 0 } });
         if (this.e.mort) { this.setState({ envoi: null }); return; }
         if (res.type === 'echo') { this.setState({ envoi: null }); this.surgir([]); return; }
         let texte = `${this.nom} revient bredouille, des brindilles plein le pelage.`;
@@ -466,7 +614,9 @@ export class Exploration extends Component<ProprietesExploration, EtatUI> {
     const ecart = sv.ageJours - ageJours(this.e);
     const fort: Fort = ecart >= 4 ? 'bien plus fort' : ecart >= 2 ? 'plus fort' : 'de taille';
     const T = temperamentTerrain(this.e), N = this.nom;
-    const reaction = fort === 'bien plus fort'
+    const reaction = aBoutDeForces(this.e)
+      ? `${N}, à bout de forces, se tasse contre vos jambes. Pas question de se battre dans cet état.`
+      : fort === 'bien plus fort'
       ? (T === 'fonceur' ? `${N} gronde… mais ses pattes tremblent. ${sv.genre === 'f' ? 'Celle-là' : 'Celui-là'} est d’une autre trempe.` : `${N} se plaque contre vos jambes. ${sv.genre === 'f' ? 'Celle-là' : 'Celui-là'} est d’une autre trempe.`)
       : fort === 'plus fort'
         ? (T === 'prudent' ? `${N} recule d’un pas, les oreilles en arrière.` : `${N} se campe, ${this.a('hésitant', 'hésitante')}, le poil hérissé.`)
@@ -474,13 +624,19 @@ export class Exploration extends Component<ProprietesExploration, EtatUI> {
     noterRencontre(this.monde, zone, this.maintenant());
     this.sauver();
     Sons.rencontre(); this.bulle(fort === 'bien plus fort' ? IMG.anxieux : IMG.surpris);
-    const f = this.state.filo, [sx, sy] = z.sauvage;
+    const f = this.state.filo, [sx, sy] = this.placeSauvage(zone);
     this.setState({ rencontre: { phase: 'apparition', zone, sauvage: sv, enjeu, x: sx, y: sy, fort, reaction }, filo: { ...f, dir: sx >= f.x ? 1 : -1, duree: 0 } });
     this.plus(1500, () => this.setState((s) => (s.rencontre ? { rencontre: { ...s.rencontre, phase: 'choix' } } : null)));
   }
-  affronter() { const r = this.state.rencontre; if (!r || r.phase !== 'choix') return; Sons.clic(); this.engager(r); }
+  affronter() { const r = this.state.rencontre; if (!r || r.phase !== 'choix' || aBoutDeForces(this.e)) return; Sons.clic(); this.engager(r); }
   eclipser() {
     const r = this.state.rencontre; if (!r || r.phase !== 'choix') return;
+    // à bout de forces, l'écho n'intéresse plus l'écho sauvage : on s'éclipse toujours
+    if (aBoutDeForces(this.e)) {
+      Sons.pas(ZONES[this.state.zone].grotte);
+      this.setState({ rencontre: { ...r, phase: 'issue', issue: 'fuite', texte: `${r.sauvage.nom} renifle ${this.nom}, puis passe son chemin.` + (r.enjeu.length ? ' Vos trouvailles, elles, sont restées par terre.' : '') } });
+      return;
+    }
     if (Math.random() < this.temp().fuite * (r.fort === 'bien plus fort' ? 0.8 : 1)) {
       Sons.pas(ZONES[this.state.zone].grotte);
       this.setState({ rencontre: { ...r, phase: 'issue', issue: 'fuite', texte: `Vous filez sans bruit. ${r.sauvage.nom} ne vous suit pas.` + (r.enjeu.length ? ' Vos trouvailles, elles, sont restées par terre.' : '') } });
@@ -509,7 +665,7 @@ export class Exploration extends Component<ProprietesExploration, EtatUI> {
       this.setState({ rencontre: { ...base, texte: `${sv.nom} détale dans les fourrés. ${N} se rengorge.` + (rencontre.enjeu.length ? (plein ? ' Vous ramassez ce que le sac peut contenir.' : ' Vous ramassez vos trouvailles éparpillées.') : '') } });
     } else if (resultat === 'defaite') {
       Sons.rate(); this.bulle(this.e.blesse ? IMG.blesse : IMG.anxieux, 3000);
-      this.setState({ rencontre: { ...base, texte: `${N} est à terre. ${sv.nom} renifle, puis s’en va comme ${sv.genre === 'f' ? 'elle est venue' : 'il est venu'}.` } });
+      this.setState({ rencontre: { ...base, texte: `${N} est à terre. ${sv.nom} renifle, puis s’en va comme ${sv.genre === 'f' ? 'elle est venue' : 'il est venu'}. ${this.Il} n’est plus en état de se battre aujourd’hui : un somme sous la tente ou au ranch lui rendra ses forces.` } });
     } else {
       Sons.pas(ZONES[this.state.zone].grotte);
       this.setState({ rencontre: { ...base, texte: `Vous battez en retraite. ${sv.nom} ne vous suit pas.` + (rencontre.enjeu.length ? ' Vos trouvailles, elles, sont restées par terre.' : '') } });
@@ -614,11 +770,33 @@ export class Exploration extends Component<ProprietesExploration, EtatUI> {
     if (aliment(id) || soin) { this.fermerSac(); this.plus(1150, () => (this.aDansLeSac('tente') ? this.camper(!soin) : this.dire(soin ? 'Pour le soigner, il faut d’abord planter la tente.' : 'Pour lui donner à manger, il faut d’abord planter la tente.'))); }
     else if (id === 'canne_peche') { this.fermerSac(); this.plus(1150, () => (z.eau ? this.pecher() : this.dire('Pas d’eau ici pour pêcher.'))); }
     else if (id === 'tente') { this.fermerSac(); this.plus(1150, () => this.camper()); }
+    else if (id === 'repousse') {
+      const i = this.e.inventaire.findIndex((c) => c?.id === 'repousse');
+      if (i < 0 || !consommer(this.e, i)) return;
+      poserRepousse(this.monde, this.heureAbs());
+      this.repousseVue = true;
+      this.sauver();
+      this.fermerSac();
+      this.plus(1150, () => { Sons.froissement(); this.dire('Vous vaporisez la repousse : les échos sauvages se tiendront à distance une demi-journée.', 3800); });
+    }
     else { this.son('refus'); this.dire('Rien à en faire ici.'); }
   }
 
   render(): ReactNode {
-    return <Repere fond="#120c08"><VueExploration v={this.valeurs()} /></Repere>;
+    const s = this.state, p = this.props;
+    return (
+      <>
+        <Repere fond="#120c08"><VueExploration v={this.valeurs()} /></Repere>
+        {s.scene && (
+          <ScenePnj key={s.scene.cle} id={s.scene.id} sujet={s.scene.sujet} etat={this.e} monde={this.monde} personnage={p.personnage}
+            catalogue={p.catalogue} sons={p.reglages?.sons !== false} musique={p.reglages?.musique !== false} sim={this.sim}
+            sauver={() => this.sauver()} surSorties={(x) => this.traiter(x)} surNote={(t) => this.dire(t, 3200)}
+            surCombat={(actif) => { this.enCombat = actif; this.setState({ combatScene: actif }); }}
+            surMort={() => { this.sauver({ fin: true }); this.props.surMort(this.e); }}
+            surFin={({ sortie }) => this.finScene(sortie)} />
+        )}
+      </>
+    );
   }
 
   valeurs() {
@@ -631,7 +809,7 @@ export class Exploration extends Component<ProprietesExploration, EtatUI> {
     const signes = lireSignes(e);
     const niveau = (b: string) => signes.besoins.find((x) => x.besoin === b)?.urgence ?? 0;
     // passages : une flèche tracée à l'encre claire ; le nom n'apparaît qu'au survol
-    const passages = z.chemins.map((c, i) => {
+    const passages = this.chemins(s.zone).map((c, i) => {
       const bloque = c.vers == null;
       const nom = bloque ? c.texte.replace(/^Aller vers /, '').replace(/^l'/, 'l’') + ' · impraticable' : connu(c.vers!) ? ZONES[c.vers!].nom : 'un sentier inconnu';
       return {
@@ -641,15 +819,37 @@ export class Exploration extends Component<ProprietesExploration, EtatUI> {
         aller: () => this.aller(c.vers), entrer: () => this.setState({ survol: i }), sortir: () => this.setState({ survol: null }),
       };
     });
+    // la Sortie du village : une seconde flèche ramène au village (la forêt du village), la première au ranch
+    if (s.zone === DEPART) {
+      passages.push({
+        x: 150, y: 668, a: -118, nom: 'revenir au village', cls: `passage${libre ? '' : ' cache'}${s.survol === 'village' ? ' survol' : ''}`,
+        etiqCls: 'etiq-passage droite', delai: '0.6',
+        aller: () => this.versVillage(), entrer: () => this.setState({ survol: 'village' }), sortir: () => this.setState({ survol: null }),
+      });
+    }
+    // les PNJ du lieu, posés dans le décor
+    const filoPieds = s.filo.y;
+    const pnj = this.pnjIci().map((q) => this.placer(q)).filter((x): x is PnjPlace => !!x).map((q) => ({
+      ...q, nom: q.p.nom, z: q.y + q.h > filoPieds ? 31 : 29,
+      cls: `pnj${q.y + q.h > filoPieds ? ' devant' : ''}${s.survolPnj === q.p.id ? ' survol' : ''}${libre ? '' : ' cache'}`,
+      parler: () => this.parler(q.p),
+      entrer: () => { if (!this.occupe()) { this.son('paperTick'); this.setState({ survolPnj: q.p.id }); } },
+      sortir: () => this.setState({ survolPnj: null }),
+    }));
+    const boutonsScene = boutonsDuLieu(s.zone, this.ctx()).map((b) => ({
+      x: b.x, y: b.y, libelle: b.libelle, cls: `ecriteau${b.rouge ? ' rouge' : ''}${libre ? '' : ' cache'}`, faire: () => this.parler(b),
+    }));
+    const garde = this.bloque();
     const prec = s.historique.length ? ZONES[s.historique[s.historique.length - 1]].nom : null;
     // gestes de terrain (le nom n'apparaît qu'au survol)
     const canne = this.aDansLeSac('canne_peche'), tente = this.aDansLeSac('tente');
     const g = (cle: string, nom: string, img: string, faire: () => void, etat: string, note: string) => ({ cle, nom, img, faire, cls: `geste ${etat}`, note });
     const gestes = [
-      g('fouiller', 'Fouiller', IMG.fouiller, () => this.fouiller(), !z.fouille.length ? 'off' : this.fait('fouiller') ? 'fait' : '', this.fait('fouiller') ? 'déjà fait aujourd’hui' : 'une demi-heure'),
+      g('fouiller', 'Fouiller', IMG.fouiller, () => this.fouiller(), !z.fouille.length || garde ? 'off' : this.fait('fouiller') ? 'fait' : '', garde ? 'le passage est gardé' : this.fait('fouiller') ? 'déjà fait aujourd’hui' : 'une demi-heure'),
       g('recolter', 'Récolter', IMG.recolter, () => this.recolter(), !groupeMat(s.zone) ? 'off' : this.fait('recolter') ? 'fait' : '', this.fait('recolter') ? 'déjà fait aujourd’hui' : 'une demi-heure'),
       ...(z.eau ? [g('pecher', 'Pêcher', IMG.pecher, () => this.pecher(), canne ? '' : 'off', canne ? 'un quart d’heure' : 'pas de canne')] : []),
-      g('envoyer', `Envoyer ${N}`, IMG.envoyer, () => this.envoyer(), !z.envoi.length ? 'off' : this.fait('envoyer') ? 'fait' : '', this.fait('envoyer') ? 'déjà fait aujourd’hui' : 'vingt minutes'),
+      g('envoyer', `Envoyer ${N}`, IMG.envoyer, () => this.envoyer(), !z.envoi.length || garde || aBoutDeForces(e) ? 'off' : this.fait('envoyer') ? 'fait' : '',
+        garde ? 'le passage est gardé' : aBoutDeForces(e) ? 'à bout de forces' : this.fait('envoyer') ? 'déjà fait aujourd’hui' : 'vingt minutes'),
       g('camper', 'Camper', IMG.camper, () => this.camper(), tente ? '' : 'off', tente ? `s’occuper ${this.a('de lui', 'd’elle')}` : 'il faut une tente'),
     ].map((x, i) => ({ ...x, delai: (0.1 + i * 0.06).toFixed(2) }));
     // l'écho : son allure (blessure, maladie), jamais de chiffre
@@ -692,7 +892,7 @@ export class Exploration extends Component<ProprietesExploration, EtatUI> {
       choix: r.phase === 'choix', combat: r.phase === 'combat', issue: r.phase === 'issue', texte: r.texte || '', coupe: r.coupe || '',
       engage: `${N} et ${r.sauvage.nom} se jaugent… Le combat s’engage.`,
       enjeu: r.enjeu.map((id) => ({ icone: iconeObjet(id), nom: nomObjet(id) })), aEnjeu: r.enjeu.length > 0 && r.phase !== 'issue',
-      defaite: r.issue === 'defaite', banniere: r.phase === 'apparition' ? 'Un écho sauvage surgit !' : r.phase === 'combat' ? 'En garde !' : '',
+      defaite: r.issue === 'defaite', peutCombattre: !aBoutDeForces(e), banniere: r.phase === 'apparition' ? 'Un écho sauvage surgit !' : r.phase === 'combat' ? 'En garde !' : '',
     } : null;
     // la tente
     const t = s.tente;
@@ -702,7 +902,7 @@ export class Exploration extends Component<ProprietesExploration, EtatUI> {
       e.malade && { src: IMG.malade, nom: 'malade' },
     ].filter((x): x is { src: string; nom: string } => !!x).map((x, i, a) => ({ ...x, a: Math.round((i - (a.length - 1) / 2) * 110) }));
     const tenteV = t ? {
-      cls: 'tente ' + t.phase + (t.anim ? ' ' + t.anim : '') + (s.sommeil ? ' sommeil' : ''), texte: t.texte, choixRepas: !!t.choixRepas, fond: asset(z.fond), filtre: L.filtre,
+      cls: 'tente ' + t.phase + (t.anim ? ' ' + t.anim : '') + (s.sommeil ? ' sommeil' : ''), texte: t.texte, choixRepas: !!t.choixRepas, fond: asset(this.fond(s.zone)), filtre: L.filtre,
       echo: asset(apparence(e)), signes: besoins,
       soins: ([['nourrir', 'Nourrir', IMG.nourrir], ['laver', 'Laver', IMG.laver], ['soigner', 'Soigner', IMG.soigner], ['dormir', 'Dormir', IMG.dormir]] as const)
         .map(([cle, nom, img]) => ({ nom, img, cls: 'geste' + (t.occupe ? ' off' : ''), faire: () => this.soin(cle) })),
@@ -742,12 +942,13 @@ export class Exploration extends Component<ProprietesExploration, EtatUI> {
     } : { sacMenuVisible: false, sacMenuInfo: false };
     return {
       pret: true, geste: this.geste, echoNom: N,
-      fond: asset(z.fond), ancien: s.ancien != null ? asset(ZONES[s.ancien].fond) : '', aAncien: s.ancien != null, sensCls: 'ex-fond' + (s.ancien != null ? ' entre-' + s.sens : ''), ancienCls: 'ex-ancien sort-' + s.sens,
+      fond: asset(this.fond(s.zone)), ancien: s.ancien != null ? asset(this.fond(s.ancien)) : '', aAncien: s.ancien != null, sensCls: 'ex-fond' + (s.ancien != null ? ' entre-' + s.sens : ''), ancienCls: 'ex-ancien sort-' + s.sens,
       filtre: L.filtre, teinte: L.teinte, chaleur: L.chaleur, lanterne: L.sombre, lanterneX: s.filo.x, lanterneY: s.filo.y,
       motes: this.motes, regionCls: 'ex ' + z.region + (L.sombre ? ' sombre' : ''),
       lieu: z.nom, lieuCls: 'lieu' + (z.nom.length > 20 ? ' long' : ''), lieuCle: 'lieu-' + (s.nouveauLieu || s.zone), region: REGIONS[z.region],
       jourTexte: `Jour ${ageJours(e)}`, heure: `${deux(h)} h ${deux(e.minute % 60)}`, periode: PERIODE(h),
-      passages,
+      passages, pnj, boutonsScene,
+      appel: s.appel, allerVoir: () => { Sons.clic(); this.setState({ appel: false }); this.ouvrirScene('nyxara'); },
       retour: {
         nom: prec ? 'revenir · ' + prec : 'rentrer au ranch', cls: 'retour' + (libre ? '' : ' cache') + (s.survol === 'retour' ? ' survol' : ''),
         faire: () => this.revenir(), entrer: () => this.setState({ survol: 'retour' }), sortir: () => this.setState({ survol: null }),
@@ -772,7 +973,11 @@ export class Exploration extends Component<ProprietesExploration, EtatUI> {
       ressourcesSac: RESSOURCES.map((x) => ({ k: x, nom: NOMS_RESSOURCES[x], image: imageRessource(x), qte: this.monde.ressources[x] ?? 0, cls: (this.monde.ressources[x] ?? 0) > 0 ? '' : 'vide' })),
       paperFilter: 'none', coteCls: libre ? '' : 'cache',
       fin: s.fin, aFin: !!s.fin, finVide: !!(s.fin && !s.fin.objets.length && !s.fin.materiaux.length),
-      finBouton: 'Retrouver le ranch', repartir: () => { this.sauver(); this.props.surRanch(this.e, this.monde); },
+      finBouton: s.fin?.vers === 'village' ? 'Retrouver le village' : 'Retrouver le ranch',
+      repartir: () => {
+        this.sauver({ fin: true });
+        if (s.fin?.vers === 'village') this.props.surVillage(this.e, this.monde); else this.props.surRanch(this.e, this.monde);
+      },
     };
   }
 

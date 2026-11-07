@@ -38,6 +38,23 @@
     <span class="etiq-passage droite">{{ retour.nom }}</span>
   </div>
 
+  <!-- les personnages du lieu : posés dans le décor comme l'écho, on leur parle d'un clic -->
+  <sc-for list="{{ pnj }}" as="n" hint-placeholder-count="0">
+    <div class="{{ n.cls }}" style="left:{{ n.x }}px;top:{{ n.y }}px;width:{{ n.l }}px;height:{{ n.h }}px;z-index:{{ n.z }}">
+      <div class="pnj-corps"><img src="{{ n.src }}" alt="" style="width:{{ n.iw }}px;height:{{ n.ih }}px;left:{{ n.ix }}px;top:{{ n.iy }}px"></div>
+      <button onClick="{{ n.parler }}" onMouseEnter="{{ n.entrer }}" onMouseLeave="{{ n.sortir }}" aria-label="{{ n.nom }}"></button>
+      <span class="etiq-pnj">{{ n.nom }}</span>
+    </div>
+  </sc-for>
+  <!-- ce qu'on peut faire ici : une étiquette de bois clouée dans le décor -->
+  <sc-for list="{{ boutonsScene }}" as="b" hint-placeholder-count="0">
+    <button class="{{ b.cls }}" style="left:{{ b.x }}px;top:{{ b.y }}px" onClick="{{ b.faire }}">{{ b.libelle }}</button>
+  </sc-for>
+  <!-- un appel au secours (le sentier solitaire) -->
+  <sc-if value="{{ appel }}" hint-placeholder-val="{{ false }}">
+    <div class="appel"><div class="appel-cri main">Au secours ! Aidez-moi !</div><button class="btn rouge" onClick="{{ allerVoir }}">Aller voir</button></div>
+  </sc-if>
+
   <!-- Filo -->
   <div class="{{ filo.cls }}" style="left:{{ filo.x }}px;top:{{ filo.y }}px;transform:scale({{ filo.s }});opacity:{{ filo.o }};transition-duration:{{ filo.duree }}ms">
     <div class="filo-ombre"></div>
@@ -197,7 +214,7 @@
           <div class="nom-sauvage">{{ rencontre.nom }}</div>
           <div class="ligne">{{ rencontre.reaction }}</div>
           <sc-if value="{{ rencontre.aEnjeu }}" hint-placeholder-val="{{ false }}"><div class="enjeu">Vos trouvailles gisent à ses pieds :<sc-for list="{{ rencontre.enjeu }}" as="o" hint-placeholder-count="0"><img src="{{ o.icone }}" alt="{{ o.nom }}" title="{{ o.nom }}"></sc-for></div></sc-if>
-          <div class="boutons"><button class="btn bois" onClick="{{ eclipser }}">S’éclipser</button><button class="btn rouge" onClick="{{ affronter }}">Affronter</button></div>
+          <div class="boutons"><button class="btn bois" onClick="{{ eclipser }}">S’éclipser</button><sc-if value="{{ rencontre.peutCombattre }}" hint-placeholder-val="{{ true }}"><button class="btn rouge" onClick="{{ affronter }}">Affronter</button></sc-if></div>
         </section>
       </sc-if>
       <sc-if value="{{ rencontre.combat }}" hint-placeholder-val="{{ false }}">

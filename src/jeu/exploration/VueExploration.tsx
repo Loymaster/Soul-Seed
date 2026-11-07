@@ -62,6 +62,39 @@ export function VueExploration({ v }: { v: any }) {
             {v.retour.nom}
           </span>
         </div>
+        {/* les personnages du lieu : posés dans le décor comme l'écho, on leur parle d'un clic */}
+        {(v.pnj || []).map((xN3: any, i3: number) => (
+          <Fragment key={i3}>
+            <div className={xN3.cls} style={{ left: `${xN3.x}px`, top: `${xN3.y}px`, width: `${xN3.l}px`, height: `${xN3.h}px`, zIndex: xN3.z } as CSSProperties}>
+              <div className="pnj-corps">
+                <img src={xN3.src} alt="" style={{ width: `${xN3.iw}px`, height: `${xN3.ih}px`, left: `${xN3.ix}px`, top: `${xN3.iy}px` } as CSSProperties} />
+              </div>
+              <button onClick={xN3.parler} onMouseEnter={xN3.entrer} onMouseLeave={xN3.sortir} aria-label={xN3.nom} />
+              <span className="etiq-pnj">
+                {xN3.nom}
+              </span>
+            </div>
+          </Fragment>
+        ))}
+        {/* ce qu'on peut faire ici : une étiquette de bois clouée dans le décor */}
+        {(v.boutonsScene || []).map((xB4: any, i4: number) => (
+          <Fragment key={i4}>
+            <button className={xB4.cls} style={{ left: `${xB4.x}px`, top: `${xB4.y}px` } as CSSProperties} onClick={xB4.faire}>
+              {xB4.libelle}
+            </button>
+          </Fragment>
+        ))}
+        {/* un appel au secours (le sentier solitaire) */}
+        {v.appel ? (<>
+          <div className="appel">
+            <div className="appel-cri main">
+              Au secours ! Aidez-moi !
+            </div>
+            <button className="btn rouge" onClick={v.allerVoir}>
+              Aller voir
+            </button>
+          </div>
+        </>) : null}
         {/* Filo */}
         <div className={v.filo.cls} style={{ left: `${v.filo.x}px`, top: `${v.filo.y}px`, transform: `scale(${v.filo.s})`, opacity: v.filo.o, transitionDuration: `${v.filo.duree}ms` } as CSSProperties}>
           <div className="filo-ombre" />
@@ -69,10 +102,10 @@ export function VueExploration({ v }: { v: any }) {
             <img src={v.filo.src} alt={v.echoNom} style={{ transform: `translateX(-50%) scaleX(${v.filo.flip})` } as CSSProperties} />
           </div>
           <div className="orbite">
-            {(v.filo.signes || []).map((xG3: any, i3: number) => (
-              <Fragment key={i3}>
-                <div className="signe" style={{ left: `${xG3.a}px`, top: "0" } as CSSProperties}>
-                  <img src={xG3.src} alt={xG3.nom} title={xG3.nom} />
+            {(v.filo.signes || []).map((xG5: any, i5: number) => (
+              <Fragment key={i5}>
+                <div className="signe" style={{ left: `${xG5.a}px`, top: "0" } as CSSProperties}>
+                  <img src={xG5.src} alt={xG5.nom} title={xG5.nom} />
                 </div>
               </Fragment>
             ))}
@@ -131,16 +164,16 @@ export function VueExploration({ v }: { v: any }) {
         </button>
         {/* gestes de terrain */}
         <div className={v.gestesCls}>
-          {(v.gestes || []).map((xG4: any, i4: number) => (
-            <Fragment key={i4}>
-              <button className={xG4.cls} style={{ animationDelay: `${xG4.delai}s` } as CSSProperties} onClick={xG4.faire} aria-label={xG4.nom}>
-                <img src={xG4.img} alt="" />
+          {(v.gestes || []).map((xG6: any, i6: number) => (
+            <Fragment key={i6}>
+              <button className={xG6.cls} style={{ animationDelay: `${xG6.delai}s` } as CSSProperties} onClick={xG6.faire} aria-label={xG6.nom}>
+                <img src={xG6.img} alt="" />
                 <span className="lib">
                   <b>
-                    {xG4.nom}
+                    {xG6.nom}
                   </b>
                   <i>
-                    {xG4.note}
+                    {xG6.note}
                   </i>
                 </span>
               </button>
@@ -157,26 +190,26 @@ export function VueExploration({ v }: { v: any }) {
               Fouiller les environs
             </h2>
             <div className="cachettes">
-              {(v.fouille.cartes || []).map((xC5: any, i5: number) => (
-                <Fragment key={i5}>
-                  <button className={xC5.cls} style={{ animationDelay: `${xC5.delai}s` } as CSSProperties} onClick={xC5.retourner}>
+              {(v.fouille.cartes || []).map((xC7: any, i7: number) => (
+                <Fragment key={i7}>
+                  <button className={xC7.cls} style={{ animationDelay: `${xC7.delai}s` } as CSSProperties} onClick={xC7.retourner}>
                     <span className="verso">
                       <svg viewBox="0 0 60 60" aria-hidden="true">
                         <circle cx="26" cy="26" r="14" fill="none" stroke="#f3e8c8" strokeWidth="4" />
                         <path d="M36 36l14 14" stroke="#f3e8c8" strokeWidth="6" strokeLinecap="round" />
                       </svg>
                       <span className="lieu">
-                        {xC5.lieu}
+                        {xC7.lieu}
                       </span>
                     </span>
                     <span className="recto">
-                      {xC5.objet ? (<>
-                        <img src={xC5.icone} alt="" />
+                      {xC7.objet ? (<>
+                        <img src={xC7.icone} alt="" />
                         <span className="nom">
-                          {xC5.nom}
+                          {xC7.nom}
                         </span>
                       </>) : null}
-                      {xC5.echo ? (<>
+                      {xC7.echo ? (<>
                         <span className="yeux">
                           <i />
                           <i />
@@ -185,7 +218,7 @@ export function VueExploration({ v }: { v: any }) {
                           Un écho !
                         </span>
                       </>) : null}
-                      {xC5.vide ? (<>
+                      {xC7.vide ? (<>
                         <svg viewBox="0 0 70 40" aria-hidden="true">
                           <path d="M6 24c8-14 14 10 22-2s12-10 18 2 12 6 18-4" fill="none" stroke="#6b5a3e" strokeWidth="3" strokeLinecap="round" />
                         </svg>
@@ -194,7 +227,7 @@ export function VueExploration({ v }: { v: any }) {
                         </span>
                       </>) : null}
                       <span className="lieu">
-                        {xC5.lieu}
+                        {xC7.lieu}
                       </span>
                     </span>
                   </button>
@@ -207,9 +240,9 @@ export function VueExploration({ v }: { v: any }) {
               </div>
               <div style={{ display: "flex", alignItems: "center", gap: "14px" } as CSSProperties}>
                 <div className="butin">
-                  {(v.fouille.gains || []).map((xO6: any, i6: number) => (
-                    <Fragment key={i6}>
-                      <img src={xO6.icone} alt={xO6.nom} title={xO6.nom} />
+                  {(v.fouille.gains || []).map((xO8: any, i8: number) => (
+                    <Fragment key={i8}>
+                      <img src={xO8.icone} alt={xO8.nom} title={xO8.nom} />
                     </Fragment>
                   ))}
                 </div>
@@ -235,11 +268,11 @@ export function VueExploration({ v }: { v: any }) {
                 Récolte
               </h2>
               <div className="ressources-gagnees">
-                {(v.recolte.gains || []).map((xR7: any, i7: number) => (
-                  <Fragment key={i7}>
+                {(v.recolte.gains || []).map((xR9: any, i9: number) => (
+                  <Fragment key={i9}>
                     <span>
-                      <img src={xR7.image} alt="" />
-                      {xR7.texte}
+                      <img src={xR9.image} alt="" />
+                      {xR9.texte}
                     </span>
                   </Fragment>
                 ))}
@@ -372,9 +405,9 @@ export function VueExploration({ v }: { v: any }) {
                 {v.rencontre.aEnjeu ? (<>
                   <div className="enjeu">
                     Vos trouvailles gisent à ses pieds :
-                    {(v.rencontre.enjeu || []).map((xO8: any, i8: number) => (
-                      <Fragment key={i8}>
-                        <img src={xO8.icone} alt={xO8.nom} title={xO8.nom} />
+                    {(v.rencontre.enjeu || []).map((xO10: any, i10: number) => (
+                      <Fragment key={i10}>
+                        <img src={xO10.icone} alt={xO10.nom} title={xO10.nom} />
                       </Fragment>
                     ))}
                   </div>
@@ -383,9 +416,11 @@ export function VueExploration({ v }: { v: any }) {
                   <button className="btn bois" onClick={v.eclipser}>
                     S’éclipser
                   </button>
-                  <button className="btn rouge" onClick={v.affronter}>
-                    Affronter
-                  </button>
+                  {v.rencontre.peutCombattre ? (<>
+                    <button className="btn rouge" onClick={v.affronter}>
+                      Affronter
+                    </button>
+                  </>) : null}
                 </div>
               </section>
             </>) : null}
@@ -441,10 +476,10 @@ export function VueExploration({ v }: { v: any }) {
               <img src={v.tente.echo} alt={v.echoNom} />
             </div>
             <div className="orbite">
-              {(v.tente.signes || []).map((xG9: any, i9: number) => (
-                <Fragment key={i9}>
-                  <div className="signe" style={{ left: `${xG9.a}px`, top: "0" } as CSSProperties}>
-                    <img src={xG9.src} alt={xG9.nom} title={xG9.nom} />
+              {(v.tente.signes || []).map((xG11: any, i11: number) => (
+                <Fragment key={i11}>
+                  <div className="signe" style={{ left: `${xG11.a}px`, top: "0" } as CSSProperties}>
+                    <img src={xG11.src} alt={xG11.nom} title={xG11.nom} />
                   </div>
                 </Fragment>
               ))}
@@ -465,12 +500,12 @@ export function VueExploration({ v }: { v: any }) {
             </>) : null}
             {v.tente.choixRepas ? (<>
               <div className="repas">
-                {(v.tente.repas || []).map((xR10: any, i10: number) => (
-                  <Fragment key={i10}>
-                    <button onClick={xR10.donner} title={xR10.nom} aria-label={`Donner : ${xR10.nom}`}>
-                      <img src={xR10.icone} alt="" />
+                {(v.tente.repas || []).map((xR12: any, i12: number) => (
+                  <Fragment key={i12}>
+                    <button onClick={xR12.donner} title={xR12.nom} aria-label={`Donner : ${xR12.nom}`}>
+                      <img src={xR12.icone} alt="" />
                       <b>
-                        {xR10.qte}
+                        {xR12.qte}
                       </b>
                     </button>
                   </Fragment>
@@ -478,13 +513,13 @@ export function VueExploration({ v }: { v: any }) {
               </div>
             </>) : null}
             <div className="soins">
-              {(v.tente.soins || []).map((xG11: any, i11: number) => (
-                <Fragment key={i11}>
-                  <button className={xG11.cls} onClick={xG11.faire} aria-label={xG11.nom}>
-                    <img src={xG11.img} alt="" />
+              {(v.tente.soins || []).map((xG13: any, i13: number) => (
+                <Fragment key={i13}>
+                  <button className={xG13.cls} onClick={xG13.faire} aria-label={xG13.nom}>
+                    <img src={xG13.img} alt="" />
                     <span className="lib">
                       <b>
-                        {xG11.nom}
+                        {xG13.nom}
                       </b>
                     </span>
                   </button>
@@ -509,28 +544,28 @@ export function VueExploration({ v }: { v: any }) {
                 </radialGradient>
                 <mask id="brume" maskUnits="userSpaceOnUse" x="0" y="0" width="1586" height="992">
                   <rect x="0" y="0" width="1586" height="992" fill="#fff" />
-                  {(v.carte.trous || []).map((xT12: any, i12: number) => (
-                    <Fragment key={i12}>
-                      <circle cx={xT12.x} cy={xT12.y} r={xT12.r} fill="url(#trou)" opacity={xT12.o} />
+                  {(v.carte.trous || []).map((xT14: any, i14: number) => (
+                    <Fragment key={i14}>
+                      <circle cx={xT14.x} cy={xT14.y} r={xT14.r} fill="url(#trou)" opacity={xT14.o} />
                     </Fragment>
                   ))}
                 </mask>
               </defs>
               <image href={v.carte.image} x="0" y="0" width="1586" height="992" preserveAspectRatio="none" />
               <image className="brume" href={v.carte.brume} x="0" y="0" width="1586" height="992" preserveAspectRatio="none" mask="url(#brume)" />
-              {(v.carte.lieux || []).map((xL13: any, i13: number) => (
-                <Fragment key={i13}>
-                  <g className={xL13.cls} transform={`translate(${xL13.x},${xL13.y})`}>
+              {(v.carte.lieux || []).map((xL15: any, i15: number) => (
+                <Fragment key={i15}>
+                  <g className={xL15.cls} transform={`translate(${xL15.x},${xL15.y})`}>
                     <circle className="zone-survol" r="26" />
-                    <circle className="point" r={xL13.r} />
-                    {xL13.inconnu ? (<>
+                    <circle className="point" r={xL15.r} />
+                    {xL15.inconnu ? (<>
                       <text className="q" x="0" y="8" textAnchor="middle">
                         ?
                       </text>
                     </>) : null}
-                    {!xL13.inconnu ? (<>
+                    {!xL15.inconnu ? (<>
                       <text className="nom" x="0" y="-22" textAnchor="middle">
-                        {xL13.nom}
+                        {xL15.nom}
                       </text>
                     </>) : null}
                   </g>
@@ -572,13 +607,13 @@ export function VueExploration({ v }: { v: any }) {
             <div className="sac-corps">
               <div className="stitch" style={{ borderRadius: "18px 18px 54px 54px" } as CSSProperties} />
               <div className="sac-poche">
-                {(v.sacCases || []).map((xC14: any, i14: number) => (
-                  <Fragment key={i14}>
-                    <button className={`case ${xC14.cls}`} style={{ animationDelay: `${xC14.delai}s` } as CSSProperties} draggable={xC14.plein} onDragStart={xC14.prendreDnd} onDragOver={xC14.survolDnd} onDragLeave={xC14.quitteDnd} onDrop={xC14.deposer} onDragEnd={xC14.finDnd} onMouseEnter={xC14.survol} onClick={xC14.choisir} aria-disabled={!!(xC14.vide)} aria-haspopup="menu" aria-label={xC14.nom}>
-                      {xC14.plein ? (<>
-                        <img src={xC14.image} alt="" />
+                {(v.sacCases || []).map((xC16: any, i16: number) => (
+                  <Fragment key={i16}>
+                    <button className={`case ${xC16.cls}`} style={{ animationDelay: `${xC16.delai}s` } as CSSProperties} draggable={xC16.plein} onDragStart={xC16.prendreDnd} onDragOver={xC16.survolDnd} onDragLeave={xC16.quitteDnd} onDrop={xC16.deposer} onDragEnd={xC16.finDnd} onMouseEnter={xC16.survol} onClick={xC16.choisir} aria-disabled={!!(xC16.vide)} aria-haspopup="menu" aria-label={xC16.nom}>
+                      {xC16.plein ? (<>
+                        <img src={xC16.image} alt="" />
                         <span className="sceau qte" style={{ background: "#6e3f22" } as CSSProperties}>
-                          {xC14.qte}
+                          {xC16.qte}
                         </span>
                       </>) : null}
                     </button>
@@ -611,12 +646,12 @@ export function VueExploration({ v }: { v: any }) {
                 <span className="sr-titre">
                   ressources
                 </span>
-                {(v.ressourcesSac || []).map((xR15: any, i15: number) => (
-                  <Fragment key={i15}>
-                    <span className={`sr ${xR15.cls}`} title={xR15.nom}>
-                      <img src={xR15.image} alt={xR15.nom} />
+                {(v.ressourcesSac || []).map((xR17: any, i17: number) => (
+                  <Fragment key={i17}>
+                    <span className={`sr ${xR17.cls}`} title={xR17.nom}>
+                      <img src={xR17.image} alt={xR17.nom} />
                       <b>
-                        {xR15.qte}
+                        {xR17.qte}
                       </b>
                     </span>
                   </Fragment>
@@ -663,19 +698,19 @@ export function VueExploration({ v }: { v: any }) {
               </div>
             </>) : null}
             <div className="objets">
-              {(v.fin.objets || []).map((xO16: any, i16: number) => (
-                <Fragment key={i16}>
+              {(v.fin.objets || []).map((xO18: any, i18: number) => (
+                <Fragment key={i18}>
                   <span className="objet">
-                    <img src={xO16.icone} alt="" />
-                    {xO16.texte}
+                    <img src={xO18.icone} alt="" />
+                    {xO18.texte}
                   </span>
                 </Fragment>
               ))}
-              {(v.fin.materiaux || []).map((xO17: any, i17: number) => (
-                <Fragment key={i17}>
+              {(v.fin.materiaux || []).map((xO19: any, i19: number) => (
+                <Fragment key={i19}>
                   <span className="objet">
-                    <img src={xO17.icone} alt="" />
-                    {xO17.texte}
+                    <img src={xO19.icone} alt="" />
+                    {xO19.texte}
                   </span>
                 </Fragment>
               ))}

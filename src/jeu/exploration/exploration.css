@@ -417,4 +417,32 @@
 @keyframes ex12RabatSacFerme{0%{transform:rotateX(-96deg);opacity:0}30%{opacity:1}100%{transform:rotateX(0deg);opacity:1}}
 @keyframes ex12Fondu{from{opacity:0}to{opacity:1}}
 @keyframes ex12FonduOut{from{opacity:1}to{opacity:0}}
+/* —— les personnages du lieu (PNJ) : la boîte utile de leur calque, posée là où elle est peinte —— */
+.ex12 .pnj{position:absolute;z-index:29;animation:ex12Apparait .8s ease both}
+.ex12 .pnj.devant{z-index:31}
+.ex12 .pnj-corps{position:absolute;inset:0;overflow:hidden;transform-origin:50% 100%;animation:ex12RespirePnj 3.8s ease-in-out infinite;transition:filter .25s}
+.ex12 .pnj-corps img{position:absolute;max-width:none;pointer-events:none;user-select:none}
+@keyframes ex12RespirePnj{0%,100%{transform:scaleY(1)}50%{transform:scaleY(1.012)}}
+.ex12 .pnj button{position:absolute;inset:0;border:none;padding:0;background:transparent;cursor:pointer}
+.ex12 .pnj.survol .pnj-corps{filter:drop-shadow(0 0 2px #fff6d8) drop-shadow(0 0 12px rgba(255,220,140,.8))}
+.ex12 .etiq-pnj{position:absolute;left:50%;top:-34px;transform:translateX(-50%) translateY(6px);white-space:nowrap;font-family:'Reenie Beanie',cursive;font-size:34px;line-height:1;color:#fbf3dc;text-shadow:0 2px 4px rgba(0,0,0,.95),0 0 14px rgba(0,0,0,.6);opacity:0;transition:opacity .25s,transform .25s;pointer-events:none}
+.ex12 .pnj.survol .etiq-pnj{opacity:1;transform:translateX(-50%)}
+.ex12 .pnj.cache button{pointer-events:none}
+/* —— une étiquette de bois clouée dans le décor (« Partir affronter Garry », « Inspecter la cabane »…) —— */
+.ex12 .ecriteau{position:absolute;z-index:26;transform:translate(-50%,-50%) rotate(-2deg);padding:13px 30px 10px;border:none;cursor:pointer;border-radius:4px;white-space:nowrap;
+  font-family:'Alegreya SC',serif;font-weight:700;font-size:17px;letter-spacing:1.5px;color:#2c1507;
+  background:repeating-linear-gradient(177deg,rgba(60,28,8,0) 0 6px,rgba(60,28,8,.13) 6px 7px,rgba(60,28,8,0) 7px 15px),linear-gradient(180deg,#c08a55,#94612f);
+  box-shadow:inset 0 0 0 2px #3a1f0e,0 8px 16px rgba(0,0,0,.45);animation:ex12EcriteauIn .6s cubic-bezier(.3,1.4,.5,1) backwards;transition:transform .2s,filter .2s,opacity .3s}
+.ex12 .ecriteau::before,.ex12 .ecriteau::after{content:"";position:absolute;top:8px;width:7px;height:7px;border-radius:50%;background:radial-gradient(circle at 35% 35%,#e8d29a,#5a4320);box-shadow:0 1px 1px rgba(0,0,0,.5)}
+.ex12 .ecriteau::before{left:9px}
+.ex12 .ecriteau::after{right:9px}
+.ex12 .ecriteau:hover{transform:translate(-50%,-54%) rotate(-1deg);filter:brightness(1.12)}
+.ex12 .ecriteau.rouge{color:#f6ecd2;background:repeating-linear-gradient(177deg,rgba(30,6,2,0) 0 6px,rgba(30,6,2,.16) 6px 7px,rgba(30,6,2,0) 7px 15px),linear-gradient(180deg,#a8513c,#7b2f20);box-shadow:inset 0 0 0 2px #3a1006,0 8px 16px rgba(0,0,0,.45),0 0 30px rgba(200,70,40,.5)}
+.ex12 .ecriteau.cache{opacity:0;pointer-events:none}
+@keyframes ex12EcriteauIn{0%{opacity:0;transform:translate(-50%,-80%) rotate(-9deg)}}
+/* —— un appel au secours —— */
+.ex12 .appel{position:absolute;left:0;right:0;top:240px;z-index:60;display:flex;flex-direction:column;align-items:center;gap:22px;animation:ex12Fondu .5s both}
+.ex12 .appel-cri{padding:14px 34px 10px;border-radius:26px;background:#fbf6ea;color:#2f2a1f;font-size:44px;line-height:1;box-shadow:0 10px 26px rgba(0,0,0,.45);animation:ex12Cri .45s ease-in-out infinite alternate}
+@keyframes ex12Cri{0%{transform:rotate(-2.5deg) translateX(-3px)}100%{transform:rotate(-1deg) translateX(3px)}}
+.ex12 .appel .btn{font-size:18px;padding:12px 36px 9px}
 .ex12 button:focus-visible{outline:2px solid #f3d48a;outline-offset:2px}

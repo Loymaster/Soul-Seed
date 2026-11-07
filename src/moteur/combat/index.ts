@@ -9,4 +9,4 @@ export { bilanCombat, type BilanCombat, type OptionsBilan } from './issue';
 export { lireSignesCombat, type SignesCombat, type PostureCombat, type AllureCombat } from './signes';
 export { TECHNIQUES, CATEGORIES_TECHNIQUE } from './donnees/techniques';
 export { SOINS_COMBAT } from './donnees/soins';
-export { descriptionDepuisEtat, descriptionSauvage } from './depuis';
+export { aBoutDeForces, descriptionDepuisEtat, descriptionSauvage } from './depuis';

@@ -142,10 +142,10 @@ export function Stand({ e, rafraichir, noter, fermer }: Commun) {
     rafraichir();
   };
   return (
-    <Feuille titre="Stand de Lady Roger" sousTitre="curiosités rachetées" icone="cadeau" fermer={fermer}>
+    <Feuille titre="Stand de Lady Roger" sousTitre="curiosités et petites bêtes rachetées" icone="cadeau" fermer={fermer}>
       <div className="mo-stand-tete">
         <img src={asset('pnj/lady-roger/neutre.png')} alt="Lady Roger" />
-        <p className="bulle">Montre-moi tes curiosités, je te les rachète avec plaisir !</p>
+        <p className="bulle">Montre-moi tes curiosités et tes petites bêtes, je te les rachète avec plaisir !</p>
       </div>
       <div className="mo-entete-page"><span className="craie-encre">Votre sac</span><Bourse or={e.or} /></div>
       <div className="mo-grille">
@@ -167,7 +167,7 @@ export function Stand({ e, rafraichir, noter, fermer }: Commun) {
             <span className="total">Total : {prix * qte} or</span>
             <button className="mo-bouton ok" onClick={vendre}>Vendre</button>
           </>
-        ) : <span className="aide">Lady Roger ne s’intéresse qu’aux curiosités.</span>}
+        ) : <span className="aide">Lady Roger ne s’intéresse qu’aux curiosités et aux petites bêtes.</span>}
       </div>
       {mot && <div className={`mo-mot ${mot.ton}`}>{mot.texte}</div>}
     </Feuille>

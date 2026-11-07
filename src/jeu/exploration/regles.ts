@@ -2,7 +2,7 @@
 // tempérament de terrain de l'écho, lumière du jour, rencontres emportées vers le combat, bilan d'une sortie.
 import type { EchoSauvage, Etat } from '@/moteur/simulation';
 import { ranger } from '@/moteur/simulation/objets';
-import type { Monde, Ressource } from '@/moteur/monde';
+import type { BilanSortie, Monde, Ressource } from '@/moteur/monde';
 
 // Ressources de « Récolter » (pools du prototype, par groupe de zones ; plafond de 5 par ressource, géré par le monde).
 export const MAT_POOLS: Record<string, { w: Partial<Record<Ressource, number>>; q: Partial<Record<Ressource, [number, number]>> }> = {
@@ -70,7 +70,7 @@ export function reprendreTrouvailles(e: Etat, r: RencontreExploration): boolean 
   return plein;
 }
 /** Le sac et le monde au départ de la sortie (pour la page de retour au ranch). */
-export interface BilanSortie { inventaire: Record<string, number>; ressources: Partial<Record<Ressource, number>>; decouvertes: number[] }
+export type { BilanSortie } from '@/moteur/monde';
 
 export function bilanDepart(e: Etat, m: Monde): BilanSortie {
   const inventaire: Record<string, number> = {};
