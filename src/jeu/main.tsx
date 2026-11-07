@@ -267,6 +267,7 @@ function Jeu() {
           tutoriel={emplacement !== ESSAI && !vrai(chargerMonde(emplacement), 'ranch.tutoriel_vu')}
           surTutorielVu={() => { if (emplacement === ESSAI) return; const m = chargerMonde(emplacement); poser(m, 'ranch.tutoriel_vu'); P.sauverMonde(profil.id, emplacement, m); }}
           ressources={chargerMonde(emplacement).ressources}
+          corvees={chargerMonde(emplacement).corvees}
           surPartir={(e, lieu) => {
             const monde = chargerMonde(emplacement);
             // le village (centre) ou la boutique de Jumpy

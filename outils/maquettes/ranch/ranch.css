@@ -88,7 +88,7 @@ to{transform:translateX(var(--fin))}
 /* lisibilité : les textes posés à même le décor reçoivent un voile sombre ; --ft vaut 1 en plein jour, 0 la nuit */
 .caresse,.crotte .astuce,.pc-couv .astuce,.evt-note,.cote-btn .etiq,.q-titre,.pc-onglet .info,.alerte-evt .astuce{isolation:isolate;padding:1px 10px 3px}
 
-.caresse::before,.crotte .astuce::before,.pc-couv .astuce::before,.evt-note::before,.cote-btn .etiq::before,.q-titre::before,.pc-onglet .info::before,.alerte-evt .astuce::before{content:"";position:absolute;inset:-1px -6px 1px;z-index:-1;border-radius:50%;background:rgba(16,9,3,calc(.84 * var(--ft)));filter:blur(9px);pointer-events:none}
+.caresse::before,.crotte .astuce::before,.pc-couv .astuce::before,.evt-note::before,.cote-btn .etiq::before,.q-titre::before,.pc-onglet .info::before,.alerte-evt .astuce::before{content:"";position:absolute;inset:-1px -6px 1px;z-index:-1;border-radius:50%;background:rgba(16,9,3,.84);opacity:var(--ft);filter:blur(9px);pointer-events:none}
 
 .q-titre{position:relative}
 
@@ -494,9 +494,9 @@ to{translate:0 6px}
 
 .orbite-etat:hover img{transform:scale(1.75)}
 
-.orbite-etat .astuce{position:absolute;left:50%;top:-34px;transform:translate(-50%,4px);white-space:nowrap;font-family:'Reenie Beanie',cursive;font-size:23px;color:#fbf3e2;text-shadow:0 1px 3px rgba(0,0,0,.85);opacity:0;transition:opacity .2s ease,transform .25s ease;pointer-events:none;isolation:isolate;padding:1px 10px 3px}
+.orbite-etat .astuce{position:absolute;left:50%;top:-58px;transform:translate(-50%,4px);white-space:nowrap;font-family:'Reenie Beanie',cursive;font-size:25px;color:#fbf3e2;text-shadow:0 1px 3px rgba(0,0,0,.85);opacity:0;transition:opacity .2s ease,transform .25s ease;pointer-events:none;isolation:isolate;padding:1px 10px 3px}
 
-.orbite-etat .astuce::before{content:"";position:absolute;inset:-1px -6px 1px;z-index:-1;border-radius:50%;background:rgba(16,9,3,calc(.84 * var(--ft)));filter:blur(9px)}
+.orbite-etat .astuce::before{content:"";position:absolute;inset:-4px -10px 0;z-index:-1;border-radius:50%;background:rgba(16,9,3,.84);opacity:var(--ft);filter:blur(8px)}
 
 .orbite-etat:hover .astuce{opacity:1;transform:translate(-50%,-12px)}
 
@@ -542,16 +542,23 @@ to{opacity:0;transform:scale(.6) rotate(2deg)}
 
 .sc-act.k-coucher .sc-fond::before,.sc-act.k-lucioles .sc-fond::before{background:rgba(22,28,80,.82)}
 
+.sc-act.k-mediter .sc-fond::before{background:rgba(70,60,140,.55)}
+
+.sc-act.k-feu .sc-fond::before{background:rgba(120,50,20,.5)}
+
+.sc-act.k-laver .sc-fond::before{background:rgba(120,190,230,.28)}
+
 .sc-sol{position:absolute;left:-10%;right:-10%;bottom:-60px;height:150px;border-radius:50%;background:radial-gradient(ellipse at 50% 30%,rgba(40,30,10,.25),rgba(40,30,10,.1) 60%,transparent 72%)}
 
 .sc-act.g-entrainement .sc-sol,.sc-act.k-coucher .sc-sol,.sc-act.k-lucioles .sc-sol{background:radial-gradient(ellipse at 50% 30%,rgba(0,0,0,.28),transparent 70%)}
 
-.sc-avant{position:absolute;left:386px;top:134px;width:508px;height:372px;border-radius:9px;overflow:hidden;pointer-events:none;filter:var(--ui)}
+.sc-avant{position:absolute;z-index:2;left:386px;top:134px;width:508px;height:372px;border-radius:9px;overflow:hidden;pointer-events:none;filter:var(--ui)}
 
 .sc-act.ferme .sc-avant{animation:fonduOut .3s ease both}
 
 /* l'écho saute dans la fenêtre depuis sa place au ranch, puis en ressort */
-.sc-echo{position:absolute;left:540px;top:270px;width:200px;height:200px;transform-origin:50% 100%;opacity:0;pointer-events:none}
+/* (z-index : la scène de dialogue déclare aussi un .sc-echo, à z-index 9) */
+.sc-echo{position:absolute;z-index:1;bottom:auto;left:540px;top:270px;width:200px;height:200px;transform-origin:50% 100%;opacity:0;pointer-events:none}
 
 .sc-echo img{position:absolute;left:50%;bottom:0;height:170px;width:auto;transform:translateX(-50%)}
 
@@ -578,7 +585,7 @@ to{opacity:0;transform:scale(.6) rotate(2deg)}
 /* accessoires : chacun n'apparaît que pour son action */
 .sc-act .p{display:none;position:absolute;inset:0}
 
-.sc-act.k-laver .p-laver,.sc-act.k-brosser .p-brosser,.sc-act.k-coucher .p-coucher,.sc-act.k-manger .p-manger,.sc-act.k-balle .p-balle,.sc-act.k-cache .p-cache,.sc-act.k-histoire .p-histoire,.sc-act.k-bulles .p-bulles,.sc-act.k-lucioles .p-lucioles,.sc-act.k-corde .p-corde,.sc-act.k-course .p-course,.sc-act.k-saut .p-saut,.sc-act.k-esprit .p-esprit,.sc-act.k-barriere .p-barriere,.sc-act.k-eau .p-eau{display:block}
+.sc-act.k-laver .p-laver,.sc-act.k-brosser .p-brosser,.sc-act.k-coucher .p-coucher,.sc-act.k-manger .p-manger,.sc-act.k-balle .p-balle,.sc-act.k-cache .p-cache,.sc-act.k-histoire .p-histoire,.sc-act.k-discussion .p-discussion,.sc-act.k-rire .p-rire,.sc-act.k-dessin .p-dessin,.sc-act.k-cabane .p-cabane,.sc-act.k-devinette .p-devinette,.sc-act.k-bruits .p-bruits,.sc-act.k-insectes .p-insectes,.sc-act.k-feu .p-feu,.sc-act.k-lecon .p-lecon,.sc-act.k-probleme .p-probleme,.sc-act.k-pierres .p-pierres,.sc-act.k-equilibre .p-equilibre,.sc-act.k-sauter .p-sauter,.sc-act.k-course .p-course,.sc-act.k-mediter .p-mediter,.sc-act.k-ranger .p-ranger,.sc-act.k-barriere .p-barriere,.sc-act.k-poules .p-poules,.sc-act.k-foin .p-foin,.sc-act.k-eau .p-eau,.sc-act.k-corde .p-corde,.sc-act.k-saut .p-saut,.sc-act.k-ciel .p-ciel,.sc-act.k-lucioles .p-lucioles,.sc-act.k-esprit .p-esprit,.sc-act.k-mediter .p-esprit,.sc-act.k-mediter .p-lucioles{display:block}
 
 .sc-act:not(.agit) .p *{animation-play-state:paused !important;opacity:0}
 
@@ -591,9 +598,17 @@ to{opacity:0;transform:scale(.6) rotate(2deg)}
 
 .sc-act.agit.k-coucher .sc-anim{animation:scDort 2.6s ease-in-out infinite}
 
-.sc-act.agit.k-manger .sc-anim{animation:scMange .35s ease-in-out .6s infinite alternate}
+.sc-act.agit.k-manger .sc-anim{animation:scMange .32s ease-in-out .55s infinite alternate}
 
-.sc-act.agit.k-balle .sc-anim,.sc-act.agit.k-bulles .sc-anim,.sc-act.agit.k-lucioles .sc-anim{animation:scBond 1.1s cubic-bezier(.3,0,.6,1) infinite}
+.sc-act.agit.k-balle .sc-anim{animation:scTete 1.1s cubic-bezier(.3,0,.6,1) infinite}
+
+@keyframes scTete{0%,100%{transform:scale(1.08,.9)}
+10%{transform:scale(.95,1.06)}
+45%{transform:translateY(-55px) rotate(-4deg)}
+80%{transform:translateY(0) scale(1.05,.94)}
+}
+
+.sc-act.agit.k-bulles .sc-anim,.sc-act.agit.k-lucioles .sc-anim{animation:scBond 1.1s cubic-bezier(.3,0,.6,1) infinite}
 
 .sc-act.agit.k-saut .sc-anim{animation:scHaut 1.1s cubic-bezier(.3,0,.6,1) infinite}
 
@@ -607,7 +622,66 @@ to{opacity:0;transform:scale(.6) rotate(2deg)}
 
 .sc-act.agit.k-esprit .sc-anim{animation:scMedite 2.8s ease-in-out infinite}
 
-.sc-act.agit.k-barriere .sc-anim{animation:scEffort .65s ease-in-out infinite}
+.sc-act.agit.k-barriere .sc-anim,.sc-act.agit.k-ranger .sc-anim{animation:scEffort .65s ease-in-out infinite}
+
+.sc-act.agit.k-pierres .sc-anim{animation:scSouleve 1.3s ease-in-out infinite}
+
+.sc-act.agit.k-equilibre .sc-anim{animation:scBalance 1.8s ease-in-out infinite;transform-origin:50% 92%}
+
+.sc-act.agit.k-sauter .sc-anim{animation:scHautPlace .9s cubic-bezier(.3,0,.6,1) infinite}
+
+.sc-act.agit.k-mediter .sc-anim{animation:scLevite 3s ease-in-out infinite}
+
+.sc-act.agit.k-probleme .sc-anim,.sc-act.agit.k-lecon .sc-anim,.sc-act.agit.k-dessin .sc-anim,.sc-act.agit.k-devinette .sc-anim{animation:scReflechit 2.2s ease-in-out infinite}
+
+.sc-act.agit.k-discussion .sc-anim,.sc-act.agit.k-bruits .sc-anim,.sc-act.agit.k-ciel .sc-anim,.sc-act.agit.k-feu .sc-anim{animation:scEcoute 2.4s ease-in-out infinite}
+
+.sc-act.agit.k-rire .sc-anim{animation:scRire .34s ease-in-out infinite alternate}
+
+.sc-act.agit.k-insectes .sc-anim,.sc-act.agit.k-cabane .sc-anim{animation:scBond 1.1s cubic-bezier(.3,0,.6,1) infinite}
+
+.sc-act.agit.k-poules .sc-anim{animation:scPoursuit 2.4s ease-in-out infinite}
+
+.sc-act.agit.k-foin .sc-anim{animation:scPorteFoin 1.6s ease-in-out infinite}
+
+.sc-act.agit.k-balade .sc-anim{animation:scCourt .5s ease-in-out infinite alternate}
+
+@keyframes scSouleve{0%,100%{transform:scale(1.06,.92)}
+45%,60%{transform:translateY(-6px) scale(.97,1.05)}
+}
+
+@keyframes scBalance{0%,100%{transform:translateY(-34px) rotate(-9deg)}
+50%{transform:translateY(-34px) rotate(9deg)}
+}
+
+@keyframes scHautPlace{0%,100%{transform:scale(1.1,.88)}
+15%{transform:scale(.92,1.1)}
+45%{transform:translateY(-130px) scale(.98,1.03)}
+85%{transform:translateY(0) scale(1.06,.92)}
+}
+
+@keyframes scLevite{0%,100%{transform:translateY(-10px)}
+50%{transform:translateY(-26px) scale(1.02)}
+}
+
+@keyframes scReflechit{0%,100%{transform:rotate(-4deg)}
+30%{transform:rotate(5deg) translateY(-2px)}
+60%{transform:rotate(-2deg) translateY(-6px)}
+}
+
+@keyframes scRire{from{transform:rotate(-5deg) scale(1.03,.97)}
+to{transform:rotate(5deg) translateY(-6px)}
+}
+
+@keyframes scPoursuit{0%,100%{transform:translateX(-120px) scaleX(1)}
+45%{transform:translateX(120px) scaleX(1)}
+50%{transform:translateX(120px) scaleX(-1)}
+95%{transform:translateX(-120px) scaleX(-1)}
+}
+
+@keyframes scPorteFoin{0%,100%{transform:translateX(-60px)}
+50%{transform:translateX(60px) translateY(-4px)}
+}
 
 @keyframes scSecoue{0%,55%,100%{transform:none}
 62%{transform:rotate(-7deg) scaleX(1.05)}
@@ -673,37 +747,37 @@ to{transform:translateY(-10px) rotate(3deg) scale(.98,1.02)}
 }
 
 /* laver : le seau se renverse, l'eau tombe, ça éclabousse */
-.seau-s{position:absolute;left:150px;top:-12px;width:100px;transform-origin:70% 80%;animation:scSeau 1.2s ease-out both}
+.seau-s{position:absolute;left:150px;top:-10px;width:92px;transform-origin:80% 85%;filter:drop-shadow(0 4px 4px rgba(30,14,4,.4));animation:scSeau 1.2s ease-out both}
 
-@keyframes scSeau{0%{transform:translateY(-60px) rotate(0)}
-40%{transform:translateY(0) rotate(0)}
-100%{transform:rotate(-115deg)}
+@keyframes scSeau{0%{transform:translate(-80px,-90px) rotate(0)}
+40%{transform:translate(0,0) rotate(0)}
+100%{transform:rotate(128deg)}
 }
 
-.goutte{position:absolute;top:60px;width:9px;height:16px;border-radius:50% 50% 50% 50%/60% 60% 40% 40%;background:linear-gradient(180deg,#d8f2ff,#6fb7e6);box-shadow:0 0 0 1.5px rgba(30,70,110,.55);animation:scGoutte .7s linear infinite}
+.goutte{position:absolute;top:70px;width:12px;height:20px;border-radius:50% 50% 50% 50%/60% 60% 40% 40%;background:linear-gradient(180deg,#d8f2ff,#6fb7e6);box-shadow:0 0 0 1.5px rgba(30,70,110,.55);animation:scGoutte .7s linear .9s infinite both}
 
 @keyframes scGoutte{0%{transform:translateY(0);opacity:0}
 10%{opacity:1}
 100%{transform:translateY(250px);opacity:.9}
 }
 
-.eclabousse{position:absolute;left:190px;top:310px;width:130px;height:30px;border-radius:50%;border:3px solid rgba(110,180,230,.8);animation:scRide 1s ease-out infinite}
+.eclabousse{position:absolute;left:180px;top:318px;width:150px;height:30px;border-radius:50%;border:3px solid rgba(110,180,230,.8);animation:scRide 1s ease-out .9s infinite both}
 
 @keyframes scRide{from{transform:scale(.4);opacity:1}
 to{transform:scale(1.4);opacity:0}
 }
 
 /* brosser : la brosse passe et repasse, quelques poils s'envolent */
-.brosse{position:absolute;left:170px;top:150px;animation:scBrosse .9s ease-in-out infinite}
+.brosse-i{position:absolute;left:204px;top:226px;width:92px;height:auto;filter:drop-shadow(0 4px 4px rgba(30,14,4,.4));animation:scBrosse 1s ease-in-out infinite}
 
-@keyframes scBrosse{0%,100%{transform:translateX(-30px) rotate(-12deg)}
-50%{transform:translateX(90px) rotate(6deg)}
+@keyframes scBrosse{0%,100%{transform:translate(-56px,10px) rotate(-16deg)}
+50%{transform:translate(64px,-8px) rotate(12deg)}
 }
 
-.poil{position:absolute;top:210px;width:10px;height:10px;border-radius:50%;background:#f3e4c8;box-shadow:0 0 0 1.5px rgba(58,31,14,.5);animation:scPoil 1.5s ease-out infinite}
+.poil{position:absolute;top:226px;width:9px;height:9px;border-radius:50% 50% 50% 0;background:#f3e4c8;box-shadow:0 0 0 1.5px rgba(58,31,14,.45);animation:scPoil 1.5s ease-out infinite both}
 
 @keyframes scPoil{from{transform:none;opacity:1}
-to{transform:translate(30px,-90px) scale(.6);opacity:0}
+to{transform:translate(40px,-110px) rotate(200deg) scale(.6);opacity:0}
 }
 
 /* coucher */
@@ -717,39 +791,43 @@ to{transform:translate(40px,-110px);opacity:0}
 }
 
 /* manger : l'aliment tombe devant lui et diminue à chaque bouchée */
-.aliment-s{position:absolute;left:150px;top:236px;width:70px;height:70px;object-fit:contain;filter:drop-shadow(0 3px 3px rgba(30,14,4,.4));animation:scAliment 3.3s ease-in both}
+.aliment-s{position:absolute;left:219px;top:232px;width:70px;height:70px;object-fit:contain;filter:drop-shadow(0 3px 3px rgba(30,14,4,.4));animation:scAliment 3.3s ease-in both}
 
-@keyframes scAliment{0%{transform:translateY(-200px) rotate(-20deg)}
-16%{transform:translateY(0) rotate(0)}
-20%{transform:translateY(-8px)}
+@keyframes scAliment{0%{transform:translateY(-260px) rotate(-25deg);opacity:0}
+6%{opacity:1}
+16%{transform:translateY(0) rotate(0) scale(1.08,.88)}
+20%{transform:translateY(-12px) scale(.96,1.05)}
 24%{transform:none}
-40%{transform:scale(.8)}
-58%{transform:scale(.6) rotate(8deg)}
-76%{transform:scale(.35)}
-92%,100%{transform:scale(0);opacity:0}
+36%{transform:scale(.82) rotate(-6deg)}
+52%{transform:scale(.62) rotate(8deg)}
+70%{transform:scale(.4) rotate(-4deg)}
+86%,100%{transform:scale(0);opacity:0}
 }
 
-.miette{position:absolute;left:200px;top:280px;width:7px;height:7px;border-radius:2px;background:#c8955a;animation:scMiette .7s ease-out .7s infinite}
+.miette{position:absolute;left:252px;top:262px;width:7px;height:7px;border-radius:2px;background:#c8955a;box-shadow:0 0 0 1px rgba(58,31,14,.4);animation:scMiette .8s ease-out .8s infinite both}
 
 @keyframes scMiette{from{transform:none;opacity:1}
-to{transform:translate(var(--mx),70px) rotate(90deg);opacity:0}
+to{transform:translate(var(--mx),78px) rotate(120deg);opacity:0}
 }
 
 /* balle */
-.balle-s{position:absolute;left:0;top:0;animation:scBalle 2.2s ease-in-out infinite}
+.balle-i{position:absolute;left:0;top:0;width:58px;height:auto;filter:drop-shadow(0 4px 3px rgba(30,14,4,.35));animation:scBalle 2.2s ease-in-out infinite}
 
-@keyframes scBalle{0%{transform:translate(20px,250px)}
-25%{transform:translate(130px,60px)}
-50%{transform:translate(240px,120px)}
-75%{transform:translate(350px,40px)}
-100%{transform:translate(440px,250px)}
+@keyframes scBalle{0%{transform:translate(-70px,120px) rotate(0)}
+25%{transform:translate(225px,58px) rotate(200deg)}
+40%{transform:translate(330px,-30px) rotate(320deg)}
+50%{transform:translate(520px,110px) rotate(400deg)}
+50.01%{transform:translate(560px,120px) rotate(0)}
+75%{transform:translate(225px,58px) rotate(-200deg)}
+90%{transform:translate(100px,-30px) rotate(-320deg)}
+100%{transform:translate(-70px,120px) rotate(-400deg)}
 }
 
 /* cache-cache : deux buissons devant lui */
-.buisson{position:absolute;bottom:-8px}
+.buisson{position:absolute;top:226px;width:190px;height:auto;filter:drop-shadow(0 6px 5px rgba(30,14,4,.35))}
 
 .b-g{left:24px}
-.b-d{left:300px}
+.b-d{left:300px;transform:scaleX(-1)}
 
 .sc-act.agit .buisson{animation:scBuisson 3.4s ease-in-out both}
 
@@ -758,7 +836,7 @@ to{transform:translate(var(--mx),70px) rotate(90deg);opacity:0}
 }
 
 /* histoire */
-.livre-s{position:absolute;left:40px;top:252px}
+.livre-i{position:absolute;left:24px;top:248px;width:150px;height:auto;filter:drop-shadow(0 6px 5px rgba(30,14,4,.35))}
 
 .feuille-t{transform-box:fill-box;transform-origin:0 50%;animation:scFeuille 1.4s ease-in-out infinite}
 
@@ -835,7 +913,7 @@ to{transform:rotate(6deg) translateY(-6px)}
 }
 
 /* feuille volante : arrachée du carnet, elle se pose sur le coin de la fenêtre */
-.sc-note{position:absolute;left:800px;top:372px;width:280px;padding:26px 24px 18px;box-sizing:border-box;cursor:pointer;color:#2b2118;background:repeating-linear-gradient(0deg,transparent 0 27px,rgba(122,90,58,.14) 27px 28px),linear-gradient(170deg,#fbf4e3,#efe2c6);filter:var(--ui) drop-shadow(0 10px 14px rgba(20,10,4,.45));clip-path:polygon(0 6%,6% 2%,12% 5%,19% 1%,27% 4%,35% 0,43% 4%,51% 1%,60% 5%,68% 1%,76% 4%,84% 0,92% 4%,100% 2%,100% 100%,0 100%);transform:rotate(4deg);transform-origin:50% 0;animation:scNote .6s cubic-bezier(.3,1.3,.5,1) both}
+.sc-note{position:absolute;z-index:3;left:800px;top:372px;width:280px;padding:26px 24px 18px;box-sizing:border-box;cursor:pointer;color:#2b2118;background:repeating-linear-gradient(0deg,transparent 0 27px,rgba(122,90,58,.14) 27px 28px),linear-gradient(170deg,#fbf4e3,#efe2c6);filter:var(--ui) drop-shadow(0 10px 14px rgba(20,10,4,.45));clip-path:polygon(0 6%,6% 2%,12% 5%,19% 1%,27% 4%,35% 0,43% 4%,51% 1%,60% 5%,68% 1%,76% 4%,84% 0,92% 4%,100% 2%,100% 100%,0 100%);transform:rotate(4deg);transform-origin:50% 0;animation:scNote .6s cubic-bezier(.3,1.3,.5,1) both}
 
 @keyframes scNote{from{opacity:0;transform:translate(90px,-120px) rotate(18deg)}
 60%{opacity:1;transform:translate(-6px,6px) rotate(1deg)}
@@ -1518,3 +1596,370 @@ to{transform:translateX(0)}
 
 .sortie{position:absolute;inset:0;background:radial-gradient(ellipse at 50% 60%,rgba(20,12,6,.25),rgba(20,12,6,.88));display:flex;align-items:center;justify-content:center;animation:evtIn .5s ease both;pointer-events:none;z-index:990}
 
+
+.mousse{position:absolute;height:auto;opacity:0;filter:drop-shadow(0 0 4px rgba(255,255,255,.9));animation:scMousse 1.8s ease-out infinite both}
+
+@keyframes scMousse{0%{opacity:0;transform:scale(.3)}
+20%{opacity:.95;transform:scale(1)}
+100%{opacity:0;transform:translate(14px,-90px) scale(1.15)}
+}
+
+.eclat-b{position:absolute;width:18px;height:18px;background:#fff6d6;clip-path:polygon(50% 0,62% 38%,100% 50%,62% 62%,50% 100%,38% 62%,0 50%,38% 38%);filter:drop-shadow(0 0 6px rgba(255,230,160,.95));animation:scEclat 1.8s ease-in-out infinite both}
+
+@keyframes scEclat{0%,100%{transform:scale(0) rotate(0);opacity:0}
+40%{transform:scale(1.1) rotate(45deg);opacity:1}
+70%{transform:scale(.6) rotate(90deg);opacity:.6}
+}
+
+.page-t{position:absolute;left:99px;top:258px;width:62px;height:76px;border-radius:2px 8px 8px 2px;background:linear-gradient(90deg,#efe2c6,#f8f0de);box-shadow:0 0 0 1.5px rgba(58,31,14,.6);transform-origin:0 50%;animation:scPage 1.6s ease-in-out infinite}
+
+@keyframes scPage{0%,25%{transform:perspective(300px) rotateY(0)}
+75%,100%{transform:perspective(300px) rotateY(-175deg)}
+}
+
+.etoile-h{position:absolute;top:230px;font-size:24px;color:#ffe9a8;text-shadow:0 0 8px rgba(255,220,140,.95);animation:scEtoileH 2.4s ease-out infinite both}
+
+@keyframes scEtoileH{from{transform:translate(0,0) scale(.4);opacity:0}
+25%{opacity:1}
+to{transform:translate(90px,-150px) scale(1.2) rotate(90deg);opacity:0}
+}
+
+/* discussion : des paroles échangées */
+.parole{position:absolute;width:76px;height:auto;filter:drop-shadow(0 6px 6px rgba(30,14,4,.35));animation:scParole 2.4s ease-in-out infinite both}
+
+.p-g{left:40px;top:70px}
+
+.p-d{left:340px;top:56px;animation-delay:1.2s}
+
+@keyframes scParole{0%,100%{transform:scale(0);opacity:0}
+12%,45%{transform:scale(1);opacity:1}
+55%{transform:scale(.6);opacity:0}
+}
+
+.ha{position:absolute;font-family:'Reenie Beanie',cursive;font-size:34px;color:#fff6dc;text-shadow:0 0 2px #3a1f0e,0 2px 6px rgba(0,0,0,.6);animation:scHa 2s ease-out infinite both}
+
+@keyframes scHa{0%{transform:scale(.3) rotate(-8deg);opacity:0}
+20%{transform:scale(1.1) rotate(4deg);opacity:1}
+70%{opacity:1}
+100%{transform:translateY(-40px) rotate(-4deg);opacity:0}
+}
+
+/* tableau : dessin, leçon, problème */
+.tableau-i{position:absolute;left:16px;top:120px;width:140px;height:auto;filter:drop-shadow(0 6px 6px rgba(30,14,4,.35))}
+
+.craie-s{position:absolute;left:52px;top:150px}
+
+.craie-s path{stroke-dasharray:100;stroke-dashoffset:100;animation:scCraie 2.6s ease-in-out infinite}
+
+@keyframes scCraie{0%{stroke-dashoffset:100}
+60%,90%{stroke-dashoffset:0}
+100%{stroke-dashoffset:0;opacity:0}
+}
+
+.craie-t{position:absolute;left:70px;top:146px;font-family:'Reenie Beanie',cursive;font-size:56px;line-height:1;color:#f4f1e6}
+
+.craie-t.q{animation:scQ 3.2s ease-in-out infinite both}
+
+.craie-t.r{animation:scR 3.2s ease-in-out infinite both}
+
+@keyframes scQ{0%,45%{opacity:1}
+55%,100%{opacity:0}
+}
+
+@keyframes scR{0%,50%{opacity:0;transform:scale(.4)}
+60%{opacity:1;transform:scale(1.25)}
+70%,100%{opacity:1;transform:none}
+}
+
+.devine{position:absolute;left:300px;top:120px;font-family:'Alegreya SC',serif;font-weight:700;font-size:40px;color:#fff6dc;text-shadow:0 0 2px #3a1f0e,0 0 10px rgba(255,220,140,.8);animation:scDevine 2.6s ease-out infinite both}
+
+.devine.d2{left:340px;top:150px;animation-delay:.5s;font-size:30px}
+
+.devine.d3{left:320px;top:100px;animation-delay:1.4s;font-size:48px;color:#ffe27a}
+
+@keyframes scDevine{0%{transform:translateY(20px) scale(.3);opacity:0}
+20%{transform:none;opacity:1}
+70%{opacity:1}
+100%{transform:translateY(-30px);opacity:0}
+}
+
+/* cabane : les planches s'empilent, l'abri apparaît */
+.bois-c{position:absolute;left:350px;width:110px;height:auto;filter:drop-shadow(0 4px 4px rgba(30,14,4,.35));animation:scBoisC 3.3s ease-out both}
+
+.bois-c.c1{top:290px}
+
+.bois-c.c2{top:262px;animation-delay:.4s}
+
+.bois-c.c3{top:234px;animation-delay:.8s}
+
+@keyframes scBoisC{0%{transform:translateY(-240px) rotate(-20deg);opacity:0}
+14%{opacity:1}
+26%{transform:none}
+70%{transform:none;opacity:1}
+85%,100%{opacity:0}
+}
+
+.abri-c{position:absolute;left:330px;top:210px;width:150px;height:auto;filter:drop-shadow(0 6px 6px rgba(30,14,4,.35));animation:scAbri 3.3s ease-out both}
+
+@keyframes scAbri{0%,70%{opacity:0;transform:scale(.5)}
+82%{opacity:1;transform:scale(1.1)}
+100%{opacity:1;transform:none}
+}
+
+/* bruits de la nature : des notes qui passent */
+.note-m{position:absolute;top:250px;font-size:46px;color:#fff6dc;text-shadow:0 0 2px #3a1f0e,0 0 10px rgba(255,230,160,.7);animation:scNoteM 3s ease-in-out infinite both}
+
+@keyframes scNoteM{0%{transform:translate(0,0) rotate(-10deg);opacity:0}
+20%{opacity:1}
+50%{transform:translate(20px,-80px) rotate(10deg)}
+100%{transform:translate(-10px,-180px) rotate(-10deg);opacity:0}
+}
+
+/* insectes : des lucioles à attraper */
+.insecte{position:absolute;width:44px;height:auto;filter:drop-shadow(0 0 8px rgba(255,230,120,.9));animation:scInsecte 2.6s ease-in-out infinite}
+
+.insecte.i1{left:110px;top:120px}
+
+.insecte.i2{left:360px;top:90px;animation-delay:-.9s;animation-duration:3.1s}
+
+.insecte.i3{left:250px;top:40px;animation-delay:-1.6s;animation-duration:2.2s}
+
+@keyframes scInsecte{0%,100%{transform:translate(0,0) rotate(-8deg)}
+25%{transform:translate(40px,-30px) rotate(10deg)}
+50%{transform:translate(-20px,-50px) rotate(-12deg)}
+75%{transform:translate(-40px,10px) rotate(6deg)}
+}
+
+/* feu de camp */
+.feu-i{position:absolute;left:56px;top:216px;width:96px;height:auto;transform-origin:50% 100%;filter:drop-shadow(0 0 18px rgba(255,160,60,.9));animation:scFlamme .5s ease-in-out infinite alternate}
+
+@keyframes scFlamme{from{transform:scale(1,1) skewX(-2deg)}
+to{transform:scale(.94,1.08) skewX(3deg)}
+}
+
+.etincelle{position:absolute;top:230px;width:5px;height:5px;border-radius:50%;background:#ffd36e;box-shadow:0 0 6px 2px rgba(255,170,60,.9);animation:scEtincelle 1.6s ease-out infinite both}
+
+@keyframes scEtincelle{from{transform:none;opacity:1}
+to{transform:translate(var(--ex),-150px);opacity:0}
+}
+
+/* entraînements */
+.pierre-i{position:absolute;left:204px;top:96px;width:100px;height:auto;filter:drop-shadow(0 6px 5px rgba(30,14,4,.4));animation:scPierre 1.3s ease-in-out infinite}
+
+@keyframes scPierre{0%,100%{transform:translateY(40px) rotate(-3deg)}
+45%,60%{transform:translateY(-22px) rotate(3deg)}
+}
+
+.sueur{position:absolute;left:246px;top:190px;width:16px;height:auto;opacity:0;animation:scSueur 1.8s ease-out infinite both}
+
+@keyframes scSueur{0%{transform:translate(0,0) scale(.5);opacity:0}
+15%{opacity:1}
+100%{transform:translate(var(--sx),50px) scale(1);opacity:0}
+}
+
+.buche-e{position:absolute;left:174px;top:296px;width:160px;height:auto;filter:drop-shadow(0 6px 4px rgba(30,14,4,.4))}
+
+.poussiere{position:absolute;top:322px;width:22px;height:22px;border-radius:50%;background:rgba(214,190,150,.85);filter:blur(1px);animation:scPoussiere .9s ease-out infinite both}
+
+@keyframes scPoussiere{0%{transform:scale(.3);opacity:0}
+15%{opacity:.9}
+100%{transform:translate(0,-14px) scale(2);opacity:0}
+}
+
+.aura{display:none}
+
+/* méditer : une aura derrière lui (dans la couche de l'écho, sous son image) */
+.sc-act.agit.k-mediter .sc-echo::before{content:"";position:absolute;left:-10px;top:-6px;width:220px;height:220px;border-radius:50%;background:radial-gradient(circle,rgba(200,190,255,.55),rgba(150,130,255,.18) 45%,transparent 70%);animation:scAura 3s ease-in-out infinite}
+
+@keyframes scAura{0%,100%{transform:scale(.9);opacity:.7}
+50%{transform:scale(1.15);opacity:1}
+}
+
+/* corvées */
+.caisse{position:absolute;left:372px;top:262px;width:100px;height:74px;border-radius:4px;background:repeating-linear-gradient(0deg,#a8723e 0 22px,#8a5530 22px 25px);box-shadow:inset 0 0 0 3px #3a1f0e,0 6px 6px rgba(30,14,4,.35)}
+
+.objet-r{position:absolute;left:30px;top:270px;width:52px;height:auto;filter:drop-shadow(0 3px 3px rgba(30,14,4,.4));animation:scRange 3.2s ease-in-out both}
+
+.objet-r.o2{animation-delay:.6s}
+
+.objet-r.o3{animation-delay:1.2s}
+
+.objet-r.o4{animation-delay:1.8s}
+
+@keyframes scRange{0%{transform:none;opacity:0}
+8%{opacity:1}
+28%{transform:translate(180px,-160px) rotate(180deg)}
+45%{transform:translate(370px,-10px) rotate(340deg);opacity:1}
+52%,100%{transform:translate(370px,10px) rotate(360deg) scale(.6);opacity:0}
+}
+
+.barriere-i{position:absolute;left:336px;top:206px;width:150px;height:auto;filter:drop-shadow(0 6px 5px rgba(30,14,4,.35))}
+
+.planche-i{position:absolute;left:350px;top:252px;width:110px;height:auto;animation:scPlanche 3.2s ease-out both}
+
+@keyframes scPlanche{0%{transform:translate(-160px,-60px) rotate(-30deg);opacity:0}
+20%{opacity:1}
+40%,100%{transform:none}
+}
+
+.marteau-i{position:absolute;left:420px;top:180px;width:62px;height:auto;transform-origin:20% 90%;animation:scMarteau .65s ease-in infinite}
+
+.choc{position:absolute;left:410px;top:256px;width:30px;height:30px;border-radius:50%;border:3px solid rgba(255,240,200,.9);animation:scRide .65s ease-out .35s infinite both}
+
+.poule-i{position:absolute;top:262px;width:72px;height:auto;filter:drop-shadow(0 4px 3px rgba(30,14,4,.35));animation:scPoule 2.4s ease-in-out infinite}
+
+.poule-i.q1{left:40px}
+
+.poule-i.q2{left:380px;animation-delay:-1.2s;width:60px;top:272px}
+
+@keyframes scPoule{0%,100%{transform:translateX(0) scaleX(-1) translateY(0)}
+10%,30%{transform:translateX(30px) scaleX(-1) translateY(-14px)}
+45%{transform:translateX(70px) scaleX(-1)}
+50%{transform:translateX(70px) scaleX(1)}
+60%,80%{transform:translateX(30px) scaleX(1) translateY(-14px)}
+95%{transform:translateX(0) scaleX(1)}
+}
+
+.gerbe-porte{position:absolute;left:204px;top:110px;width:100px;height:auto;filter:drop-shadow(0 6px 5px rgba(30,14,4,.4));animation:scPorteFoin 1.6s ease-in-out infinite}
+
+.gerbe-tas{position:absolute;left:400px;width:80px;height:auto;opacity:0;animation:scTas 3.3s ease-out both;filter:drop-shadow(0 4px 4px rgba(30,14,4,.35))}
+
+.gerbe-tas.t1{top:270px;animation-delay:.4s}
+
+.gerbe-tas.t2{top:250px;left:420px;animation-delay:1.4s}
+
+.gerbe-tas.t3{top:224px;left:408px;animation-delay:2.4s}
+
+@keyframes scTas{0%{opacity:0;transform:translateY(-40px)}
+20%,100%{opacity:1;transform:none}
+}
+
+.seau-porte{position:absolute;left:296px;top:222px;width:74px;height:auto;transform-origin:50% 0;filter:drop-shadow(0 4px 4px rgba(30,14,4,.4));animation:scPorte .56s ease-in-out infinite alternate}
+
+.goutte-e{position:absolute;left:330px;top:300px;width:8px;height:12px;border-radius:50% 50% 50% 50%/60% 60% 40% 40%;background:#8fd0f4;box-shadow:0 0 0 1.5px rgba(30,70,110,.5);animation:scGoutteE 1.4s ease-in infinite both}
+
+@keyframes scGoutteE{0%{transform:none;opacity:1}
+100%{transform:translate(var(--gx,-10px),40px);opacity:0}
+}
+
+/* ciel : des nuages passent, il les regarde */
+.nuage-s{position:absolute;left:0;width:180px;height:auto;opacity:.95;animation:scNuage 6s linear infinite}
+
+@keyframes scNuage{from{transform:translateX(540px)}
+to{transform:translateX(-200px)}
+}
+
+/* balade : le décor défile doucement */
+.sc-act.k-balade .sc-fond{background-size:140% auto}
+
+.sc-act.agit.k-balade .sc-fond{animation:scDefile 3.4s linear both}
+
+@keyframes scDefile{from{background-position:30% 78%}
+to{background-position:70% 78%}
+}
+
+/* corvées : chaque essai, réussi ou manqué */
+.essais{position:absolute;left:0;right:0;top:14px;display:flex;justify-content:center;gap:6px}
+
+.essai{width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Alegreya SC',serif;font-weight:700;font-size:16px;color:#fbf3e2;box-shadow:0 0 0 2px #3a1f0e,0 3px 5px rgba(30,14,4,.35);opacity:0;animation:scEssai .35s cubic-bezier(.3,1.6,.5,1) both}
+
+.essai.ok{background:#3f7a3a}
+
+.essai.rate{background:#9c3b2a}
+
+.sc-act:not(.agit) .essai{animation-play-state:paused}
+
+@keyframes scEssai{from{opacity:0;transform:scale(.2)}
+to{opacity:1;transform:none}
+}
+
+/* ce qui a progressé : une pluie de lueurs dorées autour de lui */
+.gain-lueur{display:none;position:absolute;inset:0}
+
+.sc-act.gagne.note .gain-lueur{display:block}
+
+.scintille{position:absolute;width:14px;height:14px;background:#ffe9a0;clip-path:polygon(50% 0,62% 38%,100% 50%,62% 62%,50% 100%,38% 62%,0 50%,38% 38%);filter:drop-shadow(0 0 6px rgba(255,214,120,1));animation:scScintille 1.6s ease-out infinite both}
+
+@keyframes scScintille{0%{transform:scale(0);opacity:0}
+30%{transform:scale(1.2) rotate(45deg);opacity:1}
+100%{transform:translateY(-60px) scale(.3) rotate(120deg);opacity:0}
+}
+
+.sc-act.gagne.note .sc-echo img{filter:drop-shadow(0 0 14px rgba(255,214,120,.9))}
+
+.sn-gains{display:flex;flex-wrap:wrap;gap:6px 10px;margin-top:8px;padding-top:6px;border-top:1px dashed rgba(122,90,58,.45)}
+
+.sn-gain{display:inline-flex;align-items:baseline;gap:4px;padding:1px 9px 2px;border-radius:12px;font-family:'Alegreya SC',serif;font-weight:700;font-size:14px;letter-spacing:1px;color:#3f5a1e;background:rgba(255,226,140,.45);box-shadow:0 0 0 1.5px rgba(122,90,58,.5),0 0 12px rgba(255,214,120,.8);animation:snGain .6s cubic-bezier(.3,1.6,.5,1) both}
+
+.sn-gain b{font-family:'Alegreya',serif;font-size:17px;color:#3f7a3a;letter-spacing:-1px}
+
+@keyframes snGain{from{opacity:0;transform:scale(.4) translateY(8px)}
+to{opacity:1;transform:none}
+}
+
+/* l'émotion du moment : une lueur derrière, teintée selon ce qu'il ressent */
+.emo-halo{position:absolute;left:-26px;top:-26px;width:116px;height:116px;border-radius:50%;background:radial-gradient(circle,rgba(255,252,240,.95) 0,rgba(var(--lueur-emo),.85) 30%,rgba(var(--lueur-emo),.35) 52%,transparent 70%);animation:emoHalo 1.6s ease-in-out infinite}
+
+.emo-rayons{position:absolute;left:-30px;top:-30px;width:124px;height:124px;border-radius:50%;background:repeating-conic-gradient(rgba(var(--lueur-emo),.55) 0 7deg,transparent 7deg 30deg);-webkit-mask:radial-gradient(circle,transparent 30%,#000 42%,transparent 70%);mask:radial-gradient(circle,transparent 30%,#000 42%,transparent 70%);animation:emoRayons 6s linear infinite}
+
+.emo-flotte img{position:relative}
+
+@keyframes emoHalo{0%,100%{transform:scale(.92);opacity:.85}
+50%{transform:scale(1.08);opacity:1}
+}
+
+@keyframes emoRayons{to{transform:rotate(360deg)}
+}
+
+/* fiche de l'écho : onglets, tempérament, combat */
+.fe-onglets{position:relative;display:flex;gap:4px;margin:2px 0 6px;border-bottom:1.5px solid rgba(58,31,14,.55)}
+
+.fe-onglet{position:relative;top:1.5px;padding:4px 12px 3px;border:none;border-radius:6px 6px 0 0;cursor:pointer;font-family:'Alegreya SC',serif;font-weight:700;font-size:13px;letter-spacing:1px;color:#f3e3c4;background:linear-gradient(180deg,#8a5530,#6e3f22);box-shadow:inset 0 0 0 1.5px #3a1f0e;transition:transform .15s ease,filter .15s ease}
+
+.fe-onglet:hover{transform:translateY(-2px);filter:brightness(1.12)}
+
+.fe-onglet.ici{color:#2b2118;background:#f4ead6;box-shadow:inset 0 0 0 1.5px #3a1f0e,0 -3px 10px rgba(255,214,140,.55);border-bottom:1.5px solid #f4ead6}
+
+.fe-intro{position:relative;margin:0 0 4px;font-family:'Reenie Beanie',cursive;font-size:21px;line-height:1.05;color:#6b4f33}
+
+.fe-glyphe{display:block;flex:none;width:22px;height:22px;background:var(--c);-webkit-mask:var(--g) center/contain no-repeat;mask:var(--g) center/contain no-repeat;filter:drop-shadow(0 0 5px var(--l))}
+
+.fe-dominant{display:flex;align-items:center;gap:8px;margin-top:8px;padding:4px 8px;border-radius:5px;font-family:'Alegreya SC',serif;font-weight:700;font-size:13px;letter-spacing:1px;color:var(--c);background:rgba(255,246,220,.6);box-shadow:inset 0 0 0 1px rgba(122,90,58,.35)}
+
+.ft-ligne{position:relative;display:grid;grid-template-columns:24px 112px 48px 1fr;align-items:center;gap:8px;padding:4px 6px;border-bottom:1px dashed rgba(122,90,58,.25)}
+
+.ft-nom{font-family:'Alegreya SC',serif;font-weight:700;font-size:13.5px;letter-spacing:1px;color:var(--c)}
+
+.ft-points{display:flex;gap:4px}
+
+.ft-points i{width:11px;height:11px;border-radius:50%;box-shadow:inset 0 0 0 1.5px rgba(58,31,14,.45)}
+
+.ft-points i.plein{background:var(--c);box-shadow:inset 0 0 0 1.5px rgba(58,31,14,.6),0 0 6px var(--l)}
+
+.ft-trait{font-size:14.5px;font-style:italic;color:#5a4632;white-space:nowrap}
+
+.ft-ligne.absent{opacity:.62}
+
+.ft-ligne.dominant{background:linear-gradient(90deg,rgba(255,236,190,.65),transparent)}
+
+.fc-ligne{position:relative;display:grid;grid-template-columns:96px 1fr 92px 30px;align-items:center;gap:8px;padding:5px 6px;border-bottom:1px dashed rgba(122,90,58,.25)}
+
+.fc-nom{font-family:'Alegreya SC',serif;font-weight:700;font-size:13.5px;letter-spacing:1px;color:#4a3524}
+
+.fc-jauge{display:flex;gap:2px;height:12px;padding:2px;border-radius:4px;background:rgba(58,31,14,.12);box-shadow:inset 0 0 0 1px rgba(58,31,14,.35)}
+
+.fc-jauge i{flex:1;border-radius:2px;background:transparent}
+
+.fc-jauge i.plein{background:linear-gradient(180deg,#c99a55,#8a5530);box-shadow:inset 0 0 0 1px rgba(58,31,14,.35)}
+
+.fc-mot{font-weight:500;font-size:15px;font-style:italic;text-align:right;color:#2b2118}
+
+.fc-fleche{font-size:21px;line-height:1;font-weight:700;letter-spacing:-3px;color:#3f7a3a;text-shadow:0 0 6px rgba(255,214,120,.9)}
+
+.fc-ligne.monte{background:linear-gradient(90deg,rgba(255,226,140,.55),rgba(255,226,140,.1));animation:fcMonte 1.8s ease-in-out infinite}
+
+.fc-ligne.monte .fc-jauge i.plein{background:linear-gradient(180deg,#f2cf6e,#b8812f);box-shadow:inset 0 0 0 1px rgba(58,31,14,.35),0 0 6px rgba(255,214,120,.9)}
+
+@keyframes fcMonte{0%,100%{box-shadow:inset 0 0 0 rgba(255,214,120,0)}
+50%{box-shadow:inset 0 0 14px rgba(255,214,120,.7)}
+}

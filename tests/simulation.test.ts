@@ -150,6 +150,36 @@ describe('soins', () => {
     expect(s.etat.minute).toBe(m + 120);
   });
 
+  it('un repas prend une demi-heure (pas un refus)', () => {
+    const s = nouvelle(21, { satiete: 5, frustrationAlimentaire: 0 });
+    s.etat.gouts.regime = 'Omnivore';
+    const i = s.etat.inventaire.findIndex(c => c?.id === 'pomme');
+    const m = s.etat.minute;
+    expect(s.nourrir(i).ok).toBe(true);
+    expect(s.etat.minute).toBe(m + 30);
+  });
+
+  it('brosser prend une heure, rend un peu plus propre et apaise le manque d’affection', () => {
+    const s = nouvelle(22, { proprete: 30, manqueAffection: 60 });
+    const m = s.etat.minute;
+    expect(s.brosser().ok).toBe(true);
+    expect(s.etat.minute).toBe(m + 60);
+    expect(s.etat.proprete).toBeGreaterThan(50);
+    expect(s.etat.proprete).toBeLessThan(100);
+    expect(s.etat.manqueAffection).toBeLessThan(60);
+  });
+
+  it('une corvée se joue une fois par jour ; son niveau fixe le nombre d’essais', () => {
+    const s = nouvelle(23);
+    const force = s.etat.caracs.force;
+    const r = s.jouerCorvee('reparer_cloture', 3);
+    expect(r.ok).toBe(true);
+    if (r.ok) expect(r.essais).toHaveLength(12);
+    expect(s.etat.caracs.force).toBeGreaterThanOrEqual(force);
+    expect(s.jouerCorvee('reparer_cloture', 3).ok).toBe(false);
+    expect(s.jouerCorvee('ranger_ranch', 1).ok).toBe(true);
+  });
+
   it('coucher : refusé tant que l’écho n’a pas sommeil', () => {
     const s = nouvelle(14, { energie: 30 });
     expect(s.coucher().ok).toBe(false);
