@@ -199,21 +199,28 @@ export class Ranch extends Component<ProprietesRanch, EtatUI> {
     }
   }
 
-  // ——— Musique : deux boucles (jour, nuit), fondu croisé quand l'heure bascule (20 h → nuit, 6 h → jour)
+  // ——— Musique : deux boucles (jour, nuit). Quand l'heure bascule (20 h → nuit, 6 h → jour), la piste en cours
+  // s'éteint en fondu, PUIS l'autre monte en fondu depuis son début (jamais les deux à la fois).
   lancerMusique() {
     if (this.musiques) return;
-    const mk = (src: string) => { const a = new Audio(asset(src)); a.loop = true; a.volume = 0; a.play().catch(() => {}); return a; };
+    const mk = (src: string) => { const a = new Audio(asset(src)); a.loop = true; a.volume = 0; return a; };
     this.musiques = { jour: mk('sons/musiques/day.mp3'), nuit: mk('sons/musiques/night.mp3') };
     this.fondu = window.setInterval(() => {
       if (!this.musiques) return;
       const h = this.e.minute / 60; const nuit = h >= 20 || h < 6;
       const V = this.state.musique ? 0.32 * volumeMusique() : 0;
-      const pas = Math.max(0.004, V / 20);
-      (['jour', 'nuit'] as const).forEach((k) => {
-        const a = this.musiques![k]; const cible = (k === 'nuit') === nuit ? V : 0; const v = a.volume;
-        a.volume = Math.max(0, Math.min(1, v < cible ? Math.min(cible, v + pas) : Math.max(cible, v - pas)));
-        if (a.paused && cible > 0) a.play().catch(() => {});
-      });
+      const voulue = this.musiques[nuit ? 'nuit' : 'jour'], autre = this.musiques[nuit ? 'jour' : 'nuit'];
+      if (!autre.paused) {
+        // 1) sortie : environ 3 s
+        autre.volume = Math.max(0, autre.volume - Math.max(0.004, 0.32 / 15));
+        if (autre.volume <= 0) { autre.pause(); autre.currentTime = 0; }
+        return;
+      }
+      // 2) entrée : environ 4 s, ou ajustement doux au volume réglé
+      if (V > 0 && voulue.paused) voulue.play().catch(() => {});
+      const pas = Math.max(0.004, 0.32 / 20), v = voulue.volume;
+      voulue.volume = Math.max(0, Math.min(1, v < V ? Math.min(V, v + pas) : Math.max(V, v - pas)));
+      if (V === 0 && voulue.volume <= 0 && !voulue.paused) voulue.pause();
     }, 200);
   }
 
