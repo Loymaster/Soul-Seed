@@ -51,9 +51,11 @@ export interface ProprietesScenePnj {
   surFin: (r: { sortie?: string }) => void;
 }
 
-/** Le portrait du personnage (son avatar s'il est dessiné, sinon celui de repli). */
+/** Le personnage en pied s'il est dessiné, sinon son ancien portrait, sinon celui de repli. */
 export function portraitJoueur(p: P.Personnage, catalogue: Catalogue): string | undefined {
   const dispo = new Set(catalogue.assets.map((a) => a.chemin));
+  const corps = P.cheminCorps(p.avatar);
+  if (dispo.has(corps)) return corps;
   const chemin = P.cheminAvatar(p.avatar);
   if (dispo.has(chemin)) return chemin;
   const repli = P.AVATARS.find((a) => a.id === p.avatar)?.repli;

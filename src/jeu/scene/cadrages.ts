@@ -121,6 +121,13 @@ const JOUEURS: Record<string, [number, number, number]> = {
   'fille-2.png': [0.46, 0.42, 0.62],
   'nb-1.png': [0.37, 0.41, 0.62],
   'nb-2.png': [0.39, 0.41, 0.62],
+  // en pied : la carte « vous » montre la tête et le haut du buste
+  'garcon-1-corps.png': [0.5, 0.15, 0.95],
+  'garcon-2-corps.png': [0.5, 0.15, 0.95],
+  'fille-1-corps.png': [0.5, 0.15, 0.95],
+  'fille-2-corps.png': [0.5, 0.15, 0.95],
+  'nb-1-corps.png': [0.5, 0.15, 0.95],
+  'nb-2-corps.png': [0.5, 0.15, 0.95],
   'joueur.png': [0.5, 0.4, 0.75],
   'joueuse.png': [0.5, 0.4, 0.75],
 };

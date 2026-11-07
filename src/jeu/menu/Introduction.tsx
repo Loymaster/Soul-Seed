@@ -6,7 +6,7 @@
 import { useState } from 'react';
 import { SFX } from '@/moteur/sfx';
 import { AVATARS, PRONOMS, type IdAvatar, type Pronom } from '../profils';
-import { Avatar } from './Avatar';
+import { EnPied } from './Avatar';
 
 const APERCU: Record<Pronom, (nom: string) => string> = {
   il: (n) => `« Tu connais ${n || 'ce nouveau venu'} ? Il est arrivé au ranch hier. »`,
@@ -103,7 +103,7 @@ export function Introduction({ disponibles, surFin, surAnnuler, initial }: {
                 <button key={a.id} role="radio" aria-checked={avatar === a.id} className={`avatar-choix ${avatar === a.id ? 'choisi' : ''}`}
                   onMouseEnter={survol} onClick={() => { SFX.holyHover(); setAvatar(a.id); }}>
                   <span className="halo" />
-                  <Avatar id={a.id} taille={112} disponibles={disponibles} />
+                  <EnPied id={a.id} disponibles={disponibles} />
                   <span>{a.nom}</span>
                 </button>
               ))}

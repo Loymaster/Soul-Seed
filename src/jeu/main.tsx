@@ -153,8 +153,10 @@ function imagesEcran(e: Ecran): { chemins: string[]; ensuite: string[] } {
   }
 }
 
-/** Portrait du personnage : son avatar s'il est déjà dessiné, sinon le portrait de repli. */
+/** Le personnage en pied s'il est dessiné, sinon son ancien portrait, sinon celui de repli. */
 function portrait(p: P.Personnage): string | undefined {
+  const corps = P.cheminCorps(p.avatar);
+  if (DISPONIBLES.has(corps)) return corps;
   const chemin = P.cheminAvatar(p.avatar);
   if (DISPONIBLES.has(chemin)) return chemin;
   const repli = P.AVATARS.find((a) => a.id === p.avatar)?.repli;

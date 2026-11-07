@@ -1,23 +1,6 @@
-import { AVATARS, cheminAvatar, type IdAvatar } from '../profils';
-import { styleCadreAvatar } from '../scene/cadrages';
+import { AVATARS, cheminAvatar, cheminCorps, type IdAvatar } from '../profils';
 
 const asset = (chemin: string) => `${import.meta.env.BASE_URL}assets/${chemin}`;
-
-/**
- * Portrait du joueur dans un cadre de cristal. Tant que l'image définitive de l'avatar n'est pas déposée
- * (joueur/<id>.png), on montre l'ancien portrait équivalent ou une silhouette de lumière.
- */
-export function Avatar({ id, taille, disponibles, nom }: { id: IdAvatar; taille: number; disponibles: Set<string>; nom?: string }) {
-  const def = AVATARS.find((a) => a.id === id) ?? AVATARS[0];
-  const chemin = disponibles.has(cheminAvatar(id)) ? cheminAvatar(id) : def.repli && disponibles.has(def.repli) ? def.repli : '';
-  return (
-    <span className="avatar" style={{ width: taille, height: taille }}>
-      <span>
-        {chemin ? <img src={asset(chemin)} alt={nom ?? ''} style={styleCadreAvatar(chemin)} /> : <Silhouette variante={id.endsWith('2') ? 2 : 1} />}
-      </span>
-    </span>
-  );
-}
 
 function Silhouette({ variante }: { variante: 1 | 2 }) {
   return (
@@ -41,6 +24,18 @@ export function Monogramme({ nom, taille }: { nom: string; taille: number }) {
   return (
     <span className="avatar" style={{ width: taille, height: taille }}>
       <span><span className="initiale" style={{ fontSize: Math.round(taille * 0.46) }}>{(nom.trim()[0] ?? '?').toLocaleUpperCase('fr-FR')}</span></span>
+    </span>
+  );
+}
+
+/** Le personnage en pied (choix du personnage) : plus de portrait dans un rond. */
+export function EnPied({ id, disponibles, nom }: { id: IdAvatar; disponibles: Set<string>; nom?: string }) {
+  const def = AVATARS.find((a) => a.id === id) ?? AVATARS[0];
+  const chemin = disponibles.has(cheminCorps(id)) ? cheminCorps(id) : disponibles.has(cheminAvatar(id)) ? cheminAvatar(id) : def.repli && disponibles.has(def.repli) ? def.repli : '';
+  return (
+    <span className="en-pied">
+      {chemin ? <img src={asset(chemin)} alt={nom ?? ''} draggable={false} /> : <Silhouette variante={id.endsWith('2') ? 2 : 1} />}
+      <span className="sol" />
     </span>
   );
 }

@@ -91,7 +91,14 @@
 .intro-champ:focus{border-bottom-color:#fff;box-shadow:0 10px 20px -14px rgba(168,220,255,.9)}
 .intro-champ::placeholder{color:rgba(200,230,255,.35)}
 .intro-actions{display:flex;justify-content:center;gap:14px;margin-top:30px;flex-wrap:wrap}
-.avatars{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px 22px;width:min(560px,100%);margin:0 auto}
+.avatars{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:10px;width:min(820px,100%);margin:0 auto}
+.en-pied{position:relative;display:flex;align-items:flex-end;justify-content:center;width:100%;height:clamp(200px,38vh,320px);opacity:.72;filter:saturate(.85);transition:opacity .3s,filter .4s,transform .4s}
+.en-pied img{position:relative;z-index:1;height:100%;width:auto;max-width:100%;object-fit:contain;object-position:50% 100%;filter:drop-shadow(0 8px 10px rgba(0,0,0,.35))}
+.en-pied .silhouette{width:70%;height:60%}
+.en-pied .sol{position:absolute;left:50%;bottom:-6px;width:70%;height:16px;transform:translateX(-50%);border-radius:50%;background:radial-gradient(ellipse,rgba(190,230,255,.0),rgba(190,230,255,0) 70%);transition:background .4s}
+.avatar-choix:hover .en-pied{opacity:1;transform:translateY(-4px)}
+.avatar-choix.choisi .en-pied{opacity:1;filter:saturate(1) drop-shadow(0 0 18px rgba(190,230,255,.75));transform:translateY(-6px)}
+.avatar-choix.choisi .en-pied .sol{background:radial-gradient(ellipse,rgba(220,240,255,.85),rgba(190,230,255,0) 70%)}
 .avatar-choix{position:relative;display:flex;flex-direction:column;align-items:center;gap:8px;padding:10px 6px 12px;border:none;border-radius:16px;background:transparent;color:#d8ecfa;cursor:pointer;font-family:'Alegreya SC',serif;font-size:13px;letter-spacing:1.5px;transition:transform .4s cubic-bezier(.22,.9,.3,1)}
 .avatar-choix .avatar{width:112px;height:112px;opacity:.78;transition:opacity .3s,box-shadow .4s,transform .4s}
 .avatar-choix:hover .avatar{opacity:1;transform:translateY(-3px)}

@@ -150,13 +150,13 @@ describe('soins', () => {
     expect(s.etat.minute).toBe(m + 120);
   });
 
-  it('un repas prend une demi-heure (pas un refus)', () => {
+  it('nourrir ne fait pas passer de temps', () => {
     const s = nouvelle(21, { satiete: 5, frustrationAlimentaire: 0 });
     s.etat.gouts.regime = 'Omnivore';
     const i = s.etat.inventaire.findIndex(c => c?.id === 'pomme');
     const m = s.etat.minute;
     expect(s.nourrir(i).ok).toBe(true);
-    expect(s.etat.minute).toBe(m + 30);
+    expect(s.etat.minute).toBe(m);
   });
 
   it('brosser prend une heure, rend un peu plus propre et apaise le manque d’affection', () => {

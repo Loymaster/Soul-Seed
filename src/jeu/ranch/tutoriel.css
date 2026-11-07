@@ -1,6 +1,6 @@
 /* Tutoriel du ranch (Tutoriel.tsx) : la scène de Jumpy par-dessus le ranch, et la lueur qui montre un élément. */
 .tuto { position: absolute; inset: 0; z-index: 1500; }
-.tuto-lueur { position: absolute; z-index: 9; pointer-events: none; border-radius: 16px;
+.tuto-lueur { position: absolute; pointer-events: none; border-radius: 16px;
   box-shadow: 0 0 0 3px rgba(255,236,170,.95), 0 0 22px 6px rgba(255,214,120,.75), 0 0 0 2000px rgba(12,8,4,.38);
   animation: tuto-entre .5s cubic-bezier(.2,1.3,.4,1) both, tuto-pulse 1.6s ease-in-out .5s infinite; }
 .tuto-lueur.rond { border-radius: 50%; }

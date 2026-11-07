@@ -70,7 +70,6 @@ Moteur prêt dans `src/moteur/combat/` (règles du prototype, temps réel, déte
 ## Simulation et contenu
 - [ ] Héritage entre générations (7–12 % des caractéristiques) : calculé puis remis à zéro dans le prototype — décider s’il devient réel.
 - [ ] Mini-jeux des corvées et réparations d’Ash (aujourd'hui elles se déroulent seules, comme dans le prototype).
-- [ ] Décider : nourrir fait passer 30 min (choix fait sur le retour « donner à manger ne fait pas passer de temps » ; le prototype n'en faisait pas passer).
 - [ ] Seuils des paliers de combat de la fiche (frêle → légendaire) à ajuster.
 - [ ] Accessoires des scènes d'action placés pour un enfant ou un adulte : avec un bébé, la pierre et le seau flottent un peu au-dessus de lui.
 - [ ] Magasin : le poteau ne mène qu'au ranch (pas de passage vers le village).

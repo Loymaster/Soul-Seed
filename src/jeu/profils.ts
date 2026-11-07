@@ -18,6 +18,8 @@ export const AVATARS: { id: IdAvatar; nom: string; repli: string }[] = [
   { id: 'nb-2', nom: 'Non-binaire', repli: '' },
 ];
 export const cheminAvatar = (id: IdAvatar) => `joueur/${id}.png`;
+/** Le personnage en pied : l'image utilisée partout (les portraits en buste, cadrés dans des ronds, ne servent plus). */
+export const cheminCorps = (id: IdAvatar) => `joueur/${id}-corps.png`;
 
 export const PRONOMS: { id: Pronom; nom: string; exemple: string }[] = [
   { id: 'il', nom: 'il', exemple: 'Il est prêt pour l’aventure.' },

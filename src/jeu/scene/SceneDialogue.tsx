@@ -357,12 +357,13 @@ export function SceneDialogue(props: PropsSceneDialogue) {
         {assetAncien && <div key={'a' + ancienDecor!.cle} className="sc-decor sort" style={{ backgroundImage: `url(${assetAncien.url})` }} />}
         {assetDecor && <div key={'d' + decor.cle} className="sc-decor" style={{ backgroundImage: `url(${assetDecor.url})` }} />}
         <div className="sc-vignettage" />
+        {/* calque du jeu (lueur du tutoriel…) : sous les personnages et la feuille, qui restent lisibles */}
+        {props.calque}
 
         {Object.values(persos).map((p) => (
           <Personnage key={p.qui} perso={p} fiche={catalogue.pnj[p.qui]} assets={assets} parle={parleur === p.qui} tape={aff?.type === 'replique' && !aff.fini && parleur === p.qui} estompe={unPNJParle && parleur !== p.qui} />
         ))}
 
-        {props.calque}
         {assetImage && <div key={image!.cle} className="sc-photo"><img src={assetImage.url} alt="" /></div>}
 
         {apercu && vars.length > 0 && (

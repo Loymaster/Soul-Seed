@@ -77,8 +77,6 @@ export const INTERACTIONS_PREFEREES = ['affection', 'discussion', 'jeu', 'partag
 
 /** Nombre de caresses acceptées par jour (règle du nouveau ranch). */
 export const CARESSES_PAR_JOUR = 10;
-/** Un repas prend une demi-heure de jeu (le prototype ne faisait pas passer de temps : retour de test). */
-export const DUREE_REPAS_HEURES = 0.5;
 /** Brosser l'écho : une heure. */
 export const DUREE_BROSSAGE_HEURES = 1;
 /** Corvées selon le niveau de remise en état (CORVEE_LEVEL_ACTIONS, CORVEE_LEVEL_XP_MULT) : nombre d'essais, gains. */

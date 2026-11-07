@@ -7,7 +7,7 @@ import type {
 } from './types';
 import {
   AGE_EVOLUTION, AGE_MORT, CARESSES_PAR_JOUR, CLES_CARACS, CLES_TEMPERAMENT, CONSTANTE_GUERISON_MALADIE,
-  DUREE_BROSSAGE_HEURES, DUREE_REPAS_HEURES, DUREE_VISITE_HEURES, ESSAIS_CORVEE, MULT_CORVEE, EMOTION_DE_TEMPERAMENT, MAX_ECHOS_SAUVAGES, MAX_PAR_STADE, MULT_ENTRAINEMENT,
+  DUREE_BROSSAGE_HEURES, DUREE_VISITE_HEURES, ESSAIS_CORVEE, MULT_CORVEE, EMOTION_DE_TEMPERAMENT, MAX_ECHOS_SAUVAGES, MAX_PAR_STADE, MULT_ENTRAINEMENT,
   MULT_GUERISON_BLESSURE, NOM_STADE, PLAGES_RYTHME, SALETE_MAX, TRAIT_DE_TEMPERAMENT, TRAIT_D_EMOTION,
   TRAIT_D_EMOTION_EDUCATIVE,
 } from './constantes';
@@ -492,8 +492,7 @@ export class Simulation {
       : repu ? `${this.Nom} mange du bout des lèvres…`
       : saveur ? `${this.Nom} se régale.` : `${this.Nom} mange tranquillement.`;
     this.message(texte, prefere || saveur ? 'bien' : deteste || !compatible || repu ? 'mal' : 'note');
-    // Le repas prend du temps (retour de test : nourrir ne faisait pas passer le temps).
-    this.avancer(DUREE_REPAS_HEURES);
+    // Nourrir ne fait pas passer de temps (comme dans le prototype ; confirmé par l'autrice).
     return { ok: true, texte };
   }
 
