@@ -312,7 +312,8 @@ export class Exploration extends Component<ProprietesExploration, EtatUI> {
         titre: apresDefaite ? 'Retour précipité' : 'De retour au ranch',
         objets, materiaux,
         lieux: lieux.length ? 'Notés sur la carte : ' + lieux.slice(0, 6).join(', ') + (lieux.length > 6 ? '…' : '.') : 'Aucun lieu nouveau cette fois.',
-        filo: e.blesse || e.malade ? `${this.nom} boite un peu. ${this.Il} aura besoin de repos et de soins.` : `${this.nom} file droit vers sa paille.`,
+        filo: e.blesse || e.malade ? `${this.nom} boite un peu. ${this.Il} aura besoin de repos et de soins.`
+          : apresDefaite ? `${this.nom} traîne la patte : une bonne nuit lui fera du bien.` : `${this.nom} file droit vers sa paille.`,
       },
     });
   }

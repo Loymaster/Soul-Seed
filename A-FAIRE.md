@@ -38,7 +38,7 @@ Maquette : plateau « Ranch » (page v7) du canevas.
 Laver, brosser, coucher, manger, jeux, entraînements et corvées se jouent dans une fenêtre au centre de l'écran : l'écho y saute depuis sa place au ranch, l'action se joue (accessoires et légères déformations du sprite), puis une feuille volante résume ce qu'on devine, sans chiffre (« Il semble apprécier. Il lui reste un petit creux. »). Maquette : plateau « Ranch » (page v7) du canevas.
 - [x] Porter la scène d'action dans le jeu (repas, bain, interactions, entraînements ; textes tirés de `lireSignes()` et de la simulation).
 - [ ] Brosser (pas encore dans la simulation : grisé « bientôt » dans Soins).
-- [ ] Ressources d'exploration (bois, pierre, fibres, résine, ferraille, cristaux) : affichées vides dans le sac tant que la simulation ne les gère pas.
+- [x] Ressources d'exploration (bois, pierre, fibres, résine, ferraille, cristaux) : gardées par le monde de la partie (`src/moteur/monde`, plafond de 5), rapportées par « Récolter », montrées dans le sac du ranch et de l'exploration.
 - [ ] Préférences de l'écho entre deux actions qui comblent le même besoin : brosser ou laver pour la propreté (il peut préférer l'une à l'autre), et plus largement aliments, jeux. À découvrir par le joueur au fil des feuilles volantes.
 - [ ] Remplacer les accessoires dessinés provisoires (seau, brosse, balle, buissons, livre, bûche, marteau…) par des visuels définitifs.
 - [ ] Jeux proposés en plus de la balle, du cache-cache et de l'histoire : bulles de savon, chasse aux lucioles (à la nuit tombée), tir à la corde (dans la maquette) ; à étudier : tas de feuilles (automne), ricochets (près d'un point d'eau), imitation de cris, course-poursuite.
@@ -53,14 +53,26 @@ Moteur prêt dans `src/moteur/combat/` (règles du prototype, temps réel, déte
 - [ ] Sons des coups, esquives, parades (synthétisés dans les maquettes, plus graves en registre corrompu).
 - [ ] Musique de Vinland : *nyxara-battle* (Leomon), qui lui revient.
 - [ ] Carnet : page des techniques (apprises, trois équipées, description en mots).
-- [ ] Brancher les combats : échos sauvages (événement « invité »), exploration, PNJ (Garry, Lady Roger, Phil et Hibert, Hevann, Bourbella), mode Arène.
+- [x] Combats d'exploration : l'écho sauvage du lieu (âge et graines de la zone) ; on revient au même lieu avec l'issue.
+- [ ] Brancher les combats : échos sauvages (événement « invité »), PNJ (Garry, Lady Roger, Phil et Hibert, Hevann, Bourbella), mode Arène.
 - [ ] Équilibrage : à caractéristiques égales, un combat de bébés dure environ 1 min 30, d'adolescents moyens 1 min 20 (essai sur 40 combats).
 - [ ] Décider : les adultes gardent-ils les techniques de leur adolescence (comme le jeu du prototype) ou prennent-ils les pools adultes (mode Arène du prototype) ? Le moteur permet les deux (`poolsAdultes`).
 
 ## Simulation et contenu
 - [ ] Héritage entre générations (7–12 % des caractéristiques) : calculé puis remis à zéro dans le prototype — décider s’il devient réel.
 - [ ] Mini-jeux des corvées et réparations d’Ash.
-- [ ] Village, magasin, exploration (maquette « Exploration » v12 du canevas : passages à la craie, Filo qui marche d’un lieu à l’autre, fouille à cinq cachettes avec combat pour reprendre ses trouvailles, Récolter (ressources ; vignette provisoire), pêche, Filo envoyé, tente de soins, sac du ranch ; seules les actions font passer le temps : fouiller 30 min, récolter 30, envoyer 20, pêcher 15 ; rencontres moins probables dans un lieu visité depuis moins de 24 h ; musique de caverne : Glacial Zone). Carte illustrée à produire (schéma des zones fourni).
+- [ ] Village et magasin (le poteau du ranch les annonce « pas encore ouverts » : `surPartir` dans `main.tsx`).
+
+## Exploration
+Maquette « Exploration » v12 du canevas, portée dans `src/jeu/exploration/` (vue générée par `outils/maquettes/exploration/construire.py`).
+- [x] Écran porté et branché : passages à la craie, l'écho qui marche d'un lieu à l'autre, lumière du jour, fouille à cinq cachettes (un écho peut y surgir et disperser les trouvailles, reprises si l'on gagne), Récolter, pêche au bouchon, envoi de l'écho, tente de soins (nourrir, laver, soigner, dormir : règles de la simulation), sac du ranch, carte illustrée sous la brume (`carte-brume.webp`, script `brume.py`), page de retour au ranch. Seules les actions font passer le temps en plus de l'horloge (fouiller 30 min, récolter 30, envoyer 20, pêcher 15).
+- [x] Monde de la partie : lieux découverts, actions faites dans la journée, rencontres (récence par lieu), ressources ; sauvegardé avec la partie à chaque changement de lieu et en sortant.
+- [x] Objets rapportés au catalogue : poissons crus (aliments), curiosités et petites bêtes (revente), tente et canne à pêche (outils, à vendre au magasin : 60 pièces chacun).
+- [ ] Repousse : l'objet existe mais n'agit pas encore sur les rencontres (le prototype le consommait pour une durée).
+- [ ] Vendre curiosités et petites bêtes au magasin (prix de revente dans la fiche : `revente`).
+- [ ] Passages impraticables des rives du lac et de la savane (zones 31 à 34), cabane (zone 6) et passage encombré (28 bis) : quêtes et événements du prototype à reprendre.
+- [ ] Formes rares d'échos sauvages par zone (le prototype en avait) et taille de l'écho sauvage selon sa forme.
+- [ ] Rencontres : réglage de fréquence (aujourd'hui la base « normales » de la maquette, 25 %).
 - [ ] Jardin et cuisine.
 - [ ] Échos de mémoire.
 - [ ] Démarche propre à chaque forme d’écho.
