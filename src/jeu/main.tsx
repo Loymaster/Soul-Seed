@@ -44,6 +44,8 @@ import './base.css';
 import { fixerVolumes } from './commun/volumes';
 
 const catalogue = donnees as unknown as Catalogue;
+// publié dans un sous-dossier (GitHub Pages : /Soul-Seed/) : les adresses du catalogue suivent la base du site
+if (import.meta.env.BASE_URL !== '/') for (const a of catalogue.assets) if (a.url?.startsWith('/')) a.url = import.meta.env.BASE_URL + a.url.slice(1);
 const DISPONIBLES = new Set(catalogue.assets.map((a) => a.chemin));
 initialiserPrechargement(catalogue);
 /** Emplacement fictif des essais lancés depuis les outils de développement : rien n'est enregistré. */
