@@ -396,7 +396,7 @@ export function SceneDialogue(props: PropsSceneDialogue) {
           {aff?.type === 'choix' && (
             <div className="sc-choix">
               <div className="sc-question">{aff.question || 'Que répondre ?'}</div>
-              <div className="sc-options">
+              <div className={`sc-options ${aff.options.length > 4 ? 'serre' : ''}`}>
                 {aff.options.map((o, i) => {
                   const r = APPARENCE_RESONANCES[o.resonance];
                   const etat = aff.choisie >= 0 ? (aff.choisie === o.index ? 'choisie' : 'estompee') : aff.active === o.index ? 'active' : '';
@@ -408,7 +408,7 @@ export function SceneDialogue(props: PropsSceneDialogue) {
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden><path d={r.icone} /></svg>
                       </span>
                       <span className="type" style={{ color: r.couleur }}>{r.nom}</span>
-                      <span>{o.texte}</span>
+                      <span className="texte">{o.texte}</span>
                       {aff.choisie < 0 && <span className="touche">{i + 1}</span>}
                       {aff.choisie === o.index && (
                         <svg className="sc-tampon-ok" viewBox="0 0 40 40" aria-hidden><circle cx="20" cy="20" r="16.5" fill="rgba(63,122,58,.08)" stroke="#3f7a3a" strokeWidth="3" /><path d="M12.5 20.5l5 5 10-11" fill="none" stroke="#3f7a3a" strokeWidth="3.6" strokeLinecap="round" strokeLinejoin="round" /></svg>

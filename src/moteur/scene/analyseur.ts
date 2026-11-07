@@ -232,7 +232,7 @@ export function analyserScene(source: string, id: string): ResultatAnalyse {
         if (opt) options.push({ ...opt, corps });
       }
       if (!options.length) signaler(l, 'Choix sans réponse : ajoutez des lignes « > résonance « texte » » décalées en dessous.');
-      if (options.length > 4) signaler(l, `${options.length} réponses : la feuille de dialogue n'en affiche que 4 à la fois.`, 'alerte');
+      if (options.length > 6) signaler(l, `${options.length} réponses : la feuille de dialogue en affiche 6 au plus.`, 'alerte');
       return { type: 'choix', ligne: l.n, question: m[1]?.trim() || undefined, options };
     }
     if (t.startsWith('>')) { signaler(l, 'Réponse « > » en dehors d’un choix.'); bloc(l.indent); return null; }
