@@ -28,8 +28,17 @@ export interface Placement {
  */
 export function placer(taille: number, visible: number): Placement {
   const complet = taille * PX_PAR_METRE;
-  return { hauteur: Math.round(complet * visible), bas: Math.round(LIGNE_PIEDS + complet * (1 - visible)) };
+  return { hauteur: Math.round(complet * visible), bas: Math.round(LIGNE_PIEDS + complet * (1 - visible) + rehausse(taille)) };
 }
+
+/**
+ * Hauteur minimale atteinte par le haut de la tête, en mètres au-dessus de la ligne des pieds.
+ * Un personnage plus petit (Lady Roger, Finn, Phil…) garde sa taille mais est rehaussé d'autant :
+ * sinon il disparaîtrait presque entièrement derrière la feuille de dialogue.
+ */
+export const HAUTEUR_MIN = 1.2;
+/** Rehausse d'un personnage trop petit, en pixels (0 au-delà du seuil). */
+export const rehausse = (taille: number) => Math.max(0, (HAUTEUR_MIN - taille) * PX_PAR_METRE);
 
 /** Style d'une image rognée à sa boîte utile et affichée à une hauteur donnée. */
 export function rogner(image: { l: number; h: number; boite?: Boite }, hauteur: number) {

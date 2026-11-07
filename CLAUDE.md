@@ -44,7 +44,7 @@ L'ancien prototype (un seul fichier de 15 700 lignes) est conservé tel quel dan
 - Noms de fichiers d'assets : minuscules, sans accents ni espaces, tirets (`normaliserNom`).
 - Nommer un fichier `<pnj>-<expression>.png`, `<stade>-<forme>.png` (`enfant-dark-joy.png`), `village-<lieu>.png`… suffit pour qu'il soit rangé automatiquement.
 - Formes d'écho : `joy|wrath|sorrow|fear|disgust|neutre`, préfixe `dark-` pour la forme sombre, suffixe `-f`/`-m` pour le genre, `branch-<a>-d<b>`, `melee-<abc>`, `memoire-<a>-<element>`, `fragment-<type>`.
-- Les PNJ ont une taille réelle (m) et une part visible : tous les personnages ont les pieds sur la même ligne de scène (`placer()`), 245 px par mètre dans un repère 1280 × 800.
+- Les PNJ ont une taille réelle (m) et une part visible : tous les personnages ont les pieds sur la même ligne de scène (`placer()`), 245 px par mètre dans un repère 1280 × 800 ; un personnage de moins de 1,20 m (`HAUTEUR_MIN`) garde sa taille mais est rehaussé pour que sa tête atteigne ce seuil, au-dessus de la feuille de dialogue.
 - Ne jamais déplacer un asset à la main sans mettre à jour les références : passer par l'atelier ou `deplacer()`.
 - Temps : 1 seconde réelle = 1 minute de jeu ; les règles de la simulation s'appliquent à chaque heure pleine.
 - Le joueur ne voit jamais l'état chiffré de son écho : tout passe par `lireSignes()`.
