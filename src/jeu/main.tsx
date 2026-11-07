@@ -16,7 +16,7 @@ import donnees from '@contenu/generes/assets.json';
 import type { Catalogue } from '@/contenu/types';
 import { SCENES } from '@/contenu/scenes';
 import { analyserScene } from '@/moteur/scene/analyseur';
-import { Simulation, ageJours, apparence, creerEchoSauvage, heureDuJour, type Etat } from '@/moteur/simulation';
+import { Simulation, ageJours, apparence, creerEchoSauvage, heureDuJour, type EchoSauvage, type Etat } from '@/moteur/simulation';
 import { bilanCombat, descriptionDepuisEtat, descriptionSauvage } from '@/moteur/combat';
 import { EcranCombat, type AdversaireCombat, type IssueCombat, type Registre } from './combat/EcranCombat';
 import { SFX } from '@/moteur/sfx';
@@ -31,7 +31,7 @@ import { EntreDeuxMondes } from './intro/EntreDeuxMondes';
 import { ID_SCENE_SANCTUAIRE, Sanctuaire } from './intro/Sanctuaire';
 import { Exploration, bilanDepart, reprendreTrouvailles, type BilanSortie, type RencontreExploration, type RetourCombat } from './exploration/Exploration';
 import { DEPART, ZONES } from './exploration/zones';
-import { creerMonde, heureAbsolue, type Monde } from '@/moteur/monde';
+import { creerMonde, heureAbsolue, poser, vrai, type Monde } from '@/moteur/monde';
 import { Monde as EcranMonde } from './monde/Monde';
 import { imagesLieu, lieuxVoisins, type ContexteLieu, type IdLieu } from './monde/lieux';
 import { imagesZone } from './exploration/pnj';
@@ -78,8 +78,15 @@ function preparerCombatExploration(r: RencontreExploration) {
 /** Terrains des combats d'exploration (décors du chemin). */
 const TERRAINS = ['02-passage-foret', '07-riviere', '16-chemin-foret', '17-foret-detruite', '10-champ-rochers', '31-sentier-bord-lac'];
 
-/** Un écho sauvage de l'âge du sien (un peu plus jeune ou un peu plus vieux), prêt à combattre. */
-function preparerCombat(etat: Etat, nature: 'exploration' | 'entrainement') {
+/**
+ * Un écho sauvage de l'âge du sien (un peu plus jeune ou un peu plus vieux), prêt à combattre ;
+ * ou l'écho de passage au ranch (`sauvage`), tel qu'il est, sur le décor du ranch.
+ */
+function preparerCombat(etat: Etat, nature: 'exploration' | 'entrainement', sauvage?: EchoSauvage) {
+  if (sauvage) {
+    const description = descriptionSauvage(sauvage, Math.random);
+    return { adversaire: { description, image: apparence({ ...sauvage, evolution: null }) } as AdversaireCombat, registre: 'exploration' as Registre, terrain: 'decors/ranch/journee.png', entrainement: true };
+  }
   const age = ageJours(etat);
   let s = creerEchoSauvage(Math.random, Math.max(1, age - 1), age + 2);
   // jamais deux échos du même nom face à face
@@ -255,7 +262,10 @@ function Jeu() {
           connus={profil.connus ?? []}
           surDecouverte={(cle) => { const p = P.profilActif(); if (p && !(p.connus ?? []).includes(cle)) P.modifierProfil(p.id, { connus: [...(p.connus ?? []), cle] }); }}
           surMort={(e) => setEcran({ nom: 'mort', emplacement, etat: e })}
-          surCombat={(e, nature) => setEcran({ nom: 'combat', emplacement, etat: e, ...preparerCombat(e, nature) })}
+          surCombat={(e, nature, sauvage) => setEcran({ nom: 'combat', emplacement, etat: e, ...preparerCombat(e, nature, sauvage) })}
+          catalogue={catalogue}
+          tutoriel={emplacement !== ESSAI && !vrai(chargerMonde(emplacement), 'ranch.tutoriel_vu')}
+          surTutorielVu={() => { if (emplacement === ESSAI) return; const m = chargerMonde(emplacement); poser(m, 'ranch.tutoriel_vu'); P.sauverMonde(profil.id, emplacement, m); }}
           ressources={chargerMonde(emplacement).ressources}
           surPartir={(e, lieu) => {
             const monde = chargerMonde(emplacement);

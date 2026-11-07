@@ -109,7 +109,9 @@ export function validerScene(scene: Scene, ctx: ContexteScene): Probleme[] {
     if (!ctx.musiques.includes(c)) pb.push({ niveau: 'erreur', ligne, message: `Musique introuvable « ${m} ».${suggestion(identifiant(m), ctx.musiques.map((x) => x.replace(/^sons\/musiques\/|\.mp3$/g, '')))}` });
   };
 
-  if (scene.decor) verifierDecor(scene.decor, 1);
+  // « décor: aucun » : la scène se joue par-dessus l'écran du jeu (tutoriel du ranch)
+  if (scene.decor && /^aucun$/i.test(scene.decor)) { /* pas de décor, voulu */ }
+  else if (scene.decor) verifierDecor(scene.decor, 1);
   else pb.push({ niveau: 'alerte', ligne: 1, message: 'Pas de décor : ajoutez « décor: … » en tête de scène.' });
   verifierMusique(scene.musique, 1);
   const presents = new Set<string>();

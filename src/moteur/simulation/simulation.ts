@@ -2,7 +2,7 @@
 // Le temps s'écoule à 1 minute de jeu par seconde réelle ; les règles du prototype s'appliquent à chaque
 // heure pleine (_tickHourCore). Les actions qui « prennent du temps » font avancer l'horloge d'autant.
 import type {
-  Aleatoire, CategorieInteraction, CauseMort, CleTemperament, CleCarac, Emotions, Etat, OptionInteraction,
+  Aleatoire, CategorieInteraction, CauseMort, CleTemperament, CleCarac, EchoSauvage, Emotions, Etat, OptionInteraction,
   ReponseComportement, Sortie, Stade,
 } from './types';
 import {
@@ -13,6 +13,7 @@ import {
 } from './constantes';
 import { accord, accorderTexte, ageJours, borne, centieme, dixieme, heureDuJour, heureTotale, piocher } from './outils';
 import { appliquerEmotions, deltaAjuste } from './emotions';
+import { CHANCE_INTERACTION_VISITE, changerAffect, compatibilite, probaEntente, texteDepart, texteRetour, tirerInteractionVisite } from './visites';
 import { regimeCompatible } from './alimentation';
 import { aliment, consommer, objetDivers, ranger } from './objets';
 import { creerEchoSauvage } from './creation';
@@ -272,9 +273,14 @@ export class Simulation {
 
     // Visiteur qui repart
     if (e.visiteur && maintenant >= e.visiteur.departA) {
+      const id = e.visiteur.id;
+      const v = e.echosSauvages.find((x) => x.id === id);
       e.visiteur = null;
-      const t = 'L’écho invité est reparti.';
-      this.noter(t); this.emettre({ type: 'visiteur-parti', texte: t });
+      const t = v ? texteDepart(e, v) : 'L’écho invité est reparti.';
+      this.noter(t); this.emettre({ type: 'visiteur-parti', texte: t, id });
+    } else if (e.visiteur && !o.repos && !e.mort && rng() < CHANCE_INTERACTION_VISITE) {
+      // pendant la visite, les deux échos font parfois quelque chose ensemble, d'eux-mêmes
+      this.interactionSpontanee();
     }
 
     // Évolutions (entre 12 h et 18 h, à l'heure tirée à la naissance, au plus tard à 18 h)
@@ -375,7 +381,7 @@ export class Simulation {
     } else {
       const s = piocher(e.echosSauvages, this.rng);
       e.visiteur = { id: s.id, departA: maintenant + DUREE_VISITE_HEURES };
-      texte = `${s.nom} revient vous rendre visite !`;
+      texte = texteRetour(e, s);
     }
     this.noter(texte);
     this.emettre({ type: 'evenement', nature, texte });
@@ -571,7 +577,7 @@ export class Simulation {
       else {
         const s = e.echosSauvages.find(x => x.id === choix.id)!;
         e.visiteur = { id: s.id, departA: heureTotale(e) + DUREE_VISITE_HEURES };
-        const texte = `L’appât attire ${s.nom}, qui revient vous rendre visite !`;
+        const texte = texteRetour(e, s, true);
         this.noter(texte); this.emettre({ type: 'evenement', nature: 'visite', texte });
       }
       return { ok: true };
@@ -830,17 +836,34 @@ export class Simulation {
     return v ? this.etat.echosSauvages.find(s => s.id === v.id) ?? null : null;
   }
 
-  /** echoCompatibilite : écart moyen de personnalité (0 = identiques). */
+  /** echoCompatibilite : écart moyen de personnalité (0 = identiques), moins le bonus d'inspiration. */
   compatibilite(id: string) {
     const s = this.etat.echosSauvages.find(x => x.id === id);
-    if (!s) return 5;
-    const p = this.etat.personnalite;
-    const cles = Object.keys(p) as (keyof typeof p)[];
-    return centieme(cles.reduce((a, k) => a + Math.abs(s.personnalite[k] - p[k]), 0) / cles.length);
+    return s ? compatibilite(this.etat.personnalite, s) : 5;
+  }
+
+  /** Change l'affect envers un écho sauvage ; un palier franchi s'écrit au journal. */
+  private affect(s: EchoSauvage, plus: number, moins: number) {
+    const r = changerAffect(this.etat, s, plus, moins);
+    if (r) { this.noter(r.texte); this.emettre({ type: 'relation', id: s.id, niveau: r.niveau, sens: r.sens, texte: r.texte }); }
+  }
+
+  /** Notre écho et son visiteur font quelque chose ensemble, d'eux-mêmes (sans que l'heure passe). */
+  interactionSpontanee() {
+    const e = this.etat; const s = this.visiteur;
+    if (!s || e.mort) return null;
+    const r = tirerInteractionVisite(e, s, this.rng);
+    appliquerEmotions(e, r.emotions);
+    if (r.education) this.eduquer(r.education.processus, r.education.emotion);
+    this.noter(r.texte);
+    this.emettre({ type: 'visite', nature: r.nature, reussi: r.reussi, sens: r.sens, texte: r.texte, spontane: true });
+    this.affect(s, r.plus, r.moins);
+    return r;
   }
 
   /** spendTimeTogether */
   passerDuTempsAvecVisiteur(): Reussi<{ texte: string }> | Refus {
+    const e = this.etat;
     const s = this.visiteur;
     if (!s) return { ok: false, raison: `${this.Nom} n’a personne avec qui passer du temps.` };
     const compat = this.compatibilite(s.id);
@@ -849,9 +872,15 @@ export class Simulation {
     else if (compat < 2) { plus = 3; humeur = 15; d = { joie: 15, tristesse: -5, peur: -3 }; texte = `${this.Nom} et ${s.nom} ont l’air de bien s’entendre.`; }
     else if (compat < 3) { plus = 2; humeur = 8; d = { joie: 8 }; texte = `${this.Nom} et ${s.nom} ne font pas vraiment la paire, mais cela pourrait être pire.`; }
     else { plus = 1; humeur = 0; d = {}; texte = `On a rarement vu deux échos aussi différents que ${this.etat.nom} et ${s.nom}.`; }
-    s.affectPositif = borne(s.affectPositif + plus);
+    this.affect(s, plus, 0);
     if (humeur > 0) { this.avancer(1, { gainHumeur: humeur, emotions: d, message: `${this.Nom} a passé du temps avec ${s.nom}.` }); this.eduquer('socio', 'joy'); }
     else this.noter(`${this.Nom} a passé du temps avec ${s.nom}.`);
+    // advanceSpendTimeModal : une fois sur dix, un « signe d'inspiration » rapproche leurs personnalités
+    if (compat > 0 && this.rng() < 0.1) {
+      s.compatBonus = centieme((s.compatBonus ?? 0) + 0.2);
+      texte += ` ${s.nom} regarde ${e.nom} avec intérêt. Vous ne savez pas pourquoi, mais vous y voyez un signe d’inspiration.`;
+    }
+    this.emettre({ type: 'visite', nature: 'temps', reussi: true, sens: humeur > 0 ? 1 : 0, texte, spontane: false });
     return { ok: true, texte };
   }
 
@@ -861,13 +890,9 @@ export class Simulation {
     const s = this.visiteur;
     if (!s) return { ok: false, raison: `${this.Nom} n’a personne avec qui ${nature === 'jeu' ? 'jouer' : 'se bagarrer'}.` };
     const compat = this.compatibilite(s.id);
-    const x = compat + 1 + (5 - s.personnalite.extraversion) + (5 - s.personnalite.agreabilite) - (1 - s.affectPositif / 100 + s.affectNegatif / 100);
-    const proba = borne((14 - x) / 14 + (e.personnalite.agreabilite - 1) / 100, 0, 1);
-    const succes = this.rng() < proba;
+    const succes = this.rng() < probaEntente(e, s, compat);
     const perteSante = nature === 'bagarre' && this.rng() < 1 / 3 ? 1 : 0;
     const debutBlessure = nature === 'bagarre' && !e.blesse && this.rng() < 1 / 5;
-    s.affectPositif = borne(s.affectPositif + (succes ? 5 - compat : 0));
-    s.affectNegatif = borne(s.affectNegatif + (succes ? -(5 - compat) : 2 + compat));
     let texte: string;
     if (nature === 'bagarre') {
       if (succes) {
@@ -888,6 +913,9 @@ export class Simulation {
       texte = `${s.nom} n’a pas voulu jouer avec ${e.nom}.`;
       this.avancer(1, { message: texte, emotions: { tristesse: 20, peur: 10, colere: 10 } });
     }
+    // finishDuoAnim : l'affect change une fois l'heure passée
+    this.affect(s, succes ? 5 - compat : 0, succes ? -(5 - compat) : 2 + compat);
+    this.emettre({ type: 'visite', nature: nature === 'jeu' ? 'jeu' : 'bagarre', reussi: succes, sens: succes ? 1 : -1, texte, spontane: false });
     return { ok: true, texte, succes };
   }
 

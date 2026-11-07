@@ -6,8 +6,14 @@ import { Component, type ReactNode } from 'react';
 import {
   CORVEES, ENTRAINEMENTS, INTERACTIONS, NOM_STADE, Simulation, accord, aliment, apparence, ageJours, descriptionObjet,
   heureDuJour, lireSignes, objetDivers, texteComportement, type CategorieInteraction, type Etat, type OptionInteraction,
-  type ReponseComportement, type Signes, type Sortie,
+  type ReponseComportement, type Signes, type Sortie, type Stade, type EchoSauvage,
+  ENCRE_RELATION, LIEN_RELATION, niveauRelation, rangRelation,
 } from '@/moteur/simulation';
+import { aBoutDeForces } from '@/moteur/combat';
+import type { Catalogue } from '@/contenu/types';
+import { VisiteRanch, perspective, type GesteVisite } from './visiteur';
+import { Evolution, type ProprietesEvolution } from './Evolution';
+import { Tutoriel, type Cible } from './Tutoriel';
 import { SFX } from '@/moteur/sfx';
 import { VueRanch } from './VueRanch';
 import { Repere } from '../commun/Repere';
@@ -91,12 +97,16 @@ export interface ProprietesRanch {
   surDecouverte?: (cle: string) => void;
   /** L'écho s'est éteint : la séquence du « dernier souffle » prend le relais. */
   surMort?: (e: Etat) => void;
-  /** Un combat commence (exploration ou entraînement) : l'écran de combat prend le relais. */
-  surCombat?: (e: Etat, nature: 'exploration' | 'entrainement') => void;
+  /** Un combat commence (contre l'écho de passage) : l'écran de combat prend le relais. */
+  surCombat?: (e: Etat, nature: 'exploration' | 'entrainement', adversaire?: EchoSauvage) => void;
   /** Le poteau « partir » : le jeu ouvre le lieu ; renvoyer `false` s'il n'est pas encore ouvert. */
   surPartir?: (e: Etat, lieu: Destination) => boolean | void;
   /** Ressources de construction rapportées d'exploration (monde de la partie), montrées dans le sac. */
   ressources?: Partial<Record<string, number>>;
+  /** Première arrivée au ranch de la partie : Jumpy fait visiter (scène ranch-tutoriel), puis `surTutorielVu`. */
+  tutoriel?: boolean;
+  surTutorielVu?: () => void;
+  catalogue?: Catalogue;
 }
 
 interface Choix {
@@ -186,6 +196,7 @@ export class Ranch extends Component<ProprietesRanch, EtatUI> {
     window.addEventListener('pointerdown', this.surGeste);
     this.lancerMusique();
     this.desabonner = ecouterVolumes(() => undefined);
+    this.monterExtras();
   }
   componentWillUnmount() {
     this.vivant = false;
@@ -213,6 +224,11 @@ export class Ranch extends Component<ProprietesRanch, EtatUI> {
     this.musiques = { jour: mk('sons/musiques/day.mp3'), nuit: mk('sons/musiques/night.mp3') };
     this.fondu = window.setInterval(() => {
       if (!this.musiques) return;
+      if (this.evo) {
+        // l'évolution coupe la musique (fondu rapide) ; elle reprend ensuite là où elle s'était arrêtée
+        for (const a of Object.values(this.musiques)) if (!a.paused) { a.volume = Math.max(0, a.volume - 0.05); if (a.volume <= 0) a.pause(); }
+        return;
+      }
       const h = this.e.minute / 60; const nuit = h >= 20 || h < 6;
       const V = this.state.musique ? 0.32 * volumeMusique() : 0;
       const voulue = this.musiques[nuit ? 'nuit' : 'jour'], autre = this.musiques[nuit ? 'jour' : 'nuit'];
@@ -230,8 +246,8 @@ export class Ranch extends Component<ProprietesRanch, EtatUI> {
     }, 200);
   }
 
-  occupe() { const s = this.state; return !!(s.ouvert || s.carnet || s.sacOuvert || s.quitter || s.evc || s.sortie || s.scene || Date.now() < this.repos || this.e.mort); }
-  enPause() { const s = this.state; return !!(s.carnet || s.sacOuvert || s.sortie || s.evc || s.scene || this.e.mort); }
+  occupe() { const s = this.state; return !!(s.ouvert || s.carnet || s.sacOuvert || s.quitter || s.evc || s.sortie || s.scene || Date.now() < this.repos || this.e.mort || this.evo || this.tutoActif); }
+  enPause() { const s = this.state; return !!(s.carnet || s.sacOuvert || s.sortie || s.evc || s.scene || this.e.mort || this.evo || this.tutoActif); }
 
   // ——— Le temps s'écoule
   tic() {
@@ -251,12 +267,13 @@ export class Ranch extends Component<ProprietesRanch, EtatUI> {
   /** Ce que la simulation signale. */
   traiter(sorties: Sortie[]) {
     for (const x of sorties) {
+      if (this.traiterExtras(x)) continue;
       switch (x.type) {
         case 'journal': this.setState((s) => ({ nouvelles: s.nouvelles + 1 })); break;
         case 'message': this.flotter(x.texte, COULEUR[x.ton]); break;
         case 'refus': this.son('refus'); this.reagir(false, 'non'); this.flotter(x.texte, COULEUR.mal); break;
         case 'dejection': this.son('pop'); break;
-        case 'voisin': case 'autonomie': case 'visiteur-parti': this.flotter(x.texte, COULEUR.note); break;
+        case 'voisin': case 'autonomie': this.flotter(x.texte, COULEUR.note); break;
         case 'evenement':
           if (x.nature === 'bruit') { this.son('darkHover'); this.reagir(true, 'saute'); } else this.son('reveal');
           this.flotter(x.texte, COULEUR.note);
@@ -264,10 +281,6 @@ export class Ranch extends Component<ProprietesRanch, EtatUI> {
         case 'comportement': this.son('reveal'); break;
         case 'sommeil':
           this.montrerSortie({ texte: `${x.heures} heure${x.heures > 1 ? 's' : ''} plus tard…`, sous: x.effondrement ? `${this.e.nom} s’est ${this.a('écroulé', 'écroulée')} de fatigue` : `${this.e.nom} a dormi` }, 2400);
-          break;
-        case 'evolution':
-          this.son('reveal');
-          this.montrerSortie({ texte: 'Il se passe quelque chose !', sous: `${this.e.nom} a atteint le stade ${NOM_STADE[x.vers]}`, image: asset(apparence(this.e)) }, 4200);
           break;
         case 'mort': {
           this.sauver();
@@ -436,9 +449,6 @@ export class Ranch extends Component<ProprietesRanch, EtatUI> {
             this.ouvrirScene({ kind, groupe: 'entrainement', image: asset(t.icone), titre: t.nom }, () => { const r = s.entrainer(t.id); return r.ok ? [] : null; });
           },
         })),
-        { k: 'r-combat', nom: 'Combat', rubrique: true },
-        { k: 'combat-entr', nom: 'Combat d’entraînement', icone: IC.course, detail: this.props.surCombat ? 'contre un écho de passage' : 'à venir', off: !this.props.surCombat,
-          agir: () => { if (!this.props.surCombat) return; this.sauver(); this.props.surCombat(this.e, 'entrainement'); } },
         { k: 'r-corv', nom: 'Corvées', rubrique: true },
         ...CORVEES.map((c) => ({ k: c.id, nom: c.nom, image: asset(c.icone), off: true, detail: 'à remettre en état' })),
       ];
@@ -455,16 +465,7 @@ export class Ranch extends Component<ProprietesRanch, EtatUI> {
         { k: 'lieu1', nom: '???', icone: IC.mystere, off: true, detail: 'à découvrir' },
       ];
     }
-    if (v === 'visiteur') {
-      const duo = (nature: 'jeu' | 'bagarre') => () => this.ouvrirScene({ kind: nature === 'jeu' ? 'balle' : 'corde', groupe: 'jeu', image: '', titre: nature === 'jeu' ? 'Jouer ensemble' : 'La bagarre' }, () => {
-        const r = s.duoAvecVisiteur(nature); return r.ok ? [r.texte] : null;
-      });
-      return [
-        { k: 'temps', nom: 'Passer du temps ensemble', icone: IC.partage, detail: '1 h', agir: () => this.ouvrirScene({ kind: 'histoire', groupe: 'jeu', image: '', titre: 'Un moment ensemble' }, () => { const r = s.passerDuTempsAvecVisiteur(); return r.ok ? [r.texte] : null; }) },
-        { k: 'jouer', nom: 'Jouer ensemble', icone: IC.balle, detail: '1 h', agir: duo('jeu') },
-        { k: 'bagarre', nom: 'Se bagarrer', icone: IC.course, detail: '1 h', agir: duo('bagarre') },
-      ];
-    }
+    if (v === 'visiteur') return this.choixVisiteur();
     return [];
   }
 
@@ -735,8 +736,174 @@ export class Ranch extends Component<ProprietesRanch, EtatUI> {
     this.montrerSortie({ texte, sous: 'ce chemin n’est pas encore ouvert dans cette version' }, 2200);
   }
 
+  // ——— Visites d'échos sauvages (visiteur.ts), évolution (Evolution.tsx), tutoriel (Tutoriel.tsx)
+  visite = new VisiteRanch({
+    rafraichir: () => this.rafraichir(),
+    plusTard: (f, ms) => this.later(f, ms),
+    echo: () => ({ x: this.state.ex, y: this.state.ey, marche: this.state.marche, taille: this.taille() }),
+    tournerEcho: (sens, ms) => {
+      this.repos = Math.max(this.repos, Date.now() + ms);
+      this.later(() => this.setState({ eSens: sens }), this.state.marche ? this.state.eDur * 1000 : 0);
+    },
+    animerEcho: (anim) => { this.setState({ anim: '' }); this.later(() => this.setState({ anim }), 20); this.later(() => this.setState((s) => (s.anim === anim ? { anim: '' } : null)), 1400); },
+    son: (nom, ...a) => this.son(nom, ...a),
+    asset,
+    occupe: () => { const s = this.state; return !!(s.carnet || s.sacOuvert || s.evc || s.scene || s.sortie || this.evo || this.tutoActif || this.e.mort); },
+  });
+  evo: Omit<ProprietesEvolution, 'sons'> | null = null;
+  tutoActif = false;
+  /** L'apparence de l'écho au dernier affichage (l'ancienne forme, quand il évolue). */
+  apparenceVue = '';
+
+  monterExtras() {
+    const v = this.sim.visiteur;
+    if (v) this.visite.placer(v);
+    if (this.props.tutoriel && this.props.catalogue && this.props.personnage && !this.e.mort) this.later(() => { this.tutoActif = true; this.setState({ ouvert: null }); this.rafraichir(); }, 1400);
+    if (import.meta.env.DEV) {
+      // aides de développement, dans la console : __ranch.visite(), __ranch.geste(), __ranch.evolution(), __ranch.tutoriel()
+      const sim = this.sim as unknown as { evenement: (n: string) => void; evoluer: (s: Stade) => void };
+      (window as unknown as { __ranch: unknown }).__ranch = {
+        sim: this.sim, visiteur: this.visite,
+        visite: (nouveau = false) => { if (this.sim.visiteur) return 'déjà un visiteur'; sim.evenement(nouveau || !this.e.echosSauvages.length ? 'invite' : 'visite'); this.traiter(this.sim.vider()); return this.e.visiteur?.id; },
+        depart: () => { const v = this.e.visiteur; if (!v) return; v.departA = 0; this.sim.minute(); while (this.e.minute % 60) this.sim.minute(); this.traiter(this.sim.vider()); },
+        geste: () => { this.sim.interactionSpontanee(); this.traiter(this.sim.vider()); },
+        evolution: () => { const suite: Partial<Record<Stade, Stade>> = { bebe: 'enfant', enfant: 'adolescent', adolescent: 'adulte' }; const v = suite[this.e.stade]; if (v) { sim.evoluer(v); this.traiter(this.sim.vider()); } return v; },
+        tutoriel: () => { this.tutoActif = true; this.rafraichir(); },
+      };
+    }
+  }
+
+  /** Ce que ces modules prennent en charge parmi les sorties de la simulation (vrai : traité). */
+  traiterExtras(x: Sortie): boolean {
+    switch (x.type) {
+      case 'evenement': {
+        if (x.nature === 'bruit') return false;
+        const v = this.sim.visiteur;
+        if (v) this.visite.arriver(v);
+        this.son('reveal');
+        this.flotter(x.texte, COULEUR.note);
+        return true;
+      }
+      case 'visiteur-parti': this.visite.partir(); this.flotter(x.texte, COULEUR.note); return true;
+      case 'visite': {
+        if (!x.spontane) return true;
+        const couleur = x.sens > 0 ? COULEUR.bien : x.sens < 0 ? COULEUR.mal : COULEUR.note;
+        if (this.visite.libre && !this.visite.hoteOccupe()) this.visite.geste(x.nature as GesteVisite, x.reussi, () => this.flotter(x.texte, couleur));
+        else this.flotter(x.texte, couleur);
+        return true;
+      }
+      case 'relation':
+        // un palier de relation franchi : après le geste qui l'a provoqué
+        this.later(() => { this.flotter(x.texte, x.sens > 0 ? COULEUR.bien : COULEUR.mal); this.son(x.sens > 0 ? 'reveal' : 'darkHover'); }, 4800);
+        return true;
+      case 'evolution': this.lancerEvolution(x.de, x.vers); return true;
+      default: return false;
+    }
+  }
+
+  /** Les gestes avec le visiteur, proposés quand on clique sur lui. */
+  choixVisiteur(): Choix[] {
+    const v = this.sim.visiteur;
+    const libre = this.visite.libre;
+    const occupe = libre ? '1 h' : 'pas maintenant';
+    const fatigue = aBoutDeForces(this.e);
+    return [
+      { k: 'temps', nom: 'Passer du temps ensemble', icone: IC.partage, detail: occupe, off: !libre, agir: () => this.duoVisiteur('temps') },
+      { k: 'jouer', nom: 'Jouer ensemble', icone: IC.balle, detail: occupe, off: !libre, agir: () => this.duoVisiteur('jeu') },
+      { k: 'bagarre', nom: 'Se bagarrer', icone: IC.course, detail: occupe, off: !libre, agir: () => this.duoVisiteur('bagarre') },
+      { k: 'r-combat', nom: 'Combat', rubrique: true },
+      { k: 'combat', nom: v ? `Affronter ${v.nom}` : 'Affronter', icone: IC.course, off: !this.props.surCombat || !v || fatigue || !libre,
+        detail: !this.props.surCombat ? 'à venir' : fatigue ? `${this.e.nom} est à bout de forces` : 'un vrai combat',
+        agir: () => { if (!v || !this.props.surCombat) return; this.sauver(); this.props.surCombat(this.e, 'entrainement', v); } },
+    ];
+  }
+
+  /** Passer du temps, jouer, se bagarrer : le visiteur rejoint notre écho, le geste se joue, une heure passe. */
+  duoVisiteur(nature: 'temps' | 'jeu' | 'bagarre') {
+    const s = this.sim;
+    const r = nature === 'temps' ? s.passerDuTempsAvecVisiteur() : s.duoAvecVisiteur(nature);
+    if (!r.ok) { this.traiter(s.vider()); this.flotter(r.raison, COULEUR.mal); this.rafraichir(); return; }
+    // ce qui s'est passé pendant l'heure est montré après le geste (sans second geste spontané par-dessus)
+    const sorties = s.vider().filter((x) => !(x.type === 'visite' && x.spontane));
+    const reussi = 'succes' in r ? !!r.succes : true;
+    this.visite.geste(nature, reussi, () => {
+      this.montrerSortie({ texte: 'Une heure plus tard…', sous: r.texte }, 3600);
+      this.traiter(sorties); this.sauver(); this.rafraichir();
+    });
+  }
+
+  /** Les échos de passage dans le carnet (relations) : la relation se lit en mots. */
+  relationsEchos() {
+    const e = this.e; const ici = e.visiteur?.id;
+    const liste = [...e.echosSauvages]
+      .sort((a, b) => Number(b.id === ici) - Number(a.id === ici) || rangRelation(niveauRelation(b)) - rangRelation(niveauRelation(a)))
+      .slice(0, 6);
+    return {
+      aDesEchosConnus: liste.length > 0, sansEchosConnus: liste.length === 0,
+      echosConnus: liste.map((x) => {
+        const n = niveauRelation(x);
+        return {
+          nom: x.nom, image: asset(apparence({ ...x, evolution: null } as unknown as Etat)), lien: LIEN_RELATION[n], encre: ENCRE_RELATION[n], cls: x.id === ici ? 'ici' : '',
+          note: x.id === ici ? 'au ranch en ce moment' : `${NOM_STADE[x.stade].toLowerCase()}, ${NOM_GRAINE[x.graine].toLowerCase()}`,
+        };
+      }),
+    };
+  }
+
+  /** Il évolue : la séquence prend tout l'écran, la musique se tait, le temps s'arrête. */
+  lancerEvolution(de: Stade, vers: Stade) {
+    const e = this.e; const s = this.state;
+    const avant = this.apparenceVue || apparence(e);
+    const Il = this.a('Il', 'Elle');
+    this.evo = {
+      de: asset(avant), vers: asset(apparence(e)),
+      tailleDe: profilEcho({ stade: de, taille: e.taille, poids: e.poids }).echelle, tailleVers: this.taille(),
+      depart: { x: s.ex + 75, y: s.ey + 226, echelle: perspective(s.ey) },
+      surtitre: `Jour ${ageJours(e)} · ${hm(e.minute)}`,
+      titre: `${e.nom} a ${vers === 'enfant' ? 'grandi' : 'évolué'} !`,
+      texte: `${Il} a atteint le stade ${NOM_STADE[vers]}. Une nouvelle page de sa vie commence.`,
+      surFin: this.finEvolution,
+    };
+    clearInterval(this.pasTimer);
+    this.setState({ ouvert: null, quitter: false, carnetLeve: false, marche: false, eDur: 0 });
+    this.rafraichir();
+  }
+  finEvolution = () => {
+    this.evo = null;
+    this.apparenceVue = apparence(this.e);
+    this.sauver();
+    this.rafraichir();
+    this.later(() => { this.reagir(true, 'saute'); this.coeurs(4); }, 200);
+  };
+
+  /** Les zones que Jumpy montre pendant le tutoriel (repère 1280 × 800). */
+  ciblesTutoriel = (): Record<string, Cible> => {
+    const s = this.state; const k = perspective(s.ey); const t = this.taille();
+    const h = 190 * t * k, l = Math.max(120, 150 * t * k);
+    return {
+      echo: { x: Math.round(s.ex + 75 - l / 2), y: Math.round(s.ey + 232 - h - 24), l: Math.round(l), h: Math.round(h + 40), rond: true },
+      onglets: { x: 200, y: 540, l: 68, h: 228 },
+      carnet: { x: 8, y: 530, l: 212, h: 258 },
+      heure: { x: 24, y: 6, l: 308, h: 124 },
+      sac: { x: 1156, y: 22, l: 102, h: 102 },
+      poteau: { x: 1156, y: 126, l: 102, h: 112 },
+    };
+  };
+  finTutoriel = () => {
+    this.props.surTutorielVu?.();
+    this.later(() => { this.tutoActif = false; this.rafraichir(); }, 600);
+  };
+
   render(): ReactNode {
-    return <Repere fond="#0d0a14"><VueRanch v={this.valeurs()} /></Repere>;
+    return (
+      <Repere fond="#0d0a14">
+        <VueRanch v={this.valeurs()} />
+        {this.evo && <Evolution {...this.evo} sons={this.state.sons} />}
+        {this.tutoActif && this.props.catalogue && this.props.personnage && (
+          <Tutoriel etat={this.e} personnage={this.props.personnage} catalogue={this.props.catalogue} sons={this.state.sons} cibles={this.ciblesTutoriel} surFin={this.finTutoriel} />
+        )}
+      </Repere>
+    );
   }
 
   valeurs() {
@@ -782,6 +949,7 @@ export class Ranch extends Component<ProprietesRanch, EtatUI> {
     const journalJours = [...parJour.entries()].reverse().map(([jour, lignes]) => ({ titre: jour === e.jour ? 'Aujourd’hui' : `Jour ${ageJours({ jour, naissance: e.naissance })}`, lignes: lignes.reverse() }));
     const visiteur = this.sim.visiteur;
     const ouvertVisiteur = s.ouvert === 'visiteur';
+    this.apparenceVue = apparence(e);
     // états qui gravitent : les besoins pressants (urgence 2 et plus)
     const etats = ORDRE_ETATS.filter((k) => g.besoins.some((b) => ETAT_DE_BESOIN[b.besoin] === k && (b.urgence >= 2 || b.besoin === 'maladie' || b.besoin === 'blessure')));
     const visibles = e.comportement || s.evc || e.mort ? [] : etats;
@@ -843,11 +1011,8 @@ export class Ranch extends Component<ProprietesRanch, EtatUI> {
           },
         };
       }),
-      visiteur: visiteur ? {
-        nom: visiteur.nom, aria: `${visiteur.nom}, écho de passage`, image: asset(apparence({ ...visiteur, evolution: null } as unknown as Etat)),
-        hauteur: Math.round(190 * profilEcho({ stade: visiteur.stade, taille: 1, poids: 18 }).echelle), y: 380, z: 480,
-        ouvrir: () => { this.son('leather'); this.setState({ ouvert: ouvertVisiteur ? null : 'visiteur', quitter: false, actif: -1 }); },
-      } : null,
+      visiteur: this.visite.valeurs(() => { this.son('leather'); this.setState({ ouvert: this.state.ouvert === 'visiteur' ? null : 'visiteur', quitter: false, actif: -1 }); }, ouvertVisiteur),
+      ...this.relationsEchos(),
       // le petit carnet (onglets) et la fiche
       verbes, choix, ceintureCls: s.carnet || s.sacOuvert || s.sortie || s.evc || s.scene ? 'repli' : '',
       carnetLeve: s.carnetLeve && !s.carnet ? 'leve' : '',
@@ -926,6 +1091,8 @@ export class Ranch extends Component<ProprietesRanch, EtatUI> {
       sauver: () => { this.sauver(); this.son('stamp'); this.setState({ sauve: 'partie sauvegardée' }); this.later(() => this.setState({ sauve: '' }), 2500); }, sauveTexte: s.sauve,
       sortieVisible: !!s.sortie, sortieTexte: s.sortie?.texte ?? '', sortieSous: s.sortie?.sous ?? '', sortieImage: s.sortie?.image ?? '',
       sortieCls: s.sortie?.bloquant ? 'bloquant' : '', sortieBouton: s.sortie?.bloquant ? { texte: 'Revenir au menu', agir: () => this.props.surQuitter() } : null,
+      // pendant l'évolution, c'est la séquence qui montre l'écho
+      ...(this.evo ? { echoOp: 0, ceintureCls: 'repli', coteCls: 'cache' } : {}),
     };
   }
 }

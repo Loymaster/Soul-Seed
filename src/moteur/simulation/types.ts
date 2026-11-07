@@ -127,6 +127,8 @@ export interface EchoSauvage {
   caracs: Caracs;
   affectPositif: number;
   affectNegatif: number;
+  /** « Signe d'inspiration » après un moment passé ensemble : rapproche les personnalités (compatibilité). */
+  compatBonus?: number;
 }
 
 export type TypeComportement = 'reussite' | 'betise' | 'amplification' | 'neutre';
@@ -283,7 +285,11 @@ export type Sortie =
   | { type: 'dejection'; dejection: Dejection }
   | { type: 'voisin'; texte: string }
   | { type: 'evenement'; nature: 'bruit' | 'invite' | 'visite'; texte: string }
-  | { type: 'visiteur-parti'; texte: string }
+  | { type: 'visiteur-parti'; texte: string; id: string }
+  /** Notre écho et son visiteur font quelque chose ensemble (d'eux-mêmes, ou à la demande du joueur). */
+  | { type: 'visite'; nature: 'jeu' | 'dispute' | 'partage' | 'repos' | 'temps' | 'bagarre'; reussi: boolean; sens: 1 | 0 | -1; texte: string; spontane: boolean }
+  /** La relation avec un écho sauvage a franchi un palier (amitié, méfiance…). */
+  | { type: 'relation'; id: string; niveau: string; sens: 1 | -1; texte: string }
   | { type: 'comportement' }
   | { type: 'autonomie'; texte: string }
   | { type: 'effondrement' }

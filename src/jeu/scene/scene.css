@@ -9,6 +9,11 @@
 @keyframes sc-decor-entre { from { opacity: 0; transform: scale(1.06); filter: blur(10px) brightness(.4); } to { opacity: 1; transform: scale(1.02); filter: blur(1.5px) brightness(.82); } }
 @keyframes sc-decor-sort { from { opacity: 1; filter: blur(1.5px) brightness(.82); } to { opacity: 0; filter: blur(8px) brightness(.4); } }
 .sc-vignettage { position: absolute; inset: 0; background: radial-gradient(ellipse at 50% 40%, transparent 40%, rgba(10,6,4,.7) 100%); pointer-events: none; }
+/* Par-dessus l'écran du jeu (tutoriel du ranch) : pas de fond, une ombre légère */
+.sc-cadre.transparent { background: transparent; }
+.sc-cadre.transparent .sc-vignettage { background: radial-gradient(ellipse at 50% 40%, transparent 50%, rgba(10,6,4,.35) 100%); }
+.sc-cadre.transparent .sc-flou { display: none; }
+.sc-cadre.transparent .sc-ombre { opacity: .55; }
 
 /* Personnages */
 .sc-perso { position: absolute; transform-origin: 50% 100%; transition: opacity .55s ease, filter .45s ease, transform .6s cubic-bezier(.22,.9,.3,1), left .6s cubic-bezier(.22,.9,.3,1); }

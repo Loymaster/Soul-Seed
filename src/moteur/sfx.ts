@@ -52,6 +52,8 @@ export interface MoteurSons {
   motVoix: (i: number) => void; sceau: (i: number) => void; aube: Son;
   /** Validation de l'introduction : une note unique, neutre et mystérieuse. */
   mystere: Son;
+  // évolution de l'écho
+  evoMontee: (duree: number) => void; evoBattement: (i: number) => void; evoEclat: Son; evoRevelation: Son;
 }
 
 export const SFX = brut as unknown as MoteurSons;
