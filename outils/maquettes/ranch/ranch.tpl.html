@@ -323,7 +323,8 @@
         <div class="sn-titre">{{scTitre}}</div>
         <sc-for list="{{scLignes}}" as="l" hint-placeholder-count="2"><div class="sn-ligne">{{l.t}}</div></sc-for>
         <sc-if value="{{scAGains}}" hint-placeholder-val="{{ false }}"><div class="sn-gains"><sc-for list="{{scGains}}" as="g" hint-placeholder-count="2"><span class="sn-gain" style="animation-delay:{{g.delai}}s">{{g.nom}}<b>{{g.fleches}}</b></span></sc-for></div></sc-if>
-        <div class="sn-suite">continuer</div>
+        <sc-if value="{{scAReponses}}" hint-placeholder-val="{{ false }}"><div class="sn-reponses"><sc-for list="{{scReponses}}" as="r" hint-placeholder-count="2"><button class="sn-reponse {{r.cls}}" onClick="{{r.choisir}}">{{r.texte}}</button></sc-for></div></sc-if>
+        <sc-if value="{{scSansReponse}}" hint-placeholder-val="{{ true }}"><div class="sn-suite">continuer</div></sc-if>
       </div>
     </sc-if>
   </div>

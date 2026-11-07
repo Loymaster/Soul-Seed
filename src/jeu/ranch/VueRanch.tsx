@@ -937,9 +937,22 @@ export function VueRanch({ v }: { v: any }) {
                   ))}
                 </div>
               </>) : null}
-              <div className="sn-suite">
-                continuer
-              </div>
+              {v.scAReponses ? (<>
+                <div className="sn-reponses">
+                  {(v.scReponses || []).map((xR17: any, i17: number) => (
+                    <Fragment key={i17}>
+                      <button className={`sn-reponse ${xR17.cls}`} onClick={xR17.choisir}>
+                        {xR17.texte}
+                      </button>
+                    </Fragment>
+                  ))}
+                </div>
+              </>) : null}
+              {v.scSansReponse ? (<>
+                <div className="sn-suite">
+                  continuer
+                </div>
+              </>) : null}
             </div>
           </>) : null}
         </div>
@@ -1073,25 +1086,25 @@ export function VueRanch({ v }: { v: any }) {
                         </span>
                       </div>
                       <div className={v.choicesClass} style={{ position: "relative", display: "flex", flexDirection: "column", gap: `${v.listGap}px`, marginTop: "10px", width: "342px" } as CSSProperties}>
-                        {(v.answers || []).map((xA17: any, i17: number) => (
-                          <Fragment key={i17}>
-                            <button className={xA17.cls} onClick={xA17.pick} onMouseEnter={xA17.enter} onFocus={xA17.enter} style={{ position: "relative", width: "100%", display: "flex", alignItems: "center", gap: "12px", padding: xA17.pad, border: "none", borderRadius: "4px", background: "transparent", textAlign: "left", fontFamily: "'Alegreya',serif", fontSize: "16.5px", color: "#2b2118", cursor: "pointer", transitionDelay: xA17.delay } as CSSProperties}>
-                              <span style={{ flex: "none", width: "28px", height: "28px", boxSizing: "border-box", borderRadius: "50%", border: `2.5px ${xA17.borderStyle} ${xA17.color}`, display: "flex", alignItems: "center", justifyContent: "center", color: xA17.color, boxShadow: `0 0 ${xA17.glow}px ${xA17.glowColor}` } as CSSProperties}>
+                        {(v.answers || []).map((xA18: any, i18: number) => (
+                          <Fragment key={i18}>
+                            <button className={xA18.cls} onClick={xA18.pick} onMouseEnter={xA18.enter} onFocus={xA18.enter} style={{ position: "relative", width: "100%", display: "flex", alignItems: "center", gap: "12px", padding: xA18.pad, border: "none", borderRadius: "4px", background: "transparent", textAlign: "left", fontFamily: "'Alegreya',serif", fontSize: "16.5px", color: "#2b2118", cursor: "pointer", transitionDelay: xA18.delay } as CSSProperties}>
+                              <span style={{ flex: "none", width: "28px", height: "28px", boxSizing: "border-box", borderRadius: "50%", border: `2.5px ${xA18.borderStyle} ${xA18.color}`, display: "flex", alignItems: "center", justifyContent: "center", color: xA18.color, boxShadow: `0 0 ${xA18.glow}px ${xA18.glowColor}` } as CSSProperties}>
                                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                                  <path d={xA17.icon} />
+                                  <path d={xA18.icon} />
                                 </svg>
                               </span>
                               <span style={{ minWidth: "0", flex: "1" } as CSSProperties}>
-                                <span style={{ display: "block", fontFamily: "'Alegreya SC',serif", fontWeight: "700", fontSize: `${xA17.labelSize}px`, letterSpacing: "1px", color: xA17.color } as CSSProperties}>
-                                  {xA17.label}
+                                <span style={{ display: "block", fontFamily: "'Alegreya SC',serif", fontWeight: "700", fontSize: `${xA18.labelSize}px`, letterSpacing: "1px", color: xA18.color } as CSSProperties}>
+                                  {xA18.label}
                                 </span>
-                                {xA17.showText ? (<>
+                                {xA18.showText ? (<>
                                   <span className="ans">
-                                    {xA17.text}
+                                    {xA18.text}
                                   </span>
                                 </>) : null}
                               </span>
-                              {xA17.sheetIcon ? (<>
+                              {xA18.sheetIcon ? (<>
                                 <span title="Voir la réponse" style={{ flex: "none", marginLeft: "auto", width: "22px", height: "22px", display: "flex", alignItems: "center", justifyContent: "center", color: "#6b4f33" } as CSSProperties}>
                                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
                                     <path d="M6 3h9l4 4v14H6z" />
@@ -1099,7 +1112,7 @@ export function VueRanch({ v }: { v: any }) {
                                   </svg>
                                 </span>
                               </>) : null}
-                              <svg className={xA17.stampCls} viewBox="0 0 40 40" aria-hidden="true">
+                              <svg className={xA18.stampCls} viewBox="0 0 40 40" aria-hidden="true">
                                 <circle cx="20" cy="20" r="16.5" fill="rgba(63,122,58,.08)" stroke="#3f7a3a" strokeWidth="3" />
                                 <circle cx="20" cy="20" r="12.5" fill="none" stroke="#3f7a3a" strokeWidth="1.2" strokeDasharray="2 2.2" />
                                 <path d="M12.5 20.5l5 5 10-11" fill="none" stroke="#3f7a3a" strokeWidth="3.6" strokeLinecap="round" strokeLinejoin="round" />
@@ -1216,25 +1229,25 @@ export function VueRanch({ v }: { v: any }) {
                       </span>
                     </div>
                     <div style={{ position: "relative", display: "flex", flexDirection: "column", gap: `${v.listGap}px`, marginTop: "10px", width: "342px" } as CSSProperties}>
-                      {(v.answers || []).map((xA18: any, i18: number) => (
-                        <Fragment key={i18}>
-                          <div className={xA18.ghostCls} aria-hidden="true" style={{ position: "relative", width: "100%", display: "flex", alignItems: "center", gap: "12px", padding: xA18.pad, border: "none", borderRadius: "4px", background: "transparent", textAlign: "left", fontFamily: "'Alegreya',serif", fontSize: "16.5px", color: "#2b2118", transitionDelay: xA18.delay } as CSSProperties}>
-                            <span style={{ flex: "none", width: "28px", height: "28px", boxSizing: "border-box", borderRadius: "50%", border: `2.5px ${xA18.borderStyle} ${xA18.color}`, display: "flex", alignItems: "center", justifyContent: "center", color: xA18.color, boxShadow: `0 0 ${xA18.glow}px ${xA18.glowColor}` } as CSSProperties}>
+                      {(v.answers || []).map((xA19: any, i19: number) => (
+                        <Fragment key={i19}>
+                          <div className={xA19.ghostCls} aria-hidden="true" style={{ position: "relative", width: "100%", display: "flex", alignItems: "center", gap: "12px", padding: xA19.pad, border: "none", borderRadius: "4px", background: "transparent", textAlign: "left", fontFamily: "'Alegreya',serif", fontSize: "16.5px", color: "#2b2118", transitionDelay: xA19.delay } as CSSProperties}>
+                            <span style={{ flex: "none", width: "28px", height: "28px", boxSizing: "border-box", borderRadius: "50%", border: `2.5px ${xA19.borderStyle} ${xA19.color}`, display: "flex", alignItems: "center", justifyContent: "center", color: xA19.color, boxShadow: `0 0 ${xA19.glow}px ${xA19.glowColor}` } as CSSProperties}>
                               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                                <path d={xA18.icon} />
+                                <path d={xA19.icon} />
                               </svg>
                             </span>
                             <span style={{ minWidth: "0", flex: "1" } as CSSProperties}>
-                              <span style={{ display: "block", fontFamily: "'Alegreya SC',serif", fontWeight: "700", fontSize: `${xA18.labelSize}px`, letterSpacing: "1px", color: xA18.color } as CSSProperties}>
-                                {xA18.label}
+                              <span style={{ display: "block", fontFamily: "'Alegreya SC',serif", fontWeight: "700", fontSize: `${xA19.labelSize}px`, letterSpacing: "1px", color: xA19.color } as CSSProperties}>
+                                {xA19.label}
                               </span>
-                              {xA18.showText ? (<>
+                              {xA19.showText ? (<>
                                 <span className="ans">
-                                  {xA18.text}
+                                  {xA19.text}
                                 </span>
                               </>) : null}
                             </span>
-                            {xA18.never ? (<>
+                            {xA19.never ? (<>
                               <span title="Voir la réponse" style={{ flex: "none", marginLeft: "auto", width: "22px", height: "22px", display: "flex", alignItems: "center", justifyContent: "center", color: "#6b4f33" } as CSSProperties}>
                                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
                                   <path d="M6 3h9l4 4v14H6z" />
@@ -1242,7 +1255,7 @@ export function VueRanch({ v }: { v: any }) {
                                 </svg>
                               </span>
                             </>) : null}
-                            <svg className={xA18.ghostStamp} viewBox="0 0 40 40" aria-hidden="true">
+                            <svg className={xA19.ghostStamp} viewBox="0 0 40 40" aria-hidden="true">
                               <circle cx="20" cy="20" r="16.5" fill="rgba(63,122,58,.08)" stroke="#3f7a3a" strokeWidth="3" />
                               <circle cx="20" cy="20" r="12.5" fill="none" stroke="#3f7a3a" strokeWidth="1.2" strokeDasharray="2 2.2" />
                               <path d="M12.5 20.5l5 5 10-11" fill="none" stroke="#3f7a3a" strokeWidth="3.6" strokeLinecap="round" strokeLinejoin="round" />
@@ -1268,9 +1281,9 @@ export function VueRanch({ v }: { v: any }) {
               <img src={v.avatarImg} alt="" style={{ filter: `blur(7px) ${v.portraitFilter}` } as CSSProperties} />
             </div>
             <div className={`portrait portrait-fade ${v.talkClass}`} style={{ filter: v.portraitFilter } as CSSProperties}>
-              {(v.poses || []).map((xP19: any, i19: number) => (
-                <Fragment key={i19}>
-                  <img className={`pose ${xP19.cls}`} src={xP19.src} alt={xP19.alt} style={{ opacity: xP19.op, position: xP19.pos, left: "40px", top: "40px" } as CSSProperties} />
+              {(v.poses || []).map((xP20: any, i20: number) => (
+                <Fragment key={i20}>
+                  <img className={`pose ${xP20.cls}`} src={xP20.src} alt={xP20.alt} style={{ opacity: xP20.op, position: xP20.pos, left: "40px", top: "40px" } as CSSProperties} />
                 </Fragment>
               ))}
             </div>
@@ -1312,13 +1325,13 @@ export function VueRanch({ v }: { v: any }) {
           <div className="sac-corps">
             <div className="stitch" style={{ borderRadius: "18px 18px 54px 54px" } as CSSProperties} />
             <div className="sac-poche">
-              {(v.sacCases || []).map((xC20: any, i20: number) => (
-                <Fragment key={i20}>
-                  <button className={`case ${xC20.cls}`} style={{ animationDelay: `${xC20.delai}s` } as CSSProperties} draggable={xC20.plein} onDragStart={xC20.prendreDnd} onDragOver={xC20.survolDnd} onDragLeave={xC20.quitteDnd} onDrop={xC20.deposer} onDragEnd={xC20.finDnd} onMouseEnter={xC20.survol} onClick={xC20.choisir} aria-disabled={!!(xC20.vide)} aria-haspopup="menu" aria-label={xC20.nom}>
-                    {xC20.plein ? (<>
-                      <img src={xC20.image} alt="" />
+              {(v.sacCases || []).map((xC21: any, i21: number) => (
+                <Fragment key={i21}>
+                  <button className={`case ${xC21.cls}`} style={{ animationDelay: `${xC21.delai}s` } as CSSProperties} draggable={xC21.plein} onDragStart={xC21.prendreDnd} onDragOver={xC21.survolDnd} onDragLeave={xC21.quitteDnd} onDrop={xC21.deposer} onDragEnd={xC21.finDnd} onMouseEnter={xC21.survol} onClick={xC21.choisir} aria-disabled={!!(xC21.vide)} aria-haspopup="menu" aria-label={xC21.nom}>
+                    {xC21.plein ? (<>
+                      <img src={xC21.image} alt="" />
                       <span className="sceau qte" style={{ background: "#6e3f22" } as CSSProperties}>
-                        {xC20.qte}
+                        {xC21.qte}
                       </span>
                     </>) : null}
                   </button>
@@ -1351,12 +1364,12 @@ export function VueRanch({ v }: { v: any }) {
               <span className="sr-titre">
                 ressources
               </span>
-              {(v.ressourcesSac || []).map((xR21: any, i21: number) => (
-                <Fragment key={i21}>
-                  <span className={`sr ${xR21.cls}`} title={xR21.nom}>
-                    <img src={xR21.image} alt={xR21.nom} />
+              {(v.ressourcesSac || []).map((xR22: any, i22: number) => (
+                <Fragment key={i22}>
+                  <span className={`sr ${xR22.cls}`} title={xR22.nom}>
+                    <img src={xR22.image} alt={xR22.nom} />
                     <b>
-                      {xR21.qte}
+                      {xR22.qte}
                     </b>
                   </span>
                 </Fragment>
@@ -1386,13 +1399,13 @@ export function VueRanch({ v }: { v: any }) {
           <div className="l-wrap">
             {/* Onglets : glissent hors du carnet une fois ouvert */}
             <nav className="l-onglets" aria-label="Pages du carnet">
-              {(v.onglets || []).map((xO22: any, i22: number) => (
-                <Fragment key={i22}>
-                  <button className={`l-onglet leather ${xO22.cls}`} style={{ animationDelay: `${xO22.delai}s` } as CSSProperties} onClick={xO22.ouvrir} aria-label={xO22.nom}>
+              {(v.onglets || []).map((xO23: any, i23: number) => (
+                <Fragment key={i23}>
+                  <button className={`l-onglet leather ${xO23.cls}`} style={{ animationDelay: `${xO23.delai}s` } as CSSProperties} onClick={xO23.ouvrir} aria-label={xO23.nom}>
                     <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                      <path d={xO22.icone} />
+                      <path d={xO23.icone} />
                     </svg>
-                    {xO22.court} 
+                    {xO23.court} 
                   </button>
                 </Fragment>
               ))}
@@ -1415,14 +1428,14 @@ export function VueRanch({ v }: { v: any }) {
                     <div style={{ fontFamily: "'Alegreya SC',serif", fontSize: "13px", letterSpacing: "2px", color: "#9a7b55", margin: "2px 0 12px" } as CSSProperties}>
                       {v.jourTexteMin} · {v.time}
                     </div>
-                    {(v.journalCourt || []).map((xJ23: any, i23: number) => (
-                      <Fragment key={i23}>
+                    {(v.journalCourt || []).map((xJ24: any, i24: number) => (
+                      <Fragment key={i24}>
                         <div style={{ display: "flex", gap: "12px", fontSize: "16.5px", lineHeight: "32px" } as CSSProperties}>
                           <span style={{ flex: "none", width: "46px", fontFamily: "'Alegreya SC',serif", fontSize: "13px", color: "#9a7b55" } as CSSProperties}>
-                            {xJ23.heure}
+                            {xJ24.heure}
                           </span>
                           <span>
-                            {xJ23.texte}
+                            {xJ24.texte}
                           </span>
                         </div>
                       </Fragment>
@@ -1430,31 +1443,31 @@ export function VueRanch({ v }: { v: any }) {
                     <div style={{ fontFamily: "'Reenie Beanie',cursive", fontSize: "28px", lineHeight: "1", color: "#9c3b2a", marginTop: "22px" } as CSSProperties}>
                       à ne pas oublier
                     </div>
-                    {(v.rappels || []).map((xR24: any, i24: number) => (
-                      <Fragment key={i24}>
+                    {(v.rappels || []).map((xR25: any, i25: number) => (
+                      <Fragment key={i25}>
                         <div style={{ fontSize: "16.5px", lineHeight: "32px", display: "flex", gap: "10px", alignItems: "center" } as CSSProperties}>
                           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#9c3b2a" strokeWidth="2.2" strokeLinecap="round" aria-hidden="true">
                             <path d="M5 12h14M13 6l6 6-6 6" />
                           </svg>
-                          {xR24.texte}
+                          {xR25.texte}
                         </div>
                       </Fragment>
                     ))}
                   </>) : null}
                   {v.pJournal ? (<>
-                    {(v.journalJours || []).map((xJj25: any, i25: number) => (
-                      <Fragment key={i25}>
+                    {(v.journalJours || []).map((xJj26: any, i26: number) => (
+                      <Fragment key={i26}>
                         <div style={{ fontFamily: "'Reenie Beanie',cursive", fontSize: "30px", lineHeight: "1", color: "#3a2a1c", margin: "6px 0 6px" } as CSSProperties}>
-                          {xJj25.titre}
+                          {xJj26.titre}
                         </div>
-                        {(xJj25.lignes || []).map((xJ26: any, i26: number) => (
-                          <Fragment key={i26}>
+                        {(xJj26.lignes || []).map((xJ27: any, i27: number) => (
+                          <Fragment key={i27}>
                             <div style={{ display: "flex", gap: "12px", fontSize: "16px", lineHeight: "24px", marginBottom: "6px" } as CSSProperties}>
                               <span style={{ flex: "none", width: "46px", fontFamily: "'Alegreya SC',serif", fontSize: "13px", color: "#9a7b55" } as CSSProperties}>
-                                {xJ26.heure}
+                                {xJ27.heure}
                               </span>
                               <span>
-                                {xJ26.texte}
+                                {xJ27.texte}
                               </span>
                             </div>
                           </Fragment>
@@ -1505,22 +1518,22 @@ export function VueRanch({ v }: { v: any }) {
                       <div style={{ fontFamily: "'Alegreya SC',serif", fontWeight: "700", fontSize: "14px", letterSpacing: "2px", color: "#9a7b55", marginBottom: "8px" } as CSSProperties}>
                         Échos de passage
                       </div>
-                      {(v.echosConnus || []).map((xC27: any, i27: number) => (
-                        <Fragment key={i27}>
-                          <div className={`relation-echo ${xC27.cls}`}>
+                      {(v.echosConnus || []).map((xC28: any, i28: number) => (
+                        <Fragment key={i28}>
+                          <div className={`relation-echo ${xC28.cls}`}>
                             <span className="medaillon">
-                              <img src={xC27.image} alt="" />
+                              <img src={xC28.image} alt="" />
                             </span>
                             <span className="qui">
                               <b>
-                                {xC27.nom}
+                                {xC28.nom}
                               </b>
                               <em>
-                                {xC27.note}
+                                {xC28.note}
                               </em>
                             </span>
-                            <span className="lien" style={{ color: xC27.encre } as CSSProperties}>
-                              {xC27.lien}
+                            <span className="lien" style={{ color: xC28.encre } as CSSProperties}>
+                              {xC28.lien}
                             </span>
                           </div>
                         </Fragment>
@@ -1601,17 +1614,17 @@ export function VueRanch({ v }: { v: any }) {
                         </span>
                       </div>
                       <div className="ast-liste">
-                        {(v.astuces || []).map((xA28: any, i28: number) => (
-                          <Fragment key={i28}>
-                            <div className={`ast ${xA28.cls}`}>
+                        {(v.astuces || []).map((xA29: any, i29: number) => (
+                          <Fragment key={i29}>
+                            <div className={`ast ${xA29.cls}`}>
                               <svg className="ast-puce" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" aria-hidden="true">
                                 <path d="M5 12h14M13 6l6 6-6 6" />
                               </svg>
                               <span className="ast-texte">
-                                {xA28.texte}
-                                {xA28.piste ? (<>
+                                {xA29.texte}
+                                {xA29.piste ? (<>
                                   <em className="ast-piste">
-                                    — {xA28.piste}
+                                    — {xA29.piste}
                                   </em>
                                 </>) : null}
                               </span>
@@ -1697,23 +1710,23 @@ export function VueRanch({ v }: { v: any }) {
                       {v.pageTitre}
                     </div>
                     {v.pSommaire ? (<>
-                      {(v.sommaire || []).map((xS29: any, i29: number) => (
-                        <Fragment key={i29}>
-                          <button className="sommaire-ligne" onClick={xS29.ouvrir}>
+                      {(v.sommaire || []).map((xS30: any, i30: number) => (
+                        <Fragment key={i30}>
+                          <button className="sommaire-ligne" onClick={xS30.ouvrir}>
                             <span className="num">
-                              {xS29.num}
+                              {xS30.num}
                             </span>
                             <span>
-                              {xS29.nom}
+                              {xS30.nom}
                             </span>
-                            {xS29.aBadge ? (<>
+                            {xS30.aBadge ? (<>
                               <span className="sceau">
-                                {xS29.badge}
+                                {xS30.badge}
                               </span>
                             </>) : null}
                             <span className="points" />
                             <span className="num">
-                              {xS29.page}
+                              {xS30.page}
                             </span>
                           </button>
                         </Fragment>
@@ -1723,14 +1736,14 @@ export function VueRanch({ v }: { v: any }) {
                       <div style={{ fontFamily: "'Reenie Beanie',cursive", fontSize: "30px", lineHeight: "1", color: "#3a2a1c", marginBottom: "6px" } as CSSProperties}>
                         aujourd'hui
                       </div>
-                      {(v.journal || []).map((xJ30: any, i30: number) => (
-                        <Fragment key={i30}>
+                      {(v.journal || []).map((xJ31: any, i31: number) => (
+                        <Fragment key={i31}>
                           <div style={{ display: "flex", gap: "12px", fontSize: "16px", lineHeight: "32px" } as CSSProperties}>
                             <span style={{ flex: "none", width: "46px", fontFamily: "'Alegreya SC',serif", fontSize: "13px", color: "#9a7b55" } as CSSProperties}>
-                              {xJ30.heure}
+                              {xJ31.heure}
                             </span>
                             <span>
-                              {xJ30.texte}
+                              {xJ31.texte}
                             </span>
                           </div>
                         </Fragment>
@@ -1741,15 +1754,15 @@ export function VueRanch({ v }: { v: any }) {
                         Nourriture
                       </div>
                       <div style={{ display: "grid", gridTemplateColumns: "repeat(4,minmax(0,1fr))", gap: "8px" } as CSSProperties}>
-                        {(v.sacNourriture || []).map((xN31: any, i31: number) => (
-                          <Fragment key={i31}>
-                            <div className="case-sac" style={{ opacity: xN31.opacite } as CSSProperties}>
-                              <img src={xN31.image} alt="" />
+                        {(v.sacNourriture || []).map((xN32: any, i32: number) => (
+                          <Fragment key={i32}>
+                            <div className="case-sac" style={{ opacity: xN32.opacite } as CSSProperties}>
+                              <img src={xN32.image} alt="" />
                               <span>
-                                {xN31.nom}
+                                {xN32.nom}
                               </span>
                               <b style={{ fontFamily: "'Alegreya SC',serif", fontSize: "12px", color: "#6b4f33" } as CSSProperties}>
-                                × {xN31.qte}
+                                × {xN32.qte}
                               </b>
                             </div>
                           </Fragment>
@@ -1757,29 +1770,29 @@ export function VueRanch({ v }: { v: any }) {
                       </div>
                     </>) : null}
                     {v.pRelations ? (<>
-                      {(v.relations || []).map((xR32: any, i32: number) => (
-                        <Fragment key={i32}>
+                      {(v.relations || []).map((xR33: any, i33: number) => (
+                        <Fragment key={i33}>
                           <div style={{ display: "flex", alignItems: "baseline", gap: "10px", fontSize: "17px", lineHeight: "32px" } as CSSProperties}>
-                            <b style={{ fontFamily: "'Alegreya SC',serif", letterSpacing: "1.5px", color: xR32.encre, width: "84px" } as CSSProperties}>
-                              {xR32.nom}
+                            <b style={{ fontFamily: "'Alegreya SC',serif", letterSpacing: "1.5px", color: xR33.encre, width: "84px" } as CSSProperties}>
+                              {xR33.nom}
                             </b>
                             <span style={{ fontFamily: "'Reenie Beanie',cursive", fontSize: "23px", color: "#6b4f33" } as CSSProperties}>
-                              {xR32.lien}
+                              {xR33.lien}
                             </span>
                           </div>
                         </Fragment>
                       ))}
                     </>) : null}
                     {v.pCarte ? (<>
-                      {(v.lieux || []).map((xL33: any, i33: number) => (
-                        <Fragment key={i33}>
-                          <button className="sommaire-ligne" onClick={xL33.partir} disabled={!!(xL33.off)} style={{ opacity: xL33.opacite } as CSSProperties}>
+                      {(v.lieux || []).map((xL34: any, i34: number) => (
+                        <Fragment key={i34}>
+                          <button className="sommaire-ligne" onClick={xL34.partir} disabled={!!(xL34.off)} style={{ opacity: xL34.opacite } as CSSProperties}>
                             <span>
-                              {xL33.nom}
+                              {xL34.nom}
                             </span>
                             <span className="points" />
                             <span className="num">
-                              {xL33.duree}
+                              {xL34.duree}
                             </span>
                           </button>
                         </Fragment>
@@ -1813,18 +1826,18 @@ export function VueRanch({ v }: { v: any }) {
                       <div className="ast-intro">
                         {v.astIntro}
                       </div>
-                      {(v.astThemes || []).map((xT34: any, i34: number) => (
-                        <Fragment key={i34}>
-                          <button className={`sommaire-ligne ast-ligne ${xT34.cls}`} onClick={xT34.ouvrir} aria-current={xT34.ici}>
+                      {(v.astThemes || []).map((xT35: any, i35: number) => (
+                        <Fragment key={i35}>
+                          <button className={`sommaire-ligne ast-ligne ${xT35.cls}`} onClick={xT35.ouvrir} aria-current={xT35.ici}>
                             <span className="num">
-                              {xT34.num}
+                              {xT35.num}
                             </span>
                             <span>
-                              {xT34.nom}
+                              {xT35.nom}
                             </span>
                             <span className="points" />
                             <span className="num">
-                              {xT34.compte}
+                              {xT35.compte}
                             </span>
                           </button>
                         </Fragment>
@@ -1835,23 +1848,23 @@ export function VueRanch({ v }: { v: any }) {
                     </>) : null}
                     {v.pOptions ? (<>
                       <div style={{ display: "flex", flexDirection: "column", gap: "14px" } as CSSProperties}>
-                        {(v.reglages || []).map((xG35: any, i35: number) => (
-                          <Fragment key={i35}>
-                            <label style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "12px", fontSize: "17px", cursor: "pointer" } as CSSProperties}>
-                              <span>
-                                {xG35.nom}
-                              </span>
-                              <input type="checkbox" checked={xG35.actif} onChange={xG35.basculer} style={{ width: "22px", height: "22px", accentColor: "#6e3f22" } as CSSProperties} />
-                            </label>
-                          </Fragment>
-                        ))}
-                        {(v.curseurs || []).map((xG36: any, i36: number) => (
+                        {(v.reglages || []).map((xG36: any, i36: number) => (
                           <Fragment key={i36}>
-                            <label style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "14px", fontSize: "17px", cursor: "pointer" } as CSSProperties}>
+                            <label style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "12px", fontSize: "17px", cursor: "pointer" } as CSSProperties}>
                               <span>
                                 {xG36.nom}
                               </span>
-                              <input type="range" min="0" max="100" step="5" value={xG36.valeur} onChange={xG36.changer} style={{ flex: "0 0 46%", accentColor: "#6e3f22", cursor: "pointer" } as CSSProperties} />
+                              <input type="checkbox" checked={xG36.actif} onChange={xG36.basculer} style={{ width: "22px", height: "22px", accentColor: "#6e3f22" } as CSSProperties} />
+                            </label>
+                          </Fragment>
+                        ))}
+                        {(v.curseurs || []).map((xG37: any, i37: number) => (
+                          <Fragment key={i37}>
+                            <label style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "14px", fontSize: "17px", cursor: "pointer" } as CSSProperties}>
+                              <span>
+                                {xG37.nom}
+                              </span>
+                              <input type="range" min="0" max="100" step="5" value={xG37.valeur} onChange={xG37.changer} style={{ flex: "0 0 46%", accentColor: "#6e3f22", cursor: "pointer" } as CSSProperties} />
                             </label>
                           </Fragment>
                         ))}

@@ -3,7 +3,7 @@
 // heure pleine (_tickHourCore). Les actions qui « prennent du temps » font avancer l'horloge d'autant.
 import type {
   Aleatoire, CategorieInteraction, CauseMort, CleTemperament, CleCarac, EchoSauvage, Emotions, Etat, OptionInteraction,
-  ReponseComportement, Sortie, Stade,
+  ReponseComportement, ReponseCorvee, ReponseRefus, Sortie, Stade,
 } from './types';
 import {
   AGE_EVOLUTION, AGE_MORT, CARESSES_PAR_JOUR, CLES_CARACS, CLES_TEMPERAMENT, CONSTANTE_GUERISON_MALADIE,
@@ -687,55 +687,71 @@ export class Simulation {
     return { ok: true, texte: accorderTexte(o.resultat, e) };
   }
 
-  /** Gronder : une fois par heure de jeu. */
-  gronder(): Reussi | Refus {
+  // Gronder et féliciter « à volonté » ont disparu (ils encourageaient à malmener l'écho) : l'éducation passe par
+  // les événements du carnet ; il ne reste que deux réponses proposées au bon moment, après un refus et après une corvée.
+
+  /** Réponses possibles juste après un refus de nourriture. */
+  reponsesRefus(): { cle: ReponseRefus; libelle: string }[] {
+    if (!this.etat.refusNourriture) return [];
+    return [
+      { cle: 'insister', libelle: `« Allez, tu dois manger, ${this.etat.nom}. »` },
+      { cle: 'respecter', libelle: '« D’accord, tu n’as pas faim. »' },
+    ];
+  }
+
+  /**
+   * Insister : il mangera le prochain repas sans broncher, mais cela le rend triste (discipline un peu plus forte).
+   * Respecter son refus : un peu plus d'autonomie. Pendant l'« expression personnelle » (refus lié à son régime),
+   * insister entame son authenticité, respecter la renforce.
+   */
+  repondreRefus(cle: ReponseRefus): Reussi | Refus {
     const e = this.etat;
-    const t = heureTotale(e);
-    if (e.dernierGronder === t) return { ok: false, raison: `${this.Nom} a déjà été ${this.a('grondé', 'grondée')} il y a un instant.` };
-    const refus = e.refusNourriture;
-    e.humeur = borne(e.humeur - 15);
-    e.dernierGronder = t;
-    if (refus) { e.forcerNourriture = true; e.discipline = Math.min(100, e.discipline + 1); e.refusNourriture = false; }
-    if (this.expressionPersonnelle) e.authenticite = Math.max(0, e.authenticite - 1);
-    e.sentimentJustice = borne(e.sentimentJustice + (e.betise ? 1 : -1));
-    if (e.betise) e.tendanceBetises = borne(e.tendanceBetises - 0.5);
-    if (e.reussite) e.volonteMieux = borne(e.volonteMieux - 0.5);
-    if (e.besoinAffection) {
-      e.manqueAffection = 0; e.besoinAffection = false;
-      e.affection = Math.max(0, e.affection - 10);
-      e.autonomie = Math.min(100, e.autonomie + 3);
-      e.discipline = Math.min(100, e.discipline + 3);
-      e.authenticite = Math.max(0, e.authenticite - 3);
+    if (!e.refusNourriture) return { ok: false, raison: '' };
+    e.refusNourriture = false;
+    const perso = this.expressionPersonnelle;
+    if (cle === 'insister') {
+      e.forcerNourriture = true;
+      e.discipline = Math.min(100, e.discipline + 1);
+      if (perso) e.authenticite = Math.max(0, e.authenticite - 1);
+      e.humeur = borne(e.humeur - 10);
+      appliquerEmotions(e, { tristesse: 15, joie: -8, colere: 5 });
+      this.noter(`Vous avez insisté pour que ${this.Nom} mange ; ${this.a('il', 'elle')} s’y fera, la mine triste.`);
+    } else {
+      e.autonomie = Math.min(100, e.autonomie + 1);
+      if (perso) e.authenticite = Math.min(100, e.authenticite + 1);
+      appliquerEmotions(e, { joie: 4, colere: -3 });
+      this.noter(`Vous avez respecté le refus de ${this.Nom}.`);
     }
-    this.noter(`${this.Nom} a été ${this.a('grondé', 'grondée')}.`);
-    appliquerEmotions(e, { joie: -10, colere: 15, tristesse: 10, degout: 5, peur: 5 });
-    if (e.reussite) this.eduquer('socio', 'wrath');
-    if (e.betise) this.eduquer('socio', 'sorrow');
-    else { this.eduquer('socio', 'fear'); this.eduquer('socio', 'wrath'); }
-    const r = e.reactionCorvee;
-    if (r && !r.succes) { e.experienceCorvees[r.corvee] = (e.experienceCorvees[r.corvee] ?? 0) + 1; e.reactionCorvee = null; }
     return { ok: true };
   }
 
-  /** Féliciter : une fois par heure de jeu. */
-  feliciter(): Reussi | Refus {
+  /** Réponses possibles à la fin d'une corvée (féliciter une réussite, encourager après un échec). */
+  reponsesCorvee(): { cle: ReponseCorvee; libelle: string }[] {
+    const r = this.etat.reactionCorvee;
+    if (!r) return [];
+    return r.succes
+      ? [{ cle: 'feliciter', libelle: '« Bravo, beau travail ! »' }, { cle: 'rien', libelle: 'Ne rien dire' }]
+      : [{ cle: 'encourager', libelle: '« Ce n’est pas grave, on recommencera. »' }, { cle: 'rien', libelle: 'Ne rien dire' }];
+  }
+
+  /** Un mot après la corvée : il en retient un peu plus (expérience de la corvée) et s'en trouve mieux. */
+  repondreCorvee(cle: ReponseCorvee): Reussi | Refus {
     const e = this.etat;
-    const t = heureTotale(e);
-    if (e.dernierFeliciter === t) return { ok: false, raison: `${this.Nom} a déjà été ${this.a('félicité', 'félicitée')} il y a un instant.` };
-    const refus = e.refusNourriture;
-    e.humeur = borne(e.humeur + 15);
-    e.dernierFeliciter = t;
-    if (refus) { e.autonomie = Math.min(100, e.autonomie + 1); e.refusNourriture = false; }
-    if (this.expressionPersonnelle) e.authenticite = Math.min(100, e.authenticite + 1);
-    e.sentimentJustice = borne(e.sentimentJustice + (e.reussite ? 1 : -1));
-    if (e.betise) e.tendanceBetises = borne(e.tendanceBetises + 0.5);
-    if (e.reussite) e.volonteMieux = borne(e.volonteMieux + 0.5);
-    this.noter(`${this.Nom} a été ${this.a('félicité', 'félicitée')}.`);
-    appliquerEmotions(e, { joie: 15, tristesse: -5, colere: -5, peur: -3 });
-    if (e.reussite) this.eduquer('socio', 'joy'); else this.eduquer('socio', 'disgust');
-    if (e.betise) { this.eduquer('socio', 'sorrow'); this.eduquer('socio', 'fear'); }
     const r = e.reactionCorvee;
-    if (r && r.succes) { e.experienceCorvees[r.corvee] = (e.experienceCorvees[r.corvee] ?? 0) + 1; e.reactionCorvee = null; }
+    if (!r) return { ok: false, raison: '' };
+    e.reactionCorvee = null;
+    if (cle === 'rien') return { ok: true };
+    e.experienceCorvees[r.corvee] = (e.experienceCorvees[r.corvee] ?? 0) + 1;
+    if (cle === 'feliciter') {
+      e.volonteMieux = borne(e.volonteMieux + 0.5);
+      e.humeur = borne(e.humeur + 8);
+      appliquerEmotions(e, { joie: 12, tristesse: -4 });
+      this.eduquer('socio', 'joy');
+    } else {
+      e.humeur = borne(e.humeur + 5);
+      appliquerEmotions(e, { tristesse: -8, joie: 4 });
+      this.eduquer('socio', null);
+    }
     return { ok: true };
   }
 

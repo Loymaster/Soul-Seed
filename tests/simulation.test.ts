@@ -5,6 +5,7 @@ import {
   ALIMENTS, CORVEES, ENTRAINEMENTS, ETATS_EMOTIONNELS, INTERACTIONS, Simulation, aleatoireFixe, apparence, creerEcho,
   determinerAdolescent, lireSignes, OBJETS_DIVERS, ICONE_BESOIN, type Etat,
 } from '../src/moteur/simulation';
+import { appliquerEmotions } from '../src/moteur/simulation/emotions';
 
 const ASSETS = path.resolve(__dirname, '../public/assets');
 const existe = (p: string) => fs.existsSync(path.join(ASSETS, p));
@@ -89,7 +90,7 @@ describe('émotions', () => {
     e.emotions.joie = 10; e.emotions.colere = 10;
     e.temperament = { cur: 3, res: 3, dis: 0, obs: 0, ant: 0 };
     e.traits.optimisme = 50; e.traits.impulsivite = 50;
-    s.feliciter(); // joie +15, colère −5
+    appliquerEmotions(e, { joie: 15, colere: -5 });
     expect(e.emotions.joie).toBeCloseTo(10 + 15 * 1.6, 1);
     expect(e.emotions.colere).toBeCloseTo(10 - 5 * 0.4, 1);
   });
@@ -129,17 +130,46 @@ describe('soins', () => {
     expect(e.satiete).toBe(10 + 24);
   });
 
-  it('gronder un refus de nourriture force le repas suivant', () => {
+  it('après un refus, insister force le repas suivant mais l’attriste', () => {
     const s = nouvelle(12);
     const e = s.etat;
     e.satiete = 45; e.frustrationAlimentaire = 100;
     const i = e.inventaire.findIndex(c => c?.id === 'pomme');
     s.nourrir(i);
-    expect(s.gronder().ok).toBe(true);
+    expect(s.reponsesRefus().map(r => r.cle)).toEqual(['insister', 'respecter']);
+    const triste = e.emotions.tristesse;
+    expect(s.repondreRefus('insister').ok).toBe(true);
     expect(e.forcerNourriture).toBe(true);
-    expect(s.gronder().ok).toBe(false); // une fois par heure
+    expect(e.emotions.tristesse).toBeGreaterThan(triste);
+    expect(s.repondreRefus('insister').ok).toBe(false); // plus de refus en cours
     expect(s.nourrir(i).ok).toBe(true);
     expect(e.forcerNourriture).toBe(false);
+  });
+
+  it('respecter un refus ne force rien et donne un peu d’autonomie', () => {
+    const s = nouvelle(12);
+    const e = s.etat;
+    e.satiete = 45; e.frustrationAlimentaire = 100;
+    const i = e.inventaire.findIndex(c => c?.id === 'pomme');
+    s.nourrir(i);
+    const autonomie = e.autonomie;
+    expect(s.repondreRefus('respecter').ok).toBe(true);
+    expect(e.forcerNourriture).toBe(false);
+    expect(e.autonomie).toBe(autonomie + 1);
+  });
+
+  it('un mot après une corvée apporte un peu d’expérience', () => {
+    const s = nouvelle(13);
+    const e = s.etat;
+    e.reactionCorvee = { corvee: 'x', succes: true };
+    expect(s.reponsesCorvee().map(r => r.cle)).toEqual(['feliciter', 'rien']);
+    expect(s.repondreCorvee('feliciter').ok).toBe(true);
+    expect(e.experienceCorvees.x).toBe(1);
+    expect(e.reactionCorvee).toBeNull();
+    e.reactionCorvee = { corvee: 'x', succes: false };
+    expect(s.reponsesCorvee()[0].cle).toBe('encourager');
+    expect(s.repondreCorvee('rien').ok).toBe(true);
+    expect(e.experienceCorvees.x).toBe(1);
   });
 
   it('laver prend deux heures et rend l’écho propre', () => {

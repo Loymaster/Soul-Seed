@@ -131,6 +131,10 @@ export interface EchoSauvage {
   compatBonus?: number;
 }
 
+/** Après un refus de nourriture. */
+export type ReponseRefus = 'insister' | 'respecter';
+/** À la fin d'une corvée. */
+export type ReponseCorvee = 'feliciter' | 'encourager' | 'rien';
 export type TypeComportement = 'reussite' | 'betise' | 'amplification' | 'neutre';
 export type ReponseComportement =
   | 'feliciter' | 'gronder' | 'rien'
@@ -245,8 +249,6 @@ export interface Etat {
   // Limites quotidiennes / horaires
   interactionsDuJour: Partial<Record<CategorieInteraction, number>>;
   caresses: { jour: number; nombre: number };
-  dernierGronder: number | null;
-  dernierFeliciter: number | null;
 
   // Ranch
   saleteRanch: number;

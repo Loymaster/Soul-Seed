@@ -130,7 +130,7 @@ export function creerEcho(o: OptionsCreation, rng: Aleatoire = Math.random): Eta
     frustrationAlimentaire: 90, refusNourriture: false, forcerNourriture: false, expressionPersonnelleJusqua: 0,
     educationStade: educationVide(), educationTotale: educationVide(), educationJour: { joy: 0, fear: 0, sorrow: 0, wrath: 0, disgust: 0 },
     reussite: false, betise: false, reactionCorvee: null, experienceCorvees: {}, derniereCorvee: {},
-    interactionsDuJour: {}, caresses: { jour, nombre: 0 }, dernierGronder: null, dernierFeliciter: null,
+    interactionsDuJour: {}, caresses: { jour, nombre: 0 },
     saleteRanch: 0, dejections: [], probaEvenement: 0, visiteur: null, echosSauvages: [], garryVaincu: false,
     chanceComportement: 0, comportement: null,
     // Heures d'évolution fixées une fois pour toutes entre 12 h et 17 h (startLife).

@@ -5,7 +5,7 @@
 import { Component, type ReactNode } from 'react';
 import {
   CORVEES, ENTRAINEMENTS, INTERACTIONS, NOM_STADE, Simulation, accord, aliment, apparence, ageJours, descriptionObjet,
-  heureDuJour, lireSignes, objetDivers, texteComportement, type CategorieInteraction, type CleCarac, type Etat, type OptionInteraction,
+  heureDuJour, lireSignes, objetDivers, texteComportement, type CategorieInteraction, type CleCarac, type Etat, type OptionInteraction, type ReponseCorvee, type ReponseRefus,
   type ReponseComportement, type Signes, type Sortie, type Stade, type EchoSauvage,
   ENCRE_RELATION, LIEN_RELATION, niveauRelation, rangRelation,
 } from '@/moteur/simulation';
@@ -29,6 +29,7 @@ import { PALIER_CORVEE, essaisScene, sceneCorvee, sceneEntrainement, sceneIntera
 import { teinteEmotion } from './lueurs';
 import { FenetreTemps } from './FenetreTemps';
 import { VoileSommeil, type Sommeil } from './VoileSommeil';
+import { NoteRefus, type RefusEnCours } from './NoteRefus';
 import { CHIFFRES_ROMAINS, ICONE_ASTUCES, THEMES_ASTUCES, compteTheme, lignesTheme, paginer, type ContexteAstuces } from '../commun/astuces';
 import type { Monde } from '@/moteur/monde';
 import './ranch.css';
@@ -126,9 +127,11 @@ interface Scene {
   kind: string; groupe: string; image: string; titre: string; lignes: string[]; dx: number; dy: number; s0: string; emo: number; journal?: string;
   /** Ce qui a progressé (flèches, sans chiffre) ; essais d'une corvée. */
   gains: { nom: string; fleches: string }[]; essais: boolean[];
+  /** Un mot à dire en fin de corvée (féliciter, encourager, ne rien dire) : la feuille attend la réponse. */
+  reponses?: { cle: ReponseCorvee; libelle: string }[];
 }
 /** Ce que renvoie l'action d'une scène : ses phrases, ou davantage (essais d'une corvée, titre). */
-type ResultatScene = string[] | { lignes: string[]; essais?: boolean[]; titre?: string } | null;
+type ResultatScene = string[] | { lignes: string[]; essais?: boolean[]; titre?: string; reponses?: { cle: ReponseCorvee; libelle: string }[] } | null;
 interface Sortie_ { texte: string; sous?: string; image?: string; bloquant?: boolean }
 
 interface EtatUI {
@@ -153,6 +156,8 @@ interface EtatUI {
   temps: boolean;
   /** L'écho dort : l'écran s'assombrit le temps d'une berceuse. */
   sommeil: Sommeil | null;
+  /** Il vient de refuser un plat : deux mots proposés (insister, respecter son refus). */
+  refus: RefusEnCours | null;
 }
 
 export class Ranch extends Component<ProprietesRanch, EtatUI> {
@@ -192,7 +197,7 @@ export class Ranch extends Component<ProprietesRanch, EtatUI> {
       quitter: false, dejSurvol: null, dejPart: [],
       scene: null, scPhase: '',
       evc: false, evcFerme: false, playing: false, typed: 0, done: false, phase: 'choose', chosen: -1, active: -1, decouverte: false, revealed: false, tamponGo: false,
-      propositions: {}, ongletFiche: 'portrait', temps: false, sommeil: null,
+      propositions: {}, ongletFiche: 'portrait', temps: false, sommeil: null, refus: null,
     };
   }
 
@@ -272,8 +277,8 @@ export class Ranch extends Component<ProprietesRanch, EtatUI> {
     }, 200);
   }
 
-  occupe() { const s = this.state; return !!(s.ouvert || s.carnet || s.sacOuvert || s.quitter || s.evc || s.sortie || s.scene || s.temps || s.sommeil || Date.now() < this.repos || this.e.mort || this.evo || this.tutoActif); }
-  enPause() { const s = this.state; return !!(s.carnet || s.sacOuvert || s.sortie || s.evc || s.scene || s.temps || s.sommeil || this.e.mort || this.evo || this.tutoActif); }
+  occupe() { const s = this.state; return !!(s.ouvert || s.carnet || s.sacOuvert || s.quitter || s.evc || s.sortie || s.scene || s.temps || s.sommeil || s.refus || Date.now() < this.repos || this.e.mort || this.evo || this.tutoActif); }
+  enPause() { const s = this.state; return !!(s.carnet || s.sacOuvert || s.sortie || s.evc || s.scene || s.temps || s.sommeil || s.refus || this.e.mort || this.evo || this.tutoActif); }
 
   // ——— Le temps s'écoule
   tic() {
@@ -297,7 +302,13 @@ export class Ranch extends Component<ProprietesRanch, EtatUI> {
       switch (x.type) {
         case 'journal': this.setState((s) => ({ nouvelles: s.nouvelles + 1 })); break;
         case 'message': this.flotter(x.texte, COULEUR[x.ton]); break;
-        case 'refus': this.son('refus'); this.reagir(false, 'non'); this.flotter(x.texte, COULEUR.mal); break;
+        case 'refus': {
+          this.son('refus'); this.reagir(false, 'non');
+          const reponses = this.sim.reponsesRefus();
+          if (reponses.length) this.later(() => { this.son('page', 0.7); this.setState({ refus: { texte: x.texte, reponses, x: this.state.ex, y: this.state.ey } }); }, 500);
+          else this.flotter(x.texte, COULEUR.mal);
+          break;
+        }
         case 'dejection': this.son('pop'); break;
         case 'voisin': case 'autonomie': this.flotter(x.texte, COULEUR.note); break;
         case 'evenement':
@@ -501,7 +512,7 @@ export class Ranch extends Component<ProprietesRanch, EtatUI> {
             agir: () => this.ouvrirScene({ kind: sceneCorvee(c.id), groupe: 'corvee', image: asset(c.icone), titre: c.nom }, () => {
               const r = s.jouerCorvee(c.id, niveau);
               if (!r.ok) { if (r.raison) this.flotter(r.raison, COULEUR.mal); return null; }
-              return { lignes: [PALIER_CORVEE[r.palier]], essais: r.essais };
+              return { lignes: [PALIER_CORVEE[r.palier]], essais: r.essais, reponses: s.reponsesCorvee() };
             }),
           };
         }),
@@ -551,7 +562,7 @@ export class Ranch extends Component<ProprietesRanch, EtatUI> {
     const g = ++this.scg;
     const ech = 0.86 + (s.ey - 235) / 135 * 0.28;
     this.setState({
-      scene: { ...sc, titre: res.titre || note.titre || sc.titre, lignes: note.lignes, dx: Math.round(s.ex + 75 - 640), dy: Math.round(s.ey + 232 - 470), s0: ech.toFixed(3), emo, gains, essais: res.essais ?? [] },
+      scene: { ...sc, titre: res.titre || note.titre || sc.titre, lignes: note.lignes, dx: Math.round(s.ex + 75 - 640), dy: Math.round(s.ey + 232 - 470), s0: ech.toFixed(3), emo, gains, essais: res.essais ?? [], reponses: res.reponses },
       scPhase: 'ouvre', ouvert: null, quitter: false, carnetLeve: false,
     });
     this.sortiesScene = sorties; this.dortScene = dort;
@@ -599,6 +610,7 @@ export class Ranch extends Component<ProprietesRanch, EtatUI> {
     const s = this.state; if (!s.scene) return;
     if (s.scPhase === 'agit') { this.noterScene(this.scg); return; }
     if (s.scPhase !== 'note') return;
+    if (s.scene.reponses?.length) return; // un mot est attendu (les réponses de la feuille)
     const g = ++this.scg; const emo = s.scene.emo;
     this.son('woosh'); this.later(() => this.son('foulee', this.profil(), 0.8, 0), 380);
     this.setState({ scPhase: 'ferme' });
@@ -611,6 +623,24 @@ export class Ranch extends Component<ProprietesRanch, EtatUI> {
       this.rafraichir();
     }, 1000);
   };
+
+  /** Après un refus : insister (il mangera le prochain plat, la mine triste) ou respecter son refus. */
+  repondreRefus(cle: ReponseRefus) {
+    this.sim.repondreRefus(cle);
+    this.son(cle === 'insister' ? 'refus' : 'paperTick');
+    this.reagir(cle !== 'insister', cle === 'insister' ? '' : 'saute');
+    this.setState({ refus: null });
+    this.traiter(this.sim.vider()); this.sauver(); this.rafraichir();
+  }
+
+  /** Le mot dit en fin de corvée : la feuille s'efface ensuite. */
+  repondreScene(cle: ReponseCorvee) {
+    const sc = this.state.scene; if (!sc?.reponses) return;
+    this.sim.repondreCorvee(cle);
+    this.son(cle === 'rien' ? 'paperTick' : 'reveal');
+    if (cle !== 'rien') this.reagir(true, 'saute');
+    this.setState({ scene: { ...sc, reponses: undefined } }, () => this.fermerScene());
+  }
 
   // ——— Le sac : 10 emplacements, déplaçables ; un objet s'utilise ou se décrit
   ouvrirLeSac() {
@@ -886,7 +916,7 @@ export class Ranch extends Component<ProprietesRanch, EtatUI> {
     if (v) this.visite.placer(v);
     if (this.props.tutoriel && this.props.catalogue && this.props.personnage && !this.e.mort) this.later(() => { this.tutoActif = true; this.setState({ ouvert: null }); this.rafraichir(); }, 1400);
     if (import.meta.env.DEV) {
-      // aides de développement, dans la console : __ranch.visite(), __ranch.geste(), __ranch.evolution(), __ranch.tutoriel()
+      // aides de développement, dans la console : __ranch.visite(), __ranch.geste(), __ranch.evolution(), __ranch.tutoriel(), __ranch.refus(), __ranch.corvee()
       const sim = this.sim as unknown as { evenement: (n: string) => void; evoluer: (s: Stade) => void };
       (window as unknown as { __ranch: unknown }).__ranch = {
         sim: this.sim, visiteur: this.visite,
@@ -895,6 +925,8 @@ export class Ranch extends Component<ProprietesRanch, EtatUI> {
         geste: () => { this.sim.interactionSpontanee(); this.traiter(this.sim.vider()); },
         evolution: () => { const suite: Partial<Record<Stade, Stade>> = { bebe: 'enfant', enfant: 'adolescent', adolescent: 'adulte' }; const v = suite[this.e.stade]; if (v) { sim.evoluer(v); this.traiter(this.sim.vider()); } return v; },
         tutoriel: () => { this.tutoActif = true; this.rafraichir(); },
+        refus: () => { const e = this.e; const i = e.inventaire.findIndex((c) => c && aliment(c.id)); if (i < 0) return 'rien à manger'; e.satiete = this.sim.max; e.frustrationAlimentaire = 100; this.utiliserObjet(i); return i; },
+        corvee: (id = CORVEES[0].id) => { const c = CORVEES.find((x) => x.id === id)!; delete this.e.derniereCorvee[c.id]; this.ouvrirScene({ kind: sceneCorvee(c.id), groupe: 'corvee', image: asset(c.icone), titre: c.nom }, () => { const r = this.sim.jouerCorvee(c.id, 1); return r.ok ? { lignes: [PALIER_CORVEE[r.palier]], essais: r.essais, reponses: this.sim.reponsesCorvee() } : null; }); },
       };
     }
   }
@@ -1032,6 +1064,7 @@ export class Ranch extends Component<ProprietesRanch, EtatUI> {
         {s.temps && <FenetreTemps minute={this.e.minute} nomEcho={this.e.nom} filtre="url(#rk7Ui)" son={(n, ...a) => this.son(n, ...a)}
           surValider={(h) => this.attendre(h)} surAnnuler={() => this.setState({ temps: false })} />}
         {s.sommeil && <VoileSommeil s={s.sommeil} />}
+        {s.refus && <NoteRefus r={s.refus} surChoix={(cle) => this.repondreRefus(cle)} />}
       </Repere>
     );
   }
@@ -1106,8 +1139,10 @@ export class Ranch extends Component<ProprietesRanch, EtatUI> {
         scCls: ['k-' + sc.kind, 'g-' + sc.groupe, sc.gains.length ? 'gagne' : '', ph === 'ouvre' ? 'ouvre' : '', ['saut', 'agit', 'note'].includes(ph) ? 'dedans' : '', ['agit', 'note'].includes(ph) ? 'agit' : '', ph === 'note' ? 'note' : '', ph === 'ferme' ? 'ferme agit' : ''].join(' '),
         scDx: sc.dx, scDy: sc.dy, scS0: sc.s0, echoOp: ph === 'ouvre' ? 1 : 0, scImage: sc.image,
         scNote: ph === 'note' || ph === 'ferme', scTitre: sc.titre, scLignes: sc.lignes.map((x) => ({ t: x })), fermerScene: this.fermerScene,
+        scAReponses: !!sc.reponses?.length, scSansReponse: !sc.reponses?.length,
+        scReponses: (sc.reponses ?? []).map((x) => ({ texte: x.libelle, cls: x.cle === 'rien' ? 'discret' : '', choisir: (ev?: { stopPropagation?: () => void }) => { ev?.stopPropagation?.(); this.repondreScene(x.cle); } })),
         scAGains: sc.gains.length > 0, scGains: sc.gains.map((x, i) => ({ ...x, delai: (0.5 + i * 0.25).toFixed(2) })), scEssais: essaisScene(sc.essais),
-      } : { sceneVisible: false, echoOp: 1, scNote: false, scAGains: false, scGains: [], scEssais: [] }),
+      } : { sceneVisible: false, echoOp: 1, scNote: false, scAGains: false, scGains: [], scEssais: [], scAReponses: false, scSansReponse: true, scReponses: [] }),
       bgFilter: m.bg, gradeColor: m.c, gradeOpacity: m.o.toFixed(3), glow: m.glow.toFixed(3), vignette: m.vig.toFixed(3), fireflies: m.fly,
       paperFilter: 'url(#rk7Ui)', matDecor: m.matDecor, matUi: m.matUi, matEcho: m.matEcho, decorFilter: m.decor, fondTexte: m.ft.toFixed(3),
       time: m.heure, period: m.periode, echoFilter: m.echo, pieces: e.or,
