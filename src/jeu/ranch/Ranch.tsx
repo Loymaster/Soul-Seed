@@ -57,10 +57,12 @@ const RESSOURCES = [
   { k: 'bois', nom: 'Bois' }, { k: 'pierre', nom: 'Pierre' }, { k: 'fibres', nom: 'Fibres' },
   { k: 'resine', nom: 'Résine' }, { k: 'ferraille', nom: 'Ferraille' }, { k: 'cristaux', nom: 'Cristaux' },
 ];
-const DESTINATIONS = [
-  { nom: 'Le village', duree: '20 min', icone: 'M3 20h18M5 20v-8l7-6 7 6v8M10 20v-5h4v5', texte: 'En route pour le village…', combat: false },
-  { nom: 'Le magasin', duree: '10 min', icone: 'M4 9l1.5-5h13L20 9M4 9h16v11H4zM4 9c0 2 1.5 3 3 3s3-1 3-3c0 2 1.5 3 3 3s3-1 3-3c0 2 1.5 3 3 3s3-1 2-3M10 20v-5h4v5', texte: 'Direction le magasin…', combat: false },
-  { nom: 'Explorer', duree: 'selon le chemin', icone: 'M12 3.5a8.5 8.5 0 1 0 0 17a8.5 8.5 0 1 0 0-17zM15.5 8.5l-2 5-5 2 2-5z', texte: 'Le sentier vous attend…', combat: true },
+/** Lieux où mène le poteau « partir ». */
+export type Destination = 'village' | 'magasin' | 'exploration';
+const DESTINATIONS: { nom: string; duree: string; icone: string; texte: string; lieu: Destination }[] = [
+  { nom: 'Le village', duree: '20 min', icone: 'M3 20h18M5 20v-8l7-6 7 6v8M10 20v-5h4v5', texte: 'En route pour le village…', lieu: 'village' },
+  { nom: 'Le magasin', duree: '10 min', icone: 'M4 9l1.5-5h13L20 9M4 9h16v11H4zM4 9c0 2 1.5 3 3 3s3-1 3-3c0 2 1.5 3 3 3s3-1 3-3c0 2 1.5 3 3 3s3-1 2-3M10 20v-5h4v5', texte: 'Direction le magasin…', lieu: 'magasin' },
+  { nom: 'Explorer', duree: 'selon le chemin', icone: 'M12 3.5a8.5 8.5 0 1 0 0 17a8.5 8.5 0 1 0 0-17zM15.5 8.5l-2 5-5 2 2-5z', texte: 'Le sentier vous attend…', lieu: 'exploration' },
 ];
 /** États qui gravitent autour de l'écho, par ordre de priorité ; chacun vient d'un besoin lu par lireSignes(). */
 const ETAT_DE_BESOIN: Record<string, string> = { maladie: 'malade', blessure: 'blesse', faim: 'faim', fatigue: 'fatigue', angoisse: 'angoisse', salete: 'sale', affection: 'affection', humeur: 'mecontent' };
@@ -91,6 +93,10 @@ export interface ProprietesRanch {
   surMort?: (e: Etat) => void;
   /** Un combat commence (exploration ou entraînement) : l'écran de combat prend le relais. */
   surCombat?: (e: Etat, nature: 'exploration' | 'entrainement') => void;
+  /** Le poteau « partir » : le jeu ouvre le lieu ; renvoyer `false` s'il n'est pas encore ouvert. */
+  surPartir?: (e: Etat, lieu: Destination) => boolean | void;
+  /** Ressources de construction rapportées d'exploration (monde de la partie), montrées dans le sac. */
+  ressources?: Partial<Record<string, number>>;
 }
 
 interface Choix {
@@ -714,13 +720,17 @@ export class Ranch extends Component<ProprietesRanch, EtatUI> {
     this.setState({ ferme: true });
     this.later(() => this.setState({ carnet: false, ferme: false, section: 'sommaire' }), 1050);
   };
-  partir(texte: string, combat: boolean) {
+  partir(texte: string, lieu: Destination) {
     this.son('woosh');
-    if (combat && this.props.surCombat && !this.e.mort) {
+    const surPartir = this.props.surPartir;
+    if (surPartir && !this.e.mort) {
       this.sauver();
-      this.setState({ sortie: { texte, sous: 'quelque chose bouge dans les fourrés…' } });
-      this.later(() => this.props.surCombat?.(this.e, 'exploration'), 1700);
-      return;
+      if (lieu === 'exploration') {
+        this.setState({ sortie: { texte, sous: `${this.e.nom} trottine devant vous, le nez au vent…` } });
+        this.later(() => surPartir(this.e, 'exploration'), 1700);
+        return;
+      }
+      if (surPartir(this.e, lieu) !== false) return;
     }
     this.montrerSortie({ texte, sous: 'ce chemin n’est pas encore ouvert dans cette version' }, 2200);
   }
@@ -860,7 +870,7 @@ export class Ranch extends Component<ProprietesRanch, EtatUI> {
       ouvrirSac: () => this.ouvrirLeSac(), fermerSac: this.fermerSac,
       ...sacMenu,
       arreter: (ev: { stopPropagation?: () => void }) => { ev?.stopPropagation?.(); },
-      ressourcesSac: RESSOURCES.map((r) => ({ ...r, image: asset(`objets/materiaux/${r.k}.png`), qte: 0, cls: 'vide' })),
+      ressourcesSac: RESSOURCES.map((r) => { const q = this.props.ressources?.[r.k] ?? 0; return { ...r, image: asset(`objets/materiaux/${r.k}.png`), qte: q, cls: q > 0 ? '' : 'vide' }; }),
       sacCases: ordreSac.map((c, i) => {
         const d = c && descriptionObjet(c.id);
         const marque = (s.dndDe === i ? ' souleve' : '') + (s.dndCible === i && s.dndDe >= 0 && s.dndDe !== i ? ' cible' : '');
@@ -886,7 +896,7 @@ export class Ranch extends Component<ProprietesRanch, EtatUI> {
       quitterVisible: s.quitter, quitterAria: s.quitter ? 'true' : 'false',
       basculerQuitter: () => { this.son('leather'); this.setState({ quitter: !this.state.quitter, ouvert: null }); },
       poteauCls: s.quitter ? 'ouvert' : '',
-      destinations: DESTINATIONS.map((d, i) => ({ ...d, r: [-1.6, 1.2, -0.8][i] || 0, delai: (0.06 + i * 0.07).toFixed(2), survol: () => this.son('paperTick'), partir: () => { this.setState({ quitter: false }); this.partir(d.texte, d.combat); } })),
+      destinations: DESTINATIONS.map((d, i) => ({ ...d, r: [-1.6, 1.2, -0.8][i] || 0, delai: (0.06 + i * 0.07).toFixed(2), survol: () => this.son('paperTick'), partir: () => { this.setState({ quitter: false }); this.partir(d.texte, d.lieu); } })),
       contenuCls: s.contenuCache ? 'cache' : '', tourneVisible: !!s.tourne, tourneCls: s.tourne === 'arriere' ? 'arriere' : '',
       aDesNouvelles: s.nouvelles > 0, nouvelles: s.nouvelles > 9 ? '9+' : s.nouvelles,
       ouvrirCarnet: () => { this.son('bookArrive'); this.setState({ carnet: true, carnetLeve: false, ferme: false, section: 'sommaire', ouvert: null, quitter: false }); },

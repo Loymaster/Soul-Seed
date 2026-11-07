@@ -12,7 +12,7 @@ export interface ObjetDivers {
   /** Ce que l'objet fait au ranch ; absent = utilisable seulement en combat ou plus tard. */
   usage?: 'pansement' | 'medicament' | 'appat';
   /** Famille d'objet sans usage au ranch : outil d'exploration, curiosité, petite bête. */
-  nature?: 'outil' | 'curiosite' | 'bete';
+  nature?: 'outil' | 'curiosite' | 'bete' | 'quete';
   /** Prix de revente (curiosités, petites bêtes). */
   revente?: number;
   description: string;
@@ -33,6 +33,8 @@ export const OBJETS_DIVERS: ObjetDivers[] = [
   // outils d'exploration
   { id: 'canne_peche', nom: 'Canne à pêche', prix: 60, icone: 'objets/divers/canne-peche.png', nature: 'outil', description: 'Pour pêcher là où il y a de l’eau, en exploration.' },
   { id: 'tente', nom: 'Tente', prix: 60, icone: 'interface/icones/tente.png', nature: 'outil', description: 'Un abri à planter en exploration pour nourrir, laver, soigner son écho et le laisser dormir.' },
+  // objets de quête (on ne les vend pas)
+  { id: 'marteau_ash', nom: 'Marteau d’Ash', prix: 0, icone: 'objets/divers/marteau-ash.png', nature: 'quete', description: 'Le marteau qu’on a volé à Ash. Il le cherche partout.' },
   ...CURIOSITES,
   ...PETITES_BETES,
 ];

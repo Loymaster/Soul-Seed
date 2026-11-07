@@ -38,6 +38,8 @@ export interface OptionsHeure {
 export type Refus = { ok: false; raison: string };
 export type Reussi<T = {}> = { ok: true } & T;
 
+/** Entraînements motivés par Hevann. */
+export const MULT_MOTIVATION = 1.75;
 const EMOTIONS_FOND = ['joie', 'colere', 'tristesse', 'degout', 'peur'] as const;
 
 export class Simulation {
@@ -773,7 +775,9 @@ export class Simulation {
     const t = ENTRAINEMENTS.find(x => x.id === id);
     if (!t) return { ok: false, raison: '' };
     const secondaire = piocher(CLES_CARACS.filter(k => k !== t.carac), this.rng);
-    const mult = MULT_ENTRAINEMENT[e.stade] * (1 + (e.personnalite.conscienciosite - 3) / 10) * (0.85 + e.humeur / 333);
+    // motivation d'Hevann (trainingMotivationMult) : × 1,75 pendant 6 heures
+    const motive = (e.motivationJusqua ?? 0) > heureTotale(e) ? MULT_MOTIVATION : 1;
+    const mult = MULT_ENTRAINEMENT[e.stade] * (1 + (e.personnalite.conscienciosite - 3) / 10) * (0.85 + e.humeur / 333) * motive;
     const gainP = dixieme((10 + (t.temperament ? e.temperament[t.temperament] : 0)) * mult * (0.8 + this.rng() * 0.4));
     const gainS = dixieme(3 * mult * (0.8 + this.rng() * 0.4));
     this.avancer(2);

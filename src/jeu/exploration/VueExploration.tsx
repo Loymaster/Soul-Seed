@@ -688,7 +688,7 @@ export function VueExploration({ v }: { v: any }) {
             </div>
             <div className="boutons">
               <button className="btn" onClick={v.repartir}>
-                Repartir explorer
+                {v.finBouton}
               </button>
             </div>
           </section>

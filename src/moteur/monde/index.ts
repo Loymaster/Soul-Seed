@@ -1,7 +1,7 @@
 // État du monde d'une partie : tout ce qui dure au-delà d'un écho (il survit à sa disparition, comme le personnage).
 // Drapeaux de quêtes, ressources de construction, lieux découverts, rencontres, constructions, PNJ.
 // Sans affichage ; sérialisable tel quel (sauvegarde JSON, une par emplacement de partie).
-import type { Etat } from '../simulation/types';
+import type { CaseInventaire, Etat } from '../simulation/types';
 
 export type Ressource = 'bois' | 'pierre' | 'fibres' | 'resine' | 'ferraille' | 'cristaux';
 export const RESSOURCES: Ressource[] = ['bois', 'pierre', 'fibres', 'resine', 'ferraille', 'cristaux'];
@@ -28,16 +28,58 @@ export interface Monde {
   structures: string[];
   /** PNJ déjà rencontrés (identifiants des fiches). */
   pnjConnus: string[];
+  /** Coffre de Maïko, puis entrepôt : objets déposés et ressources stockées (plafonds selon le niveau d'entrepôt). */
+  coffre: { objets: (CaseInventaire | null)[]; ressources: Partial<Record<Ressource, number>> };
+  /** Étal du jour de la boutique de Jumpy (renouvelé à la première visite de chaque jour). */
+  boutique: { jour: number; etal: EmplacementEtal[] } | null;
+  /** Bâtiment qu'Ash construit (fin en minute absolue). */
+  chantier: { cle: string; nom: string; finA: number } | null;
+  /** Réparation ou amélioration de corvée en cours chez Ash (fin en minute absolue). */
+  reparation: { corvee: string; libelle: string; niveau: number; finA: number } | null;
+  /** Niveau des corvées du ranch remises en état par Ash (0 : pas encore réparée, 1 à 3). */
+  corvees: Record<string, number>;
+}
+
+/** Un emplacement de l'étal de Jumpy. */
+export interface EmplacementEtal {
+  categorie: string;
+  id: string;
+  prix: number;
+  stock: number;
+  /** « Deux pour le prix d'un » : un achat donne deux exemplaires. */
+  deuxPourUn?: boolean;
 }
 
 export function creerMonde(): Monde {
-  return { version: 1, drapeaux: {}, quetes: {}, ressources: {}, decouvertes: [], faitAujourdhui: {}, rencontres: {}, derniereRencontre: null, structures: [], pnjConnus: [] };
+  return {
+    version: 1, drapeaux: {}, quetes: {}, ressources: {}, decouvertes: [], faitAujourdhui: {}, rencontres: {}, derniereRencontre: null, structures: [], pnjConnus: [],
+    coffre: { objets: Array(CASES_COFFRE[0]).fill(null), ressources: {} }, boutique: null, chantier: null, reparation: null, corvees: {},
+  };
 }
 
 /** Relit un monde enregistré en complétant ce qui manque (sauvegardes plus anciennes). */
 export function normaliserMonde(m: Partial<Monde> | null | undefined): Monde {
-  return { ...creerMonde(), ...(m ?? {}), version: 1 };
+  const n: Monde = { ...creerMonde(), ...(m ?? {}), version: 1 };
+  const c = n.coffre ?? { objets: [], ressources: {} };
+  const cases = CASES_COFFRE[niveauEntrepot(n)];
+  const objets = Array.isArray(c.objets) ? c.objets.slice(0, Math.max(cases, c.objets.length)) : [];
+  while (objets.length < cases) objets.push(null);
+  n.coffre = { objets, ressources: { ...(c.ressources ?? {}) } };
+  n.corvees = { ...(n.corvees ?? {}) };
+  return n;
 }
+
+/** Cases du coffre et plafond de chaque ressource stockée, selon le niveau d'entrepôt (0 : le coffre de Maïko). */
+export const CASES_COFFRE = [24, 48, 60, 72] as const;
+export const PLAFOND_COFFRE = [20, 50, 100, 200] as const;
+export function niveauEntrepot(m: Pick<Monde, 'structures'>): 0 | 1 | 2 | 3 {
+  const s = m.structures ?? [];
+  return s.includes('entrepot_l3') ? 3 : s.includes('entrepot_l2') ? 2 : s.includes('entrepot') ? 1 : 0;
+}
+export const construit = (m: Pick<Monde, 'structures'>, cle: string) => (m.structures ?? []).includes(cle);
+
+/** Heure absolue de la partie (jour × 24 + heure du jour), l'unité des délais du village (« maintenant » dans les scènes). */
+export const heureAbsolue = (e: Pick<Etat, 'jour' | 'minute'>) => e.jour * 24 + Math.floor(e.minute / 60);
 
 /** Minute absolue de la partie (jour × 1440 + minute du jour). */
 export const minuteAbsolue = (e: Pick<Etat, 'jour' | 'minute'>) => e.jour * 1440 + e.minute;
@@ -93,3 +135,26 @@ export function probaRencontre(m: Monde, zone: number, maintenant: number, o: { 
   return p;
 }
 export function noterRencontre(m: Monde, zone: number, maintenant: number) { m.rencontres[zone] = maintenant; m.derniereRencontre = maintenant; }
+
+// —— Village : prospérité et habitants
+/** Prospérité qu'apporte un habitant selon son stade (recruitCharacter du prototype). */
+export const PROSPERITE_STADE: Record<string, number> = { bebe: 1, enfant: 2, adolescent: 3, adulte: 4, mature: 5 };
+export const prosperite = (m: Monde) => Number(m.drapeaux['village.prosperite'] ?? 1) || 1;
+/**
+ * Un PNJ rejoint le village : la prospérité monte selon son stade, il devient le dernier arrivé.
+ * Sans effet s'il l'a déjà rejoint. Renvoie vrai s'il vient d'arriver.
+ */
+export function recruter(m: Monde, id: string, nom: string, stade: string): boolean {
+  const cle = `village.habitant.${id}`;
+  if (m.drapeaux[cle]) return false;
+  m.drapeaux[cle] = true;
+  m.drapeaux['village.prosperite'] = prosperite(m) + (PROSPERITE_STADE[stade] ?? 1);
+  m.drapeaux['village.dernier'] = nom;
+  connaitrePnj(m, id);
+  return true;
+}
+export const habitant = (m: Monde, id: string) => !!m.drapeaux[`village.habitant.${id}`];
+
+export * from './boutique';
+export * from './coffre';
+export * from './constructions';

@@ -41,6 +41,10 @@ export interface ProprietesCombat {
   /** Fond (chemin dans public/assets). */
   terrain: string;
   musique?: boolean;
+  /** Autres adversaires du même combat (Phil et Hibert se battent à deux). */
+  renforts?: AdversaireCombat[];
+  /** Piste du combat (public/assets/sons/musiques) au lieu de celle du registre (ex. « combat-garry »). */
+  piste?: string;
   surFin: (issue: IssueCombat) => void;
 }
 
@@ -78,13 +82,17 @@ interface Effet { cls: string; x: number; y: number; t?: number; dx?: number; sr
 interface Etiquette { nom: string; icone: string; x: number; y: number; fin: number }
 interface Particule { x: number; y: number; t: number; d: number; dx: number; c: string; delai: number }
 
-export function EcranCombat({ echo, allie, adversaire, registre, terrain, musique = true, surFin }: ProprietesCombat) {
+export function EcranCombat({ echo, allie, adversaire, registre, terrain, musique = true, renforts = [], piste, surFin }: ProprietesCombat) {
   const CORROMPU = registre === 'corrompue', EXPLO = registre === 'exploration';
   const nom = echo.nom;
   const a = (m: string, f: string) => accord(echo, m, f);
   const combat = useRef<Combat | null>(null);
-  if (!combat.current) combat.current = Combat.creer([allie], [adversaire.description]);
+  const enFace = [adversaire, ...renforts];
+  if (!combat.current) combat.current = Combat.creer([allie], enFace.map((x) => x.description));
   const C = combat.current;
+  /** L'adversaire (image, taille) d'un combattant d'en face, d'après son rang (« adversaire1 », « adversaire2 »…). */
+  const nomsEnFace = C.etat.adversaires.map((c) => c.nom).join(' et ');
+  const adversaireDe = (c: Combattant) => enFace[Math.max(0, (parseInt(c.id.replace(/\D/g, ''), 10) || 1) - 1)] ?? adversaire;
   const [, rafraichir] = useReducer((x: number) => (x + 1) % 1e6, 0);
   const [phase, setPhase] = useState<'attente' | 'intro' | 'combat' | 'fin'>('attente');
   const phaseRef = useRef(phase); phaseRef.current = phase;
@@ -102,7 +110,7 @@ export function EcranCombat({ echo, allie, adversaire, registre, terrain, musiqu
   const plus = (ms: number, f: () => void) => { minuteurs.current.push(window.setTimeout(f, ms)); };
   useEffect(() => () => { minuteurs.current.forEach(clearTimeout); }, []);
   useEffect(() => { SonsCombat.grave(CORROMPU); }, [CORROMPU]);
-  useMusique(CORROMPU ? 'morthen' : 'combat', { volume: 0.38, active: musique && phase !== 'attente', montee: 1500 });
+  useMusique(piste ?? (CORROMPU ? 'morthen' : 'combat'), { volume: 0.38, active: musique && phase !== 'attente', montee: 1500 });
 
   // Particules : elles montent (magie sainte), tombent (corruption) ou dérivent au vent (exploration).
   const [particules] = useState<Particule[]>(() => {
@@ -115,7 +123,7 @@ export function EcranCombat({ echo, allie, adversaire, registre, terrain, musiqu
   });
 
   const hautDe = (c: Combattant) => {
-    const base = c.camp === 'allies' ? 226 * (TAILLES[c.stade] / TAILLES.enfant) : 216 * (TAILLES[c.stade] / TAILLES.enfant) * (adversaire.taille ?? 1);
+    const base = c.camp === 'allies' ? 226 * (TAILLES[c.stade] / TAILLES.enfant) : 216 * (TAILLES[c.stade] / TAILLES.enfant) * (adversaireDe(c).taille ?? 1);
     return base * echelleY(c.y);
   };
 
@@ -125,17 +133,18 @@ export function EcranCombat({ echo, allie, adversaire, registre, terrain, musiqu
   };
 
   const terminer = (resultat: Resultat) => {
-    const x = C.etat.allies[0], b = C.etat.adversaires[0];
+    const x = C.etat.allies[0], b = { nom: nomsEnFace };
+    const pl = (un: string, plusieurs: string) => (enFace.length > 1 ? plusieurs : un);
     const part = x.pv / x.pvMax;
     const f = CORROMPU ? (resultat === 'victoire'
-      ? { titre: 'La corruption reflue', lignes: [`${b.nom} se délite en une fumée violette.`, part > 0.4 ? `${nom} reste debout, les yeux brillants.` : `${nom} vacille, mais la lumière lui revient.`] }
+      ? { titre: 'La corruption reflue', lignes: [`${b.nom} ${pl('se délite', 'se délitent')} en une fumée violette.`, part > 0.4 ? `${nom} reste debout, les yeux brillants.` : `${nom} vacille, mais la lumière lui revient.`] }
       : resultat === 'defaite'
-        ? { titre: 'Les ténèbres l’emportent', lignes: [`${b.nom} se referme sur le silence.`, `${nom} gît, très ${a('pâle', 'pâle')}. Il faut ${a('le', 'la')} ramener au ranch au plus vite.`] }
+        ? { titre: 'Les ténèbres l’emportent', lignes: [`${b.nom} ${pl('se referme', 'se referment')} sur le silence.`, `${nom} gît, très ${a('pâle', 'pâle')}. Il faut ${a('le', 'la')} ramener au ranch au plus vite.`] }
         : { titre: 'Vous battez en retraite', lignes: [`${nom} vous suit sans se retourner.`] })
       : resultat === 'victoire'
-        ? { titre: `${nom} l’emporte !`, lignes: [`${b.nom} détale dans les fourrés.`, part > 0.6 ? `${a('Il', 'Elle')} bombe le torse, à peine ${a('essoufflé', 'essoufflée')}.` : part > 0.25 ? `${a('Il', 'Elle')} souffle fort, mais ${a('il', 'elle')} a l’air ${a('fier', 'fière')}.` : `${a('Il', 'Elle')} tient à peine debout… mais ${a('il', 'elle')} a gagné.`] }
+        ? { titre: `${nom} l’emporte !`, lignes: [`${b.nom} ${pl('détale', 'détalent')} dans les fourrés.`, part > 0.6 ? `${a('Il', 'Elle')} bombe le torse, à peine ${a('essoufflé', 'essoufflée')}.` : part > 0.25 ? `${a('Il', 'Elle')} souffle fort, mais ${a('il', 'elle')} a l’air ${a('fier', 'fière')}.` : `${a('Il', 'Elle')} tient à peine debout… mais ${a('il', 'elle')} a gagné.`] }
         : resultat === 'defaite'
-          ? { titre: `${nom} s’effondre…`, lignes: [`${b.nom} s’éloigne sans se retourner.`, `Il faudra ${a('le', 'la')} ramener au ranch et ${a('le', 'la')} laisser se reposer.`] }
+          ? { titre: `${nom} s’effondre…`, lignes: [`${b.nom} ${pl('s’éloigne', 's’éloignent')} sans se retourner.`, `Il faudra ${a('le', 'la')} ramener au ranch et ${a('le', 'la')} laisser se reposer.`] }
           : { titre: 'Vous battez en retraite', lignes: [`${nom} vous suit en jetant des regards en arrière.`, `${a('Il', 'Elle')} n’a pas l’air d’avoir tout compris.`] };
     plus(resultat === 'fuite' ? 300 : 1400, () => {
       if (resultat === 'victoire') SonsCombat.victoire(); else SonsCombat.defaite();
@@ -208,7 +217,7 @@ export function EcranCombat({ echo, allie, adversaire, registre, terrain, musiqu
   const lancer = () => {
     if (phase !== 'attente') return;
     SonsCombat.eveiller(); SonsCombat.ordre();
-    const adv = C.etat.adversaires[0];
+    const adv = { nom: nomsEnFace };
     setPhase('intro');
     setBanniere(CORROMPU ? `${adv.nom} se dresse` : `${adv.nom} surgit !`);
     plus(1500, () => setBanniere(CORROMPU ? `Tiens bon, ${nom}` : 'En garde !'));
@@ -237,7 +246,8 @@ export function EcranCombat({ echo, allie, adversaire, registre, terrain, musiqu
         : (v > 0.5 ? '#dff2ff' : v > 0.2 ? '#ffd27a' : '#ffb86b');
     return { nom: c.nom, allure: ALLURE[s.allure][c.genre === 'f' ? 1 : 0], fil: Math.round(v * 1000) / 10, couleur };
   };
-  const pa = plaque(x0), pb = plaque(C.etat.adversaires[0]);
+  // à plusieurs, la plaque suit celui d'en face qui tient encore debout
+  const pa = plaque(x0), pb = plaque(C.etat.adversaires.find((c) => !c.ko) ?? C.etat.adversaires[0]);
 
   // Objets de soin présents dans le sac de l'écho (moins ceux déjà utilisés pendant ce combat).
   const sac = Object.keys(SOINS_COMBAT).map((id) => {
@@ -271,7 +281,7 @@ export function EcranCombat({ echo, allie, adversaire, registre, terrain, musiqu
             if (c.touche - t > 350) classes.push('touche');
             const elan = Math.round(c.jauge * 360);
             const garde = c.paradeJusqua > t || c.ordre?.type === 'protege';
-            const image = c.camp === 'allies' ? asset(cheminEcho(echo)) : asset(adversaire.image);
+            const image = c.camp === 'allies' ? asset(cheminEcho(echo)) : asset(adversaireDe(c).image);
             return (
               <div key={c.id} className={`ec ${c.camp !== 'allies' && CORROMPU ? 'boss' : ''}`} style={{ left: Math.round(p.x), top: Math.round(p.y), zIndex: Math.round(c.y * 10) }}>
                 <div className="ec-ombre" style={{ width: Math.round(160 * k), height: Math.round(38 * k) }} />
@@ -425,7 +435,7 @@ export function EcranCombat({ echo, allie, adversaire, registre, terrain, musiqu
 
         {phase === 'attente' && (
           <div className="depart">
-            <div className="depart-titre">{CORROMPU ? `${C.etat.adversaires[0].nom} vous attend` : EXPLO ? `${C.etat.adversaires[0].nom} vous barre le chemin` : `${C.etat.adversaires[0].nom} relève le défi`}</div>
+            <div className="depart-titre">{CORROMPU ? `${nomsEnFace} vous attend` : EXPLO ? `${nomsEnFace} vous ${enFace.length > 1 ? 'barrent' : 'barre'} le chemin` : `${nomsEnFace} ${enFace.length > 1 ? 'relèvent' : 'relève'} le défi`}</div>
             <button className="btn-depart" onClick={lancer}>Commencer le combat</button>
           </div>
         )}

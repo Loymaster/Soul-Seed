@@ -51,6 +51,27 @@ export const ACTIONS: Record<string, string> = {
   eclosion: 'la graine tremble, s’ouvre dans un éclair et l’écho naît',
   'nommer-echo': 'le joueur donne un nom à son écho ({echo.nom} ensuite)',
   image: 'épingle une image au-dessus de la scène (« action: image pnj/garry/attaque-jumpy », « action: image aucune »)',
+  // — Actions du monde (village, exploration) : jouées par src/jeu/monde/actions.ts
+  donner: 'range un objet dans le sac (« action: donner canne_peche », « action: donner pomme 2 ») ; {action.ok} vaut faux si le sac est plein',
+  retirer: 'retire un objet du sac (« action: retirer poisson_anguille », « action: retirer aliment » = le premier aliment) ; {action.ok}, {action.objet}',
+  or: 'donne ou reprend de l’or (« action: or 10 », « action: or -5 »)',
+  ressource: 'ajoute ou retire une ressource portée (« action: ressource bois 3 »)',
+  recruter: 'un PNJ rejoint le village (« action: recruter lady-roger bebe ») : prospérité, {village.dernier}, journal',
+  combat: 'combat contre un PNJ (« action: combat hevann ») ; ensuite {combat.issue} vaut "victoire", "defaite" ou "fuite"',
+  boutique: 'ouvre l’étal de Jumpy ; la scène reprend quand on le ferme',
+  stand: 'ouvre le stand de curiosités de Lady Roger',
+  coffre: 'ouvre le coffre de Maïko (ou l’entrepôt)',
+  travaux: 'ouvre le panneau des travaux d’Ash',
+  travail: 'le travail à la boutique (mini-jeu) ; ensuite {travail.or} = l’or gagné',
+  deblayer: 'déblayer un passage (mini-jeu des pierres) ; {action.ok}',
+  drapeau: 'pose aussitôt un drapeau du monde (« action: drapeau garry.vaincu vrai »)',
+  reconfort: 'Myhra réconforte l’écho (santé, vigueur, angoisse ; guérit s’il est angoissé)',
+  motiver: 'Hevann motive l’écho : entraînements plus efficaces pendant 6 heures',
+  'apprendre-echo': 'Jumpy révèle un trait de l’écho, en mots ; {jumpy.info}',
+  heures: 'fait passer des heures (« action: heures 6 »)',
+  journal: 'écrit une ligne dans le journal (« action: journal Garry a rejoint le village. »)',
+  ranch: 'à la fin de la scène, le joueur rentre au ranch',
+  lieu: 'à la fin de la scène, le joueur va ailleurs (« action: lieu sanctuaire », « action: lieu zone 27 »)',
 };
 
 /** Identifiant canonique : minuscules, sans accents, tirets (comme les fichiers). */

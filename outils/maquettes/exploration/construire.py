@@ -27,6 +27,8 @@ t = rep(t, '''          <div class="ligne">Le combat s’engage sur l’écran d
           <div class="aparte">Pour la maquette, choisissez l’issue :</div>
           <div class="boutons"><button class="btn bois" onClick="{{ perdre }}">Filo est battu</button><button class="btn" onClick="{{ gagner }}">Filo l’emporte</button></div>''',
         '''          <div class="ligne">{{ rencontre.engage }}</div>''')
+# la page de retour mène au ranch (la maquette repartait explorer)
+t = rep(t, '<button class="btn" onClick="{{ repartir }}">Repartir explorer</button>', '<button class="btn" onClick="{{ repartir }}">{{ finBouton }}</button>')
 reste = re.findall(r'/_blob/\w+|Filo', re.sub(r'<!--.*?-->', '', t, flags=re.S))
 assert not reste, reste
 

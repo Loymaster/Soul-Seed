@@ -15,7 +15,7 @@ ATTR = {'class': 'className', 'for': 'htmlFor', 'tabindex': 'tabIndex', 'viewbox
     'dominant-baseline': 'dominantBaseline', 'font-family': 'fontFamily', 'font-size': 'fontSize', 'font-weight': 'fontWeight', 'letter-spacing': 'letterSpacing',
     'pathlength': 'pathLength', 'markerwidth': 'markerWidth', 'markerheight': 'markerHeight', 'refx': 'refX', 'refy': 'refY', 'patternunits': 'patternUnits',
     'mix-blend-mode': 'mixBlendMode', 'spellcheck': 'spellCheck', 'autocomplete': 'autoComplete', 'maxlength': 'maxLength', 'draggable': 'draggable',
-    'filterunits': 'filterUnits', 'primitiveunits': 'primitiveUnits', 'in2': 'in2', 'result': 'result', 'mode': 'mode', 'operator': 'operator'}
+    'filterunits': 'filterUnits', 'maskunits': 'maskUnits', 'maskcontentunits': 'maskContentUnits', 'primitiveunits': 'primitiveUnits', 'in2': 'in2', 'result': 'result', 'mode': 'mode', 'operator': 'operator'}
 EVENTS = ['click', 'pointerdown', 'pointerup', 'pointerenter', 'pointerleave', 'pointermove', 'mouseenter', 'mouseleave', 'mousedown', 'mouseup', 'mousemove',
     'focus', 'blur', 'keydown', 'keyup', 'change', 'input', 'dragstart', 'dragend', 'dragover', 'dragenter', 'dragleave', 'drop', 'animationend', 'transitionend',
     'contextmenu', 'dblclick', 'wheel', 'submit', 'touchstart', 'touchend']

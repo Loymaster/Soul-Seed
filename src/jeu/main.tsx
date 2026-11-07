@@ -3,6 +3,8 @@
 //   avec l'introduction : entre deux mondes → arrivée au Sanctuaire (graine, éclosion, nom) → ranch ;
 //   sans l'introduction : création du personnage → choix de la Soul Seed → ranch.
 //   Au ranch, quand l'écho s'éteint : le dernier souffle → choix de la Soul Seed (après la disparition) → ranch.
+//   Du ranch, le poteau « partir » → Explorer : l'exploration (départ à la Sortie du village) ; une rencontre ouvre
+//   l'écran de combat, qui ramène au même lieu ; la flèche « rentrer au ranch » de la Sortie du village ramène au ranch.
 import { StrictMode, useMemo, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import donnees from '@contenu/generes/assets.json';
@@ -22,6 +24,9 @@ import { ChoixGraine } from './graines/ChoixGraine';
 import { DernierSouffle } from './mort/DernierSouffle';
 import { EntreDeuxMondes } from './intro/EntreDeuxMondes';
 import { ID_SCENE_SANCTUAIRE, Sanctuaire } from './intro/Sanctuaire';
+import { Exploration, bilanDepart, reprendreTrouvailles, type BilanSortie, type RencontreExploration, type RetourCombat } from './exploration/Exploration';
+import { DEPART, ZONES } from './exploration/zones';
+import { creerMonde, type Monde } from '@/moteur/monde';
 import * as P from './profils';
 import '@/styles/polices';
 import './base.css';
@@ -41,8 +46,19 @@ type Ecran =
   | { nom: 'graines'; emplacement: number; personnage: P.Personnage; contexte: 'nouvelle' | 'apres' }
   | { nom: 'mort'; emplacement: number; etat: Etat }
   | { nom: 'ranch'; emplacement: number; etat: Etat }
-  | { nom: 'combat'; emplacement: number; etat: Etat; adversaire: AdversaireCombat; registre: Registre; terrain: string; entrainement: boolean }
+  | { nom: 'combat'; emplacement: number; etat: Etat; adversaire: AdversaireCombat; registre: Registre; terrain: string; entrainement: boolean; exploration?: SortieExploration & { rencontre: RencontreExploration } }
+  | ({ nom: 'exploration'; emplacement: number; etat: Etat; retourCombat?: RetourCombat } & SortieExploration)
   | { nom: 'scene'; id: string };
+
+/** Une sortie en exploration : le monde de la partie, le lieu, le chemin parcouru, le sac au départ. */
+interface SortieExploration { monde: Monde; zone: number; historique: number[]; bilan: BilanSortie }
+
+/** L'écho sauvage d'une rencontre d'exploration, prêt à combattre sur le décor du lieu. */
+function preparerCombatExploration(r: RencontreExploration) {
+  const description = descriptionSauvage(r.sauvage, Math.random);
+  const adversaire: AdversaireCombat = { description, image: apparence({ ...r.sauvage, evolution: null } as unknown as Etat) };
+  return { adversaire, registre: 'exploration' as Registre, terrain: ZONES[r.zone].fond, entrainement: false };
+}
 
 /** Terrains des combats d'exploration (décors du chemin). */
 const TERRAINS = ['02-passage-foret', '07-riviere', '16-chemin-foret', '17-foret-detruite', '10-champ-rochers', '31-sentier-bord-lac'];
@@ -95,6 +111,8 @@ function Jeu() {
   }
 
   const { musique, sons } = profil.reglages;
+  /** Le monde d'un emplacement (un essai n'a pas de monde enregistré). */
+  const chargerMonde = (emplacement: number) => (emplacement === ESSAI ? creerMonde() : P.chargerMonde(profil.id, emplacement));
   SFX.on = sons;
   fixerVolumes({ musique: (profil.reglages.volumeMusique ?? 80) / 100, bruitages: (profil.reglages.volumeBruitages ?? 80) / 100 });
   const menu = () => { rafraichir(); setEcran({ nom: 'menu' }); };
@@ -156,19 +174,45 @@ function Jeu() {
           surDecouverte={(cle) => { const p = P.profilActif(); if (p && !(p.connus ?? []).includes(cle)) P.modifierProfil(p.id, { connus: [...(p.connus ?? []), cle] }); }}
           surMort={(e) => setEcran({ nom: 'mort', emplacement, etat: e })}
           surCombat={(e, nature) => setEcran({ nom: 'combat', emplacement, etat: e, ...preparerCombat(e, nature) })}
+          ressources={chargerMonde(emplacement).ressources}
+          surPartir={(e, lieu) => {
+            // le village et le magasin ne sont pas encore ouverts : le ranch l'annonce
+            if (lieu !== 'exploration') return false;
+            const monde = chargerMonde(emplacement);
+            setEcran({ nom: 'exploration', emplacement, etat: e, monde, zone: DEPART, historique: [], bilan: bilanDepart(e, monde) });
+          }}
           surQuitter={menu} />
       );
     }
+    case 'exploration': {
+      const { emplacement, etat, monde, zone, historique, bilan, retourCombat } = ecran;
+      const sauver = (e: Etat, m: Monde) => { if (emplacement !== ESSAI) { P.sauverPartie(profil.id, emplacement, e); P.sauverMonde(profil.id, emplacement, m); P.noterForme(profil.id, apparence(e)); } };
+      return (
+        <Exploration key={`explo-${profil.id}-${emplacement}-${etat.naissance}-${etat.nom}-${retourCombat ? retourCombat.rencontre.sauvage.id : 'depart'}`}
+          etat={etat} monde={monde} zone={zone} historique={historique} bilan={bilan} reglages={profil.reglages} retourCombat={retourCombat}
+          sauver={sauver}
+          surLieu={(z, h) => setEcran((x) => (x.nom === 'exploration' ? { ...x, zone: z, historique: h, retourCombat: x.retourCombat } : x))}
+          surCombat={(e, m, rencontre) => setEcran({ nom: 'combat', emplacement, etat: e, ...preparerCombatExploration(rencontre), exploration: { monde: m, zone: rencontre.zone, historique: ecran.historique, bilan, rencontre } })}
+          surRanch={(e, m) => { sauver(e, m); setEcran({ nom: 'ranch', emplacement, etat: e }); }}
+          surMort={(e) => setEcran({ nom: 'mort', emplacement, etat: e })} />
+      );
+    }
     case 'combat': {
-      const { emplacement, etat, adversaire, registre, terrain, entrainement } = ecran;
+      const { emplacement, etat, adversaire, registre, terrain, entrainement, exploration } = ecran;
       return (
         <EcranCombat key={`combat-${etat.naissance}-${adversaire.description.nom}`} echo={etat} allie={descriptionDepuisEtat(etat)} adversaire={adversaire}
           registre={registre} terrain={terrain} musique={musique}
           surFin={(issue) => {
             appliquerCombat(etat, issue, adversaire, entrainement);
+            // exploration : une victoire rend les trouvailles dispersées
+            const plein = exploration && issue.resultat === 'victoire' && !etat.mort ? reprendreTrouvailles(etat, exploration.rencontre) : false;
             if (emplacement !== ESSAI) { P.sauverPartie(profil.id, emplacement, etat); P.noterForme(profil.id, apparence(etat)); }
+            if (exploration && emplacement !== ESSAI) P.sauverMonde(profil.id, emplacement, exploration.monde);
             if (etat.mort) setEcran({ nom: 'mort', emplacement, etat });
-            else setEcran({ nom: 'ranch', emplacement, etat });
+            else if (exploration) {
+              const { rencontre, ...sortie } = exploration;
+              setEcran({ nom: 'exploration', emplacement, etat, ...sortie, retourCombat: { rencontre, resultat: issue.resultat, plein } });
+            } else setEcran({ nom: 'ranch', emplacement, etat });
           }} />
       );
     }

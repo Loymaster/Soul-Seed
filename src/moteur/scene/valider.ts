@@ -76,7 +76,15 @@ export function variablesDeScene(scene: Scene) {
 }
 
 /** Variables fournies par le jeu lui-même (jamais écrites dans une scène, mais toujours définies). */
-export const VARIABLES_DU_JEU = new Set(['echo.nom', 'echo.stade', 'echo.lignee', 'joueur.nom', 'joueur.pronom', 'echo.genre', 'graine.nom', 'jour', 'heure', 'saison']);
+export const VARIABLES_DU_JEU = new Set([
+  'echo.nom', 'echo.stade', 'echo.lignee', 'joueur.nom', 'joueur.pronom', 'echo.genre', 'graine.nom', 'jour', 'heure', 'saison',
+  // monde (src/jeu/monde/variables.ts) : l'heure absolue, l'or, le hasard, les suites d'actions
+  'maintenant', 'or', 'hasard', 'sujet', 'echo.angoisse', 'echo.malade', 'echo.petit', 'sac.plein', 'sac.aliment',
+  'combat.issue', 'action.ok', 'action.objet', 'travail.or', 'jumpy.info', 'village.prosperite', 'village.dernier', 'chantier.en_cours',
+]);
+/** Familles de variables fournies par le jeu : « sac.<objet> » (quantité dans le sac), « construit.<bâtiment> ». */
+export const PREFIXES_DU_JEU = ['sac.', 'construit.', 'village.habitant.'];
+export const variableDuJeu = (v: string) => VARIABLES_DU_JEU.has(v) || PREFIXES_DU_JEU.some((p) => v.startsWith(p));
 
 export function validerScene(scene: Scene, ctx: ContexteScene): Probleme[] {
   const pb: Probleme[] = [];
@@ -184,7 +192,7 @@ export function validerScene(scene: Scene, ctx: ContexteScene): Probleme[] {
   // Variables lues mais écrites nulle part : elles vaudront toujours 0.
   const { lues, ecrites } = variablesDeScene(scene);
   for (const [v, ligne] of lues) {
-    if (ecrites.has(v) || ctx.variablesEcrites?.has(v) || VARIABLES_DU_JEU.has(v)) continue;
+    if (ecrites.has(v) || ctx.variablesEcrites?.has(v) || variableDuJeu(v)) continue;
     pb.push({ niveau: 'alerte', ligne, message: `La variable « ${v} » n'est modifiée dans aucune scène : elle vaudra toujours 0.${suggestion(v, [...(ctx.variablesEcrites || []), ...ecrites.keys()])}` });
   }
   return pb;

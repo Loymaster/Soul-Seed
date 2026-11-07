@@ -265,6 +265,8 @@ export interface Etat {
   or: number;
   /** Combat : PV restants depuis le dernier combat (null ou absent : pleine forme, rendue par le sommeil). */
   pvCombat?: number | null;
+  /** Hevann a motivé l'écho : ses entraînements rendent davantage jusqu'à cette heure totale. */
+  motivationJusqua?: number;
   /** Techniques de combat : apprises, équipées (trois au plus), seuils d'intelligence déjà franchis. */
   techniques?: { connues: string[]; equipees: string[]; seuils: number[] };
   journal: EntreeJournal[];
