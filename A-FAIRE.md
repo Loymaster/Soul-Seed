@@ -60,7 +60,7 @@ Moteur prêt dans `src/moteur/combat/` (règles du prototype, temps réel, déte
 ## Simulation et contenu
 - [ ] Héritage entre générations (7–12 % des caractéristiques) : calculé puis remis à zéro dans le prototype — décider s’il devient réel.
 - [ ] Mini-jeux des corvées et réparations d’Ash.
-- [ ] Village, magasin, exploration (maquette « Exploration » v12 du canevas à valider : panneaux de chemin, fouille à cinq cachettes, pêche au bouchon, Filo envoyé, camp, carte qui se dessine ; durées de marche et risques proposés).
+- [ ] Village, magasin, exploration (maquette « Exploration » v12 du canevas : passages à la craie, Filo qui marche d’un lieu à l’autre, fouille à cinq cachettes avec combat pour reprendre ses trouvailles, Récolter (ressources ; vignette provisoire), pêche, Filo envoyé, tente de soins, sac du ranch ; seules les actions font passer le temps : fouiller 30 min, récolter 30, envoyer 20, pêcher 15 ; rencontres moins probables dans un lieu visité depuis moins de 24 h ; musique de caverne : Glacial Zone). Carte illustrée à produire (schéma des zones fourni).
 - [ ] Jardin et cuisine.
 - [ ] Échos de mémoire.
 - [ ] Démarche propre à chaque forme d’écho.
