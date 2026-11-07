@@ -11,7 +11,6 @@ import { cheminDecor, cheminImage, cheminMusique } from '@/moteur/scene/valider'
 import { imagesScene, precharger } from '../commun/prechargement';
 import { afficherValeur } from '@/moteur/scene/expressions';
 import { JOUEUR, NARRATION, type Resonance, type Scene, type Valeur } from '@/moteur/scene/types';
-import { APPARENCE_RESONANCES } from './resonances';
 import { cadrage, styleCadre } from './cadrages';
 import './scene.css';
 
@@ -401,16 +400,13 @@ export function SceneDialogue(props: PropsSceneDialogue) {
               <div className="sc-question">{aff.question || 'Que répondre ?'}</div>
               <div className={`sc-options ${aff.options.length > 4 ? 'serre' : ''}`}>
                 {aff.options.map((o, i) => {
-                  const r = APPARENCE_RESONANCES[o.resonance];
                   const etat = aff.choisie >= 0 ? (aff.choisie === o.index ? 'choisie' : 'estompee') : aff.active === o.index ? 'active' : '';
                   return (
                     <button key={o.index} className={`sc-option ${etat}`} style={{ animationDelay: `${i * 70}ms` }}
                       onMouseEnter={() => { if (affRef.current?.type === 'choix' && affRef.current.choisie < 0 && affRef.current.active !== o.index) { sfx('paperTick'); setAff({ ...affRef.current, active: o.index }); } }}
                       onClick={(e) => { e.stopPropagation(); choisir(o.index); }}>
-                      <span className={`pastille ${r.pointilles ? 'pointilles' : ''}`} style={{ color: r.couleur }}>
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden><path d={r.icone} /></svg>
-                      </span>
-                      <span className="type" style={{ color: r.couleur }}>{r.nom}</span>
+                      {/* les réponses d'un dialogue n'affichent plus de tempérament (intérêt scénaristique) ; les événements du ranch gardent les leurs */}
+                      <span className="puce" aria-hidden />
                       <span className="texte">{o.texte}</span>
                       {aff.choisie < 0 && <span className="touche">{i + 1}</span>}
                       {aff.choisie === o.index && (
