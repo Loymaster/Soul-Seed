@@ -156,8 +156,12 @@ export function Monde(props: ProprietesMonde) {
 
   // ——— accueil de Jumpy en entrant dans la boutique
   useEffect(() => {
-    if (lieu === 'boutique' && boutiqueOuverte(heureDuJour(etat))) setAccueil(ACCUEILS[Math.floor(Math.random() * ACCUEILS.length)](personnage.nom));
-    else setAccueil(null);
+    if (lieu === 'boutique' && boutiqueOuverte(heureDuJour(etat))) {
+      setAccueil(ACCUEILS[Math.floor(Math.random() * ACCUEILS.length)](personnage.nom));
+      const id = setTimeout(() => setAccueil(null), 9000);
+      return () => clearTimeout(id);
+    }
+    setAccueil(null);
   }, [lieu]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // ——— essais (développement) : jouer n'importe quelle scène de PNJ depuis la console, ex. __monde.jouer('hevann-chemin')
@@ -274,7 +278,7 @@ export function Monde(props: ProprietesMonde) {
               <div className="planche bois"><b>Fermé</b><span className="craie">revenez entre 9 h et 19 h</span></div>
             </div>
           )}
-          {accueil && !scene && !panneau && (
+          {accueil && !fermee && !scene && !panneau && (
             <div className="mo-accueil" onClick={(ev) => { ev.stopPropagation(); setAccueil(null); }}>
               <p>{accueil}</p><span className="x">×</span>
             </div>
@@ -283,7 +287,7 @@ export function Monde(props: ProprietesMonde) {
           {menu && (() => {
             const p = enRepere(menu.x, menu.y);
             return (
-              <div className="mo-menu" style={{ left: Math.max(130, Math.min(1150, p.x)), top: Math.max(170, p.y - 6) }} onClick={(ev) => ev.stopPropagation()}>
+              <div className="mo-menu" style={{ left: Math.max(130, Math.min(1150, p.x)), top: Math.max(64 + menu.entrees.length * 38, p.y - 6) }} onClick={(ev) => ev.stopPropagation()}>
                 <div className="titre">{menu.pnj.nom}</div>
                 {menu.entrees.map((en, i) => (
                   <button key={i} className="entree" onMouseEnter={() => son('paperTick')} onClick={() => ouvrirEntree(en)}>

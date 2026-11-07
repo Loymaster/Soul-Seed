@@ -10,7 +10,7 @@
 /* Lieu et décor */
 .mo-lieu{position:absolute;inset:0;overflow:hidden;transition:opacity .38s ease}
 .mo-lieu.transition{opacity:0}
-.mo-decor{position:absolute;transition:filter 1.5s linear}
+.mo-decor{position:absolute;z-index:0;isolation:isolate;transition:filter 1.5s linear}
 .mo-decor .fond{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;user-select:none}
 .mo-nuit{position:absolute;inset:0;pointer-events:none;background:radial-gradient(ellipse at 50% 70%,rgba(255,190,110,.08),rgba(10,14,40,.35) 70%);mix-blend-mode:multiply}
 

@@ -54,14 +54,27 @@ Moteur prêt dans `src/moteur/combat/` (règles du prototype, temps réel, déte
 - [ ] Musique de Vinland : *nyxara-battle* (Leomon), qui lui revient.
 - [ ] Carnet : page des techniques (apprises, trois équipées, description en mots).
 - [x] Combats d'exploration : l'écho sauvage du lieu (âge et graines de la zone) ; on revient au même lieu avec l'issue.
-- [ ] Brancher les combats : échos sauvages (événement « invité »), PNJ (Garry, Lady Roger, Phil et Hibert, Hevann, Bourbella), mode Arène.
+- [x] Combats contre les PNJ (`src/jeu/monde/adversaires.ts`, lancés par `action: combat <pnj>` dans les scènes) : Jumpy (entraînement), Lady Roger, Hevann et Garry (magie sainte, musique de Garry pour lui), Bourbella, Phil et Hibert (à deux). L'écran de combat accepte plusieurs adversaires (`renforts`) et une piste (`piste`).
+- [ ] Brancher les combats : échos sauvages (événement « invité »), mode Arène.
 - [ ] Équilibrage : à caractéristiques égales, un combat de bébés dure environ 1 min 30, d'adolescents moyens 1 min 20 (essai sur 40 combats).
 - [ ] Décider : les adultes gardent-ils les techniques de leur adolescence (comme le jeu du prototype) ou prennent-ils les pools adultes (mode Arène du prototype) ? Le moteur permet les deux (`poolsAdultes`).
 
 ## Simulation et contenu
 - [ ] Héritage entre générations (7–12 % des caractéristiques) : calculé puis remis à zéro dans le prototype — décider s’il devient réel.
 - [ ] Mini-jeux des corvées et réparations d’Ash.
-- [ ] Village et magasin (le poteau du ranch les annonce « pas encore ouverts » : `surPartir` dans `main.tsx`).
+- [x] Village et magasin : écran du monde (`src/jeu/monde`) ouvert par le poteau du ranch — village, forêt du village, sanctuaire, atelier, boutique de Jumpy ; PNJ selon l'heure et les quêtes, scènes, combats, étal, stand, coffre, travaux d'Ash, sac.
+
+## Village (à reprendre ou à décider)
+- [ ] Brancher en exploration les scènes des PNJ (tableau dans `contenu/scenes/LISEZMOI.md`) : Hevann (16), Garry (17), Morthen (2), Bourbella (5), Phil et Hibert (6, nuit ; « Inspecter la cabane » le jour ; marteau au sol), Tourby (7), Ash (11), Grimp (23), bouton « Déblayer le passage » et Glamp (28), Nyxara (32) ; bonus de pêche de Bourbella (`peche.bonus_jusqua`) ; « Revenir au village » de la Sortie du village → forêt du village (`Ecran` `monde`, lieu `foret`).
+- [ ] Corvées réparées par Ash (`monde.corvees`, niveaux 1 à 3) : le ranch ne les lit pas encore (toutes les corvées y sont jouables ; le niveau devrait fixer le nombre de tentatives et le gain d'expérience).
+- [ ] Bâtiments du village payés en or (dojo, fontaine, arène…) : construits mais sans effet, comme dans le prototype. « Améliorer l'entraînement » (Hevann), « Demander un service » (Glamp), Finn « Partir en exploration » / « Discuter », Bourbella « Discuter », Myhra « le monde » : « En développement ».
+- [ ] Décider : l'or et le sac appartiennent à l'écho (`Etat`) et repartent de zéro avec la graine suivante, alors que le prototype gardait l'or d'un écho à l'autre.
+- [ ] Décider : le plafond de 5 par ressource portée (prototype) oblige à passer par le coffre de Maïko avant l'atelier ; le garder ?
+- [ ] Décider : le stade de Lady Roger (bébé : +1 prospérité ; le prototype hésitait avec adulte).
+- [ ] Prospérité : avec tous les habitants (Grimp compris) elle plafonne à 16 ; Myhra n'a que des phrases au-delà de 15. Paliers à revoir.
+- [ ] Potager de Tourby : installé au village (le prototype passait par l'activité « Jardin » du ranch) ; « Nodules nutritifs ? » et « Aménager le potager » à écrire.
+- [ ] Événement « bruit de Garry » : il cesse dès que `garry.vaincu` (synchronisé dans l'état de l'écho au retour au ranch).
+- [ ] Visuels : Grimp au village et dans l'atelier n'a pas de calque dessiné (sprite posé) ; Jumpy n'a pas d'expression « en pied » neutre (la fiche utilise un portrait en buste par défaut).
 
 ## Exploration
 Maquette « Exploration » v12 du canevas, portée dans `src/jeu/exploration/` (vue générée par `outils/maquettes/exploration/construire.py`).

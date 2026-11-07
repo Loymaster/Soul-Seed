@@ -161,7 +161,7 @@ export const LIEUX: Record<IdLieu, Lieu> = {
   foret: {
     id: 'foret', nom: 'La forêt du village', ratio: 1536 / 1024, musique: 'intro-sanctuary',
     decor: () => 'decors/foret/entree.png', decorScene: () => 'foret/entree',
-    echo: { x: 35, pieds: 93, hauteur: 14 },
+    echo: { x: 60, pieds: 87, hauteur: 13 },
     passages: () => [
       { libelle: 'Partir en exploration', vers: 'exploration', position: 'haut' },
       { libelle: 'Vers le centre du village', vers: 'village', position: 'bas' },
@@ -215,7 +215,7 @@ export const LIEUX: Record<IdLieu, Lieu> = {
     id: 'atelier', nom: 'L’atelier', ratio: 1536 / 1024, musique: 'intro-sanctuary',
     decor: (c) => (ENTREPOT(c) ? 'decors/atelier/avec-entrepot.png' : 'decors/atelier/sans-entrepot.png'),
     decorScene: (c) => (ENTREPOT(c) ? 'atelier/avec-entrepot' : 'atelier/sans-entrepot'),
-    echo: { x: 58, pieds: 95, hauteur: 18 },
+    echo: { x: 74, pieds: 92, hauteur: 17 },
     passages: () => [{ libelle: 'Retour au village', vers: 'village', position: 'bas' }],
     pnj: [
       {
