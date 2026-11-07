@@ -74,6 +74,7 @@ export function SceneDialogue(props: PropsSceneDialogue) {
   const minuteurs = useRef<ReturnType<typeof setTimeout>[]>([]);
   const affRef = useRef<Affichage>(null);
   const attente = useRef<{ id: ReturnType<typeof setTimeout>; f: () => void } | null>(null);
+  const enMouvement = useRef(false);
   const compteur = useRef(0);
   const propsRef = useRef(props);
   propsRef.current = props;
@@ -85,7 +86,7 @@ export function SceneDialogue(props: PropsSceneDialogue) {
   }, []);
 
   const plusTard = useCallback((f: () => void, ms: number) => { minuteurs.current.push(setTimeout(f, ms)); }, []);
-  const toutArreter = () => { minuteurs.current.forEach(clearTimeout); minuteurs.current = []; attente.current = null; };
+  const toutArreter = () => { minuteurs.current.forEach(clearTimeout); minuteurs.current = []; attente.current = null; enMouvement.current = false; };
 
   // --- Mise à l'échelle : le repère 1280 × 800 tient toujours entier dans l'écran
   useEffect(() => {
@@ -237,11 +238,12 @@ export function SceneDialogue(props: PropsSceneDialogue) {
 
   function avancer() {
     const l = lecteur.current;
-    if (!l) return;
+    if (!l || l.enAttenteDeChoix) return; // un choix arrive (après une entrée en scène) : on l'attend
     let pas;
     try { pas = l.suivant(); } catch (e) { console.error(e); return; }
     const delai = appliquer(pas.changements);
-    if (delai) plusTard(() => montrer(pas.evenement), delai + 120);
+    // pendant une entrée en scène, un clic de plus ne doit pas sauter l'événement qui la suit
+    if (delai) { enMouvement.current = true; plusTard(() => { enMouvement.current = false; montrer(pas.evenement); }, delai + 120); }
     else montrer(pas.evenement);
   }
 
@@ -281,6 +283,7 @@ export function SceneDialogue(props: PropsSceneDialogue) {
   };
 
   const cliquer = () => {
+    if (enMouvement.current) return;
     const a = affRef.current;
     if (attente.current) { const { id, f } = attente.current; clearTimeout(id); attente.current = null; f(); return; }
     if (!a || a.type === 'action') return; // le jeu joue son action : il reprendra la main

@@ -88,7 +88,7 @@ export const LIEUX: Record<IdLieu, Lieu> = {
   village: {
     id: 'village', nom: 'Le village', ratio: 1536 / 1024, musique: 'intro-sanctuary',
     decor: () => 'decors/village/ruines.png', decorScene: () => 'village/ruines',
-    echo: { x: 50, pieds: 93, hauteur: 13 },
+    echo: { x: 37, pieds: 88, hauteur: 12 },
     passages: () => [
       { libelle: 'Vers la forêt', vers: 'foret', position: 'haut' },
       { libelle: 'Vers le sanctuaire', vers: 'sanctuaire', position: 'gauche' },
@@ -111,7 +111,7 @@ export const LIEUX: Record<IdLieu, Lieu> = {
         id: 'lady-roger', nom: 'Lady Roger',
         visible: (c) => !standPret(c), image: () => 'pnj/lady-roger/neutre.png',
         promenade: { xMin: 40, xMax: 60, piedsMin: 74, piedsMax: 82, hauteur: 9, pas: [1, 5], periode: [1600, 2500] },
-        premier: (c) => ({ scene: 'lady-roger', sujet: d(c.m, 'ladyroger.recrutee') ? 'promenade' : 'promenade' }),
+        premier: () => ({ scene: 'lady-roger', sujet: 'promenade' }),
         menu: () => [],
       },
       {
@@ -161,7 +161,7 @@ export const LIEUX: Record<IdLieu, Lieu> = {
   foret: {
     id: 'foret', nom: 'La forêt du village', ratio: 1536 / 1024, musique: 'intro-sanctuary',
     decor: () => 'decors/foret/entree.png', decorScene: () => 'foret/entree',
-    echo: { x: 50, pieds: 92, hauteur: 14 },
+    echo: { x: 35, pieds: 93, hauteur: 14 },
     passages: () => [
       { libelle: 'Partir en exploration', vers: 'exploration', position: 'haut' },
       { libelle: 'Vers le centre du village', vers: 'village', position: 'bas' },

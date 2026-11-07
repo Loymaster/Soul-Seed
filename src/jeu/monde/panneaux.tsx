@@ -6,7 +6,7 @@ import {
   BATIMENTS_ASH, BATIMENTS_VILLAGE, REPARATIONS, RESSOURCES, acheter, casesCoffre, construireVillage, deposerObjet, deposerRessources,
   etalDuJour, etatBatimentAsh, etatBatimentVillage, lancerChantier, lancerReparation, manque, niveauCorvee, nomCoffre, plafondCoffre,
   prixRachat, reprendreObjet, ressourcesDisponibles, texteCout, vendreCuriosite, HEURES_REPARATION, NOMS_RESSOURCES, TENTATIVES_CORVEE,
-  minuteAbsolue, type Monde, type Ressource,
+  minuteAbsolue, nomBatiment, type Monde, type Ressource,
 } from '@/moteur/monde';
 import { Simulation, aliment, descriptionObjet, objetDivers, type Etat } from '@/moteur/simulation';
 import { SFX } from '@/moteur/sfx';
@@ -252,7 +252,7 @@ export function Travaux({ e, m, rafraichir, noter, fermer }: Commun) {
                 <div key={b.cle} className={`mo-ligne ${et}`}>
                   <div className="txt">
                     <b>{inconnu ? '???' : b.nom}</b>
-                    <i>{inconnu ? 'Un écho doit pouvoir vous renseigner sur cette construction.' : et === 'construit' ? 'Construit.' : et === 'prerequis' ? `Prérequis : ${b.prerequis.join(', ')}` : `${texteCout(b.cout)} · ${b.heures} h`}</i>
+                    <i>{inconnu ? 'Un écho doit pouvoir vous renseigner sur cette construction.' : et === 'construit' ? 'Construit.' : et === 'prerequis' ? `Prérequis : ${b.prerequis.map(nomBatiment).join(', ')}` : `${texteCout(b.cout)} · ${b.heures} h`}</i>
                     {!inconnu && et !== 'construit' && <small>{b.effet}</small>}
                   </div>
                   <button className={`mo-bouton ${et === 'disponible' && !manquant ? 'ok' : ''}`} disabled={et !== 'disponible'} onClick={() => resultat(lancerChantier(m, b.cle, maintenant))}>{LIBELLE_ETAT[et]}</button>
@@ -267,7 +267,7 @@ export function Travaux({ e, m, rafraichir, noter, fermer }: Commun) {
                 <div key={b.cle} className={`mo-ligne ${et}`}>
                   <div className="txt">
                     <b>{inconnu ? '???' : b.nom}</b>
-                    <i>{inconnu ? 'Un écho doit pouvoir vous renseigner sur cette construction.' : et === 'construit' ? 'Construit.' : et === 'prerequis' ? `Prérequis : ${b.prerequis.length > 3 ? 'tout le reste du village' : b.prerequis.join(', ')}` : `${b.or} or`}</i>
+                    <i>{inconnu ? 'Un écho doit pouvoir vous renseigner sur cette construction.' : et === 'construit' ? 'Construit.' : et === 'prerequis' ? `Prérequis : ${b.prerequis.length > 3 ? 'tout le reste du village' : b.prerequis.map(nomBatiment).join(', ')}` : `${b.or} or`}</i>
                   </div>
                   <button className={`mo-bouton ${et === 'disponible' && e.or >= b.or ? 'ok' : ''}`} disabled={et !== 'disponible'} onClick={() => resultat(construireVillage(m, e, b.cle))}>{LIBELLE_ETAT[et]}</button>
                 </div>

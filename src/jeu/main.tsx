@@ -5,6 +5,8 @@
 //   Au ranch, quand l'écho s'éteint : le dernier souffle → choix de la Soul Seed (après la disparition) → ranch.
 //   Du ranch, le poteau « partir » → Explorer : l'exploration (départ à la Sortie du village) ; une rencontre ouvre
 //   l'écran de combat, qui ramène au même lieu ; la flèche « rentrer au ranch » de la Sortie du village ramène au ranch.
+//   Du ranch encore, « Le village » et « Le magasin » ouvrent l'écran du monde (src/jeu/monde : village, forêt,
+//   sanctuaire, atelier, boutique) ; ses PNJ jouent leurs scènes et leurs combats sur place, puis on rentre au ranch.
 import { StrictMode, useMemo, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import donnees from '@contenu/generes/assets.json';
@@ -27,6 +29,9 @@ import { ID_SCENE_SANCTUAIRE, Sanctuaire } from './intro/Sanctuaire';
 import { Exploration, bilanDepart, reprendreTrouvailles, type BilanSortie, type RencontreExploration, type RetourCombat } from './exploration/Exploration';
 import { DEPART, ZONES } from './exploration/zones';
 import { creerMonde, type Monde } from '@/moteur/monde';
+import { Monde as EcranMonde } from './monde/Monde';
+import type { IdLieu } from './monde/lieux';
+import { synchroniser } from './monde/variables';
 import * as P from './profils';
 import '@/styles/polices';
 import './base.css';
@@ -48,6 +53,7 @@ type Ecran =
   | { nom: 'ranch'; emplacement: number; etat: Etat }
   | { nom: 'combat'; emplacement: number; etat: Etat; adversaire: AdversaireCombat; registre: Registre; terrain: string; entrainement: boolean; exploration?: SortieExploration & { rencontre: RencontreExploration } }
   | ({ nom: 'exploration'; emplacement: number; etat: Etat; retourCombat?: RetourCombat } & SortieExploration)
+  | { nom: 'monde'; emplacement: number; etat: Etat; monde: Monde; lieu: IdLieu }
   | { nom: 'scene'; id: string };
 
 /** Une sortie en exploration : le monde de la partie, le lieu, le chemin parcouru, le sac au départ. */
@@ -164,6 +170,7 @@ function Jeu() {
       );
     case 'ranch': {
       const { emplacement } = ecran;
+      synchroniser(ecran.etat, chargerMonde(emplacement)); // Garry vaincu : plus de bruits de ravages
       return (
         <Ranch key={`${profil.id}-${emplacement}-${ecran.etat.naissance}-${ecran.etat.graine}-${ecran.etat.nom}`} etat={ecran.etat}
           reglages={profil.reglages}
@@ -176,9 +183,9 @@ function Jeu() {
           surCombat={(e, nature) => setEcran({ nom: 'combat', emplacement, etat: e, ...preparerCombat(e, nature) })}
           ressources={chargerMonde(emplacement).ressources}
           surPartir={(e, lieu) => {
-            // le village et le magasin ne sont pas encore ouverts : le ranch l'annonce
-            if (lieu !== 'exploration') return false;
             const monde = chargerMonde(emplacement);
+            // le village (centre) ou la boutique de Jumpy
+            if (lieu !== 'exploration') { setEcran({ nom: 'monde', emplacement, etat: e, monde, lieu: lieu === 'magasin' ? 'boutique' : 'village' }); return; }
             setEcran({ nom: 'exploration', emplacement, etat: e, monde, zone: DEPART, historique: [], bilan: bilanDepart(e, monde) });
           }}
           surQuitter={menu} />
@@ -195,6 +202,18 @@ function Jeu() {
           surCombat={(e, m, rencontre) => setEcran({ nom: 'combat', emplacement, etat: e, ...preparerCombatExploration(rencontre), exploration: { monde: m, zone: rencontre.zone, historique: ecran.historique, bilan, rencontre } })}
           surRanch={(e, m) => { sauver(e, m); setEcran({ nom: 'ranch', emplacement, etat: e }); }}
           surMort={(e) => setEcran({ nom: 'mort', emplacement, etat: e })} />
+      );
+    }
+    case 'monde': {
+      const { emplacement, etat, monde, lieu } = ecran;
+      const sauver = (e: Etat, m: Monde) => { if (emplacement !== ESSAI) { P.sauverPartie(profil.id, emplacement, e); P.sauverMonde(profil.id, emplacement, m); P.noterForme(profil.id, apparence(e)); } };
+      return (
+        <EcranMonde key={`monde-${profil.id}-${emplacement}-${etat.naissance}-${etat.nom}`} etat={etat} monde={monde} lieu={lieu}
+          personnage={P.chargerPersonnage(profil, emplacement)} catalogue={catalogue} reglages={profil.reglages}
+          sauver={sauver}
+          surRanch={(e, m) => { sauver(e, m); setEcran({ nom: 'ranch', emplacement, etat: e }); }}
+          surExploration={(e, m) => { sauver(e, m); setEcran({ nom: 'exploration', emplacement, etat: e, monde: m, zone: DEPART, historique: [], bilan: bilanDepart(e, m) }); }}
+          surMort={(e) => { sauver(e, monde); setEcran({ nom: 'mort', emplacement, etat: e }); }} />
       );
     }
     case 'combat': {
