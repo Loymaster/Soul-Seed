@@ -1,0 +1,52 @@
+// Maïko, le petit écho affamé de la forêt, gardien du coffre puis de l'entrepôt.
+// {sujet} : « parler » (clic sur Maïko), « discuter » (son menu).
+titre: Maïko
+décor: foret/entree
+places: maiko G2
+
+si sujet == "discuter":
+  si construit.entrepot:
+    si non maiko.entrepot_vu:
+      maiko: Ouah ! T’as vu toute la place qu’on a maintenant ? C’est super tu vas pouvoir stocker un max de trucs et de machins maintenant !
+      maiko: Si t’as besoin de ranger ou de récupérer du matériel, viens me voir ! On fait comme d’habitude !
+      maiko.entrepot_vu = vrai
+    sinon:
+      maiko: T’imagines si on avait un entrepôt ENCORE plus grand ? J’en ai le vertige rien que d’imaginer toute cette place gagnée !
+  sinon:
+    maiko: C’est sympa ce petit coffre ! Mais bon, je sais qu’on pourrait faire mieux…
+  fin
+
+si maiko.recrute:
+  maiko: Il est pratique mon petit coffre !
+  fin
+
+si maiko.nourri:
+  si maintenant - maiko.nourri_a < 6:
+    maiko: Je suis repu ! Il va me falloir quelques heures avant d’être opérationnel…
+    fin
+  maiko: Hey ! Merci encore pour ce délicieux repas ! Je me souviendrai toute ma vie de ce que tu m’as donné : un morceau de {maiko.aliment}.
+  maiko: Pour te remercier {joueur.nom}, j’ai décidé de te filer un coup de patte !
+  maiko: Dans la vie, on peut pas garder sur soi plus de choses qu’on a de places dans les poches. Alors si tu ne peux plus rien trimballer, viens me voir ! On mettra le surplus dans ce coffre !
+  maiko: C’est une bonne idée, tu trouves pas ?
+  action: recruter maiko bebe
+  maiko.recrute = vrai
+  narration: Maïko a rejoint le village !
+  fin
+
+si sac.aliment == "":
+  maiko: Hey ! Tu peux m’apporter un petit truc à manger ? Allez s’il te plaît j’ai vraiment faim…
+  narration: Vous n’aviez pas encore vu d’écho aussi mignon.
+  fin
+
+maiko: *Snifff Sniff* Hey… tu me donnes un petit bout de ce que tu as sur toi, dis ? J’ai vraiment faim…
+choix:
+  > anticipation « Lui donner : {sac.aliment} »
+    action: retirer aliment
+    maiko.nourri = vrai
+    maiko.nourri_a = maintenant
+    maiko.aliment = action.objet
+    maiko: Waouh ! Merci beaucoup !
+    narration: Maïko se délecte de ce repas, il dévore : {maiko.aliment}.
+    maiko: C’était trop bon ! Encore merci {joueur.nom}. Ça mérite bien une petite sieste !
+  > neutre « Partir »
+    fin

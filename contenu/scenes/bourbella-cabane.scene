@@ -1,0 +1,73 @@
+// Exploration, lieu 5 « Devant la cabane » (4 h – 14 h, tant que Bourbella n'a pas rejoint le village).
+// Elle confie une canne à pêche ; l'anguille se pêche au bord du lac (lieu 8) ou au lac souterrain (lieu 21).
+titre: Bourbella, devant la cabane
+décor: exploration/05-devant-cabane
+places: bourbella D2
+
+si bourbella.canne:
+  bourbella: Tu as trouvé une anguille ?
+  choix:
+    > anticipation « Oui »
+      bourbella.anguille_demandee = vrai
+    > neutre « Pas encore »
+      fin
+  si sac.poisson_anguille < 1:
+    bourbella: Tu as trouvé une anguille ?
+    fin
+  action: retirer poisson_anguille
+  bourbella: Oh… merci {joueur.nom}…
+  bourbella: Je vais m’occuper d’elle et la chérir de tout mon cœur…
+  bourbella: Jusqu’à ce que je la mange.
+  sort: bourbella
+  action: recruter bourbella bebe
+  bourbella.recrutee = vrai
+  narration: Bourbella a rejoint le village !
+  fin
+
+si bourbella.combattue:
+  bourbella: Hmm. Je ne t’aime pas du tout. Tu es quelqu’un de méchant.
+  choix:
+    > anticipation « Je peux t’aider pour me faire pardonner ? »
+      bourbella: Hmm. Oui. J’adore les anguilles. Elles sont… poisseuses… et gluantes…
+    > neutre « Partir »
+      fin
+  choix:
+    > résolution « Et qu’est-ce que tu veux que ça me fasse ? »
+      bourbella: Toi, tu as un problème avec moi ! Va-t-en !
+      fin
+    > anticipation « Tu veux que je te ramène une anguille ? »
+      action: donner canne_peche
+  si non action.ok:
+    narration: Le sac est plein.
+    fin
+  bourbella.canne = vrai
+  bourbella: Hmm. Oui. Tiens ça va t’aider.
+  fin
+
+bourbella: Hey… tu veux devenir le maître ?
+choix:
+  > curiosité « Le maître de quoi ? »
+    bourbella: Le maître des poissons. J’adore les poissons. Ils sont poisseux. Et gluants. Et poisseux.
+  > neutre « Laisser tomber »
+    fin
+choix:
+  > observation « Oui… les poissons sont… poisseux. »
+    bourbella: Oui… surtout les anguilles. Mais je n’arrive pas à les attraper. Mes mains sont trop poisseuses et gluantes.
+  > résolution « Bon je suis {joueur:venu|venue|venu·e} pour me battre. Prépare-toi ! »
+    action: combat bourbella
+    // Une fuite ne compte pas comme un combat (anomalie du prototype corrigée).
+    si combat.issue != "fuite":
+      bourbella.combattue = vrai
+    fin
+choix:
+  > curiosité « C’est un peu ironique, non ? »
+    bourbella: … Je ne suis pas un poisson.
+    fin
+  > anticipation « Tu veux que j’aille te chercher une anguille ? »
+    bourbella: Oh… oui… une belle anguille…
+action: donner canne_peche
+si non action.ok:
+  narration: Le sac est plein.
+  fin
+bourbella.canne = vrai
+bourbella: Tiens, tu auras besoin de ça pour l’attraper. Et… rapporte-moi une anguille… s’il te plaît.

@@ -1,0 +1,33 @@
+// Exploration, lieu 16 « Chemin de forêt » : Hevann barre la route de la forêt détruite tant qu'il n'a pas été battu.
+titre: Hevann barre le chemin
+décor: exploration/16-chemin-foret
+places: hevann D2
+
+hevann: Hey toi ! Tu es complètement {joueur:fou|folle|fou·folle} de t’aventurer par ici. Un monstre est en train de réduire la forêt à néant.
+hevann: J’en aurai bientôt fini avec lui… Enfin, je dois m’entraîner encore un peu mais je pense que je peux arriver à le vaincre… d’ici… quelques semaines… peut-être mois…
+choix:
+  > neutre « Partir »
+    fin
+  > résolution « Je vais m’en occuper »
+    hevann: T’en occuper ? Laisse-moi rire ! Avec ton {echo:ami|amie} vous n’avez aucune chance contre lui !
+hevann: Si tu penses pouvoir le vaincre, alors affronte-moi. Je jugerai de ta capacité à le battre !
+choix:
+  > résolution « Combattre »
+    hevann.defie = vrai
+  > anticipation « Laisser tomber »
+    hevann: Sage décision. Allez repars d’où tu viens ou tu risques de te mettre en danger.
+    fin
+
+action: combat hevann
+si combat.issue == "victoire":
+  hevann: Wouaah… On peut dire que t’as de la poigne ! {echo.nom} est carrément {echo:surpuissant|surpuissante} !
+  hevann: Mais on parle de Garry là-bas… ce n’est pas n’importe qui, il risque de t’en faire voir de toutes les couleurs {joueur.nom}.
+  hevann: {joueur.nom}… c’est curieux ça… Hmm…
+  hevann: Je rentre au village. Viens me voir et on va s’occuper de vous entraîner comme il se doit !
+  sort: hevann
+  action: recruter hevann adolescent
+  hevann.vaincu = vrai
+  narration: Hevann a rejoint le village !
+sinon:
+  hevann: Allez rentre chez toi. Tu n’as aucune chance contre lui.
+  action: ranch

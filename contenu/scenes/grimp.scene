@@ -1,0 +1,6 @@
+// Grimp au village, à côté de Glamp.
+titre: Grimp au village
+décor: village/ruines
+places: grimp D2
+
+grimp: Glamp ne dit pas grand-chose, mais je sais qu’elle est contente d’être rentrée. Merci encore {joueur.nom} !

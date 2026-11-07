@@ -1,0 +1,59 @@
+// Exploration, lieu 6 « Dans la cabane ». {sujet} : « nuit » (22 h – 7 h, après avoir parlé à Ash, tant qu'ils ne sont pas battus),
+// « inspecter » (le bouton « Inspecter la cabane », 8 h – 22 h), « marteau » (le marteau resté au sol, sac plein).
+titre: Phil et Hibert
+décor: exploration/06-dans-cabane
+
+si sujet == "inspecter":
+  narration: Vous remarquez qu’il y a eu de l’agitation dans cette cabane. Sûrement une présence nocturne.
+  fin
+si sujet == "marteau":
+  action: donner marteau_ash
+  si action.ok:
+    ash.marteau_au_sol = faux
+    narration: Vous récupérez le marteau d’Ash !
+  sinon:
+    narration: Votre sac est plein.
+  fin
+
+entre: phil G2
+entre: hibert D2
+phil: Héhéhé ! T’aurais vu sa tête à l’autre cornu !
+hibert: Hihihi ! Il avait l’air furieux ! « Mon marteau ! Mon marteau ! »
+phil: Tu l’imites trop bien… « Mon marteau ! Mon marteau ! »
+hibert: « Mon marteau ! Mon marteau ! »
+choix:
+  > curiosité « Qu’est-ce qui se passe ici ? »
+    phil: On a chourravé le marteau de l’autre cornu ! Héhéhé !
+  > neutre « Ils ont l’air de bien s’amuser, les laisser tranquilles. »
+    fin
+hibert: Trop marrant ! Hihihi ! La prochaine fois on lui pique ses gants !
+choix:
+  > résolution « Donnez-moi le marteau, je vais lui rapporter »
+    phil: Quoi !? Pas question !
+  > neutre « Ce n’est pas mon problème »
+    fin
+hibert: On a trop galéré pour l’avoir. T’as qu’à venir le chercher si tu le veux vraiment !
+choix:
+  > résolution « Combattre »
+    philhibert.defies = vrai
+  > neutre « Partir »
+    fin
+
+action: combat phil-hibert
+si combat.issue == "victoire":
+  phil: Aieuuuh… Mais t’es {joueur:un malade|une malade|un·e malade} toi !
+  hibert: D’où tu nous gères tous les deux en même temps ?
+  phil: On se carapapatte ! On l’aura la prochaine fois !
+  hibert: Tu perds rien pour attendre toi !
+  sort: phil, hibert
+  philhibert.vaincus = vrai
+  action: image objets/divers/marteau-ash-grand
+  narration: Vous récupérez le marteau d’Ash !
+  action: donner marteau_ash
+  si non action.ok:
+    narration: Votre sac est plein, le marteau reste au sol.
+    ash.marteau_au_sol = vrai
+  action: image aucune
+sinon:
+  narration: {echo.nom} a perdu contre Phil et Hibert, retour au ranch.
+  action: ranch

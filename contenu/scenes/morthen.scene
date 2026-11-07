@@ -1,0 +1,12 @@
+// Exploration, lieu 2 « Passage vers la forêt » (à partir du jour 4, de 8 h à 16 h, une seule fois).
+titre: Morthen
+décor: exploration/02-passage-foret
+places: morthen D2
+
+morthen: Hmm…
+morthen: C’est donc toi… je m’attendais à mieux je dois t’avouer. Peut-être plus grand… plus héroïque… je ne sais pas.
+morthen: Tu me fais de la peine… Enfin bon…
+morthen: J’avais envie de te voir pour de vrai. Un caprice, certainement.
+morthen: Ne t’en fais pas. On se reverra plus tard.
+sort: morthen
+morthen.vu = vrai

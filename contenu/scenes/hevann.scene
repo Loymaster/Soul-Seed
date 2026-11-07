@@ -1,0 +1,24 @@
+// Hevann au sanctuaire, après sa défaite au chemin de forêt. {sujet} : « parler » (première fois),
+// « entrainement » (améliorer l'entraînement), « motiver » (motiver l'écho, une fois toutes les 48 heures).
+titre: Hevann au sanctuaire
+décor: village/sanctuaire
+places: hevann D2
+
+si sujet == "entrainement":
+  hevann: Hmm… tu n’as pour l’instant pas ce qu’il faut comme structure pour que je m’occupe d’améliorer les entraînements. Mais ne t’en fais pas, ça va venir !
+  fin
+si sujet == "motiver":
+  si hevann.motivation_a > 0 et maintenant - hevann.motivation_a < 48:
+    narration: Hevann a déjà motivé {echo.nom} récemment.
+    fin
+  action: image pnj/hevann/motivation
+  narration: Hevann déploie toute son énergie pour motiver {echo.nom}. Les effets de l’entraînement sont boostés !
+  action: motiver
+  hevann.motivation_a = maintenant
+  écho: (fier) {echo.nom} trépigne, prêt{echo:|e} à en découdre.
+  action: image aucune
+  fin
+
+hevann: Je vois que tu as commencé à remettre de l’ordre dans le village ! Continue sur cette voie. Il y a encore beaucoup à faire mais tu vas y arriver, je n’ai aucun doute.
+hevann: En attendant, on va faire en sorte que les entraînements de {echo.nom} soient les plus efficaces possibles ! On ne sait jamais sur quel danger on peut tomber.
+hevann.sanctuaire_vu = vrai

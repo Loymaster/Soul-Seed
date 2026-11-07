@@ -1,0 +1,75 @@
+// Jumpy, le boutiquier. Le menu de la boutique donne {sujet} :
+// « discuter », « apprendre » (en apprendre plus sur l'écho), « emploi » (gagner de l'argent),
+// « travailler » (le travail du jour), « entrainement » (s'entraîner au combat).
+titre: Jumpy
+décor: boutique/interieur
+places: jumpy D2
+
+si sujet == "apprendre":
+  si jumpy.appris_jour == jour:
+    jumpy: Je t’ai déjà dévoilé quelque chose sur {echo.nom} aujourd’hui. Reviens demain et je t’en dirai plus !
+  sinon:
+    action: apprendre-echo
+    jumpy.appris_jour = jour
+    jumpy [pensif]: {jumpy.info}
+  fin
+
+si sujet == "emploi":
+  jumpy [pensif]: Ah oui… c’est vrai qu’il va vous falloir de l’argent… si vous le souhaitez, vous pouvez venir travailler à ma boutique !
+  jumpy [daccord]: Ne vous inquiétez pas pour {echo.nom}. Je m’occuperai {echo:de lui|d’elle} pendant ce temps-là et tâcherai de faire en sorte qu’{echo:il|elle} ne manque de rien !
+  metier.assistant = vrai
+  narration: Vous pouvez désormais travailler à la boutique, de 8 h à 14 h, une fois par jour.
+  fin
+
+si sujet == "travailler":
+  si echo.malade:
+    jumpy [triste]: {echo.nom} n’a pas l’air bien… Occupe-toi {echo:de lui|d’elle} d’abord, le travail attendra !
+  sinon si heure < 8 ou heure >= 14:
+    narration: Ce travail n’est disponible que de 8 h à 14 h.
+  sinon si travail.jour == jour:
+    narration: Vous avez déjà travaillé aujourd’hui. Revenez demain !
+  sinon:
+    jumpy [rit]: Au travail ! Attrape-moi tous ces échos sauvages qui mettent le bazar dans les rayons !
+    action: travail
+    travail.jour = jour
+    si travail.or > 0:
+      jumpy [daccord]: Beau travail ! Voilà ta paie : {travail.or} or.
+    sinon:
+      jumpy [pensif]: Hmm… ce n’était pas ta journée. Reviens demain, tu feras mieux !
+    action: heures 6
+  fin
+
+si sujet == "entrainement":
+  narration: Êtes-vous {joueur:sûr|sûre|sûr·e} de vouloir affronter Jumpy ?
+  choix:
+    > neutre « Non, pas maintenant »
+      fin
+    > résolution « Affronter Jumpy »
+      action: combat jumpy
+  fin
+
+// « Discuter » : une anecdote par jour.
+si jumpy.discute_jour == jour:
+  jumpy: Tu veux qu’on discute ? Là je suis occupé, mais reviens demain, j’aurai d’autres anecdotes !
+  fin
+jumpy.discute_jour = jour
+si hasard <= 10:
+  jumpy [rit]: Tu as vu tout ce que j’ai déniché ce matin ? N’hésite pas à te servir ! Tant que tu paies…
+sinon si hasard <= 20:
+  jumpy: Les stocks changent tous les jours, reviens souvent voir les nouveautés !
+sinon si hasard <= 30:
+  jumpy [pensif]: Les échos sauvages traînent régulièrement dans les environs… Tu as déjà reçu leur visite ?
+sinon si hasard <= 40:
+  jumpy: Le risotto à la truffe part toujours en premier, tu devrais te dépêcher !
+sinon si hasard <= 50:
+  jumpy [daccord]: J’ai une théorie sur la provenance de mes pansements… mais chut, secret professionnel.
+sinon si hasard <= 60:
+  jumpy [colere]: J’espère que ça ne te vient pas à l’esprit de gronder {echo.nom} pour rien ! Tu imagines ce qu’{echo:il|elle} pourrait ressentir si tu le faisais ?
+sinon si hasard <= 70:
+  jumpy [pensif]: Certains d’entre nous ne grandissent pas… il y a certainement une explication à ça, mais laquelle ?
+sinon si hasard <= 80:
+  jumpy [triste]: J’avais beaucoup d’amis avant, mais tout le monde a disparu… C’est pas grave ! C’est l’occasion de partir à l’aventure et de s’en faire de nouveaux !
+sinon si hasard <= 90:
+  jumpy: Tu as besoin d’argent ? J’aurais peut-être besoin d’un assistant si ça t’intéresse !
+sinon:
+  jumpy [daccord]: Si jamais tu as besoin de sortir, je peux m’occuper de {echo.nom} en ton absence !

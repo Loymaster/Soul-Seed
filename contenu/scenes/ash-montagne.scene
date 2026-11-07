@@ -1,0 +1,35 @@
+// Exploration, lieu 11 « Passage proche de la caverne » (8 h – 20 h, tant qu'Ash n'a pas rejoint le village).
+// Parler à Ash fait apparaître Phil et Hibert, la nuit, dans la cabane (lieu 6) ; le marteau rapporté le fait venir au village.
+titre: Ash, près de la caverne
+décor: exploration/11-passage-caverne
+places: ash D2
+
+si sac.marteau_ash >= 1:
+  ash: Pfff… Si jamais je les retrouve…
+  choix:
+    > anticipation « Rendre le marteau »
+      ash.marteau_rendu = vrai
+    > neutre « Partir »
+      fin
+  ash: Comment… Où est-ce que tu l’as trouvé ? Tu leur as donné une bonne correction c’est ça ?
+  ash: Hmm… je te suis… reconnaissant {joueur.nom}. Tu m’enlèves une énorme épine du pied.
+  action: retirer marteau_ash
+  action: recruter ash enfant
+  ash.recrute = vrai
+  ash: D’ailleurs… il n’y a pas une minute à perdre. Retrouve-moi au village. Allez, du nerf !
+  sort: ash
+  narration: Ash a rejoint le village !
+  fin
+
+si ash.vu:
+  ash: Si jamais je te les attrape… pfff… ces petits voleurs…
+  fin
+
+ash: Pfff…
+choix:
+  > curiosité « Qu’est-ce qui ne va pas ? »
+    ash: Ces sales petits… pfff… S’ils n’étaient pas deux je te les aurais…
+    ash: Les vauriens… pfff…
+    ash.vu = vrai
+  > neutre « Partir »
+    fin

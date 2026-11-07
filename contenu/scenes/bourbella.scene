@@ -1,0 +1,23 @@
+// Bourbella au village. {sujet} : « discuter », « peche » (améliorer la pêche : une anguille contre 24 heures de meilleure pêche).
+titre: Bourbella au village
+décor: village/ruines
+places: bourbella D2
+
+si sujet == "peche":
+  si bourbella.peche_jour == jour:
+    bourbella: Hmm… j’ai déjà pêché avec toi aujourd’hui… poisseux…
+    fin
+  si sac.poisson_anguille < 1:
+    bourbella: Reviens avec une anguille… et je t’aiderai à mieux pêcher.
+    fin
+  bourbella: Tu as une anguille… tu veux me la donner ?
+  choix:
+    > anticipation « Oui »
+      action: retirer poisson_anguille
+      bourbella.peche_jour = jour
+      peche.bonus_jusqua = maintenant + 24
+      bourbella: Oooh… toute poisseuse… Je te remercie beaucoup. Tiens, prends un peu de gélatine et imbibe-en ta canne à pêche. Tu vas voir, c’est très efficace.
+    > neutre « Non »
+      fin
+  fin
+narration: En développement.

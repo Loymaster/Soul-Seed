@@ -1,0 +1,14 @@
+// Ash dans son atelier : « Discuter ».
+titre: Ash à l’atelier
+décor: atelier/sans-entrepot
+places: ash G2
+
+si non ash.atelier_vu:
+  ash: Ça, c’est un atelier digne de ce nom. Encore meilleur que celui que j’avais auparavant. Je peux te dire qu’on a vraiment fait du bon boulot.
+  ash: Allez, c’est pas le tout mais il nous reste pas mal de pain sur la planche. Dès que tu as les ressources, je me mets au boulot !
+  ash.atelier_vu = vrai
+  fin
+si chantier.en_cours:
+  ash: Je travaille sur la prochaine construction. Repasse quand elle sera terminée !
+sinon:
+  ash: Apporte-moi des ressources, et je me mettrai au travail !

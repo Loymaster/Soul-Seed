@@ -1,0 +1,58 @@
+// Lady Roger, l'écho rose du village. {sujet} : « promenade » (la rencontre), « stand » (premier passage au stand),
+// « discuter » (au stand).
+titre: Lady Roger
+décor: village/ruines
+
+si sujet == "stand":
+  si non ladyroger.stand_vu:
+    lady-roger: {joueur.nom} ! Comment tu vas ? Je viens d’ouvrir un stand de curiosités !
+    lady-roger: J’adore les choses qui brillent, les belles pierres, les cristaux anciens… Je me souviens que je ne pouvais m’empêcher de les collectionner !
+    lady-roger: Si jamais tu en trouves, n’hésite pas à me les ramener… Je te les reprendrai avec plaisir !
+    ladyroger.stand_vu = vrai
+  fin
+si sujet == "discuter":
+  narration: Lady Roger n’a rien à vous dire pour l’instant.
+  fin
+
+si ladyroger.recrutee:
+  narration: Lady Roger n’a plus rien à dire.
+  fin
+
+narration: Vous croisez un écho d’une belle couleur rosée dans ce qu’il reste du village. Vous vous en approchez.
+lady-roger: Waaaah ! Mais… mais… mais…
+choix:
+  > anticipation « Pardon ! je t’ai fait peur ? »
+    lady-roger: Mais bien sûr que tu m’as fait peur ! Tu as vu ta tête ?
+  > curiosité « Qu’est-ce qu’il y a ? Ça ne va pas ? »
+    lady-roger: Mais évidemment que ça ne va pas ! Regarde-toi !
+lady-roger: Je n’ai jamais vu quelqu’un d’aussi hideux.
+lady-roger: Regarde comme je suis belle… Prends-en de la graine !
+choix:
+  > résolution « Discutable pour quelqu’un qui rampe au sol »
+    lady-roger: Oh ! Mais tu es {joueur:malpoli|malpolie|malpoli·e} en plus. Tu vas voir de quel bois je me chauffe !
+    choix:
+      > résolution « Combattre »
+        ladyroger.defiee = vrai
+  > discernement « Au lieu d’être désagréable, tu ne veux pas plutôt aider à reconstruire le village ? »
+    lady-roger: Reconstruire le village ? Quel village ? Bon tu commences à m’énerver… Laisse-moi tranquille maintenant, ou ça va barder !
+    choix:
+      > neutre « Partir »
+        fin
+      > résolution « Combattre »
+        ladyroger.defiee = vrai
+
+action: combat lady-roger
+si combat.issue == "victoire":
+  lady-roger: Ouah… Tu rigoles pas… J’espère que ce n’est pas toi qui as réduit le village dans cet état !
+  lady-roger: Tiens… le village… je commence à me souvenir…
+  lady-roger: C’est curieux non ? Pourquoi je ne m’en rappelais pas ? Hmm…
+  lady-roger: En tout cas merci {joueur.nom} ! C’est grâce à toi que la mémoire me revient.
+  lady-roger: Euh… tu m’avais dit ton nom ? Bon ma mémoire continue de me jouer des tours, je vais aller voir là-bas si j’y suis !
+  sort: lady-roger
+  action: recruter lady-roger bebe
+  ladyroger.recrutee = vrai
+  ladyroger.stand_a = maintenant + 12
+  narration: Lady Roger a rejoint le village !
+sinon:
+  narration: Vous vous êtes {joueur:enfui|enfuie|enfui·e} avec {echo.nom}.
+  action: ranch

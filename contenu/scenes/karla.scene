@@ -1,0 +1,13 @@
+// Karla, la villageoise méfiante (forêt du village, à partir du jour 3, de 4 h à 20 h).
+titre: Karla
+décor: foret/entree
+places: karla D2
+
+si karla.vue:
+  karla: N’oublie pas : je te tiens à l’œil.
+  fin
+karla: Hmm… Intéressant.
+karla: Je te préviens tout de suite : je ne te fais absolument pas confiance. Tout le monde perd la mémoire, le village se retrouve entièrement vidé de ses habitants, presque totalement détruit…
+karla: Et toi tu apparais sans crier « gare », {joueur:tel un sauveur|telle une sauveuse|tel·le un·e sauveur·euse} qui viendrait remettre de l’ordre dans ce vaste chaos.
+karla: Ça ne prend pas avec moi. Je te tiens à l’œil.
+karla.vue = vrai

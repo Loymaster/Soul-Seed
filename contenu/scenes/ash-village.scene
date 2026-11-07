@@ -1,0 +1,12 @@
+// Ash au village, avant l'atelier. La première fois, il explique ; ensuite « Discuter » (le menu propose aussi les travaux).
+titre: Ash au village
+décor: village/ruines
+places: ash D2
+
+si non ash.village_vu:
+  ash: {joueur.nom}… le pouvoir dont tu disposes est très puissant. Tu sembles résonner avec ton écho, et les interactions que tu as avec nos semblables nous éveillent, nous rendent notre conscience.
+  ash: Tous n’ont pas la capacité de s’en rendre compte. Mais je le vois clairement désormais. Cela dépasse le simple cadre de ce village : l’avenir de notre monde dépend de ton action.
+  ash: C’est pourquoi je vais m’atteler à la tâche. Avec ton aide, nous allons reconstruire ce village. Viens me voir et nous commencerons les travaux.
+  ash.village_vu = vrai
+  fin
+ash: As-tu de quoi stocker des ressources ? Je vais en avoir besoin pour démarrer les constructions.

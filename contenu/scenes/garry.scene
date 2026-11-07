@@ -1,0 +1,13 @@
+// Garry au village, après sa défaite.
+titre: Garry au village
+décor: village/ruines
+places: garry D2
+
+si garry.village_vu:
+  garry: Tu penses que je suis quelqu’un de violent {joueur.nom} ?
+  fin
+garry: Voilà ce qu’il reste du village… Comment j’ai pu faire une chose pareille ?
+garry: Je ne me souviens de rien tu sais. Myhra et Jumpy m’ont expliqué que j’étais rentré dans une rage folle et que j’avais tout détruit. Qu’il n’y avait plus personne pour m’en empêcher…
+garry: Tu penses que je suis quelqu’un de violent {joueur.nom} ?
+narration: Garry reste sur le côté, l’air pensif, en retrait.
+garry.village_vu = vrai

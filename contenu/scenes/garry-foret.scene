@@ -1,0 +1,30 @@
+// Exploration, lieu 17 « Forêt détruite » : le bouton « Partir affronter Garry » (tant qu'il n'est pas vaincu).
+// Victoire : Garry et Jumpy, puis Garry rejoint le village (les bruits de ses ravages cessent au ranch).
+titre: Garry, dans la forêt détruite
+décor: exploration/17-foret-detruite
+
+narration: Êtes-vous {joueur:sûr|sûre|sûr·e} de vouloir affronter Garry ?
+choix:
+  > anticipation « Pas encore »
+    fin
+  > résolution « Affronter Garry »
+    action: image pnj/garry/scene
+    narration: Vous vous approchez de Garry pour le ramener à la raison.
+    action: image aucune
+
+action: combat garry
+si combat.issue == "victoire":
+  garry.vaincu = vrai
+  action: recruter garry adolescent
+  entre: garry G2
+  garry: Qu’est-ce que… hein ? Qui es-tu ?
+  entre: jumpy D2 [surpris]
+  jumpy [surpris]: Waouw ! {echo.nom} a carrément géré ! J’aurais jamais cru quelqu’un capable d’affronter Garry… et de le battre surtout. Tu peux être {joueur:fier|fière|fier·fière} de toi {joueur.nom} !
+  garry: Jumpy… {joueur.nom}… {echo.nom}… Je n’y comprends plus rien… Où est mon restaurant ?
+  jumpy [pensif]: Ah… ton restaurant… Hmm…
+  jumpy [daccord]: Viens Garry il faut qu’on parle un petit peu… Ne t’inquiète pas {joueur.nom} ! Je m’occupe de lui maintenant ! À plus tard !
+  sort: garry, jumpy
+  narration: Garry rejoint le village !
+sinon si combat.issue == "defaite":
+  narration: Défaite… Vous vous enfuyez avec {echo.nom} et revenez au ranch.
+  action: ranch

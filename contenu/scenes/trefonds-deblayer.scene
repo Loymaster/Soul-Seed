@@ -1,0 +1,17 @@
+// Exploration, lieu 28 : le bouton « Déblayer le passage » (Grimp a demandé de l'aide, passage encore encombré).
+// Le bouton manquait dans le prototype : la quête de Glamp y était bloquée.
+titre: Déblayer le passage
+décor: exploration/28-passage-encombre-trefonds
+
+narration: Voulez-vous tenter de déblayer le passage ?
+choix:
+  > résolution « Oui »
+    action: deblayer
+  > neutre « Non »
+    fin
+si action.ok:
+  trefonds.deblaye = vrai
+  décor: exploration/28bis-passage-desencombre-trefonds
+  narration: Le passage est déblayé.
+sinon:
+  narration: Vous reprenez votre souffle. Les pierres attendront.

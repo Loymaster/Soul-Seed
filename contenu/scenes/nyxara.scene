@@ -1,0 +1,59 @@
+// Exploration, lieu 32 « Sentier solitaire » (8 h – 20 h, une seule fois, en y arrivant) : « Au secours ! Aidez-moi ! » → « Aller voir ».
+// Nyxara s'en prend à Finn, Vinland s'interpose ; Finn rejoint le village. Aucun combat.
+// La scène a sa propre musique : l'écran qui la joue coupe la sienne pendant ce temps.
+titre: Nyxara, sur le sentier solitaire
+décor: exploration/32-sentier-solitaire
+musique: aucune
+
+action: image pnj/nyxara/attaque-1
+pause: 2.5
+entre: finn G2
+entre: nyxara D2
+finn: Laisse-moi tranquille ! Je ne veux rien avoir à faire avec toi !
+nyxara: Je ne te laisse pas le choix ! Arrête de résister.
+action: image pnj/nyxara/attaque-2
+musique: nyxara-battle
+pause: 2
+sort: finn
+entre: vinland G2
+nyxara: Qu’est-ce que…
+vinland: Toujours à essayer de t’en prendre à plus faible que toi !
+nyxara: Rrrr… Vinland… Occupe-toi de ce qui te regarde !
+action: image pnj/nyxara/attaque-3
+pause: 2
+vinland: Tu as intérêt à partir sur-le-champ. Tu ne fais pas le poids.
+nyxara: Tu as tort de me sous-estimer ! Je vais t’apprendre un peu…
+vinland: Très bien… Puisque c’est ainsi !
+action: image pnj/nyxara/attaque-4
+narration: « Lame de l’aube ! »
+nyxara: Argh… Tu ne perds rien pour attendre…
+sort: nyxara
+action: image pnj/nyxara/attaque-5
+pause: 2
+action: image aucune
+entre: finn G2
+finn: Merci ! J’ai cru qu’elle allait m’enlever… C’est pas la première fois qu’elle essaie…
+vinland: Ne t’en fais pas ce n’est rien… Et tu n’es pas non plus sa première cible… Ce qui m’interroge sur ses motivations…
+vinland: Ah et… je ne sais pas qui tu es mais j’ai vu que tu allais intervenir. Désolé, j’ai senti que tu ne ferais pas le poids contre elle.
+choix:
+  > résolution « J’aurais pu m’en sortir »
+    vinland: Je vois… En tout cas tu ne manques pas de courage. Mais mesure bien la force de tes adversaires avant de te mesurer à eux.
+  > discernement « Tu n’as pas tort… »
+    vinland: Mais ne perds pas espoir. Je sens un grand potentiel en toi et ton compagnon. J’espère que nous pourrons nous recroiser.
+choix: Veux-tu rejoindre le village ?
+  > anticipation « Lui proposer »
+    vinland: Le village… non. Comme tu as pu le constater, le monde n’est pas sûr. Je ne peux pas faillir à mon devoir. Nous devons protéger les plus faibles tant que le danger régnera sur les sentiers.
+vinland: Mais ton combat est noble. Continue de te battre et peut-être qu’un jour, nos chemins se recroiseront. Ciao !
+sort: vinland
+musique: aucune
+finn: Wouah… c’était… trop classe non ?
+finn: Bon… bah moi j’y vais au village. Je tiens à ma vie et je pense que je vais aller me poser quelques instants… merci pour la proposition {joueur.nom}.
+choix:
+  > curiosité « Euh… mais je n’ai rien dit encore »
+    nyxara.vue = vrai
+  > neutre « Euh… à plus tard dans ce cas ! »
+    nyxara.vue = vrai
+sort: finn
+action: recruter finn bebe
+finn.recrute = vrai
+narration: Finn rejoint le village !

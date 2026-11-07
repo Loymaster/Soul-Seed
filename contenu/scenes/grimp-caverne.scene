@@ -1,0 +1,36 @@
+// Exploration, lieu 23 « Vers la jungle depuis la caverne » (à partir de 12 h). Grimp cherche son amie Glamp.
+// Une fois Glamp revenue au village, Grimp l'y rejoint (dans le prototype, il ne rejoignait jamais le village).
+titre: Grimp, dans la caverne
+décor: exploration/23-vers-jungle-caverne
+places: grimp D2
+
+si glamp.recrutee:
+  grimp: Tu l’as retrouvée ! Glamp est rentrée au village, elle m’a tout raconté… enfin, à sa façon.
+  grimp: Merci infiniment {joueur.nom} ! Je file la rejoindre !
+  sort: grimp
+  action: recruter grimp bebe
+  grimp.recrute = vrai
+  narration: Grimp a rejoint le village !
+  fin
+si grimp.accepte:
+  grimp: Merci encore de m’aider à retrouver mon amie…
+  fin
+
+grimp: Eh toi ! J’ai mon amie qui est descendue dans ce trou…
+grimp: Tu peux essayer de la retrouver ? J’ai peur qu’elle soit tombée tout en bas de la caverne…
+grimp: Et… disons que ça avait l’air très dangereux. Mais elle n’en fait toujours qu’à sa tête !
+choix:
+  > anticipation « Pas de soucis ! je vais voir ce que je peux faire. »
+    grimp.accepte = vrai
+  > neutre « Euh ça a pas l’air ouf comme idée. »
+    fin
+grimp: Super ! Merci infiniment ! Tu peux essayer de faire le tour de la caverne ou… prendre le même chemin qu’elle… Bon courage en tout cas !
+choix:
+  > anticipation « Je vais faire le tour. »
+    fin
+  > résolution « On va tenter de passer par le trou. »
+    si echo.petit:
+      narration: {echo.nom} se faufile dans la cavité, et vous {echo:le|la} suivez tant bien que mal…
+      action: lieu zone 27
+    sinon:
+      narration: {echo.nom} ne passe pas dans la cavité.

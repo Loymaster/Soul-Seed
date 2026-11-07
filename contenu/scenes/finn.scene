@@ -1,0 +1,9 @@
+// Finn au village. {sujet} : « infos » (obtenir des informations), « exploration », « discuter ».
+titre: Finn au village
+décor: village/ruines
+places: finn D2
+
+si sujet == "infos":
+  finn: Si seulement on pouvait construire un panneau d’affichage… Cela nous permettrait de partager des informations cruciales !
+  fin
+narration: En développement.

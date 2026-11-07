@@ -1,0 +1,13 @@
+// Glamp au village (avant l'atelier), puis dans l'atelier. {sujet} : « parler », « service » (demander un service).
+titre: Glamp
+décor: village/ruines
+places: glamp D2
+
+si sujet == "service":
+  narration: En développement.
+  fin
+si grimp.recrute:
+  glamp: Hmpf.
+  fin
+glamp: Hmpf… Grimp… ?
+glamp: … Je suis inquiète pour Grimp…

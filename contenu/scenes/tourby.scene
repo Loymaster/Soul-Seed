@@ -1,0 +1,27 @@
+// Tourby et son potager, au village (12 heures après son arrivée). {sujet} : « parler » (la première fois),
+// « recolte » (récolte journalière : deux nodules nutritifs, à partir du lendemain), « nodules », « amenager ».
+titre: Le potager de Tourby
+décor: village/ruines
+places: tourby D2
+
+si sujet == "recolte":
+  si tourby.potager_jour == 0 ou jour <= tourby.potager_jour ou tourby.recolte_jour == jour:
+    tourby: Il n’y a rien de disponible dans le potager pour l’instant. Reviens demain !
+    fin
+  action: donner nodule_nutritif 2
+  si non action.ok:
+    narration: Votre sac est plein.
+    fin
+  tourby.recolte_jour = jour
+  tourby: Tiens ! Voilà la récolte du jour que Tourby a ramassée !
+  fin
+si sujet == "nodules" ou sujet == "amenager":
+  narration: En développement.
+  fin
+
+tourby: Tourby a introspecté Tourby, qui a lui-même inspecté ce potager.
+tourby: La conclusion de Tourby est sans appel : ce potager n’est plus que l’ombre de lui-même.
+tourby: Alors Tourby a ajouté de l’huile de coude de Tourby. Avoue {joueur.nom} que c’est pas mal ? Tourby est fier de Tourby.
+tourby: Tourby va faire pousser des nodules nutritifs ici. Et quand le potager sera plus gros, peut-être que Tourby aura le temps pour autre chose.
+tourby: Viens me voir demain et Tourby te donnera des nodules nutritifs.
+tourby.potager_jour = jour

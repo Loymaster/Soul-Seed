@@ -1,0 +1,12 @@
+// Exploration, lieu 28 « Passage encombré dans les tréfonds », une fois le passage déblayé (tant que Glamp n'est pas au village).
+titre: Glamp, dans les tréfonds
+décor: exploration/28bis-passage-desencombre-trefonds
+places: glamp D2
+
+glamp: Hmpf. Merci.
+glamp: Il fait… Chaud. Je rentre au village.
+glamp: Hmpf… Dangereux par ici.
+sort: glamp
+action: recruter glamp bebe
+glamp.recrutee = vrai
+narration: Glamp a rejoint le village !

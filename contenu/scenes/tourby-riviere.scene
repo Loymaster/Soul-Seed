@@ -1,0 +1,21 @@
+// Exploration, lieu 7 « Rivière » (à partir de 16 h, tant que Tourby n'a pas rejoint le village).
+titre: Tourby, à la rivière
+décor: exploration/07-riviere
+places: tourby D2
+
+tourby: Bwarg ! Tourby se noie ! Tourby a besoin d’aide !
+choix:
+  > anticipation « Sauver de la rivière »
+    tourby.sauve = vrai
+  > neutre « Partir »
+    fin
+tourby: Toi ! Tu t’es fait avoir par Tourby !
+tourby: Tourby est un grand acteur. Tourby a fait semblant de se noyer dans une eau de seulement quelques centimètres de profondeur.
+tourby: Tourby est reconnaissant que {joueur.nom} reconnaisse ses talents d’acteur.
+tourby: Mais Tourby n’en peut plus de la pression de la notoriété et de la gloire. Tourby veut se réorienter. Tourby se souvient qu’il est un incroyable potageur.
+tourby: Tourby va introspecter Tourby au village.
+sort: tourby
+action: recruter tourby bebe
+tourby.recrute = vrai
+tourby.potager_a = maintenant + 12
+narration: Tourby a rejoint le village !

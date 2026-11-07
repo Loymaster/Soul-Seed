@@ -1,0 +1,41 @@
+// Myhra, la gardienne du sanctuaire : « Parler à Myhra ».
+// (Le prototype proposait aussi « Comment éduquer l'écho » — « En développement » : retiré, la feuille n'affiche que quatre réponses.)
+titre: Myhra
+décor: village/sanctuaire
+places: myhra D2
+
+myhra.vue = vrai
+myhra: Que veux-tu savoir ?
+choix:
+  > curiosité « La prospérité du village »
+    si village.dernier == "":
+      myhra: Le village doit être entièrement reconstruit… c’est un peu tôt pour parler de prospérité.
+    sinon:
+      myhra: La dernière personne arrivée au village est {village.dernier}. Ce qui amène la prospérité du village à {village.prosperite}.
+      si village.prosperite <= 15:
+        myhra: Nous n’en sommes qu’au début mais… j’ai vraiment espoir de tout rebâtir !
+      sinon si village.prosperite <= 30:
+        myhra: Le village reprend forme… grâce à toi, les habitants reprennent peu à peu le sourire.
+      sinon si village.prosperite <= 45:
+        myhra: Le village continue de s’agrandir. C’est incroyable ce que tu as accompli jusque maintenant. Merci encore !
+      sinon:
+        myhra [compassion]: Le village… il est magnifique. Encore plus beau que dans mes souvenirs. Tu as toute ma gratitude {joueur.nom}.
+  > observation « En apprendre plus sur le monde »
+    narration: En développement.
+  > anticipation « Rassurer {echo.nom} »
+    si myhra.reconfort_jour == jour:
+      myhra [inquiete]: Je suis désolée… Mais j’ai déjà utilisé mon pouvoir aujourd’hui. Mais reviens demain, d’accord ?
+    sinon:
+      si echo.angoisse:
+        myhra [inquiete]: Pauvre {echo.nom}… Tu es dans un état… Laisse-moi m’occuper de toi.
+      sinon:
+        myhra: {echo.nom}… Tu sembles aller bien. Mais je ne refuse jamais de m’occuper de quelqu’un.
+      action: image pnj/myhra/reconforte
+      narration: Myhra prend {echo.nom} dans ses bras. Une lueur réconfortante émane de son corps et semble irradier les alentours.
+      action: reconfort
+      myhra.reconfort_jour = jour
+      écho: (serein) {echo.nom} ferme les yeux, {echo:blotti|blottie} contre elle.
+      action: image aucune
+      myhra [compassion]: Voilà, il n’y a plus de raison de s’inquiéter pour l’instant.
+  > neutre « Partir »
+    fin
