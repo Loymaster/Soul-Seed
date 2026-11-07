@@ -29,6 +29,8 @@ import { PALIER_CORVEE, essaisScene, sceneCorvee, sceneEntrainement, sceneIntera
 import { teinteEmotion } from './lueurs';
 import { FenetreTemps } from './FenetreTemps';
 import { VoileSommeil, type Sommeil } from './VoileSommeil';
+import { CHIFFRES_ROMAINS, ICONE_ASTUCES, THEMES_ASTUCES, compteTheme, lignesTheme, paginer, type ContexteAstuces } from '../commun/astuces';
+import type { Monde } from '@/moteur/monde';
 import './ranch.css';
 
 export const asset = (chemin: string) => `${import.meta.env.BASE_URL}assets/${chemin}`;
@@ -56,7 +58,8 @@ const SECTIONS = [
   { k: 'journal', nom: 'Journal du ranch', court: 'Journal', titre: 'Journal du ranch', surtitre: 'Ce qui s’est passé', icone: IC.journal, page: 2 },
   { k: 'relations', nom: 'Relations', court: 'Relations', titre: 'Relations', surtitre: 'Les gens du coin', icone: IC.relations, page: 4 },
   { k: 'memoire', nom: 'Mémoire des échos', court: 'Mémoire', titre: 'Mémoire des échos', surtitre: 'Ce profil', icone: IC.memoire, page: 6 },
-  { k: 'options', nom: 'Options', court: 'Options', titre: 'Options', surtitre: 'Réglages', icone: IC.options, page: 8 },
+  { k: 'astuces', nom: 'Astuces', court: 'Astuces', titre: 'Astuces', surtitre: 'Conseils d’éleveur', icone: ICONE_ASTUCES, page: 8 },
+  { k: 'options', nom: 'Options', court: 'Options', titre: 'Options', surtitre: 'Réglages', icone: IC.options, page: 10 },
 ] as const;
 type Section = (typeof SECTIONS)[number]['k'];
 
@@ -110,6 +113,8 @@ export interface ProprietesRanch {
   catalogue?: Catalogue;
   /** Corvées remises en état par Ash (monde de la partie) : niveau 1 à 3 ; absentes ou 0 : pas encore praticables. */
   corvees?: Partial<Record<string, number>>;
+  /** Le monde de la partie, en lecture : ses drapeaux dévoilent des astuces du carnet. */
+  monde?: Pick<Monde, 'drapeaux' | 'corvees'> | null;
 }
 
 interface Choix {
@@ -133,7 +138,7 @@ interface EtatUI {
   survol: number; ouvert: Verbe | 'visiteur' | null; actif: number; tamponne: string | null;
   anim: string; bulle: number | null; bulleImg: string; coeurs: { id: number; x: number; y: number; dx: number; delai: string }[];
   flottants: { id: number; texte: string; couleur: string; x: number; y: number }[];
-  carnet: boolean; ferme: boolean; section: Section; contenuCache: boolean; tourne: null | 'avant' | 'arriere'; sauve: string; carnetLeve: boolean;
+  carnet: boolean; ferme: boolean; section: Section; astTheme: number; astPage: number; contenuCache: boolean; tourne: null | 'avant' | 'arriere'; sauve: string; carnetLeve: boolean;
   sortie: Sortie_ | null; nouvelles: number; mainVisible: boolean; main: number;
   sacOuvert: boolean; sacFerme: boolean; sacSurvol: number; sacMenu: number; sacMenuInfo: boolean; dndDe: number; dndCible: number;
   quitter: boolean; dejSurvol: number | null; dejPart: number[];
@@ -181,7 +186,7 @@ export class Ranch extends Component<ProprietesRanch, EtatUI> {
       t: 0, sons: r?.sons ?? true, musique: r?.musique ?? true, volumeMusique: r?.volumeMusique ?? VOLUME_MUSIQUE_DEFAUT, volumeBruitages: r?.volumeBruitages ?? VOLUME_BRUITAGES_DEFAUT,
       ex: 520, ey: 290, eDur: 0, eSens: '', marche: false,
       survol: -1, ouvert: null, actif: -1, tamponne: null, anim: '', bulle: null, bulleImg: '', coeurs: [], flottants: [],
-      carnet: false, ferme: false, section: 'sommaire', contenuCache: false, tourne: null, sauve: '', carnetLeve: false,
+      carnet: false, ferme: false, section: 'sommaire', astTheme: 0, astPage: 0, contenuCache: false, tourne: null, sauve: '', carnetLeve: false,
       sortie: null, nouvelles: 0, mainVisible: false, main: 0,
       sacOuvert: false, sacFerme: false, sacSurvol: -1, sacMenu: -1, sacMenuInfo: false, dndDe: -1, dndCible: -1,
       quitter: false, dejSurvol: null, dejPart: [],
@@ -800,6 +805,42 @@ export class Ranch extends Component<ProprietesRanch, EtatUI> {
     this.later(() => this.setState({ section: k, contenuCache: false, nouvelles: k === 'journal' ? 0 : this.state.nouvelles }), 380);
     this.later(() => this.setState({ tourne: null }), 760);
   }
+  /** Les astuces : ce que le monde et l'écho dévoilent. */
+  contexteAstuces(): ContexteAstuces {
+    const m = this.props.monde;
+    return { e: this.e, m: { drapeaux: m?.drapeaux ?? {}, corvees: { ...(m?.corvees ?? {}), ...(this.props.corvees ?? {}) } as Record<string, number> } };
+  }
+  /** Tourner les pages des astuces : un autre thème, ou la page d'avant ou d'après (on passe d'un thème à l'autre). */
+  feuilleter(theme: number, page: number) {
+    const s = this.state;
+    if (s.tourne || (theme === s.astTheme && page === s.astPage)) return;
+    const avant = theme > s.astTheme || (theme === s.astTheme && page > s.astPage);
+    this.son('page', 1);
+    this.setState({ tourne: avant ? 'avant' : 'arriere', contenuCache: true });
+    this.later(() => this.setState({ astTheme: theme, astPage: page, contenuCache: false }), 380);
+    this.later(() => this.setState({ tourne: null }), 760);
+  }
+  valsAstuces() {
+    const s = this.state; const c = this.contexteAstuces();
+    const pages = THEMES_ASTUCES.map((t) => paginer(lignesTheme(t, c)));
+    const ti = Math.min(s.astTheme, THEMES_ASTUCES.length - 1); const t = THEMES_ASTUCES[ti];
+    const pi = Math.min(s.astPage, pages[ti].length - 1);
+    const prec = pi > 0 ? [ti, pi - 1] : ti > 0 ? [ti - 1, pages[ti - 1].length - 1] : null;
+    const suiv = pi < pages[ti].length - 1 ? [ti, pi + 1] : ti < THEMES_ASTUCES.length - 1 ? [ti + 1, 0] : null;
+    return {
+      astIntro: 'Ce que les éleveurs se transmettent, et ce que vous découvrirez en chemin.',
+      astThemes: THEMES_ASTUCES.map((x, i) => {
+        const n = compteTheme(x, c);
+        return { num: CHIFFRES_ROMAINS[i], nom: x.nom, compte: n.vues < n.total ? `${n.vues}/${n.total}` : `${n.total}`, cls: i === ti ? 'ici' : '', ici: i === ti ? 'page' : 'false', ouvrir: () => this.feuilleter(i, 0) };
+      }),
+      astMot: t.mot, astIcone: t.icone, astTheme: t.nom,
+      astuces: pages[ti][pi].map((l) => ({ texte: l.texte, piste: l.piste, cls: l.cachee ? 'cachee' : '' })),
+      astFolio: pages[ti].length > 1 ? `${CHIFFRES_ROMAINS[ti]} · page ${pi + 1} / ${pages[ti].length}` : CHIFFRES_ROMAINS[ti],
+      astSansPrec: !prec, astSansSuiv: !suiv,
+      astPrec: () => { if (prec) this.feuilleter(prec[0], prec[1]); },
+      astSuiv: () => { if (suiv) this.feuilleter(suiv[0], suiv[1]); },
+    };
+  }
   fermerCarnet = () => {
     if (!this.state.carnet || this.state.ferme) return;
     this.son('page', 0.8); this.later(() => this.son('woosh'), 380);
@@ -1152,7 +1193,8 @@ export class Ranch extends Component<ProprietesRanch, EtatUI> {
       ouvrirCarnet: () => { this.son('bookArrive'); this.setState({ carnet: true, carnetLeve: false, ferme: false, section: 'sommaire', ouvert: null, quitter: false }); },
       fermerCarnet: this.fermerCarnet,
       pageTitre: sec.titre, pageSurtitre: sec.surtitre,
-      pSommaire: p('sommaire'), pJournal: p('journal'), pSac: false, pRelations: p('relations'), pCarte: false, pMemoire: p('memoire'), pOptions: p('options'),
+      pSommaire: p('sommaire'), pJournal: p('journal'), pSac: false, pRelations: p('relations'), pCarte: false, pMemoire: p('memoire'), pAstuces: p('astuces'), pOptions: p('options'),
+      ...(p('astuces') ? this.valsAstuces() : { astThemes: [], astuces: [] }),
       onglets: SECTIONS.map((x, i) => ({ nom: x.nom, court: x.court, icone: x.icone, delai: (1.5 + i * 0.07).toFixed(2), cls: s.section === x.k ? 'ici' : '', ouvrir: () => this.allerA(x.k) })),
       sommaire: SECTIONS.slice(1).map((x, i) => ({ num: ['I', 'II', 'III', 'IV', 'V', 'VI'][i], nom: x.nom, page: 'page' in x ? x.page : '', aBadge: x.k === 'journal' && s.nouvelles > 0, badge: s.nouvelles, ouvrir: () => this.allerA(x.k) })),
       journal: journal.slice(-8), journalCourt: journal.slice(-3), journalJours, rappels: rappels.slice(0, 3),

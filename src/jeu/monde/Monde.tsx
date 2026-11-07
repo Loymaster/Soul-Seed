@@ -329,7 +329,7 @@ export function Monde(props: ProprietesMonde) {
               destinations={L.passages(ctx).map((pa) => ({ nom: pa.libelle, icone: ICONES_LIEU[pa.vers === 'boutique' ? 'magasin' : pa.vers], partir: () => aller(pa.vers) }))} />
             {sacOuvert && <Sacoche etat={etat} ressources={monde.ressources} surFerme={() => { setSacOuvert(false); rafraichir(); }} surUtiliser={utiliser} sauver={sauver} />}
             {carnetOuvert && <PetitCarnet etat={etat} portrait={assets.get(apparence(etat))?.url} reglages={reglages} surReglages={props.surReglages}
-              sauver={sauver} surMenu={props.surMenu} surFerme={() => setCarnetOuvert(false)} />}
+              sauver={sauver} surMenu={props.surMenu} surFerme={() => setCarnetOuvert(false)} monde={monde} />}
           </Calque>
 
           <div className="mo-notes">

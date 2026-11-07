@@ -41,9 +41,77 @@ def retoucher(t, rep):
             '<sc-if value="{{sortieSous}}" hint-placeholder-val="{{ false }}"><div style="font-family:\'Alegreya\',serif;font-style:italic;font-size:20px;color:#efe0c2;text-shadow:0 2px 8px rgba(0,0,0,.8);margin-top:6px">{{sortieSous}}</div></sc-if>'
             '<sc-if value="{{sortieBouton}}" hint-placeholder-val="{{ false }}"><button class="sortie-bouton" onClick="{{sortieBouton.agir}}">{{sortieBouton.texte}}</button></sc-if>'
             '</div></div>')
+    # astuces : page de gauche (les thèmes, le mot de l'éleveur), page de droite (les conseils du thème, page à page)
+    t = rep(t, '''                <sc-if value="{{pOptions}}" hint-placeholder-val="{{ false }}">
+                  <div style="display:flex;flex-direction:column;gap:14px">''',
+            '''                <sc-if value="{{pAstuces}}" hint-placeholder-val="{{ false }}">
+                  <div class="ast-intro">{{astIntro}}</div>
+                  <sc-for list="{{astThemes}}" as="t" hint-placeholder-count="7">
+                    <button class="sommaire-ligne ast-ligne {{t.cls}}" onClick="{{t.ouvrir}}" aria-current="{{t.ici}}">
+                      <span class="num">{{t.num}}</span><span>{{t.nom}}</span><span class="points"></span><span class="num">{{t.compte}}</span>
+                    </button>
+                  </sc-for>
+                  <div class="ast-mot">{{astMot}}</div>
+                </sc-if>
+                <sc-if value="{{pOptions}}" hint-placeholder-val="{{ false }}">
+                  <div style="display:flex;flex-direction:column;gap:14px">''')
+    t = rep(t, '''              </sc-if>
+            </div>
+          </div>
+          <!-- Marque-page -->''', '''              </sc-if>
+              <sc-if value="{{pAstuces}}" hint-placeholder-val="{{ false }}">
+                <div class="ast-page">
+                  <div class="ast-entete">
+                    <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{astIcone}}"></path></svg>
+                    <span class="ast-theme">{{astTheme}}</span>
+                  </div>
+                  <div class="ast-liste">
+                    <sc-for list="{{astuces}}" as="a" hint-placeholder-count="5">
+                      <div class="ast {{a.cls}}">
+                        <svg class="ast-puce" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"></path></svg>
+                        <span class="ast-texte">{{a.texte}}<sc-if value="{{a.piste}}" hint-placeholder-val="{{ false }}"><em class="ast-piste">— {{a.piste}}</em></sc-if></span>
+                      </div>
+                    </sc-for>
+                  </div>
+                  <div class="ast-pages">
+                    <button class="ast-fleche" onClick="{{astPrec}}" disabled="{{astSansPrec}}" aria-label="Page précédente"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 5l-7 7 7 7"></path></svg></button>
+                    <span class="ast-folio">{{astFolio}}</span>
+                    <button class="ast-fleche" onClick="{{astSuiv}}" disabled="{{astSansSuiv}}" aria-label="Page suivante"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 5l7 7-7 7"></path></svg></button>
+                  </div>
+                </div>
+              </sc-if>
+            </div>
+          </div>
+          <!-- Marque-page -->''')
     return t
 
-CSS = (# le visiteur : mêmes classes que notre écho (démarche, bonds), son étiquette au survol, la poussière d'une bousculade
+CSS = (# astuces : mêmes encres que le carnet ; aussi utilisées par le petit carnet (InterfaceRanch.tsx, portée .r7)
+       ".r7 .ast-intro{font-family:'Reenie Beanie',cursive;font-size:23px;line-height:1.05;color:#6b4f33;margin:-6px 0 10px}"
+       '.r7 .ast-ligne{font-size:17px;padding:4px 6px}'
+       '.r7 .ast-ligne.ici{background:rgba(201,160,80,.22);box-shadow:inset 3px 0 0 #9c3b2a}'
+       '.r7 .ast-ligne.ici>span:nth-child(2){font-weight:700}'
+       ".r7 .ast-mot{position:absolute;left:0;right:0;bottom:4px;font-family:'Reenie Beanie',cursive;font-size:25px;line-height:1.05;color:#3f6a3a;transform:rotate(-1.2deg)}"
+       ".r7 .ast-mot::before{content:'« '}.r7 .ast-mot::after{content:' »'}"
+       '.r7 .ast-page{display:flex;flex-direction:column;height:100%}'
+       '.r7 .ast-entete{display:flex;align-items:center;gap:10px;color:#9c3b2a;margin:-4px 0 10px}'
+       ".r7 .ast-theme{font-family:'Reenie Beanie',cursive;font-size:36px;line-height:1;color:#3a2a1c}"
+       '.r7 .ast-liste{flex:1;min-height:0}'
+       '.r7 .ast{display:flex;gap:9px;align-items:flex-start;margin-bottom:10px;font-size:15.5px;line-height:22px;color:#2b2118;animation:r7AstVient .4s ease both}'
+       '.r7 .ast:nth-child(2){animation-delay:.05s}.r7 .ast:nth-child(3){animation-delay:.1s}.r7 .ast:nth-child(4){animation-delay:.15s}.r7 .ast:nth-child(5){animation-delay:.2s}.r7 .ast:nth-child(n+6){animation-delay:.25s}'
+       '.r7 .ast-puce{flex:none;margin-top:5px;color:#9c3b2a}'
+       ".r7 .ast.cachee{font-family:'Reenie Beanie',cursive;font-size:23px;line-height:24px;color:#a8937a;margin-bottom:6px}"
+       '.r7 .ast.cachee .ast-puce{color:#b9a78c}'
+       ".r7 .ast-piste{margin-left:7px;font-family:'Alegreya',serif;font-size:13.5px;font-style:italic;color:#9a8668}"
+       '.r7 .ast-pages{flex:none;display:flex;align-items:center;justify-content:center;gap:14px;padding-top:4px}'
+       ".r7 .ast-folio{min-width:120px;text-align:center;font-family:'Alegreya SC',serif;font-size:13px;letter-spacing:2px;color:#9a7b55}"
+       '.r7 .ast-fleche{width:34px;height:34px;border:none;border-radius:50%;background:transparent;color:#6e3f22;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:inset 0 0 0 1.5px rgba(110,63,34,.55);transition:background .2s,transform .2s}'
+       '.r7 .ast-fleche:hover:not(:disabled){background:rgba(201,160,80,.22);transform:scale(1.06)}'
+       '.r7 .ast-fleche:disabled{opacity:.3;cursor:default}'
+       '@keyframes r7AstVient{from{opacity:0;transform:translateX(-6px)}to{opacity:1;transform:none}}'
+       # le petit carnet : le lien vers les astuces, le retour
+       ".r7 .ic-lien{display:inline-flex;align-items:center;gap:8px;padding:6px 2px;border:none;background:transparent;cursor:pointer;font-family:'Alegreya SC',serif;font-size:15px;letter-spacing:1px;color:#6e3f22;transition:transform .2s}"
+       '.r7 .ic-lien:hover{transform:translateX(3px)}'
+       '.r7 .ic-lien svg{color:#9c3b2a}'# le visiteur : mêmes classes que notre écho (démarche, bonds), son étiquette au survol, la poussière d'une bousculade
        '.r7 .visiteur-zone{cursor:pointer}'
        '.r7 .visiteur-pos.part{pointer-events:none}'
        '.r7 .visiteur-tag{position:absolute;left:50%;transform:translate(-50%,6px);display:flex;gap:8px;align-items:baseline;white-space:nowrap;padding:3px 12px;border-radius:12px;background:rgba(251,244,227,.94);box-shadow:0 0 0 1.5px #3a1f0e,0 4px 8px rgba(0,0,0,.25);opacity:0;pointer-events:none;transition:opacity .25s ease,transform .25s ease}'

@@ -803,7 +803,7 @@ export class Exploration extends Component<ProprietesExploration, EtatUI> {
             {s.sacOuvert && <Sacoche etat={this.e} ressources={this.monde.ressources} surFerme={() => this.setState({ sacOuvert: false })}
               surUtiliser={(i, fermer) => this.utiliserDepuisSac(i, fermer)} sauver={() => this.sauver()} />}
             {s.carnet && <PetitCarnet etat={this.e} portrait={this.assets.get(apparence(this.e))?.url} reglages={p.reglages ?? { sons: true, musique: true }}
-              surReglages={p.surReglages} surMenu={p.surMenu} sauver={() => this.sauver()} surFerme={() => this.setState({ carnet: false })} />}
+              surReglages={p.surReglages} surMenu={p.surMenu} sauver={() => this.sauver()} surFerme={() => this.setState({ carnet: false })} monde={this.monde} />}
           </Calque>
         </Repere>
         {s.scene && (

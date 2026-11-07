@@ -1590,6 +1590,52 @@ export function VueRanch({ v }: { v: any }) {
                       </button>
                     </div>
                   </>) : null}
+                  {v.pAstuces ? (<>
+                    <div className="ast-page">
+                      <div className="ast-entete">
+                        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                          <path d={v.astIcone} />
+                        </svg>
+                        <span className="ast-theme">
+                          {v.astTheme}
+                        </span>
+                      </div>
+                      <div className="ast-liste">
+                        {(v.astuces || []).map((xA28: any, i28: number) => (
+                          <Fragment key={i28}>
+                            <div className={`ast ${xA28.cls}`}>
+                              <svg className="ast-puce" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" aria-hidden="true">
+                                <path d="M5 12h14M13 6l6 6-6 6" />
+                              </svg>
+                              <span className="ast-texte">
+                                {xA28.texte}
+                                {xA28.piste ? (<>
+                                  <em className="ast-piste">
+                                    — {xA28.piste}
+                                  </em>
+                                </>) : null}
+                              </span>
+                            </div>
+                          </Fragment>
+                        ))}
+                      </div>
+                      <div className="ast-pages">
+                        <button className="ast-fleche" onClick={v.astPrec} disabled={!!(v.astSansPrec)} aria-label="Page précédente">
+                          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                            <path d="M15 5l-7 7 7 7" />
+                          </svg>
+                        </button>
+                        <span className="ast-folio">
+                          {v.astFolio}
+                        </span>
+                        <button className="ast-fleche" onClick={v.astSuiv} disabled={!!(v.astSansSuiv)} aria-label="Page suivante">
+                          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                            <path d="M9 5l7 7-7 7" />
+                          </svg>
+                        </button>
+                      </div>
+                    </div>
+                  </>) : null}
                 </div>
               </div>
               {/* Marque-page */}
@@ -1651,23 +1697,23 @@ export function VueRanch({ v }: { v: any }) {
                       {v.pageTitre}
                     </div>
                     {v.pSommaire ? (<>
-                      {(v.sommaire || []).map((xS28: any, i28: number) => (
-                        <Fragment key={i28}>
-                          <button className="sommaire-ligne" onClick={xS28.ouvrir}>
+                      {(v.sommaire || []).map((xS29: any, i29: number) => (
+                        <Fragment key={i29}>
+                          <button className="sommaire-ligne" onClick={xS29.ouvrir}>
                             <span className="num">
-                              {xS28.num}
+                              {xS29.num}
                             </span>
                             <span>
-                              {xS28.nom}
+                              {xS29.nom}
                             </span>
-                            {xS28.aBadge ? (<>
+                            {xS29.aBadge ? (<>
                               <span className="sceau">
-                                {xS28.badge}
+                                {xS29.badge}
                               </span>
                             </>) : null}
                             <span className="points" />
                             <span className="num">
-                              {xS28.page}
+                              {xS29.page}
                             </span>
                           </button>
                         </Fragment>
@@ -1677,14 +1723,14 @@ export function VueRanch({ v }: { v: any }) {
                       <div style={{ fontFamily: "'Reenie Beanie',cursive", fontSize: "30px", lineHeight: "1", color: "#3a2a1c", marginBottom: "6px" } as CSSProperties}>
                         aujourd'hui
                       </div>
-                      {(v.journal || []).map((xJ29: any, i29: number) => (
-                        <Fragment key={i29}>
+                      {(v.journal || []).map((xJ30: any, i30: number) => (
+                        <Fragment key={i30}>
                           <div style={{ display: "flex", gap: "12px", fontSize: "16px", lineHeight: "32px" } as CSSProperties}>
                             <span style={{ flex: "none", width: "46px", fontFamily: "'Alegreya SC',serif", fontSize: "13px", color: "#9a7b55" } as CSSProperties}>
-                              {xJ29.heure}
+                              {xJ30.heure}
                             </span>
                             <span>
-                              {xJ29.texte}
+                              {xJ30.texte}
                             </span>
                           </div>
                         </Fragment>
@@ -1695,15 +1741,15 @@ export function VueRanch({ v }: { v: any }) {
                         Nourriture
                       </div>
                       <div style={{ display: "grid", gridTemplateColumns: "repeat(4,minmax(0,1fr))", gap: "8px" } as CSSProperties}>
-                        {(v.sacNourriture || []).map((xN30: any, i30: number) => (
-                          <Fragment key={i30}>
-                            <div className="case-sac" style={{ opacity: xN30.opacite } as CSSProperties}>
-                              <img src={xN30.image} alt="" />
+                        {(v.sacNourriture || []).map((xN31: any, i31: number) => (
+                          <Fragment key={i31}>
+                            <div className="case-sac" style={{ opacity: xN31.opacite } as CSSProperties}>
+                              <img src={xN31.image} alt="" />
                               <span>
-                                {xN30.nom}
+                                {xN31.nom}
                               </span>
                               <b style={{ fontFamily: "'Alegreya SC',serif", fontSize: "12px", color: "#6b4f33" } as CSSProperties}>
-                                × {xN30.qte}
+                                × {xN31.qte}
                               </b>
                             </div>
                           </Fragment>
@@ -1711,29 +1757,29 @@ export function VueRanch({ v }: { v: any }) {
                       </div>
                     </>) : null}
                     {v.pRelations ? (<>
-                      {(v.relations || []).map((xR31: any, i31: number) => (
-                        <Fragment key={i31}>
+                      {(v.relations || []).map((xR32: any, i32: number) => (
+                        <Fragment key={i32}>
                           <div style={{ display: "flex", alignItems: "baseline", gap: "10px", fontSize: "17px", lineHeight: "32px" } as CSSProperties}>
-                            <b style={{ fontFamily: "'Alegreya SC',serif", letterSpacing: "1.5px", color: xR31.encre, width: "84px" } as CSSProperties}>
-                              {xR31.nom}
+                            <b style={{ fontFamily: "'Alegreya SC',serif", letterSpacing: "1.5px", color: xR32.encre, width: "84px" } as CSSProperties}>
+                              {xR32.nom}
                             </b>
                             <span style={{ fontFamily: "'Reenie Beanie',cursive", fontSize: "23px", color: "#6b4f33" } as CSSProperties}>
-                              {xR31.lien}
+                              {xR32.lien}
                             </span>
                           </div>
                         </Fragment>
                       ))}
                     </>) : null}
                     {v.pCarte ? (<>
-                      {(v.lieux || []).map((xL32: any, i32: number) => (
-                        <Fragment key={i32}>
-                          <button className="sommaire-ligne" onClick={xL32.partir} disabled={!!(xL32.off)} style={{ opacity: xL32.opacite } as CSSProperties}>
+                      {(v.lieux || []).map((xL33: any, i33: number) => (
+                        <Fragment key={i33}>
+                          <button className="sommaire-ligne" onClick={xL33.partir} disabled={!!(xL33.off)} style={{ opacity: xL33.opacite } as CSSProperties}>
                             <span>
-                              {xL32.nom}
+                              {xL33.nom}
                             </span>
                             <span className="points" />
                             <span className="num">
-                              {xL32.duree}
+                              {xL33.duree}
                             </span>
                           </button>
                         </Fragment>
@@ -1763,25 +1809,49 @@ export function VueRanch({ v }: { v: any }) {
                         Aucun autre écho pour l'instant.
                       </div>
                     </>) : null}
+                    {v.pAstuces ? (<>
+                      <div className="ast-intro">
+                        {v.astIntro}
+                      </div>
+                      {(v.astThemes || []).map((xT34: any, i34: number) => (
+                        <Fragment key={i34}>
+                          <button className={`sommaire-ligne ast-ligne ${xT34.cls}`} onClick={xT34.ouvrir} aria-current={xT34.ici}>
+                            <span className="num">
+                              {xT34.num}
+                            </span>
+                            <span>
+                              {xT34.nom}
+                            </span>
+                            <span className="points" />
+                            <span className="num">
+                              {xT34.compte}
+                            </span>
+                          </button>
+                        </Fragment>
+                      ))}
+                      <div className="ast-mot">
+                        {v.astMot}
+                      </div>
+                    </>) : null}
                     {v.pOptions ? (<>
                       <div style={{ display: "flex", flexDirection: "column", gap: "14px" } as CSSProperties}>
-                        {(v.reglages || []).map((xG33: any, i33: number) => (
-                          <Fragment key={i33}>
+                        {(v.reglages || []).map((xG35: any, i35: number) => (
+                          <Fragment key={i35}>
                             <label style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "12px", fontSize: "17px", cursor: "pointer" } as CSSProperties}>
                               <span>
-                                {xG33.nom}
+                                {xG35.nom}
                               </span>
-                              <input type="checkbox" checked={xG33.actif} onChange={xG33.basculer} style={{ width: "22px", height: "22px", accentColor: "#6e3f22" } as CSSProperties} />
+                              <input type="checkbox" checked={xG35.actif} onChange={xG35.basculer} style={{ width: "22px", height: "22px", accentColor: "#6e3f22" } as CSSProperties} />
                             </label>
                           </Fragment>
                         ))}
-                        {(v.curseurs || []).map((xG34: any, i34: number) => (
-                          <Fragment key={i34}>
+                        {(v.curseurs || []).map((xG36: any, i36: number) => (
+                          <Fragment key={i36}>
                             <label style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "14px", fontSize: "17px", cursor: "pointer" } as CSSProperties}>
                               <span>
-                                {xG34.nom}
+                                {xG36.nom}
                               </span>
-                              <input type="range" min="0" max="100" step="5" value={xG34.valeur} onChange={xG34.changer} style={{ flex: "0 0 46%", accentColor: "#6e3f22", cursor: "pointer" } as CSSProperties} />
+                              <input type="range" min="0" max="100" step="5" value={xG36.valeur} onChange={xG36.changer} style={{ flex: "0 0 46%", accentColor: "#6e3f22", cursor: "pointer" } as CSSProperties} />
                             </label>
                           </Fragment>
                         ))}
