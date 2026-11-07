@@ -1,5 +1,6 @@
-// Panneaux du village, dans l'esprit du ranch (cuir, kraft, étiquettes) : l'étal de Jumpy, le stand de Lady Roger,
-// le coffre de Maïko, les travaux d'Ash, le sac, et deux petits jeux (le travail à la boutique, déblayer un passage).
+// Panneaux du village, dans l'identité du ranch (cuir cousu, page de carnet lignée, signet, lueurs au survol) :
+// l'étal de Jumpy, le stand de Lady Roger, le coffre de Maïko, les travaux d'Ash, et deux petits jeux (le travail à la
+// boutique, déblayer un passage). Le sac est celui du ranch (src/jeu/commun/InterfaceRanch.tsx).
 // Les prix et les quantités d'objets s'affichent ; jamais l'état chiffré de l'écho.
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import {
@@ -8,8 +9,9 @@ import {
   prixRachat, reprendreObjet, ressourcesDisponibles, texteCout, vendreCuriosite, HEURES_REPARATION, NOMS_RESSOURCES, TENTATIVES_CORVEE,
   minuteAbsolue, nomBatiment, type Monde, type Ressource,
 } from '@/moteur/monde';
-import { Simulation, aliment, descriptionObjet, objetDivers, type Etat } from '@/moteur/simulation';
+import { Simulation, aliment, descriptionObjet, type Etat } from '@/moteur/simulation';
 import { SFX } from '@/moteur/sfx';
+import { Calque, Sacoche } from '../commun/InterfaceRanch';
 
 export const asset = (chemin: string) => `${import.meta.env.BASE_URL}assets/${chemin}`;
 const son = (nom: 'paperTick' | 'pop' | 'stamp' | 'woosh' | 'refus' | 'reveal' | 'leather' | 'pencil') => { const f = (SFX as unknown as Record<string, () => void>)[nom]; if (typeof f === 'function') f.call(SFX); };
@@ -31,6 +33,11 @@ export function Feuille({ titre, sousTitre, icone, fermer, children, large, clas
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round"><path d="M7 7l10 10M17 7L7 17" /></svg>
         </button>
         <div className="mo-page">{children}</div>
+        <svg className="mo-signet" width="30" height="120" viewBox="0 0 30 120" aria-hidden="true">
+          <path d="M15 0 C14 40 17 80 16 104" fill="none" stroke="#5e1a12" strokeWidth="12" />
+          <path d="M15 0 C14 40 17 80 16 104" fill="none" stroke="#9c3b2a" strokeWidth="9.5" />
+          <path d="M21 106 L16 116 L11 106 L4 110 L9 100 Z" fill="#9c3b2a" stroke="#5e1a12" strokeWidth="1.2" strokeLinejoin="round" />
+        </svg>
       </div>
     </div>
   );
@@ -304,39 +311,22 @@ export function Travaux({ e, m, rafraichir, noter, fermer }: Commun) {
   );
 }
 
-// —————————————————————————————————————— Le sac (le même que celui du ranch)
+// —————————————————————————————————————— Le sac (celui du ranch), ouvert depuis une scène (« action: sac »)
 
 export function Sac({ e, m, sim, rafraichir, noter, fermer }: Commun) {
-  const [choisi, setChoisi] = useState<number | null>(null);
-  const c = choisi != null ? e.inventaire[choisi] : null;
-  const d = c ? descriptionObjet(c.id) : null;
-  const mangeable = !!(c && aliment(c.id));
-  const utilisable = !!(c && objetDivers(c.id)?.usage && objetDivers(c.id)?.usage !== 'appat');
-  const agir = () => {
-    if (choisi == null) return;
-    const r = mangeable ? sim.nourrir(choisi) : sim.utiliser(choisi);
-    for (const s of sim.vider()) if (s.type === 'journal') noter(s.texte, 'note');
-    if (r.ok) { son('pop'); if ('texte' in r && r.texte) noter(r.texte, 'bien'); }
-    else { son('refus'); if (r.raison) noter(r.raison, 'mal'); }
-    setChoisi(null);
-    rafraichir();
-  };
   return (
-    <Feuille titre="Le sac" sousTitre={`${e.nom} vous suit`} fermer={fermer}>
-      <div className="mo-entete-page"><span className="craie-encre">Ce que vous portez</span><Bourse or={e.or} /></div>
-      <div className="mo-grille">
-        {e.inventaire.map((x, i) => <CaseObjet key={i} id={x?.id} qte={x?.qte} actif={choisi === i} onClick={() => { son('pop'); setChoisi(i === choisi ? null : i); }} />)}
-      </div>
-      <Ressources m={m} titre="ressources" />
-      <div className="mo-pied">
-        {c && d ? (
-          <>
-            <span className="quoi"><b>{d.nom}</b> <i>{d.description}</i></span>
-            {(mangeable || utilisable) && <button className="mo-bouton ok" onClick={agir}>{mangeable ? `Donner à ${e.nom}` : 'Utiliser'}</button>}
-          </>
-        ) : <span className="aide">Choisissez un objet.</span>}
-      </div>
-    </Feuille>
+    <Calque minute={e.minute} devant>
+      <Sacoche etat={e} ressources={m.ressources} surFerme={fermer} sauver={rafraichir}
+        surUtiliser={(index, refermer) => refermer(() => {
+          const c = e.inventaire[index];
+          if (!c) return;
+          const r = aliment(c.id) ? sim.nourrir(index) : sim.utiliser(index);
+          for (const s of sim.vider()) if (s.type === 'journal') noter(s.texte, 'note');
+          if (r.ok) { son('pop'); if ('texte' in r && r.texte) noter(r.texte, 'bien'); }
+          else { son('refus'); if (r.raison) noter(r.raison, 'mal'); }
+          rafraichir();
+        })} />
+    </Calque>
   );
 }
 

@@ -24,6 +24,7 @@ import {
 } from '@/moteur/monde';
 import { SFX } from '@/moteur/sfx';
 import { Repere } from '../commun/Repere';
+import { BoutonCarnet, BoutonSac, Calque, PetitCarnet, Sacoche } from '../commun/InterfaceRanch';
 import { ecouterVolumes, fixerVolumes, volumeMusique } from '../commun/volumes';
 import { profilEcho } from '../ranch/demarche';
 import type { Personnage, Reglages } from '../profils';
@@ -44,7 +45,7 @@ const IMG = {
   fouiller: asset('interface/actions/fouiller.png'), recolter: asset('interface/actions/recolter.png'), pecher: asset('interface/actions/pecher.png'),
   envoyer: asset('interface/actions/envoyer-echo.png'), camper: asset('interface/actions/campement.png'),
   nourrir: asset('interface/actions/nourrir.png'), laver: asset('interface/actions/laver.png'), soigner: asset('interface/actions/soigner.png'), dormir: asset('interface/actions/dormir.png'),
-  carte: asset('decors/exploration/carte.png'), brume: asset('decors/exploration/carte-brume.webp'),
+  carte: asset('decors/exploration/carte.png'), brume: asset('decors/exploration/carte-brume.webp'), repere: asset('interface/icones/repere.png'),
 };
 const NOMS_RESSOURCES: Record<Ressource, string> = { bois: 'Bois', pierre: 'Pierre', fibres: 'Fibres', resine: 'Résine', ferraille: 'Ferraille', cristaux: 'Cristaux' };
 const imageRessource = (r: Ressource) => asset(`objets/materiaux/${r}.png`);
@@ -99,6 +100,10 @@ export interface ProprietesExploration {
   /** « Revenir au village » depuis la Sortie du village : la forêt du village. */
   surVillage: (e: Etat, m: Monde) => void;
   surMort: (e: Etat) => void;
+  /** Réglages changés dans le petit carnet. */
+  surReglages?: (r: Reglages) => void;
+  /** « Retour au menu principal » (petit carnet) : la sortie en cours reste notée. */
+  surMenu?: () => void;
 }
 
 interface Pos { x: number; y: number; s: number; o: number; dir: number; cls: string; duree: number }
@@ -120,7 +125,7 @@ interface EtatUI {
   fouille: Fouille | null; peche: Peche | null; envoi: Envoi | null; rencontre: Rencontre | null;
   recolte: { phase: 'travail' | 'fin'; gains?: { image: string; texte: string }[]; texte?: string } | null;
   tente: Tente | null; carte: boolean; fin: Fin | null;
-  sacOuvert: boolean; sacFerme: boolean; sacMenu: number; sacMenuInfo: boolean; dndDe: number; dndCible: number;
+  sacOuvert: boolean; carnet: boolean;
   toast: { texte: string; id: number } | null; bulle: { src: string; id: number } | null;
   marche: boolean; survol: number | 'retour' | 'village' | null; nouveauLieu: number | null;
   filo: Pos;
@@ -165,7 +170,7 @@ export class Exploration extends Component<ProprietesExploration, EtatUI> {
     this.state = {
       t: 0, zone: z, ancien: null, sens: 'avant', historique: p.historique ?? [], sommeil: false,
       fouille: null, peche: null, envoi: null, rencontre: null, recolte: null, tente: null, carte: false, fin: null,
-      sacOuvert: false, sacFerme: false, sacMenu: -1, sacMenuInfo: false, dndDe: -1, dndCible: -1,
+      sacOuvert: false, carnet: false,
       toast: null, bulle: null, marche: false, survol: null, nouveauLieu: null,
       filo: { x: fx, y: fy, s: echelle(fy), o: 1, dir: this.regard(z, fx), cls: '', duree: 0 },
       scene: null, combatScene: false, nyxara: false, appel: false, survolPnj: null,
@@ -299,11 +304,11 @@ export class Exploration extends Component<ProprietesExploration, EtatUI> {
     this.pistes = null;
   }
 
-  // —— le temps s'écoule (1 s = 1 min), sauf pendant le sommeil sous la tente et sur la page de retour
+  // —— le temps s'écoule (1 s = 1 min), sauf pendant le sommeil sous la tente, sur la page de retour, sac ou carnet ouverts
   tic() {
     const s = this.state;
     // l'horloge s'arrête aussi pendant les scènes des PNJ et la cinématique du sentier solitaire
-    if (s.fin || s.sommeil || this.enCombat || this.e.mort || s.scene || s.nyxara) return;
+    if (s.fin || s.sommeil || this.enCombat || this.e.mort || s.scene || s.nyxara || s.sacOuvert || s.carnet) return;
     const h = Math.floor(this.e.minute / 60);
     this.sim.minute();
     this.traiter(this.sim.vider());
@@ -374,7 +379,7 @@ export class Exploration extends Component<ProprietesExploration, EtatUI> {
 
   dire(texte: string, ms = 2600) { this.setState({ toast: { texte, id: Math.random() } }); clearTimeout(this.tToast); this.tToast = window.setTimeout(() => { if (this.vivant) this.setState({ toast: null }); }, ms); }
   bulle(src: string, ms = 2200) { this.setState({ bulle: { src, id: Math.random() } }); clearTimeout(this.tBulle); this.tBulle = window.setTimeout(() => { if (this.vivant) this.setState({ bulle: null }); }, ms); }
-  occupe() { const s = this.state; return !!(s.marche || s.fouille || s.peche || s.envoi || s.rencontre || s.recolte || s.tente || s.fin || s.carte || s.sacOuvert || s.scene || s.nyxara || this.e.mort); }
+  occupe() { const s = this.state; return !!(s.marche || s.fouille || s.peche || s.envoi || s.rencontre || s.recolte || s.tente || s.fin || s.carte || s.sacOuvert || s.carnet || s.scene || s.nyxara || this.e.mort); }
   heure() { return Math.floor(this.e.minute / 60) % 24; }
   nuit() { const h = this.heure(); return h >= 21 || h < 5; }
   fait(action: string) { return faitCeJour(this.monde, this.state.zone, action, this.e.jour); }
@@ -442,7 +447,7 @@ export class Exploration extends Component<ProprietesExploration, EtatUI> {
   revenir() {
     if (this.occupe()) return;
     const h = this.state.historique;
-    if (!h.length) { this.rentrer(); return; }
+    if (!h.length) { if (this.state.zone === DEPART) this.versVillage(); else this.rentrer(); return; }
     this.aller(h[h.length - 1], true);
   }
   /** « Revenir au village » (Sortie du village) : la page de retour, puis la forêt du village. */
@@ -761,41 +766,27 @@ export class Exploration extends Component<ProprietesExploration, EtatUI> {
   }
   sortirTente() { if (!this.state.tente || this.state.tente.occupe) return; Sons.toile(); this.setState({ tente: { ...this.state.tente, phase: 'sortie' } }); this.plus(600, () => this.setState({ tente: null })); }
 
-  // —— le sac : le même qu'au ranch (cases de la simulation, déplaçables)
-  deplacerSac(de: number, vers: number) {
-    if (de < 0 || de === vers) { this.setState({ dndDe: -1, dndCible: -1 }); return; }
-    const inv = this.e.inventaire; const x = inv[de]; inv[de] = inv[vers]; inv[vers] = x;
-    this.sauver();
-    this.son('sacPose'); this.setState({ dndDe: -1, dndCible: -1 });
-  }
+  // —— le sac : celui du ranch (src/jeu/commun/InterfaceRanch.tsx), le carnet simplifié
   ouvrirLeSac() {
     if (this.state.sacOuvert || this.occupe()) return;
-    this.son('woosh'); this.plus(380, () => this.son('sacoche', true));
-    this.setState({ sacOuvert: true, sacFerme: false, sacMenu: -1 });
+    this.setState({ sacOuvert: true });
   }
-  fermerSac = () => {
-    if (this.state.sacMenu >= 0) this.setState({ sacMenu: -1 });
-    if (!this.state.sacOuvert || this.state.sacFerme) return;
-    this.son('sacoche', false); this.plus(620, () => this.son('woosh'));
-    this.setState({ sacFerme: true });
-    this.plus(1080, () => this.setState({ sacOuvert: false, sacFerme: false }));
-  };
   /** « Utiliser » depuis le sac : un aliment ou un soin se donne sous la tente, la canne sert à pêcher. */
-  utiliserDepuisSac(id: string) {
+  utiliserDepuisSac(index: number, fermerSac: (puis?: () => void) => void) {
+    const id = this.e.inventaire[index]?.id;
+    if (!id) return;
     const z = ZONES[this.state.zone];
-    this.setState({ sacMenu: -1 });
     const soin = id === 'bandage' || id === 'medicament';
-    if (aliment(id) || soin) { this.fermerSac(); this.plus(1150, () => (this.aDansLeSac('tente') ? this.camper(!soin) : this.dire(soin ? 'Pour le soigner, il faut d’abord planter la tente.' : 'Pour lui donner à manger, il faut d’abord planter la tente.'))); }
-    else if (id === 'canne_peche') { this.fermerSac(); this.plus(1150, () => (z.eau ? this.pecher() : this.dire('Pas d’eau ici pour pêcher.'))); }
-    else if (id === 'tente') { this.fermerSac(); this.plus(1150, () => this.camper()); }
+    if (aliment(id) || soin) { fermerSac(() => (this.aDansLeSac('tente') ? this.camper(!soin) : this.dire(soin ? 'Pour le soigner, il faut d’abord planter la tente.' : 'Pour lui donner à manger, il faut d’abord planter la tente.'))); }
+    else if (id === 'canne_peche') { fermerSac(() => (z.eau ? this.pecher() : this.dire('Pas d’eau ici pour pêcher.'))); }
+    else if (id === 'tente') { fermerSac(() => this.camper()); }
     else if (id === 'repousse') {
       const i = this.e.inventaire.findIndex((c) => c?.id === 'repousse');
       if (i < 0 || !consommer(this.e, i)) return;
       poserRepousse(this.monde, this.heureAbs());
       this.repousseVue = true;
       this.sauver();
-      this.fermerSac();
-      this.plus(1150, () => { Sons.froissement(); this.dire('Vous vaporisez la repousse : les échos sauvages se tiendront à distance une demi-journée.', 3800); });
+      fermerSac(() => { Sons.froissement(); this.dire('Vous vaporisez la repousse : les échos sauvages se tiendront à distance une demi-journée.', 3800); });
     }
     else { this.son('refus'); this.dire('Rien à en faire ici.'); }
   }
@@ -804,7 +795,17 @@ export class Exploration extends Component<ProprietesExploration, EtatUI> {
     const s = this.state, p = this.props;
     return (
       <>
-        <Repere fond="#120c08"><VueExploration v={this.valeurs()} /></Repere>
+        <Repere fond="#120c08">
+          <VueExploration v={this.valeurs()} />
+          <Calque minute={this.e.minute} sons={p.reglages?.sons !== false} devant={s.sacOuvert || s.carnet} nuit={false} z={70}>
+            <BoutonSac top={128} cache={this.occupe()} ouvrir={() => this.ouvrirLeSac()} />
+            <BoutonCarnet top={238} cache={this.occupe()} ouvrir={() => { if (!this.occupe()) this.setState({ carnet: true }); }} />
+            {s.sacOuvert && <Sacoche etat={this.e} ressources={this.monde.ressources} surFerme={() => this.setState({ sacOuvert: false })}
+              surUtiliser={(i, fermer) => this.utiliserDepuisSac(i, fermer)} sauver={() => this.sauver()} />}
+            {s.carnet && <PetitCarnet etat={this.e} portrait={this.assets.get(apparence(this.e))?.url} reglages={p.reglages ?? { sons: true, musique: true }}
+              surReglages={p.surReglages} surMenu={p.surMenu} sauver={() => this.sauver()} surFerme={() => this.setState({ carnet: false })} />}
+          </Calque>
+        </Repere>
         {s.scene && (
           <ScenePnj key={s.scene.cle} id={s.scene.id} sujet={s.scene.sujet} etat={this.e} monde={this.monde} personnage={p.personnage}
             catalogue={p.catalogue} sons={p.reglages?.sons !== false} musique={p.reglages?.musique !== false} sim={this.sim}
@@ -837,12 +838,12 @@ export class Exploration extends Component<ProprietesExploration, EtatUI> {
         aller: () => this.aller(c.vers), entrer: () => this.setState({ survol: i }), sortir: () => this.setState({ survol: null }),
       };
     });
-    // la Sortie du village : une seconde flèche ramène au village (la forêt du village), la première au ranch
+    // la Sortie du village : la flèche de gauche rentre au ranch ; celle du bas (sans chemin parcouru) revient au village
     if (s.zone === DEPART) {
       passages.push({
-        x: 150, y: 668, a: -118, nom: 'revenir au village', cls: `passage${libre ? '' : ' cache'}${s.survol === 'village' ? ' survol' : ''}`,
+        x: 150, y: 668, a: -118, nom: 'rentrer au ranch', cls: `passage${libre ? '' : ' cache'}${s.survol === 'village' ? ' survol' : ''}`,
         etiqCls: 'etiq-passage droite', delai: '0.6',
-        aller: () => this.versVillage(), entrer: () => this.setState({ survol: 'village' }), sortir: () => this.setState({ survol: null }),
+        aller: () => { if (!this.occupe()) { Sons.pas(false, 3); this.rentrer(); } }, entrer: () => this.setState({ survol: 'village' }), sortir: () => this.setState({ survol: null }),
       });
     }
     // les PNJ du lieu, posés dans le décor
@@ -927,37 +928,6 @@ export class Exploration extends Component<ProprietesExploration, EtatUI> {
       repas: this.repas().map(({ i, al, qte }) => ({ nom: al.nom, icone: asset(al.icone), qte, donner: () => this.soin('nourrir', i) })),
       bulle: s.bulle ? s.bulle.src : '', bulleId: s.bulle ? s.bulle.id : 0,
     } : null;
-    // le sac (le même qu'au ranch)
-    const inv = e.inventaire;
-    const sacCases = inv.map((c, i) => {
-      const d = c && descriptionObjet(c.id);
-      const marque = (s.dndDe === i ? ' souleve' : '') + (s.dndCible === i && s.dndDe >= 0 && s.dndDe !== i ? ' cible' : '');
-      const base = {
-        delai: (0.86 + i * 0.03).toFixed(2),
-        survolDnd: (ev: DragEvent) => { if (this.state.dndDe < 0) return; ev?.preventDefault?.(); if (ev?.dataTransfer) ev.dataTransfer.dropEffect = 'move'; if (this.state.dndCible !== i) this.setState({ dndCible: i }); },
-        quitteDnd: () => { if (this.state.dndCible === i) this.setState({ dndCible: -1 }); },
-        deposer: (ev: DragEvent) => { ev?.preventDefault?.(); this.deplacerSac(this.state.dndDe, i); },
-        finDnd: () => { if (this.state.dndDe >= 0 || this.state.dndCible >= 0) this.setState({ dndDe: -1, dndCible: -1 }); },
-      };
-      if (!c || !d) return { ...base, vide: true, plein: false, cls: 'vide' + marque, nom: 'emplacement vide', image: '', qte: 0, survol: () => undefined, choisir: () => { if (this.state.sacMenu >= 0) this.setState({ sacMenu: -1 }); }, prendreDnd: (ev: DragEvent) => ev?.preventDefault?.() };
-      return {
-        ...base, vide: false, plein: true, cls: marque + (s.sacMenu === i ? ' choisi' : ''), nom: d.nom, image: asset(d.icone), qte: c.qte,
-        choisir: () => { this.son('paperTick'); this.setState((st) => (st.sacMenu === i ? { sacMenu: -1, sacMenuInfo: false } : { sacMenu: i, sacMenuInfo: false })); },
-        survol: () => undefined,
-        prendreDnd: (ev: DragEvent & { currentTarget: HTMLElement }) => {
-          if (ev?.dataTransfer) { ev.dataTransfer.effectAllowed = 'move'; ev.dataTransfer.setData('text/plain', String(i)); const im = ev.currentTarget?.querySelector('img'); if (im) ev.dataTransfer.setDragImage(im, 29, 29); }
-          this.setState({ dndDe: i, sacMenu: -1 });
-        },
-      };
-    });
-    const cMenu = s.sacMenu >= 0 ? inv[s.sacMenu] : null;
-    const dMenu = cMenu && descriptionObjet(cMenu.id);
-    const menuSac = cMenu && dMenu && !s.sacFerme ? {
-      sacMenuVisible: true, sacMenuInfo: !!s.sacMenuInfo, sacMenuNom: dMenu.nom, sacMenuTexte: dMenu.description,
-      sacMenuX: Math.round(34 + 22 + (s.sacMenu % 5) * 104 + 46), sacMenuY: Math.round(30 + 26 + Math.floor(s.sacMenu / 5) * 106 - 6),
-      sacInfos: () => { this.son('page', 0.5); this.setState((st) => ({ sacMenuInfo: !st.sacMenuInfo })); },
-      sacUtiliser: () => this.utiliserDepuisSac(cMenu.id),
-    } : { sacMenuVisible: false, sacMenuInfo: false };
     return {
       pret: true, geste: this.geste, echoNom: N,
       fond: asset(this.fond(s.zone)), ancien: s.ancien != null ? asset(this.fond(s.ancien)) : '', aAncien: s.ancien != null, sensCls: 'ex-fond' + (s.ancien != null ? ' entre-' + s.sens : ''), ancienCls: 'ex-ancien sort-' + s.sens,
@@ -968,7 +938,7 @@ export class Exploration extends Component<ProprietesExploration, EtatUI> {
       passages, pnj, boutonsScene,
       appel: s.appel, allerVoir: () => { Sons.clic(); this.setState({ appel: false }); this.ouvrirScene('nyxara'); },
       retour: {
-        nom: prec ? 'revenir · ' + prec : 'rentrer au ranch', cls: 'retour' + (libre ? '' : ' cache') + (s.survol === 'retour' ? ' survol' : ''),
+        nom: prec ? 'revenir · ' + prec : s.zone === DEPART ? 'revenir au village' : 'rentrer au ranch', cls: 'retour' + (libre ? '' : ' cache') + (s.survol === 'retour' ? ' survol' : ''),
         faire: () => this.revenir(), entrer: () => this.setState({ survol: 'retour' }), sortir: () => this.setState({ survol: null }),
       },
       gestes, gestesCls: 'gestes' + (libre ? '' : ' cache'),
@@ -985,10 +955,7 @@ export class Exploration extends Component<ProprietesExploration, EtatUI> {
       carte: s.carte ? this.valsCarte() : null, aCarte: s.carte,
       ouvrirCarte: () => { if (this.occupe()) return; this.son('page', 0.8); this.setState({ carte: true }); },
       fermerCarte: () => { this.son('page', 0.6); this.setState({ carte: false }); },
-      sacVisible: s.sacOuvert, sacCls: s.sacFerme ? 'ferme' : '', sacVoileCls: s.sacFerme ? 'part' : '', sacVoileDelai: s.sacFerme ? '0.5' : '0',
-      ouvrirSac: () => this.ouvrirLeSac(), fermerSac: this.fermerSac, sacCases, ...menuSac,
       arreter: (ev: { stopPropagation?: () => void }) => { ev?.stopPropagation?.(); },
-      ressourcesSac: RESSOURCES.map((x) => ({ k: x, nom: NOMS_RESSOURCES[x], image: imageRessource(x), qte: this.monde.ressources[x] ?? 0, cls: (this.monde.ressources[x] ?? 0) > 0 ? '' : 'vide' })),
       paperFilter: 'none', coteCls: libre ? '' : 'cache',
       fin: s.fin, aFin: !!s.fin, finVide: !!(s.fin && !s.fin.objets.length && !s.fin.materiaux.length),
       finBouton: s.fin?.vers === 'village' ? 'Retrouver le village' : 'Retrouver le ranch',
@@ -1013,7 +980,7 @@ export class Exploration extends Component<ProprietesExploration, EtatUI> {
       ...[...entrevus].map((id) => ({ x: ZONES[id].carte[0], y: ZONES[id].carte[1], nom: '', r: 13, cls: 'lieu entrevu', inconnu: true })),
     ];
     const [ix, iy] = ZONES[s.zone].carte;
-    return { trous, lieux, piqueX: ix, piqueY: iy, image: IMG.carte, brume: IMG.brume };
+    return { trous, lieux, piqueX: ix, piqueY: iy, image: IMG.carte, brume: IMG.brume, repere: IMG.repere };
   }
 }
 

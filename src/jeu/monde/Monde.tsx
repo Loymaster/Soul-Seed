@@ -1,21 +1,23 @@
 // Le village et ses abords : centre du village, forêt du village, sanctuaire, atelier d'Ash, boutique de Jumpy.
 // Un décor plein cadre, les PNJ à leur place (selon l'heure et l'avancée des quêtes), un petit menu au clic,
-// des passages vers les autres lieux. Le temps s'écoule comme au ranch (1 s réelle = 1 min de jeu) ;
-// il s'arrête pendant les dialogues et les panneaux. Les dialogues sont des scènes (ScenePnj), les travaux d'Ash
+// et l'interface du ranch (src/jeu/commun/InterfaceRanch.tsx) : planche de l'heure, sac, petit carnet, poteau « partir »
+// vers les autres lieux. L'écho n'y est pas montré. Le temps s'écoule comme au ranch (1 s réelle = 1 min de jeu) ;
+// il s'arrête pendant les dialogues, les panneaux, le sac et le carnet. Les dialogues sont des scènes (ScenePnj), les travaux d'Ash
 // avancent à chaque heure. La partie et le monde sont enregistrés à chaque heure et à chaque changement de lieu.
 import { useEffect, useMemo, useReducer, useRef, useState, type CSSProperties } from 'react';
 import type { Catalogue } from '@/contenu/types';
-import { Simulation, NOM_STADE, apparence, heureDuJour, type Etat, type Sortie } from '@/moteur/simulation';
+import { Simulation, NOM_STADE, aliment, apparence, heureDuJour, type Etat, type Sortie } from '@/moteur/simulation';
 import { avancerTravaux, boutiqueOuverte, heureAbsolue, minuteAbsolue, type Monde as MondePartie } from '@/moteur/monde';
 import { SFX } from '@/moteur/sfx';
 import { Repere } from '../commun/Repere';
 import { useMusiqueEnchainee } from '../commun/musique';
 import { IC } from '../ranch/icones';
+import { BoutonCarnet, BoutonSac, Calque, Encart, ICONES_LIEU, PetitCarnet, Poteau, Sacoche } from '../commun/InterfaceRanch';
 import type { Personnage, Reglages } from '../profils';
 import { LIEUX, imagesLieu, lieuxVoisins, type ContexteLieu, type Destination, type EntreeMenu, type IdLieu, type PnjLieu } from './lieux';
 import type { Panneau } from './actions';
 import { ScenePnj } from './ScenePnj';
-import { Coffre, Etal, Sac, Stand, Travail, Travaux, asset, type Ton } from './panneaux';
+import { Coffre, Etal, Stand, Travail, Travaux, asset, type Ton } from './panneaux';
 import { synchroniser } from './variables';
 import { estPret, precharger } from '../commun/prechargement';
 import './monde.css';
@@ -33,18 +35,17 @@ export interface ProprietesMonde {
   /** « Partir en exploration » (forêt du village) : l'exploration, départ à la Sortie du village. */
   surExploration: (e: Etat, m: MondePartie) => void;
   surMort: (e: Etat) => void;
+  /** Réglages changés dans le petit carnet. */
+  surReglages?: (r: Reglages) => void;
+  /** « Retour au menu principal » (petit carnet). */
+  surMenu?: () => void;
 }
 
-const pad = (n: number) => (n < 10 ? '0' : '') + n;
-const SAISONS = ['Printemps', 'Été', 'Automne', 'Hiver'];
-const periode = (h: number) => (h >= 6 && h < 12 ? 'matinée' : h < 18 && h >= 12 ? 'après-midi' : h >= 18 && h < 23 ? 'soirée' : 'nuit');
-const ICONE_PERIODE = (h: number) => (h >= 6 && h < 12 ? 'matin' : h >= 12 && h < 18 ? 'journee' : h >= 18 && h < 23 ? 'soiree' : 'nuit');
 const ACCUEILS = [
   (j: string) => `Bonjour ${j}, bienvenue dans ma boutique ! Tu veux acheter quelque chose ?`,
   (j: string) => `Ah, ${j} ! Quel plaisir de te voir par ici, entre donc !`,
   (j: string) => `Salut ${j} ! J’espère que tu as de l’or, j’ai de belles trouvailles aujourd’hui !`,
 ];
-const TAILLE_STADE = { bebe: 0.72, enfant: 0.88, adolescent: 1, adulte: 1.1 } as const;
 
 interface Note { id: number; texte: string; ton: Ton }
 interface Menu { pnj: PnjLieu; x: number; y: number; entrees: EntreeMenu[] }
@@ -64,10 +65,12 @@ export function Monde(props: ProprietesMonde) {
   const [survol, setSurvol] = useState<string | null>(null);
   const [promenades, setPromenades] = useState<Record<string, Promenade>>({});
   const [accueil, setAccueil] = useState<string | null>(null);
+  const [sacOuvert, setSacOuvert] = useState(false);
+  const [carnetOuvert, setCarnetOuvert] = useState(false);
   const compteur = useRef(0);
   const vivant = useRef(true);
-  const etatRef = useRef({ scene, panneau, combat, transition });
-  etatRef.current = { scene, panneau, combat, transition };
+  const etatRef = useRef({ scene, panneau, combat, transition, sacOuvert, carnetOuvert });
+  etatRef.current = { scene, panneau, combat, transition, sacOuvert, carnetOuvert };
   const L = LIEUX[lieu];
   const sons = reglages.sons !== false;
   const son = (nom: keyof typeof SFX) => { if (!sons) return; const f = SFX[nom]; if (typeof f === 'function') (f as () => void).call(SFX); };
@@ -117,7 +120,7 @@ export function Monde(props: ProprietesMonde) {
     vivant.current = true;
     const id = setInterval(() => {
       const r = etatRef.current;
-      if (r.scene || r.panneau || r.combat || etat.mort) return;
+      if (r.scene || r.panneau || r.combat || r.sacOuvert || r.carnetOuvert || etat.mort) return;
       const h0 = heureDuJour(etat);
       sim.minute();
       traiter(sim.vider());
@@ -198,12 +201,13 @@ export function Monde(props: ProprietesMonde) {
     setMenu(null);
     son('paperTick');
     if (en.scene) setScene({ id: en.scene, sujet: en.sujet, cle: ++compteur.current });
+    else if (en.panneau === 'sac') setSacOuvert(true);
     else if (en.panneau) setPanneau(en.panneau);
     else if (en.aller) aller(en.aller);
   };
 
   const cliquerPnj = (p: PnjLieu, x: number, y: number) => {
-    if (scene || panneau) return;
+    if (scene || panneau || sacOuvert || carnetOuvert) return;
     const premier = p.premier?.(ctx);
     if (premier) { setMenu(null); son('paperTick'); setScene({ id: premier.scene, sujet: premier.sujet, cle: ++compteur.current }); return; }
     const entrees = p.menu(ctx);
@@ -231,8 +235,18 @@ export function Monde(props: ProprietesMonde) {
   const pnjVisibles = L.pnj.filter((p) => p.visible(ctx));
 
   const commun = { e: etat, m: monde, sim, rafraichir, noter, fermer: () => { setPanneau(null); sauver(); rafraichir(); } };
-  const echoAsset = assets.get(apparence(etat));
-  const echoH = (L.echo.hauteur / 100) * boite.height * TAILLE_STADE[etat.stade];
+  const libre = !scene && !panneau && !transition;
+  /** « Utiliser » depuis le sac : l'écho mange ou reçoit l'objet (il n'est pas montré ici : une note le raconte). */
+  const utiliser = (index: number, fermer: (puis?: () => void) => void) => fermer(() => {
+    const c = etat.inventaire[index];
+    if (!c) return;
+    const r = aliment(c.id) ? sim.nourrir(index) : sim.utiliser(index);
+    for (const x of sim.vider()) if (x.type === 'journal') noter(x.texte, 'note');
+    if (r.ok) { son('pop'); if ('texte' in r && r.texte) noter(r.texte, 'bien'); }
+    else { son('refus'); if (r.raison) noter(r.raison, 'mal'); }
+    sauver();
+    rafraichir();
+  });
 
   return (
     <>
@@ -275,19 +289,13 @@ export function Monde(props: ProprietesMonde) {
                 </button>
               );
             })}
-            {echoAsset && (
-              <div className="mo-echo" style={{ left: `${L.echo.x}%`, top: `${L.echo.pieds}%`, height: echoH, zIndex: Math.round(L.echo.pieds) }}>
-                <span className="ombre" />
-                <img src={echoAsset.url} alt={etat.nom} draggable={false} />
-              </div>
-            )}
           </div>
           {nuit && lieu !== 'atelier' && lieu !== 'boutique' && <div className="mo-nuit" />}
 
           {fermee && (
             <div className="mo-ferme">
               <div className="corde g" /><div className="corde d" />
-              <div className="planche bois"><b>Fermé</b><span className="craie">revenez entre 9 h et 19 h</span></div>
+              <div className="etiquette leather"><span className="stitch" /><b>Fermé</b><span className="mot">revenez entre 9 h et 19 h</span></div>
             </div>
           )}
           {accueil && !fermee && !scene && !panneau && (
@@ -313,34 +321,16 @@ export function Monde(props: ProprietesMonde) {
             );
           })()}
 
-          {L.passages(ctx).map((pa) => (
-            <button key={pa.vers + pa.position} className={`mo-passage ${pa.position}`} onMouseEnter={() => son('paperTick')} onClick={(ev) => { ev.stopPropagation(); aller(pa.vers); }}>
-              <span className="fl-bois bois">
-                <svg className={pa.vers === 'ranch' || pa.vers === 'exploration' ? '' : 'dir'} width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d={pa.vers === 'ranch' ? IC.ranch : pa.vers === 'exploration' ? IC.exploration : 'M5 12h14M13 6l6 6-6 6'} />
-                </svg>
-                <span className="pyro">{pa.libelle}</span>
-              </span>
-            </button>
-          ))}
-
-          <div className="mo-ecriteau">
-            <div className="corde" style={{ left: 44 }} /><div className="corde" style={{ left: 248 }} />
-            <div className="planche bois">
-              <div className="lieu pyro">{L.nom}</div>
-              <div className="ligne">
-                <img src={asset(`interface/icones/${ICONE_PERIODE(h)}.png`)} alt="" />
-                <b className="pyro">{pad(h)}:{pad(etat.minute % 60)}</b>
-                <span className="craie">{periode(h)}</span>
-              </div>
-              <div className="jour pyro">Jour {etat.jour} · {SAISONS[Math.floor((etat.jour - 1) / 8) % 4]} · <span className="piece" />{etat.or} pièce{etat.or > 1 ? 's' : ''}</div>
-            </div>
-          </div>
-
-          <button className="mo-sac" aria-label="Ouvrir le sac" onClick={(ev) => { ev.stopPropagation(); son('leather'); setPanneau('sac'); }}>
-            <span className="rond leather"><span className="stitch" /><svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="#f3e4c4" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d={IC.sac} /></svg></span>
-            <span className="craie">sac</span>
-          </button>
+          <Calque minute={etat.minute} sons={sons} devant={sacOuvert || carnetOuvert}>
+            <Encart etat={etat} lieu={L.nom} />
+            <BoutonSac top={20} cache={!libre} ouvrir={() => { setMenu(null); setSacOuvert(true); }} />
+            <BoutonCarnet top={122} cache={!libre} ouvrir={() => { setMenu(null); setCarnetOuvert(true); }} />
+            <Poteau top={224} cache={!libre || sacOuvert || carnetOuvert}
+              destinations={L.passages(ctx).map((pa) => ({ nom: pa.libelle, icone: ICONES_LIEU[pa.vers === 'boutique' ? 'magasin' : pa.vers], partir: () => aller(pa.vers) }))} />
+            {sacOuvert && <Sacoche etat={etat} ressources={monde.ressources} surFerme={() => { setSacOuvert(false); rafraichir(); }} surUtiliser={utiliser} sauver={sauver} />}
+            {carnetOuvert && <PetitCarnet etat={etat} portrait={assets.get(apparence(etat))?.url} reglages={reglages} surReglages={props.surReglages}
+              sauver={sauver} surMenu={props.surMenu} surFerme={() => setCarnetOuvert(false)} />}
+          </Calque>
 
           <div className="mo-notes">
             {notes.map((n) => <div key={n.id} className={`mo-note ${n.ton}`}>{n.texte}</div>)}
@@ -350,7 +340,6 @@ export function Monde(props: ProprietesMonde) {
           {panneau === 'stand' && <Stand {...commun} />}
           {panneau === 'coffre' && <Coffre {...commun} />}
           {panneau === 'travaux' && <Travaux {...commun} />}
-          {panneau === 'sac' && <Sac {...commun} />}
           {panneau === 'travail' && <Travail {...commun} gain={() => undefined} />}
         </div>
       </Repere>
