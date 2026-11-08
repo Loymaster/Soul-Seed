@@ -19,6 +19,11 @@ export const CONSTANTE_GUERISON_MALADIE: Record<Stade, number> = { bebe: 0.2, en
 export const AGE_EVOLUTION: Record<Exclude<Stade, 'bebe'>, number> = { enfant: 2, adolescent: 6, adulte: 12 };
 /** L'écho meurt de vieillesse le 20e jour à midi. */
 export const AGE_MORT = 20;
+/**
+ * Entrées gardées au journal (les plus anciennes s'effacent au-delà) : de 15 à 40 par jour selon les soins, de quoi
+ * tenir toute une vie (20 jours et plus) — environ 150 ko dans la sauvegarde.
+ */
+export const JOURNAL_MAX = 1500;
 
 /** BIO_RHYTHM_WINDOWS : plages [début, fin[ où le rythme est respecté (repli après minuit si fin ≤ début). */
 export const PLAGES_RYTHME: Record<Rythme, [number, number]> = {
@@ -26,6 +31,8 @@ export const PLAGES_RYTHME: Record<Rythme, [number, number]> = {
 };
 
 export const CLES_TEMPERAMENT: CleTemperament[] = ['cur', 'res', 'dis', 'obs', 'ant'];
+/** Échelle du tempérament (« x/5 » et radar du prototype) : 0 à 3 points à l'éclosion, 5 au plus. */
+export const TEMPERAMENT_MAX = 5;
 export const NOM_TEMPERAMENT: Record<CleTemperament, string> = {
   cur: 'Curiosité', res: 'Résolution', dis: 'Discernement', obs: 'Observation', ant: 'Anticipation',
 };

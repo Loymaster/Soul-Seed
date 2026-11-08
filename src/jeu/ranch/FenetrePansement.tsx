@@ -1,4 +1,4 @@
-// « Panser les blessures » : la même page de carnet que « laisser le temps passer » (FenetreTemps.tsx, fenetres.css),
+// « Appliquer les premiers soins » (« panser » dans le code) : la même page de carnet que « laisser le temps passer » (FenetreTemps.tsx, fenetres.css),
 // une réglette en demi-heures, au plus la tranche de PV perdus (moteur/simulation/soins.ts). Jamais de chiffre de PV :
 // l'état de ses plaies et ce qu'elles seront, en mots.
 import { useState } from 'react';
@@ -11,7 +11,7 @@ const pad = (n: number) => (n < 10 ? '0' : '') + n;
 /** Icône au trait (24 × 24) : un pansement en biais. */
 export const ICONE_PANSER = 'M4.6 14.8l10.2-10.2a3.2 3.2 0 0 1 4.6 4.6L9.2 19.4a3.2 3.2 0 0 1-4.6-4.6zM9.5 9.5l5 5M11 12h.01M13 12h.01M12 11h.01M12 13h.01';
 
-/** L'action dans les Soins du ranch : grisée s'il n'y a rien à panser, sinon la durée maximale. */
+/** L'action dans les Soins du ranch : grisée s'il n'y a rien à soigner, sinon la durée maximale. */
 export function detailPanser(e: Pick<Etat, 'pvCombat' | 'caracs'>): { off: boolean; detail: string } {
   const max = demiHeuresPansement(e);
   return max ? { off: false, detail: `jusqu’à ${dureeDemiHeures(max)}` } : { off: true, detail: 'aucune plaie' };
@@ -46,18 +46,18 @@ export function FenetrePansement({ minute, nomEcho, etat, max, apres, filtre, so
   const graduations = Array.from({ length: max }, (_, i) => i + 1).filter((v) => v === 1 || v % 2 === 0 || v === max);
   return (
     <div className={`rf-temps rf-panser${part ? ' part' : ''}`} onClick={() => { son('page', 0.6); fermer(surAnnuler); }}>
-      <div className="rf-page" style={{ filter: filtre }} onClick={(ev) => ev.stopPropagation()} role="dialog" aria-label="Panser les blessures">
+      <div className="rf-page" style={{ filter: filtre }} onClick={(ev) => ev.stopPropagation()} role="dialog" aria-label="Appliquer les premiers soins">
         <span className="rf-couture" />
         <svg className="rf-sablier rf-bandage" width="54" height="54" viewBox="0 0 24 24" fill="none" stroke="#6e3f22" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
           <path d={ICONE_PANSER} />
         </svg>
-        <div className="rf-titre">Panser les blessures</div>
+        <div className="rf-titre">Appliquer les premiers soins</div>
         <div className="rf-etat">{etat}</div>
         <div className="rf-duree"><b>{dureeDemiHeures(n)}</b></div>
         <div className="rf-arrivee">jusqu’à {pad(h)}:{pad(arrivee % 60)}{lendemain ? ', demain' : ''} : {apres(n)}</div>
         {max > 1 ? (
           <label className="rf-reglette">
-            <span className="rf-sr">Temps passé à panser</span>
+            <span className="rf-sr">Temps passé à soigner</span>
             <input type="range" min={1} max={max} step={1} value={n} style={{ ['--p' as string]: `${pos(n)}%` }}
               onChange={(ev) => changer(Number(ev.target.value))} />
             <span className="rf-graduations" aria-hidden="true">{graduations.map((v) => <i key={v} style={{ left: `${pos(v)}%` }}>{dureeDemiHeures(v)}</i>)}</span>
@@ -66,7 +66,7 @@ export function FenetrePansement({ minute, nomEcho, etat, max, apres, filtre, so
         <div className="rf-note">{nomEcho} se laissera faire, bien au calme.</div>
         <div className="rf-boutons">
           <button className="rf-annuler" onClick={() => { son('page', 0.6); fermer(surAnnuler); }}>Annuler</button>
-          <button className="rf-attendre" onClick={() => { son('stamp'); fermer(() => surValider(n)); }}>Panser</button>
+          <button className="rf-attendre" onClick={() => { son('stamp'); fermer(() => surValider(n)); }}>Soigner</button>
         </div>
       </div>
     </div>

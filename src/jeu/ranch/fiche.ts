@@ -1,14 +1,15 @@
-// La fiche de l'écho (onglet « Écho » du petit carnet) : portrait, tempérament, caractéristiques de combat.
+// La fiche de l'écho (onglet « Écho » du petit carnet) : portrait, tempérament, caractéristiques de combat, techniques.
 // Jamais de chiffre : des jauges à crans, des paliers nommés, des flèches pour ce qui vient de progresser.
 import {
-  CLES_CARACS, CLES_TEMPERAMENT, NOM_CARAC, TRAIT_DE_TEMPERAMENT,
+  CLES_CARACS, CLES_TEMPERAMENT, NOM_CARAC, TEMPERAMENT_MAX, TRAIT_DE_TEMPERAMENT, accord,
   type Caracs, type CleCarac, type CleTrait, type Etat,
 } from '@/moteur/simulation';
+import { CATEGORIES_TECHNIQUE, MAX_TECHNIQUES, SEUILS_TECHNIQUES, TECHNIQUES, poolTechniques, techniquesADecouvrir, type CategorieTechnique } from '@/moteur/combat';
 import { TEMPERAMENTS } from './evenements';
 
-export type OngletFiche = 'portrait' | 'temperament' | 'combat';
+export type OngletFiche = 'portrait' | 'temperament' | 'combat' | 'techniques';
 export const ONGLETS_FICHE: { k: OngletFiche; nom: string }[] = [
-  { k: 'portrait', nom: 'Portrait' }, { k: 'temperament', nom: 'Tempérament' }, { k: 'combat', nom: 'Combat' },
+  { k: 'portrait', nom: 'Portrait' }, { k: 'temperament', nom: 'Tempérament' }, { k: 'combat', nom: 'Combat' }, { k: 'techniques', nom: 'Techniques' },
 ];
 
 const NOM_TRAIT: Record<CleTrait, string> = {
@@ -61,7 +62,10 @@ export function lignesCombat(e: Etat, recents: Partial<Record<CleCarac, string>>
 
 const intensite = (v: number) => (v < 35 ? 'à peine' : v < 50 ? 'un peu' : v < 65 ? 'nettement' : v < 80 ? 'fortement' : 'profondément');
 
-/** Les cinq tempéraments : la part innée (0 à 3 crans, tirée à l'éclosion) et le trait qu'il nourrit, qui évolue. */
+/**
+ * Les cinq tempéraments : la part innée, sur cinq ronds comme le « x/5 » du prototype (0 à 3 pleins, tirés à
+ * l'éclosion), et le trait qu'il nourrit, qui évolue.
+ */
 export function lignesTemperament(e: Etat) {
   const max = Math.max(...CLES_TEMPERAMENT.map((k) => e.temperament[k]));
   return CLES_TEMPERAMENT.map((k) => {
@@ -69,7 +73,7 @@ export function lignesTemperament(e: Etat) {
     return {
       nom: t.label, couleur: n ? t.color : '#9a8668', lueur: n ? t.glow : 'transparent', glyphe: t.glyphe,
       cls: n === 0 ? 'absent' : n === max ? 'dominant' : '',
-      points: [0, 1, 2].map((i) => ({ cls: i < n ? 'plein' : '' })),
+      points: Array.from({ length: TEMPERAMENT_MAX }, (_, i) => ({ cls: i < n ? 'plein' : '' })),
       trait: `${NOM_TRAIT[trait]} · ${intensite(e.traits[trait])}`,
     };
   });
@@ -79,4 +83,53 @@ export function lignesTemperament(e: Etat) {
 export function temperamentDominant(e: Etat) {
   const k = CLES_TEMPERAMENT.reduce((a, b) => (e.temperament[b] > e.temperament[a] ? b : a));
   return TEMPERAMENTS[k];
+}
+
+// ——— Techniques
+
+export interface TechniqueFiche {
+  nom: string;
+  categorie: CategorieTechnique;
+  /** « Physique », « Spectral »… */
+  famille: string;
+  description: string;
+  /** Emportée au combat. */
+  equipee: boolean;
+  /** Apprise sous une autre forme : elle ne fait plus partie de ses affinités (on peut la laisser, pas la reprendre). */
+  horsAffinites: boolean;
+}
+
+/** Ce qui manque d'intelligence jusqu'à la prochaine technique, en mots. */
+export function pisteTechnique(ecart: number): string {
+  if (ecart <= 40) return 'son esprit s’éveille : une nouvelle technique est toute proche';
+  if (ecart <= 150) return 'encore un peu d’intelligence, et une autre viendra';
+  return 'il faudra bien davantage d’intelligence pour la suivante';
+}
+
+/**
+ * Les techniques de l'écho pour l'onglet « Techniques » : celles qu'il a apprises (et s'il les emporte), ses trois
+ * emplacements de combat, et ce qui reste à découvrir sous sa forme actuelle — en silhouettes, avec une piste en mots.
+ */
+export function lireTechniquesFiche(e: Etat) {
+  const t = e.techniques ?? { connues: [], equipees: [], seuils: [] };
+  const pool = e.stade === 'bebe' ? [] : poolTechniques(e);
+  const famille = (c: CategorieTechnique) => CATEGORIES_TECHNIQUE.find((x) => x.cle === c)?.libelle ?? c;
+  const fiche = (nom: string): TechniqueFiche => {
+    const f = TECHNIQUES[nom];
+    return {
+      nom, categorie: f?.categorie ?? 'physique', famille: famille(f?.categorie ?? 'physique'), description: f?.description ?? '',
+      equipee: t.equipees.includes(nom), horsAffinites: !pool.includes(nom),
+    };
+  };
+  const connues = t.connues.filter((n) => TECHNIQUES[n]).map(fiche);
+  const equipees = e.stade === 'bebe' ? [] : t.equipees.filter((n) => t.connues.includes(n)).slice(0, MAX_TECHNIQUES);
+  const emplacements = Array.from({ length: MAX_TECHNIQUES }, (_, i) => (equipees[i] ? fiche(equipees[i]) : null));
+  const dec = techniquesADecouvrir(e.caracs.intelligence, t, pool);
+  const il = accord(e, 'il', 'elle');
+  let mot: string;
+  if (e.stade === 'bebe') mot = `Bébé, ${il} ne retient aucune technique : les premières viendront quand ${il} aura grandi, à mesure qu’${il} gagnera en intelligence.`;
+  else if (dec.nombre) { const p = pisteTechnique(dec.ecart!); mot = `${p[0].toUpperCase()}${p.slice(1)}.`; }
+  else if (SEUILS_TECHNIQUES.some((x) => !t.seuils.includes(x) && e.caracs.intelligence < x)) mot = `Sous sa forme actuelle, ${il} connaît déjà tout ce qu’${il} peut apprendre.`;
+  else mot = `Son esprit a appris tout ce qu’il pouvait : ${il} n’apprendra plus de nouvelle technique.`;
+  return { bebe: e.stade === 'bebe', connues, emplacements, plein: equipees.length >= MAX_TECHNIQUES, aDecouvrir: dec.nombre, mot };
 }

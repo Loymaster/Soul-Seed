@@ -491,6 +491,7 @@ export function VueRanch({ v }: { v: any }) {
                 </Fragment>
               ))}
             </>) : null}
+             {v.ficheTechniques} 
           </>) : null}
           {v.ficheChoix ? (<>
             <div style={{ position: "relative", display: "flex", flexDirection: "column", gap: "1px" } as CSSProperties}>

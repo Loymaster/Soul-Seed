@@ -122,3 +122,12 @@
 .cn-fragments{display:flex;justify-content:space-around;margin:10px 0}
 .cn-note.bas{bottom:2px}
 .cn-coeur{position:absolute;width:60px;height:60px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Reenie Beanie',cursive;font-size:40px;color:#9a8668;background:radial-gradient(circle,rgba(255,236,190,.9),rgba(255,236,190,0) 70%)}
+
+/* —— Journal (tout l'historique, page à page) */
+.cn-journal{display:flex;flex-direction:column}
+.cn-jour-titre{font-family:'Reenie Beanie',cursive;font-size:30px;line-height:1;color:#3a2a1c;margin:6px 0 6px}
+.cn-jour-titre em{font-size:22px;font-style:normal;color:#9a8668}
+.cn-entree{display:flex;gap:12px;font-size:16px;line-height:24px;margin-bottom:6px}
+.cn-heure{flex:none;width:46px;font-family:'Alegreya SC',serif;font-size:13px;color:#9a7b55}
+.cn-journal-fin{margin-top:8px;text-align:center;font-family:'Reenie Beanie',cursive;font-size:22px;color:#9a8668}
+.cn-journal-fin::before,.cn-journal-fin::after{content:'~';margin:0 8px;color:#b9a78c}

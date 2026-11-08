@@ -83,3 +83,32 @@ export function techniquesEquipees(stade: Stade, equipees: string[], connues: st
   if (stade === 'bebe') return [];
   return equipees.filter(n => connues.includes(n)).slice(0, MAX_TECHNIQUES);
 }
+
+export type TechniquesEcho = { connues: string[]; equipees: string[]; seuils: number[] };
+
+/**
+ * Choisir ou laisser une technique pour le combat (toggleEquipFromMenu du prototype) : on retire toujours une
+ * technique emportée ; on n'en prend une que si elle est apprise, qu'elle fait partie des affinités de sa forme
+ * actuelle (son pool) et qu'il en emporte moins de trois. Aucune au stade Bébé.
+ */
+export function basculerTechnique(
+  t: TechniquesEcho, nom: string, stade: Stade, pool: string[],
+): { ok: true; techniques: TechniquesEcho; equipee: boolean } | { ok: false; cause: 'inconnue' | 'bebe' | 'affinites' | 'plein' } {
+  if (t.equipees.includes(nom)) return { ok: true, equipee: false, techniques: { ...t, equipees: t.equipees.filter((n) => n !== nom) } };
+  if (!t.connues.includes(nom)) return { ok: false, cause: 'inconnue' };
+  if (stade === 'bebe') return { ok: false, cause: 'bebe' };
+  if (!pool.includes(nom)) return { ok: false, cause: 'affinites' };
+  if (t.equipees.length >= MAX_TECHNIQUES) return { ok: false, cause: 'plein' };
+  return { ok: true, equipee: true, techniques: { ...t, equipees: [...t.equipees, nom] } };
+}
+
+/**
+ * Ce qui reste à apprendre : chaque seuil d'intelligence pas encore franchi apprendra une technique, tant que son
+ * pool actuel en contient d'inconnues. `ecart` : ce qui manque d'intelligence jusqu'au prochain seuil (caché :
+ * l'affichage le traduit en mots).
+ */
+export function techniquesADecouvrir(intelligence: number, t: TechniquesEcho, pool: string[]): { nombre: number; ecart: number | null } {
+  const restants = SEUILS_TECHNIQUES.filter((s) => !t.seuils.includes(s) && intelligence < s);
+  const inconnues = pool.filter((n) => !t.connues.includes(n)).length;
+  return { nombre: Math.min(restants.length, inconnues), ecart: restants.length && inconnues ? restants[0] - intelligence : null };
+}

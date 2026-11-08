@@ -1,4 +1,4 @@
-// « Panser les blessures » au ranch : rendre à l'écho ses PV de combat, en prenant le temps qu'il faut.
+// « Appliquer les premiers soins » au ranch (« panser » dans le code) : rendre à l'écho ses PV de combat, en prenant le temps qu'il faut.
 // Règles (demande de l'autrice) :
 //  - chaque demi-heure passée à panser rend 10 % des PV de combat maximum ;
 //  - on choisit le temps passé (réglette), au plus la tranche de PV perdus arrondie à la dizaine supérieure :
