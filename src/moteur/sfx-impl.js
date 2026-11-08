@@ -319,6 +319,13 @@ export const SFX = {
     [0, 0.42].forEach((o) => this.noise(t + o, 0.32, { f: 2800, fTo: 4200, q: 0.8, gain: 0.05, attack: 0.06, grain: 0.0018 })); },
   croque() { const c = this.get(); if (!c) return; const t = c.currentTime;
     for (let i = 0; i < 3; i++) this.noise(t + i * 0.05, 0.05, { f: 1800 + Math.random() * 1500, q: 1.5, gain: 0.09, grain: 0.003 }); },
+  // visite : l'appel au clic (deux notes vives qui montent) puis l'éclat quand les deux échos se retrouvent
+  appel() { const c = this.get(); if (!c) return; const t = c.currentTime;
+    [[587.33, 0], [880, 0.09]].forEach(([f, d]) => this.tone(f, t + d, 0.22, { gain: 0.07, attack: 0.005, type: 'triangle', lp: 3200, send: this.bright, sendGain: 0.4 }));
+    this.noise(t, 0.12, { f: 2400, fTo: 4200, q: 1.2, gain: 0.025, attack: 0.01 }); },
+  retrouvailles() { const c = this.get(); if (!c) return; const t = c.currentTime;
+    this.noise(t, 0.3, { type: 'highpass', f: 5200, gain: 0.025, attack: 0.02 });
+    [[783.99, 0], [987.77, 0.06], [1318.5, 0.12]].forEach(([f, d]) => this.tone(f, t + d, 0.7, { gain: 0.05, attack: 0.006, lp: 4200, send: this.bright, sendGain: 0.6 })); },
   rebond() { const c = this.get(); if (!c) return; const t = c.currentTime;
     this.tone(260, t, 0.22, { to: 520, gain: 0.07, type: 'triangle' }); },
   bulles() { const c = this.get(); if (!c) return; const t = c.currentTime;

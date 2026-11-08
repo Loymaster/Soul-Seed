@@ -91,8 +91,16 @@ export interface InteractionVisite {
   texte: string;
 }
 
-/** Probabilité, à chaque heure de visite (éveillé), que les deux échos fassent quelque chose ensemble. */
+/** Probabilité de base, à chaque heure de visite (éveillé), que les deux échos fassent quelque chose ensemble. */
 export const CHANCE_INTERACTION_VISITE = 0.4;
+/**
+ * Selon la relation : des amis (et plus encore des inséparables) vont d'eux-mêmes l'un vers l'autre bien plus souvent ;
+ * des rivaux se cherchent aussi un peu plus (disputes) ; des inconnus s'observent.
+ */
+export const CHANCE_INTERACTION_RELATION: Record<NiveauRelation, number> = {
+  hostilite: 0.45, mefiance: 0.35, inconnu: 0.3, neutre: 0.35, camaraderie: 0.5, amitie: 0.65, complicite: 0.8,
+};
+export const chanceInteractionVisite = (s: Pick<EchoSauvage, 'affectPositif' | 'affectNegatif'>): number => CHANCE_INTERACTION_RELATION[niveauRelation(s)];
 
 /** Probabilité qu'une proposition de jeu soit acceptée (computeInteractionSuccess). */
 export function probaEntente(e: Pick<Etat, 'personnalite'>, s: EchoSauvage, compat: number): number {

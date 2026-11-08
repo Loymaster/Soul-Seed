@@ -560,11 +560,13 @@ to{opacity:0;transform:scale(.6) rotate(2deg)}
 /* (z-index : la scène de dialogue déclare aussi un .sc-echo, à z-index 9) */
 .sc-echo{position:absolute;z-index:1;bottom:auto;left:540px;top:270px;width:200px;height:200px;transform-origin:50% 100%;opacity:0;pointer-events:none}
 
-.sc-echo img{position:absolute;left:50%;bottom:0;height:170px;width:auto;transform:translateX(-50%)}
+/* --h : hauteur de l'écho selon son stade (Ranch.tsx) ; ses pieds sont à 336 px du haut de .sc-avant, sa tête à 336 − --h */
+.sc-act{--h:170px;--tete:calc(336px - var(--h))}
+.sc-echo img{position:absolute;left:50%;bottom:0;height:var(--h);width:auto;transform:translateX(-50%)}
 
 .sc-anim{position:absolute;inset:0;transform-origin:50% 100%}
 
-.sc-ombre{position:absolute;left:50px;right:50px;bottom:-8px;height:18px;border-radius:50%;background:rgba(20,10,4,.3);filter:blur(2px)}
+.sc-ombre{position:absolute;left:calc(100px - var(--h) * .3);width:calc(var(--h) * .6);bottom:-8px;height:18px;border-radius:50%;background:rgba(20,10,4,.3);filter:blur(2px)}
 
 .sc-act.dedans .sc-echo{opacity:1;animation:scEntre .8s cubic-bezier(.33,.5,.4,1) both}
 
@@ -587,9 +589,12 @@ to{opacity:0;transform:scale(.6) rotate(2deg)}
 
 .sc-act.k-laver .p-laver,.sc-act.k-brosser .p-brosser,.sc-act.k-coucher .p-coucher,.sc-act.k-manger .p-manger,.sc-act.k-balle .p-balle,.sc-act.k-cache .p-cache,.sc-act.k-histoire .p-histoire,.sc-act.k-discussion .p-discussion,.sc-act.k-rire .p-rire,.sc-act.k-dessin .p-dessin,.sc-act.k-cabane .p-cabane,.sc-act.k-devinette .p-devinette,.sc-act.k-bruits .p-bruits,.sc-act.k-insectes .p-insectes,.sc-act.k-feu .p-feu,.sc-act.k-lecon .p-lecon,.sc-act.k-probleme .p-probleme,.sc-act.k-pierres .p-pierres,.sc-act.k-equilibre .p-equilibre,.sc-act.k-sauter .p-sauter,.sc-act.k-course .p-course,.sc-act.k-mediter .p-mediter,.sc-act.k-ranger .p-ranger,.sc-act.k-barriere .p-barriere,.sc-act.k-poules .p-poules,.sc-act.k-foin .p-foin,.sc-act.k-eau .p-eau,.sc-act.k-corde .p-corde,.sc-act.k-saut .p-saut,.sc-act.k-ciel .p-ciel,.sc-act.k-lucioles .p-lucioles,.sc-act.k-esprit .p-esprit,.sc-act.k-mediter .p-esprit,.sc-act.k-mediter .p-lucioles{display:block}
 
+/* tant que le geste n'a pas commencé, aucun accessoire ne se montre (visibility : les animations, même figées en « both », n'y touchent pas) */
+.sc-act:not(.agit) .p{visibility:hidden}
 .sc-act:not(.agit) .p *{animation-play-state:paused !important;opacity:0}
 
-.sc-act.agit .p>*{transition:opacity .3s}
+/* au début du geste, les accessoires apparaissent ensemble (le conteneur s'éclaire : rien ne se montre avant le reste) */
+.sc-act.agit .p{animation:fondu .3s ease .15s both}
 
 /* gestes de l'écho */
 .sc-act.agit.k-laver .sc-anim{animation:scSecoue 1.2s ease-in-out infinite}
@@ -768,13 +773,13 @@ to{transform:scale(1.4);opacity:0}
 }
 
 /* brosser : la brosse passe et repasse, quelques poils s'envolent */
-.brosse-i{position:absolute;left:204px;top:226px;width:92px;height:auto;filter:drop-shadow(0 4px 4px rgba(30,14,4,.4));animation:scBrosse 1s ease-in-out infinite}
+.brosse-i{position:absolute;left:calc(254px - var(--h) * .19);top:calc(336px - var(--h) * .62);width:calc(var(--h) * .38);height:auto;filter:drop-shadow(0 4px 4px rgba(30,14,4,.4));animation:scBrosse 1s ease-in-out infinite}
 
-@keyframes scBrosse{0%,100%{transform:translate(-56px,10px) rotate(-16deg)}
-50%{transform:translate(64px,-8px) rotate(12deg)}
+@keyframes scBrosse{0%,100%{transform:translate(calc(var(--h) * -.33),10px) rotate(-16deg)}
+50%{transform:translate(calc(var(--h) * .38),-8px) rotate(12deg)}
 }
 
-.poil{position:absolute;top:226px;width:9px;height:9px;border-radius:50% 50% 50% 0;background:#f3e4c8;box-shadow:0 0 0 1.5px rgba(58,31,14,.45);animation:scPoil 1.5s ease-out infinite both}
+.poil{position:absolute;top:calc(336px - var(--h) * .58);width:9px;height:9px;border-radius:50% 50% 50% 0;background:#f3e4c8;box-shadow:0 0 0 1.5px rgba(58,31,14,.45);animation:scPoil 1.5s ease-out infinite both}
 
 @keyframes scPoil{from{transform:none;opacity:1}
 to{transform:translate(40px,-110px) rotate(200deg) scale(.6);opacity:0}
@@ -783,7 +788,7 @@ to{transform:translate(40px,-110px) rotate(200deg) scale(.6);opacity:0}
 /* coucher */
 .lune-s{position:absolute;left:390px;top:36px;width:56px;height:56px;border-radius:50%;box-shadow:inset 14px -6px 0 0 #f4f1dc;transform:rotate(-20deg);filter:drop-shadow(0 0 12px rgba(230,235,255,.6))}
 
-.zz{position:absolute;top:150px;font-family:'Reenie Beanie',cursive;font-size:26px;font-weight:400;color:#e8ecff;text-shadow:0 1px 3px rgba(0,0,0,.6);animation:scZ 2.4s ease-out infinite}
+.zz{position:absolute;top:calc(var(--tete) - 10px);font-family:'Reenie Beanie',cursive;font-size:26px;font-weight:400;color:#e8ecff;text-shadow:0 1px 3px rgba(0,0,0,.6);animation:scZ 2.4s ease-out infinite}
 
 @keyframes scZ{from{transform:translate(0,0);opacity:0}
 20%{opacity:1}
@@ -791,7 +796,7 @@ to{transform:translate(40px,-110px);opacity:0}
 }
 
 /* manger : l'aliment tombe devant lui et diminue à chaque bouchée */
-.aliment-s{position:absolute;left:219px;top:232px;width:70px;height:70px;object-fit:contain;filter:drop-shadow(0 3px 3px rgba(30,14,4,.4));animation:scAliment 3.3s ease-in both}
+.aliment-s{position:absolute;left:219px;top:calc(336px - var(--h) * .62);width:70px;height:70px;object-fit:contain;filter:drop-shadow(0 3px 3px rgba(30,14,4,.4));animation:scAliment 3.3s ease-in both}
 
 @keyframes scAliment{0%{transform:translateY(-260px) rotate(-25deg);opacity:0}
 6%{opacity:1}
@@ -804,7 +809,7 @@ to{transform:translate(40px,-110px);opacity:0}
 86%,100%{transform:scale(0);opacity:0}
 }
 
-.miette{position:absolute;left:252px;top:262px;width:7px;height:7px;border-radius:2px;background:#c8955a;box-shadow:0 0 0 1px rgba(58,31,14,.4);animation:scMiette .8s ease-out .8s infinite both}
+.miette{position:absolute;left:252px;top:calc(336px - var(--h) * .42);width:7px;height:7px;border-radius:2px;background:#c8955a;box-shadow:0 0 0 1px rgba(58,31,14,.4);animation:scMiette .8s ease-out .8s infinite both}
 
 @keyframes scMiette{from{transform:none;opacity:1}
 to{transform:translate(var(--mx),78px) rotate(120deg);opacity:0}
@@ -1604,7 +1609,7 @@ to{transform:translateX(0)}
 100%{opacity:0;transform:translate(14px,-90px) scale(1.15)}
 }
 
-.eclat-b{position:absolute;width:18px;height:18px;background:#fff6d6;clip-path:polygon(50% 0,62% 38%,100% 50%,62% 62%,50% 100%,38% 62%,0 50%,38% 38%);filter:drop-shadow(0 0 6px rgba(255,230,160,.95));animation:scEclat 1.8s ease-in-out infinite both}
+.eclat-b{position:absolute;left:calc(254px + var(--h) * var(--ex));top:calc(336px - var(--h) * var(--ey));width:18px;height:18px;background:#fff6d6;clip-path:polygon(50% 0,62% 38%,100% 50%,62% 62%,50% 100%,38% 62%,0 50%,38% 38%);filter:drop-shadow(0 0 6px rgba(255,230,160,.95));animation:scEclat 1.8s ease-in-out infinite both}
 
 @keyframes scEclat{0%,100%{transform:scale(0) rotate(0);opacity:0}
 40%{transform:scale(1.1) rotate(45deg);opacity:1}
@@ -1627,9 +1632,9 @@ to{transform:translate(90px,-150px) scale(1.2) rotate(90deg);opacity:0}
 /* discussion : des paroles échangées */
 .parole{position:absolute;width:76px;height:auto;filter:drop-shadow(0 6px 6px rgba(30,14,4,.35));animation:scParole 2.4s ease-in-out infinite both}
 
-.p-g{left:40px;top:70px}
+.p-g{left:96px;top:calc(var(--tete) - 50px)}
 
-.p-d{left:340px;top:56px;animation-delay:1.2s}
+.p-d{left:322px;top:calc(var(--tete) - 80px);animation-delay:1.2s}
 
 @keyframes scParole{0%,100%{transform:scale(0);opacity:0}
 12%,45%{transform:scale(1);opacity:1}
@@ -1647,7 +1652,7 @@ to{transform:translate(90px,-150px) scale(1.2) rotate(90deg);opacity:0}
 /* tableau : dessin, leçon, problème */
 .tableau-i{position:absolute;left:16px;top:120px;width:140px;height:auto;filter:drop-shadow(0 6px 6px rgba(30,14,4,.35))}
 
-.craie-s{position:absolute;left:52px;top:150px}
+.craie-s{position:absolute;left:52px;top:172px}
 
 .craie-s path{stroke-dasharray:100;stroke-dashoffset:100;animation:scCraie 2.6s ease-in-out infinite}
 
@@ -1656,7 +1661,7 @@ to{transform:translate(90px,-150px) scale(1.2) rotate(90deg);opacity:0}
 100%{stroke-dashoffset:0;opacity:0}
 }
 
-.craie-t{position:absolute;left:70px;top:146px;font-family:'Reenie Beanie',cursive;font-size:56px;line-height:1;color:#f4f1e6}
+.craie-t{position:absolute;left:37px;top:168px;width:99px;height:68px;display:flex;align-items:center;justify-content:center;font-family:'Reenie Beanie',cursive;font-size:54px;line-height:1;color:#f4f1e6}
 
 .craie-t.q{animation:scQ 3.2s ease-in-out infinite both}
 
@@ -1671,11 +1676,11 @@ to{transform:translate(90px,-150px) scale(1.2) rotate(90deg);opacity:0}
 70%,100%{opacity:1;transform:none}
 }
 
-.devine{position:absolute;left:300px;top:120px;font-family:'Alegreya SC',serif;font-weight:700;font-size:40px;color:#fff6dc;text-shadow:0 0 2px #3a1f0e,0 0 10px rgba(255,220,140,.8);animation:scDevine 2.6s ease-out infinite both}
+.devine{position:absolute;left:300px;top:calc(var(--tete) - 46px);font-family:'Alegreya SC',serif;font-weight:700;font-size:40px;color:#fff6dc;text-shadow:0 0 2px #3a1f0e,0 0 10px rgba(255,220,140,.8);animation:scDevine 2.6s ease-out infinite both}
 
-.devine.d2{left:340px;top:150px;animation-delay:.5s;font-size:30px}
+.devine.d2{left:340px;top:calc(var(--tete) - 16px);animation-delay:.5s;font-size:30px}
 
-.devine.d3{left:320px;top:100px;animation-delay:1.4s;font-size:48px;color:#ffe27a}
+.devine.d3{left:320px;top:calc(var(--tete) - 66px);animation-delay:1.4s;font-size:48px;color:#ffe27a}
 
 @keyframes scDevine{0%{transform:translateY(20px) scale(.3);opacity:0}
 20%{transform:none;opacity:1}
@@ -1744,13 +1749,13 @@ to{transform:translate(var(--ex),-150px);opacity:0}
 }
 
 /* entraînements */
-.pierre-i{position:absolute;left:204px;top:96px;width:100px;height:auto;filter:drop-shadow(0 6px 5px rgba(30,14,4,.4));animation:scPierre 1.3s ease-in-out infinite}
+.pierre-i{position:absolute;left:204px;top:calc(var(--tete) - 108px);width:100px;height:auto;filter:drop-shadow(0 6px 5px rgba(30,14,4,.4));animation:scPierre 1.3s ease-in-out infinite}
 
 @keyframes scPierre{0%,100%{transform:translateY(40px) rotate(-3deg)}
 45%,60%{transform:translateY(-22px) rotate(3deg)}
 }
 
-.sueur{position:absolute;left:246px;top:190px;width:16px;height:auto;opacity:0;animation:scSueur 1.8s ease-out infinite both}
+.sueur{position:absolute;left:246px;top:calc(var(--tete) + var(--h) * .08);width:16px;height:auto;opacity:0;animation:scSueur 1.8s ease-out infinite both}
 
 @keyframes scSueur{0%{transform:translate(0,0) scale(.5);opacity:0}
 15%{opacity:1}
@@ -1769,7 +1774,7 @@ to{transform:translate(var(--ex),-150px);opacity:0}
 .aura{display:none}
 
 /* méditer : une aura derrière lui (dans la couche de l'écho, sous son image) */
-.sc-act.agit.k-mediter .sc-echo::before{content:"";position:absolute;left:-10px;top:-6px;width:220px;height:220px;border-radius:50%;background:radial-gradient(circle,rgba(200,190,255,.55),rgba(150,130,255,.18) 45%,transparent 70%);animation:scAura 3s ease-in-out infinite}
+.sc-act.agit.k-mediter .sc-echo::before{content:"";position:absolute;left:calc(100px - var(--h) * .65);top:calc(200px - var(--h) * 1.15);width:calc(var(--h) * 1.3);height:calc(var(--h) * 1.3);border-radius:50%;background:radial-gradient(circle,rgba(200,190,255,.55),rgba(150,130,255,.18) 45%,transparent 70%);animation:scAura 3s ease-in-out infinite}
 
 @keyframes scAura{0%,100%{transform:scale(.9);opacity:.7}
 50%{transform:scale(1.15);opacity:1}
@@ -1795,7 +1800,7 @@ to{transform:translate(var(--ex),-150px);opacity:0}
 
 .barriere-i{position:absolute;left:336px;top:206px;width:150px;height:auto;filter:drop-shadow(0 6px 5px rgba(30,14,4,.35))}
 
-.planche-i{position:absolute;left:350px;top:252px;width:110px;height:auto;animation:scPlanche 3.2s ease-out both}
+.planche-i{position:absolute;left:370px;top:266px;width:84px;height:auto;animation:scPlanche 3.2s ease-out both}
 
 @keyframes scPlanche{0%{transform:translate(-160px,-60px) rotate(-30deg);opacity:0}
 20%{opacity:1}
@@ -1820,7 +1825,7 @@ to{transform:translate(var(--ex),-150px);opacity:0}
 95%{transform:translateX(0) scaleX(1)}
 }
 
-.gerbe-porte{position:absolute;left:204px;top:110px;width:100px;height:auto;filter:drop-shadow(0 6px 5px rgba(30,14,4,.4));animation:scPorteFoin 1.6s ease-in-out infinite}
+.gerbe-porte{position:absolute;left:204px;top:calc(var(--tete) - 92px);width:100px;height:auto;filter:drop-shadow(0 6px 5px rgba(30,14,4,.4));animation:scPorteFoin 1.6s ease-in-out infinite}
 
 .gerbe-tas{position:absolute;left:400px;width:80px;height:auto;opacity:0;animation:scTas 3.3s ease-out both;filter:drop-shadow(0 4px 4px rgba(30,14,4,.35))}
 
@@ -1834,7 +1839,7 @@ to{transform:translate(var(--ex),-150px);opacity:0}
 20%,100%{opacity:1;transform:none}
 }
 
-.seau-porte{position:absolute;left:296px;top:222px;width:74px;height:auto;transform-origin:50% 0;filter:drop-shadow(0 4px 4px rgba(30,14,4,.4));animation:scPorte .56s ease-in-out infinite alternate}
+.seau-porte{position:absolute;left:calc(254px + var(--h) * .25);top:calc(336px - var(--h) * .66);width:74px;height:auto;transform-origin:50% 0;filter:drop-shadow(0 4px 4px rgba(30,14,4,.4));animation:scPorte .56s ease-in-out infinite alternate}
 
 .goutte-e{position:absolute;left:330px;top:300px;width:8px;height:12px;border-radius:50% 50% 50% 50%/60% 60% 40% 40%;background:#8fd0f4;box-shadow:0 0 0 1.5px rgba(30,70,110,.5);animation:scGoutteE 1.4s ease-in infinite both}
 

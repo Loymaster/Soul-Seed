@@ -234,6 +234,30 @@ export function VueRanch({ v }: { v: any }) {
             </div>
           </>) : null}
         </div>
+        {v.visiteur.appel1 ? (<>
+          <div className="duo-appel" style={{ left: `${v.visiteur.appel1.x}px`, top: `${v.visiteur.appel1.y}px` } as CSSProperties}>
+            <b>
+              !
+            </b>
+          </div>
+        </>) : null}
+        {v.visiteur.appel2 ? (<>
+          <div className="duo-appel" style={{ left: `${v.visiteur.appel2.x}px`, top: `${v.visiteur.appel2.y}px` } as CSSProperties}>
+            <b>
+              !
+            </b>
+          </div>
+        </>) : null}
+        {v.visiteur.duo ? (<>
+          <div className={`duo-cadrage ${v.visiteur.duo.cls}`} style={{ "--x": `${v.visiteur.duo.x}px`, "--y": `${v.visiteur.duo.y}px` } as CSSProperties} />
+          <div className={`duo-eclat ${v.visiteur.duo.cls}`} style={{ left: `${v.visiteur.duo.x}px`, top: `${v.visiteur.duo.haut}px` } as CSSProperties}>
+            <i className="duo-anneau" />
+            <i className="duo-rayons" />
+            <b>
+              !
+            </b>
+          </div>
+        </>) : null}
       </>) : null}
       {/* L'écho se promène sur le terrain ; tout ce qui le concerne le suit */}
       <div className="echo-pos" style={{ opacity: v.echoOp, left: `${v.ex}px`, top: `${v.ey}px`, transitionDuration: `${v.eDur}s`, transform: `scale(${v.eScale})`, zIndex: v.eZ } as CSSProperties}>
@@ -562,7 +586,7 @@ export function VueRanch({ v }: { v: any }) {
       </nav>
       {/* Scène d'action : fenêtre centrale où l'écho saute pour laver, brosser, manger, jouer, s'entraîner… */}
       {v.sceneVisible ? (<>
-        <div className={`sc-act ${v.scCls}`} style={{ "--dx": `${v.scDx}px`, "--dy": `${v.scDy}px`, "--s0": v.scS0, "--ui": v.paperFilter } as CSSProperties}>
+        <div className={`sc-act ${v.scCls}`} style={{ "--dx": `${v.scDx}px`, "--dy": `${v.scDy}px`, "--s0": v.scS0, "--h": `${v.scH}px`, "--tete": `${v.scTete}px`, "--ui": v.paperFilter } as CSSProperties}>
           <button className="sc-voile" onClick={v.fermerScene} aria-label="Continuer" />
           <div className="sc-fen bois">
             <div className="sc-fond" style={{ filter: v.decorFilter } as CSSProperties}>
@@ -614,10 +638,6 @@ export function VueRanch({ v }: { v: any }) {
                 <i className="luciole" style={{ left: "399px", top: "227px", animationDelay: "-0.52s", animationDuration: "4.08s" } as CSSProperties} />
               </span>
             </div>
-            <i className="clou" style={{ left: "10px", top: "10px" } as CSSProperties} />
-            <i className="clou" style={{ right: "0", left: "auto", top: "10px" } as CSSProperties} />
-            <i className="clou" style={{ left: "10px", top: "auto", bottom: "0" } as CSSProperties} />
-            <i className="clou" style={{ right: "0", left: "auto", top: "auto", bottom: "0" } as CSSProperties} />
           </div>
           <div className="sc-echo">
             <span className="sc-ombre" />
@@ -666,9 +686,9 @@ export function VueRanch({ v }: { v: any }) {
               <i className="poil" style={{ left: "249px", animationDelay: "1.24s" } as CSSProperties} />
               <i className="poil" style={{ left: "244px", animationDelay: "0.03s" } as CSSProperties} />
               <i className="poil" style={{ left: "259px", animationDelay: "0.50s" } as CSSProperties} />
-              <i className="eclat-b" style={{ left: "180px", top: "190px" } as CSSProperties} />
-              <i className="eclat-b" style={{ left: "320px", top: "220px", animationDelay: ".6s" } as CSSProperties} />
-              <i className="eclat-b" style={{ left: "250px", top: "170px", animationDelay: "1.2s" } as CSSProperties} />
+              <i className="eclat-b" style={{ "--ex": "-.44", "--ey": ".86" } as CSSProperties} />
+              <i className="eclat-b" style={{ "--ex": ".39", "--ey": ".68", animationDelay: ".6s" } as CSSProperties} />
+              <i className="eclat-b" style={{ "--ex": "-.02", "--ey": ".98", animationDelay: "1.2s" } as CSSProperties} />
             </span>
             <span className="p p-coucher">
               <b className="zz" style={{ left: "300px" } as CSSProperties}>

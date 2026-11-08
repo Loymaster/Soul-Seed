@@ -42,9 +42,9 @@
 @keyframes rfSablier{0%,70%{transform:rotate(0)}85%,100%{transform:rotate(180deg)}}
 @keyframes rfSable{0%{transform:scaleY(.2)}70%{transform:scaleY(1)}100%{transform:scaleY(1)}}
 
-/* ——— Le sommeil : l'écran s'assombrit le temps d'une berceuse ——— */
+/* ——— Le sommeil : un ciel de nuit pleinement opaque (on ne voit plus le ranch) le temps d'une berceuse ——— */
 .rf-sommeil{position:absolute;inset:0;z-index:995;overflow:hidden;pointer-events:auto;cursor:default;
-  background:radial-gradient(ellipse at 50% 40%,rgba(28,30,70,.9),rgba(6,6,18,.97) 75%);animation:rfNuit 1s ease both}
+  background:#06060f radial-gradient(ellipse at 50% 40%,#1c1e46,#0b0b1e 55%,#06060f 80%);animation:rfNuit 1s ease both}
 .rf-sommeil.part{animation:rfJour .9s ease both}
 .rf-etoile{position:absolute;border-radius:50%;background:#fff6d8;box-shadow:0 0 6px 2px rgba(255,240,200,.6);animation:rfScintille ease-in-out infinite}
 .rf-lune{position:absolute;left:592px;top:150px;width:96px;height:96px;border-radius:50%;box-shadow:inset 26px -10px 0 0 #f4f1dc;transform:rotate(-20deg);filter:drop-shadow(0 0 22px rgba(230,235,255,.65));animation:rfLune 4s ease-in-out infinite}
