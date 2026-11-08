@@ -32,6 +32,14 @@ h1{font-weight:normal;font-style:italic;text-align:center;font-size:clamp(28px,4
 .volume input{width:120px;accent-color:#c9a97a}
 .fiche-son .titre{margin-top:4px}
 .temps{margin:10px 6px 0;padding-left:20px;font-size:14.5px;line-height:1.45;color:var(--encre2)}
+.palette{margin:12px 6px 0;font-size:14px;color:var(--encre2)}
+.palette:empty{display:none}
+.palette h4{margin:12px 0 6px;font:normal 13px/1 inherit;font-variant:small-caps;letter-spacing:1.5px;color:var(--encre)}
+.palette .notes{display:flex;flex-wrap:wrap;gap:6px}
+.palette .note-p{display:inline-flex;align-items:center;gap:6px;padding:3px 9px 3px 4px;border-radius:999px;background:rgba(110,63,34,.08);border:1px solid rgba(110,63,34,.18);font-size:13.5px}
+.palette .note-p i{width:16px;height:16px;border-radius:50%;box-shadow:inset 0 0 0 1px rgba(0,0,0,.15)}
+.palette .roue{display:grid;grid-template-columns:repeat(5,1fr);gap:4px;margin-top:4px;text-align:center;font-size:12.5px}
+.palette .roue i{display:block;height:10px;border-radius:3px;margin-bottom:3px}
 .temps li{margin:4px 0}.temps b{color:var(--encre);font-weight:normal;font-variant:small-caps;letter-spacing:1px}
 
 .carte{background:linear-gradient(180deg,var(--papier),var(--papier2));color:var(--encre);border-radius:6px;padding:14px 14px 18px;position:relative;box-shadow:0 0 0 6px var(--cuir),0 0 0 8px var(--cuir-sombre),0 16px 34px rgba(0,0,0,.55),inset 0 0 40px rgba(122,90,58,.18)}
@@ -76,13 +84,16 @@ h1{font-weight:normal;font-style:italic;text-align:center;font-size:clamp(28px,4
 <div class="page">
   <div class="surtitre">Soul Seed · séquence d'évolution · bruitage</div>
   <h1>Poussière d'étoiles, en musique</h1>
-  <p class="intro">La transformation est choisie : la silhouette se déforme lentement d'une forme à l'autre pendant qu'une nuée de grains, aux couleurs des deux formes, la suit en s'agitant. Reste le son. Choisissez une ambiance, puis <em>« Jouer avec le son »</em> (le navigateur n'autorise le son qu'après un clic).</p>
+  <p class="intro">La transformation est choisie : la silhouette se déforme lentement d'une forme à l'autre pendant qu'une nuée de grains, aux couleurs des deux formes, la suit en s'agitant. Reste le son. Choisissez une ambiance, ou l'une des propositions <em>Pigments</em>, où la couleur des grains choisit les notes, puis <em>« Jouer avec le son »</em> (le navigateur n'autorise le son qu'après un clic).</p>
 
   <div class="commandes">
     <div class="groupe" id="paires"><span>Exemple</span></div>
   </div>
   <div class="commandes">
-    <div class="groupe" id="sons"><span>Son</span></div>
+    <div class="groupe" id="sons"><span>Ambiance</span></div>
+  </div>
+  <div class="commandes">
+    <div class="groupe" id="pigments"><span>Pigments</span></div>
     <label class="volume"><span>Volume</span><input id="volume" type="range" min="0" max="1" step="0.05" value="0.7"></label>
     <button class="bouton" id="jouer">Jouer avec le son</button>
   </div>
@@ -97,6 +108,7 @@ h1{font-weight:normal;font-style:italic;text-align:center;font-size:clamp(28px,4
       <div class="titre"><span class="lettre" id="sonLettre">1</span><span class="nom" id="sonNom">—</span></div>
       <p class="desc" id="sonDesc"></p>
       <ol class="temps" id="sonTemps"></ol>
+      <div class="palette" id="palette"></div>
     </aside>
   </div>
   <p class="note">Les sons sont synthétisés à la volée (Web Audio), comme ceux du jeu : rien à télécharger, et chaque ambiance se règle finement une fois choisie.</p>
@@ -246,6 +258,7 @@ const VARIANTES = {
         souffle: ph(), r: 0.7 + Math.random() * 1.5, retard: Math.random() * 0.18,
         cA: couleur(pxA, q), cB: couleur(pxB, pb[Math.floor(k * (pb.length - 1))] || q) };
     });
+    NUEE = { grains, l: W };
     const blanche = (img, h) => { const k = document.createElement('canvas'); k.width = W; k.height = H; const x = k.getContext('2d'); const q = placer(img, h, 1); x.drawImage(img, q.x, q.y, q.l, q.h); x.globalCompositeOperation = 'source-in'; x.fillStyle = '#fffcf0'; x.fillRect(0, 0, W, H); return k; };
     const sA = blanche(de, hDe), sB = blanche(vers, hVers);
     const point = document.createElement('canvas'); point.width = point.height = 16; { const x = point.getContext('2d'); const r = x.createRadialGradient(8, 8, 0, 8, 8, 8); r.addColorStop(0, 'rgba(255,253,240,1)'); r.addColorStop(0.35, 'rgba(255,236,170,.75)'); r.addColorStop(1, 'rgba(255,220,140,0)'); x.fillStyle = r; x.fillRect(0, 0, 16, 16); }
@@ -292,6 +305,43 @@ const VARIANTES = {
   },
 };
 
+
+// ———————————————————————————————— les pigments : la couleur d'un grain donne une note
+// teinte → note d'une gamme pentatonique de do, en suivant le cercle des quintes (rouge do, jaune sol, vert ré,
+// bleu la, violet mi : des teintes voisines donnent des notes consonantes) ; clarté → octave (sombre grave, clair aigu) ;
+// saturation → éclat du timbre et volume (un gris joue un do doux, sans couleur).
+let NUEE = null;
+const SECTEURS = [{ demi: 0, nom: 'do', teinte: '#d8483c' }, { demi: 7, nom: 'sol', teinte: '#e6c23a' }, { demi: 2, nom: 'ré', teinte: '#5fb04a' },
+  { demi: 9, nom: 'la', teinte: '#3f86d0' }, { demi: 4, nom: 'mi', teinte: '#9b56c4' }];
+function pigment([R8, G8, B8]) {
+  const r = R8 / 255, g = G8 / 255, b = B8 / 255, max = Math.max(r, g, b), min = Math.min(r, g, b), d = max - min, L = (max + min) / 2;
+  const S = d === 0 ? 0 : d / (1 - Math.abs(2 * L - 1));
+  let H = 0; if (d) { H = max === r ? ((g - b) / d) % 6 : max === g ? (b - r) / d + 2 : (r - g) / d + 4; H = (H * 60 + 360) % 360; }
+  const secteur = S < 0.12 ? 0 : Math.round(H / 72) % 5;
+  const octave = L < 0.62 ? 0 : L < 0.8 ? 1 : 2;              // les grains sont éclaircis : la clarté va d'environ 0,55 à 1
+  return { secteur, octave, demi: SECTEURS[secteur].demi + 12 * octave, S, L, terne: S < 0.12 };
+}
+const hz = (base, demi) => base * Math.pow(2, demi / 12);
+/** L'état d'un grain à τ secondes de la transformation (6 s) : sa couleur du moment et sa place, sans l'agitation. */
+function grainA(q, tau) {
+  const m = avancement(tau * 1000, 'continu', 6000);
+  const av = lisse(borne((m - q.retard * (1 - m)) / (1 - q.retard * 0.6)));
+  const c = q.cA.map((v, j) => v + (q.cB[j] - v) * av);
+  return { c, x: q.a.x + (q.b.x - q.a.x) * av, p: pigment(c) };
+}
+/** L'accord d'une forme : ses notes les plus présentes (pondérées par la saturation), une par teinte, graves d'abord. */
+function accord(grains, cote, n = 4) {
+  const poids = new Map();
+  for (const q of grains) { const p = pigment(cote === 'a' ? q.cA : q.cB); const k = p.demi; const e = poids.get(k) || { p, w: 0, c: cote === 'a' ? q.cA : q.cB }; e.w += 0.25 + p.S; poids.set(k, e); }
+  const tri = [...poids.values()].sort((u, v) => v.w - u.w), r = [];
+  // d'abord une note par teinte (les gris à part), puis d'autres octaves des teintes présentes, puis le doublement à l'octave
+  const prendre = (ok) => { for (const e of tri) { if (r.length === n) return; if (!r.includes(e) && ok(e)) r.push(e); } };
+  prendre((e) => !e.p.terne && !r.some((x) => x.p.secteur === e.p.secteur));
+  prendre((e) => !r.some((x) => x.p.secteur === e.p.secteur));
+  prendre((e) => !r.some((x) => x.p.demi === e.p.demi));
+  for (let i = 0; r.length && r.length < n && i < 12; i++) { const e = r[i % r.length]; let d = e.p.demi; while (r.some((x) => x.p.demi === d)) d += 12; r.push({ ...e, p: { ...e.p, demi: d, octave: Math.min(2, Math.floor(d / 12)) } }); }
+  return r.sort((u, v) => u.p.demi - v.p.demi);
+}
 
 // ———————————————————————————————— le son : trois ambiances synthétisées, calées sur la séquence
 // Instants (s, depuis le clic) : blanchiment 0,7 → transformation 1,7 → 7,7 (6 s) → éclat 7,7 → révélation 7,85.
@@ -404,19 +454,87 @@ const Son = (() => {
         [523, 659, 784, 1047].forEach((f, j) => lame(f, fin + j * 0.01, 0.11, 2.6)); for (let j = 0; j < 10; j++) lame(note(2093, Math.floor(Math.random() * 7)), fin + 0.15 + j * 0.06, 0.02, 0.6, Math.random() * 1.6 - 0.8);
       },
     },
+
+    // —— les pigments
+    prisme: {
+      famille: 'pigments', nom: 'Prisme', desc: 'Chaque grain qui scintille sonne la note de sa couleur, à sa place dans l’espace (à gauche, à droite). On entend la palette de l’ancienne forme glisser vers celle de la nouvelle.',
+      temps: ['<b>Blanchiment</b> : une inspiration de lumière.', '<b>Transformation</b> : des clochettes de verre tirées dans la nuée, rares puis nombreuses au cœur de l’agitation ; chacune joue la couleur du grain à cet instant.', '<b>Éclat</b> : l’accord de la nouvelle forme, ses couleurs les plus présentes, en cloches claires.'],
+      jouer(t, nuee) {
+        const { blanc, debut, duree } = SON, t1 = t + debut, fin = t1 + duree, G = nuee.grains;
+        souffle(t + blanc, debut - blanc + 0.6, 400, 2600, 0.12, 0.8);
+        tourbillon(t1 + 0.4, duree - 0.6, 2000, 0.03);
+        grele(t1, duree * 0.92, 26, (x, k, a) => {
+          const q = G[(Math.random() * G.length) | 0], e = grainA(q, x - t1);
+          ping(hz(523.25, e.p.demi - 12), x, (0.022 + 0.05 * a) * (0.45 + 0.55 * e.p.S), 0.5 + Math.random() * 0.6, 0.8, borne((e.x - nuee.l / 2) / (nuee.l / 2), -1, 1) * 0.9);
+        });
+        const B = accord(G, 'b');
+        ping(hz(130.81, B[0].p.secteur === 0 ? 0 : SECTEURS[B[0].p.secteur].demi), fin, 0.1, 3.5, 0.9);
+        B.forEach((e, i) => ping(hz(523.25, e.p.demi - 12), fin + i * 0.03, 0.09, 3, 1, -0.5 + i * 0.33));
+      },
+    },
+    accord: {
+      famille: 'pigments', nom: 'Accord des pigments', desc: 'Chaque forme a son accord, tiré de ses couleurs dominantes. L’accord de l’ancienne forme tient, puis chaque voix glisse à son tour vers la note de la nouvelle : on entend l’écho changer de couleur.',
+      temps: ['<b>Blanchiment</b> : l’accord de l’ancienne forme se lève, doucement.', '<b>Transformation</b> : l’accord s’ouvre avec l’agitation ; ses voix glissent une à une vers l’accord de la nouvelle forme ; quelques clochettes aux couleurs des grains.', '<b>Éclat</b> : le nouvel accord, plein, en cloches.'],
+      jouer(t, nuee) {
+        const { blanc, debut, duree } = SON, t1 = t + debut, fin = t1 + duree, G = nuee.grains;
+        const A = accord(G, 'a'), B = accord(G, 'b');
+        const fl = ctx.createBiquadFilter(); fl.type = 'lowpass'; fl.Q.value = 2;
+        fl.frequency.setValueAtTime(500, t + blanc); fl.frequency.linearRampToValueAtTime(900, t1); fl.frequency.linearRampToValueAtTime(3200, t1 + duree * 0.5); fl.frequency.linearRampToValueAtTime(1600, fin);
+        const g = ctx.createGain(); g.gain.setValueAtTime(0.0001, t + blanc); g.gain.exponentialRampToValueAtTime(0.022, t1); g.gain.setValueAtTime(0.022, fin - 0.2); g.gain.exponentialRampToValueAtTime(0.0001, fin + 1.6);
+        fl.connect(g); g.connect(voie(0.7));
+        A.forEach((ea, i) => {
+          const eb = B[i] || B[B.length - 1], fa = hz(261.63, ea.p.demi - 12), fb = hz(261.63, eb.p.demi - 12);
+          const quand = t1 + duree * (0.22 + 0.5 * i / Math.max(1, A.length - 1));
+          for (const [type, d, v] of [['triangle', -5, 1], ['sine', 6, 0.8]]) {
+            const o = ctx.createOscillator(); o.type = type; o.detune.value = d; const gv = ctx.createGain(); gv.gain.value = v;
+            o.frequency.setValueAtTime(fa, t + blanc); o.frequency.setValueAtTime(fa, quand); o.frequency.exponentialRampToValueAtTime(fb, quand + 1.1);
+            const vib = ctx.createOscillator(); vib.frequency.value = 4.5 + i * 0.4; const vg = ctx.createGain(); vg.gain.value = 3; vib.connect(vg); vg.connect(o.detune);
+            o.connect(gv); gv.connect(fl); o.start(t + blanc); o.stop(fin + 1.8); vib.start(t + blanc); vib.stop(fin + 1.8);
+          }
+          ping(hz(1046.5, eb.p.demi - 12), quand + 0.9, 0.035, 1.6, 0.9, -0.6 + i * 0.4);   // chaque voix arrivée tinte
+        });
+        grele(t1, duree * 0.85, 7, (x, k, a) => { const e = grainA(G[(Math.random() * G.length) | 0], x - t1); ping(hz(1046.5, e.p.demi - 12), x, (0.01 + 0.015 * a) * (0.5 + 0.5 * e.p.S), 0.7, 0.9, Math.random() * 1.4 - 0.7); });
+        ping(hz(65.41, B[0].p.demi % 12), fin, 0.12, 4, 0.9);
+        B.forEach((e, i) => { ping(hz(523.25, e.p.demi - 12), fin + i * 0.02, 0.08, 3.2, 1); ping(hz(1046.5, e.p.demi - 12), fin + 0.25 + i * 0.09, 0.04, 2, 1, -0.6 + i * 0.4); });
+      },
+    },
+    partition: {
+      famille: 'pigments', nom: 'Partition de la silhouette', desc: 'Une boîte à musique lit la silhouette de haut en bas, comme un cylindre : chaque bande joue la couleur qui y domine. Chaque écho a donc sa propre mélodie, et on l’entend se transformer en celle de la nouvelle forme.',
+      temps: ['<b>Blanchiment</b> : on remonte la boîte.', '<b>Transformation</b> : la lecture va et vient de la tête aux pieds, de plus en plus vite avec l’agitation ; les notes changent à mesure que les grains prennent leurs nouvelles couleurs.', '<b>Éclat</b> : la mélodie de la nouvelle forme, lue d’un trait, puis son accord.'],
+      jouer(t, nuee) {
+        const { blanc, debut, duree } = SON, t1 = t + debut, fin = t1 + duree, G = nuee.grains, BANDES = 8;
+        for (let i = 0; i < 5; i++) { const x = t + blanc + i * 0.15; const src = ctx.createBufferSource(); src.buffer = bruitBlanc(); const fl = ctx.createBiquadFilter(); fl.type = 'bandpass'; fl.frequency.value = 3200; fl.Q.value = 8; const g = ctx.createGain(); env(g, x, 0.001, 0.3, 0, 0.03); src.connect(fl); fl.connect(g); g.connect(voie(0.2)); src.start(x); src.stop(x + 0.06); }
+        // la note d'une bande (grains rangés de haut en bas) à l'instant τ : la plus présente, pondérée par la saturation
+        const bande = (b, tau, cote) => {
+          const i0 = Math.floor(b * G.length / BANDES), i1 = Math.floor((b + 1) * G.length / BANDES), poids = new Map();
+          for (let i = i0; i < i1; i += 3) { const p = cote ? pigment(cote === 'a' ? G[i].cA : G[i].cB) : grainA(G[i], tau).p; poids.set(p.demi, (poids.get(p.demi) || 0) + 0.25 + p.S); }
+          return [...poids.entries()].sort((u, v) => v[1] - u[1])[0][0];
+        };
+        const agit = (tau) => Math.sin(Math.PI * borne((avancement(tau * 1000, 'continu', 6000) - 0.06) / 0.88));
+        let tau = 0, pas = 0;
+        while (tau < duree * 0.94) {
+          const a = agit(tau), cycle = pas % (2 * BANDES - 2), b = cycle < BANDES ? cycle : 2 * BANDES - 2 - cycle;
+          lame(hz(523.25, bande(b, tau) - 12), t1 + tau, 0.09, 1.1, -0.7 + 1.4 * b / (BANDES - 1));
+          if (a > 0.5 && pas % 2) lame(hz(1046.5, bande(b, tau) - 12), t1 + tau + 0.03, 0.02, 0.6, Math.random() * 1.4 - 0.7);
+          tau += 0.34 - 0.2 * a; pas++;
+        }
+        for (let b = 0; b < BANDES; b++) lame(hz(523.25, bande(b, 0, 'b') - 12), fin + b * 0.085, 0.1, 1.3, -0.7 + 1.4 * b / (BANDES - 1));
+        accord(G, 'b').forEach((e, i) => lame(hz(523.25, e.p.demi - 12), fin + BANDES * 0.085 + 0.12 + i * 0.01, 0.11, 2.6));
+      },
+    },
   };
 
   return {
     AMBIANCES,
     reglerVolume(v) { volume = v; if (maitre) maitre.gain.value = v; },
     arreter() { if (courant && ctx) { const g = courant.sortie; g.gain.cancelScheduledValues(ctx.currentTime); g.gain.setTargetAtTime(0.0001, ctx.currentTime, 0.08); const c = courant; setTimeout(() => c.sortie.disconnect(), 600); courant = null; } },
-    jouer(id) {
+    jouer(id, nuee) {
       if (!id || !pret()) return;
       this.arreter();
       const sortie = ctx.createGain(); sortie.connect(maitre); const sec = ctx.createGain(); sec.connect(sortie); const mouille = ctx.createGain(); mouille.connect(salle); const ret = ctx.createGain(); // la salle est commune : on dose l'envoi
       mouille.disconnect(); mouille.connect(salle);
       courant = { sortie, sec, mouille };
-      AMBIANCES[id].jouer(ctx.currentTime + 0.03);
+      AMBIANCES[id].jouer(ctx.currentTime + 0.03, nuee);
     },
     actif() { return !!ctx && ctx.state === 'running'; },
   };
@@ -450,8 +568,8 @@ class Scene {
   }
   jouer(avecSon = Son.actif()) {
     cancelAnimationFrame(this.raf); clearTimeout(this.minuteur);
-    if (avecSon) Son.jouer(etat.son); else Son.arreter();
-    this.monter(); this.phase(''); this.formes(true, false, false, false); this.dessiner(0, 0); this.curseur.value = 0;
+    this.monter();
+    if (avecSon) Son.jouer(etat.son, NUEE); else Son.arreter(); this.phase(''); this.formes(true, false, false, false); this.dessiner(0, 0); this.curseur.value = 0;
     const debut = performance.now();
     const pas = (now) => {
       const t = now - debut;
@@ -482,7 +600,7 @@ class Scene {
   const paires = document.getElementById('paires');
   PAIRES.forEach((p, i) => {
     const b = document.createElement('button'); b.className = 'pastille' + (i ? '' : ' on'); b.textContent = p.nom;
-    b.addEventListener('click', () => { etat.paire = p; paires.querySelectorAll('.pastille').forEach((x) => x.classList.toggle('on', x === b)); toutes(); });
+    b.addEventListener('click', () => { etat.paire = p; paires.querySelectorAll('.pastille').forEach((x) => x.classList.toggle('on', x === b)); toutes(); fiche(); });
     paires.appendChild(b);
   });
   // les ambiances
@@ -492,11 +610,22 @@ class Scene {
     document.getElementById('sonLettre').textContent = ids.indexOf(etat.son) + 1;
     document.getElementById('sonNom').textContent = a.nom; document.getElementById('sonDesc').textContent = a.desc;
     document.getElementById('sonTemps').innerHTML = a.temps.map((x) => '<li>' + x + '</li>').join('');
+    // pour les pigments : la règle des couleurs, et l'accord de chaque forme de l'exemple
+    const pal = document.getElementById('palette');
+    if (a.famille !== 'pigments' || !NUEE) { pal.innerHTML = ''; return; }
+    const pastille = (e) => `<span class="note-p"><i style="background:rgb(${e.c.map(Math.round).join(',')})"></i>${SECTEURS[e.p.secteur].nom}${['₄', '₅', '₆'][e.p.octave]}</span>`;
+    const [nDe, nVers] = etat.paire.nom.split('→').map((x) => x.trim());
+    pal.innerHTML = '<h4>La règle</h4><div class="roue">' + SECTEURS.map((x) => `<span><i style="background:${x.teinte}"></i>${x.nom}</span>`).join('') + '</div>'
+      + '<p style="margin:6px 0 0;font-size:13px">teinte → note (cercle des quintes) · plus clair → plus aigu · plus terne → plus doux</p>'
+      + `<h4>Accord de l’ancienne forme${nVers ? ' · ' + nDe : ''}</h4><div class="notes">` + accord(NUEE.grains, 'a').map(pastille).join('') + '</div>'
+      + `<h4>Accord de la nouvelle forme${nVers ? ' · ' + nVers : ''}</h4><div class="notes">` + accord(NUEE.grains, 'b').map(pastille).join('') + '</div>';
   };
+  const boutonsSon = [];
   Object.entries(Son.AMBIANCES).forEach(([id, a], i) => {
     const b = document.createElement('button'); b.className = 'pastille' + (i ? '' : ' on'); b.textContent = (i + 1) + ' · ' + a.nom;
-    b.addEventListener('click', () => { etat.son = id; sons.querySelectorAll('.pastille').forEach((x) => x.classList.toggle('on', x === b)); fiche(); toutes(true); });
-    sons.appendChild(b);
+    b.addEventListener('click', () => { etat.son = id; boutonsSon.forEach((x) => x.classList.toggle('on', x === b)); toutes(true); fiche(); });
+    boutonsSon.push(b);
+    document.getElementById(a.famille === 'pigments' ? 'pigments' : 'sons').appendChild(b);
   });
   fiche();
   document.getElementById('jouer').addEventListener('click', () => toutes(true));
