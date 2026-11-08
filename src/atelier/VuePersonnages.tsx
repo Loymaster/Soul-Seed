@@ -2,7 +2,7 @@
 // Chaque modification est enregistrée dans contenu/personnages/<id>.json.
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { Asset, Catalogue, FichePNJ, PNJCatalogue } from '@/contenu/types';
-import { SFX, TIMBRES, timbre } from '@/moteur/sfx';
+import { CADENCES, FAMILLES, VOIX, direLettre, pauseApres, reglagesVoix, type Cadence } from '@/moteur/voix';
 import { LIGNE_PIEDS, PLACES, PX_PAR_METRE, SCENE_H, SCENE_L, placer, rogner, type Place } from '@/moteur/scene/placement';
 import { api } from './api';
 import { Icone, ImageAsset, Section, normaliser, trouverAsset } from './commun';
@@ -165,13 +165,30 @@ function Fiche({ pnj, catalogue, notifier, ouvrirAsset }: { pnj: PNJCatalogue; c
               <span className="code">{fiche.encre}</span>
             </span>
           </label>
-          <Curseur libelle="Hauteur de la voix" valeur={fiche.voix.note} min={110} max={880} pas={1} format={(v) => `${Math.round(v)} Hz · ${nomNote(v)}`} onChange={(v) => majVoix({ note: v })} />
-          <Curseur libelle="Rythme de parole" valeur={fiche.voix.rythme} min={0.5} max={2} pas={0.01} format={(v) => (v < 0.9 ? `rapide (×${v.toFixed(2)})` : v > 1.1 ? `posé (×${v.toFixed(2)})` : `normal (×${v.toFixed(2)})`)} onChange={(v) => majVoix({ rythme: v })} />
           <label className="champ">
-            <span>Timbre</span>
-            <select className="saisie" value={typeof fiche.voix.timbre === 'string' ? fiche.voix.timbre : 'perso'} onChange={(e) => majVoix({ timbre: e.target.value })}>
-              {Object.entries(TIMBRES).map(([k, t]) => <option key={k} value={k}>{t.nom}</option>)}
+            <span>Voix <a href={`${import.meta.env.BASE_URL}outils/voix/essai-voix.html`} target="_blank" rel="noreferrer" style={{ marginLeft: 8, fontSize: 12.5 }}>essayer toutes les voix ↗</a></span>
+            <select className="saisie" value={typeof fiche.voix.timbre === 'string' ? fiche.voix.timbre : 'perso'} onChange={(e) => {
+              // une autre voix : on repart de ses réglages (hauteur, rythme…), qu'on ajuste ensuite
+              const v = VOIX[e.target.value];
+              setFiche((f) => ({ ...f, voix: { timbre: e.target.value, note: v?.note ?? f.voix.note, rythme: v?.rythme ?? f.voix.rythme } }));
+            }}>
+              {Object.entries(FAMILLES).map(([fam, nomFam]) => (
+                <optgroup key={fam} label={nomFam}>
+                  {Object.entries(VOIX).filter(([, v]) => v.famille === fam).map(([k, v]) => <option key={k} value={k}>{v.nom}</option>)}
+                </optgroup>
+              ))}
               {typeof fiche.voix.timbre !== 'string' && <option value="perso">Personnalisé</option>}
+            </select>
+          </label>
+          <Curseur libelle="Hauteur de la voix" valeur={fiche.voix.note} min={50} max={2000} pas={1} format={(v) => `${Math.round(v)} Hz · ${nomNote(v)}`} onChange={(v) => majVoix({ note: v })} />
+          <Curseur libelle="Rythme de parole" valeur={fiche.voix.rythme} min={0.5} max={2} pas={0.01} format={(v) => (v < 0.9 ? `rapide (×${v.toFixed(2)})` : v > 1.1 ? `posé (×${v.toFixed(2)})` : `normal (×${v.toFixed(2)})`)} onChange={(v) => majVoix({ rythme: v })} />
+          <Curseur libelle="Variation de hauteur" valeur={reglagesVoix(fiche.voix as never).variation} min={0} max={24} pas={1} format={(v) => (v === 0 ? 'recto tono' : `${v} demi-tons`)} onChange={(v) => majVoix({ variation: v })} />
+          <Curseur libelle="Durée des notes" valeur={reglagesVoix(fiche.voix as never).duree} min={0.3} max={2.5} pas={0.05} format={(v) => `×${v.toFixed(2)}`} onChange={(v) => majVoix({ duree: v })} />
+          <Curseur libelle="Volume de la voix" valeur={reglagesVoix(fiche.voix as never).volume} min={0} max={2} pas={0.05} format={(v) => `×${v.toFixed(2)}`} onChange={(v) => majVoix({ volume: v })} />
+          <label className="champ">
+            <span>Cadence</span>
+            <select className="saisie" value={reglagesVoix(fiche.voix as never).cadence} onChange={(e) => majVoix({ cadence: e.target.value as Cadence })}>
+              {Object.entries(CADENCES).map(([k, t]) => <option key={k} value={k}>{t}</option>)}
             </select>
           </label>
         </Section>
@@ -247,17 +264,16 @@ function SceneTest({ fiche, cheminVu, catalogue }: { fiche: FichePNJ; cheminVu?:
   }, []);
 
   function parler() {
-    const t = timbre(fiche.voix.timbre);
+    const v = reglagesVoix(fiche.voix as never);
     let i = 0;
     setEcrit('');
     const pas = () => {
       i++;
       const ch = texte[i - 1];
       setEcrit(texte.slice(0, i));
-      SFX.typeTick(ch, fiche.voix.note, t);
+      direLettre(texte, i - 1, v);
       if (i < texte.length) {
-        const pause = /[.!?…]/.test(ch) ? 260 : /[,;:]/.test(ch) ? 140 : 32;
-        setTimeout(pas, pause * fiche.voix.rythme);
+        setTimeout(pas, pauseApres(ch) * v.rythme);
       } else setTimeout(() => setEcrit(null), 1800);
     };
     pas();
@@ -323,7 +339,7 @@ function SceneTest({ fiche, cheminVu, catalogue }: { fiche: FichePNJ; cheminVu?:
         <button className="bouton principal-b" onClick={parler} disabled={ecrit !== null}><Icone nom="son" taille={16} /> Écouter la voix</button>
       </div>
       <div style={{ fontSize: 12.5, color: 'var(--encre-3)' }}>
-        Repère de scène {SCENE_L} × {SCENE_H} · {PX_PAR_METRE} px par mètre · tous les personnages ont les pieds sur la même ligne et sont à leur taille réelle.
+        Repère de scène {SCENE_L} × {SCENE_H} · {PX_PAR_METRE} px par mètre · tous les personnages ont les pieds sur la même ligne et sont à leur taille réelle (sous 1,20 m : grossis puis rehaussés).
       </div>
     </div>
   );

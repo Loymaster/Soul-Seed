@@ -25,20 +25,30 @@ export interface Placement {
  * taille : taille réelle en mètres ; visible : part du corps montrée par l'image (1 = des pieds à la tête,
  * 0,86 = l'image s'arrête un peu au-dessus des pieds). La partie manquante passe sous la ligne des pieds,
  * dans le flou de la zone de texte.
+ * Un petit personnage est d'abord grossi (tailleAffichee), puis rehaussé (rehausse) : les deux règles se combinent.
  */
 export function placer(taille: number, visible: number): Placement {
-  const complet = taille * PX_PAR_METRE;
+  const complet = tailleAffichee(taille) * PX_PAR_METRE;
   return { hauteur: Math.round(complet * visible), bas: Math.round(LIGNE_PIEDS + complet * (1 - visible) + rehausse(taille)) };
 }
 
 /**
- * Hauteur minimale atteinte par le haut de la tête, en mètres au-dessus de la ligne des pieds.
- * Un personnage plus petit (Lady Roger, Finn, Phil…) garde sa taille mais est rehaussé d'autant :
- * sinon il disparaîtrait presque entièrement derrière la feuille de dialogue.
+ * Seuil des petits personnages, en mètres. En dessous :
+ *  1. ils sont grossis : l'écart au seuil est resserré (RESSERREMENT), sans changer l'ordre des tailles
+ *     (Finn reste plus petit que Lady Roger, tous restent plus petits que Jumpy) ;
+ *  2. ils sont rehaussés : le haut de leur tête atteint ce seuil au-dessus de la ligne des pieds,
+ *     sinon ils disparaîtraient presque entièrement derrière la feuille de dialogue.
  */
 export const HAUTEUR_MIN = 1.2;
-/** Rehausse d'un personnage trop petit, en pixels (0 au-delà du seuil). */
-export const rehausse = (taille: number) => Math.max(0, (HAUTEUR_MIN - taille) * PX_PAR_METRE);
+/**
+ * Part de l'écart au seuil gardée à l'affichage (1 = taille réelle, 0 = tous à la taille du seuil).
+ * À 0,45 : Finn (0,60 m) s'affiche comme 0,93 m, Maïko (0,70 m) comme 0,98 m, Lady Roger (0,75 m) comme 1,00 m.
+ */
+export const RESSERREMENT = 0.45;
+/** Taille affichée en scène (m) : la taille réelle au-delà du seuil, resserrée vers le seuil en dessous. */
+export const tailleAffichee = (taille: number) => (taille >= HAUTEUR_MIN ? taille : HAUTEUR_MIN - (HAUTEUR_MIN - taille) * RESSERREMENT);
+/** Rehausse d'un personnage trop petit, en pixels (0 au-delà du seuil), calculée sur sa taille affichée. */
+export const rehausse = (taille: number) => Math.max(0, (HAUTEUR_MIN - tailleAffichee(taille)) * PX_PAR_METRE);
 
 /** Style d'une image rognée à sa boîte utile et affichée à une hauteur donnée. */
 export function rogner(image: { l: number; h: number; boite?: Boite }, hauteur: number) {

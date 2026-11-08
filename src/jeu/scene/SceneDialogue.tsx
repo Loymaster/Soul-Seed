@@ -4,7 +4,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { volumeMusique } from '../commun/volumes';
 import type { Asset, Catalogue, FichePNJ } from '@/contenu/types';
-import { SFX, TIMBRES, timbre } from '@/moteur/sfx';
+import { SFX } from '@/moteur/sfx';
+import { direLettre, pauseApres, reglagesVoix } from '@/moteur/voix';
 import { LecteurScene, type Changement, type Evenement } from '@/moteur/scene/lecteur';
 import { PLACES, placer, rogner, type Place } from '@/moteur/scene/placement';
 import { cheminDecor, cheminImage, cheminMusique } from '@/moteur/scene/valider';
@@ -53,8 +54,9 @@ type Affichage =
 
 /** Durée de l'estompe de fin de scène (ms), accordée à l'animation `sc-sortie` de scene.css. */
 const DUREE_SORTIE = 1000;
-const VOIX_NARRATION = { note: 330, rythme: 1.05, timbre: TIMBRES.narration.reglages };
-const VOIX_JOUEUR = { note: 262, rythme: 1, timbre: TIMBRES.doux.reglages };
+// voix de dialogue : bibliothèque de src/moteur/voix (champ « voix » des fiches de PNJ)
+const VOIX_NARRATION = reglagesVoix({ timbre: 'narration', note: 330, rythme: 1.05 });
+const VOIX_JOUEUR = reglagesVoix({ timbre: 'doux', note: 262, rythme: 1 });
 
 export function SceneDialogue(props: PropsSceneDialogue) {
   const { scene, catalogue, echo, apercu } = props;
@@ -160,7 +162,7 @@ export function SceneDialogue(props: PropsSceneDialogue) {
     if (qui === NARRATION) return VOIX_NARRATION;
     if (qui === JOUEUR) return VOIX_JOUEUR;
     const f = catalogue.pnj[qui];
-    return f ? { note: f.voix.note, rythme: f.voix.rythme, timbre: timbre(f.voix.timbre) } : VOIX_NARRATION;
+    return f ? reglagesVoix(f.voix as Parameters<typeof reglagesVoix>[0]) : VOIX_NARRATION;
   };
 
   const taper = () => {
@@ -169,9 +171,8 @@ export function SceneDialogue(props: PropsSceneDialogue) {
     if (a.tape >= a.texte.length) { setAff({ ...a, fini: true }); return; }
     const ch = a.texte[a.tape];
     const v = voixDe(a.qui);
-    if (propsRef.current.sons !== false) SFX.typeTick(ch, v.note, v.timbre);
-    let d = 26;
-    if (ch === '…') d = 320; else if ('.?!'.includes(ch)) d = 240; else if (ch === ',' || ch === ';' || ch === ':') d = 130; else if (ch === ' ') d = 34;
+    if (propsRef.current.sons !== false) direLettre(a.texte, a.tape, v);
+    const d = pauseApres(ch);
     const suivant = { ...a, tape: a.tape + 1 };
     affRef.current = suivant;
     setAff(suivant);

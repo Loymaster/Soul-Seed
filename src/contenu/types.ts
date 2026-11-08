@@ -45,7 +45,20 @@ export interface Asset {
   erreur?: string;
 }
 
-export interface Voix { note: number; rythme: number; timbre: string | Timbre }
+/**
+ * Voix de dialogue d'un PNJ : `timbre` nomme une voix de la bibliothèque (src/moteur/voix/moteur-voix.js, page d'essai
+ * outils/voix/essai-voix.html) ; les autres champs l'ajustent (absents : réglages de la voix choisie).
+ */
+export interface Voix {
+  timbre: string | Timbre;
+  note: number;
+  rythme: number;
+  variation?: number;
+  gamme?: 'penta' | 'majeure' | 'mineure' | 'chromatique' | 'libre';
+  duree?: number;
+  cadence?: 'lettre' | 'syllabe' | 'mot';
+  volume?: number;
+}
 
 export interface FichePNJ {
   id: string;

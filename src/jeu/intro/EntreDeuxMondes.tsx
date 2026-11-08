@@ -1,6 +1,8 @@
 // Introduction, première partie : entre deux mondes (registre « magie sainte »), portage de la maquette validée.
 // Bruitages sobres : la musique porte la scène ; chaque réponse est validée par une seule note (SFX.mystere),
-// aucun son au survol ; restent la voix feutrée de l'homme (une note très douce par mot) et le réveil.
+// aucun son au survol, aucun bruitage pendant que les paroles de l'homme s'écrivent (choix de l'autrice) ; reste le réveil.
+// Sa voix feutrée (une note très douce par mot) est gardée pour les rencontres suivantes : timbre « mystere »
+// de la bibliothèque des voix (src/moteur/voix), choisi dans sa fiche contenu/personnages/homme-mysterieux.json.
 // L'homme mystérieux demande le nom du personnage, son pronom, l'astre en qui il a confiance (→ son image)
 // et ce qui compte le plus pour lui (→ la Soul Seed que lui remettra Myhra). Puis le joueur s'éveille.
 import { useEffect, useRef, useState, type CSSProperties } from 'react';
@@ -86,7 +88,7 @@ export function EntreDeuxMondes({ surFin, musique = true }: { surFin: (r: Result
     toutArreter();
     const n = r.t.split(' ').length;
     setEtape(i); setTout(false); setFini(false); setParle(true);
-    for (let k = 0; k < n; k++) plusTard(() => SFX.motVoix(k), 250 + k * 160); // la voix : une note par mot
+    // le texte apparaît mot à mot (≈ 160 ms par mot), en silence : pas de voix dans l'introduction
     plusTard(() => { setFini(true); setParle(false); }, 250 + n * 160 + 700);
   };
   // le texte de la réplique suivante dépend des réponses qui viennent d'être données
