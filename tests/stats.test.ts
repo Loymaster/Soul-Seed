@@ -9,7 +9,7 @@ import {
 import { tirerCaracs } from '../src/moteur/simulation/creation';
 import { aBoutDeForces } from '../src/moteur/combat';
 import { palierCarac } from '../src/jeu/ranch/fiche';
-import { echelleDejection, placerDejection } from '../src/jeu/ranch/dejections';
+import { PART_CROTTE, hauteurSilhouette, placerDejection } from '../src/jeu/ranch/dejections';
 
 function nouvelle(graine = 1, regl: Partial<Etat> = {}) {
   const rng = aleatoireFixe(graine);
@@ -169,15 +169,23 @@ describe('prénoms des échos', () => {
 });
 
 describe('déjections à la taille de l’écho', () => {
-  it('proportionnelles à l’échelle de l’écho (référence : un enfant), au stade où il l’a laissée', () => {
-    expect(echelleDejection(0.75)).toBeCloseTo(1);
-    expect(echelleDejection(0.5)).toBeLessThan(echelleDejection(1.15));
+  it('une vraie proportion de la silhouette affichée, au stade où il l’a laissée', () => {
     const e = nouvelle(1, { taille: 1 }).etat;
     const d = { id: 1, x: 0.5, y: 0.5, nature: 'crotte' as const };
-    const bebe = placerDejection({ ...d, stade: 'bebe' }, e), adulte = placerDejection({ ...d, stade: 'adulte' }, e);
-    expect(adulte.l).toBeGreaterThan(bebe.l);
+    const bebe = placerDejection({ ...d, stade: 'bebe' }, e), enfant = placerDejection({ ...d, stade: 'enfant' }, e), adulte = placerDejection({ ...d, stade: 'adulte' }, e);
+    expect(adulte.l).toBeGreaterThan(enfant.l);
+    expect(enfant.l).toBeGreaterThan(bebe.l);
+    // la crotte fait PART_CROTTE de la hauteur de la silhouette à l'écran (à l'arrondi près)
+    for (const p of [bebe, enfant, adulte]) expect(Math.abs(p.visible - p.silhouette * PART_CROTTE)).toBeLessThanOrEqual(1);
+    // un bébé : une toute petite crotte (moins de 20 px de haut, pour une silhouette d'environ 85 px)
+    expect(bebe.h).toBeLessThan(20);
+    expect(bebe.silhouette).toBeLessThan(100);
     expect(adulte.y + adulte.h).toBe(bebe.y + bebe.h); // posées sur le même sol
     expect(Math.round(adulte.x + adulte.l / 2)).toBe(Math.round(bebe.x + bebe.l / 2));
+    // la perspective : plus loin, plus petite
+    expect(hauteurSilhouette(1, 1, 470)).toBeLessThan(hauteurSilhouette(1, 1, 600));
+    // l'image de l'écho compte : plus de vide autour d'elle, plus petite silhouette, plus petite crotte
+    expect(placerDejection({ ...d, stade: 'enfant' }, e, 0.7).h).toBeLessThan(placerDejection({ ...d, stade: 'enfant' }, e, 0.95).h);
   });
 
   it('la simulation note le stade de l’écho sur chaque déjection', () => {

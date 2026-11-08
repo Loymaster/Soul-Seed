@@ -39,7 +39,7 @@ si sujet == "travailler":
       jumpy [daccord]: Beau travail ! Voilà ta paie : {travail.or} or.
     sinon:
       jumpy [pensif]: Hmm… ce n’était pas ta journée. Reviens demain, tu feras mieux !
-    action: heures 4
+    action: garde 4
   fin
 
 si sujet == "entrainement":

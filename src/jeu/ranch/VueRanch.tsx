@@ -205,7 +205,7 @@ export function VueRanch({ v }: { v: any }) {
       {v.visiteur ? (<>
         <div className={`echo-pos visiteur-pos ${v.visiteur.cls}`} style={{ left: `${v.visiteur.x}px`, top: `${v.visiteur.y}px`, transitionDuration: `${v.visiteur.dur}s`, transform: `scale(${v.visiteur.persp})`, zIndex: v.visiteur.z } as CSSProperties}>
           <button className={`echo-zone visiteur-zone ${v.visiteur.anim} ${v.visiteur.demarche}`} style={{ "--cycle": `${v.visiteur.cycle}s` } as CSSProperties} onClick={v.visiteur.ouvrir} aria-label={v.visiteur.aria}>
-            <span className="echo-ombre" style={{ transform: `scaleX(${v.visiteur.taille})` } as CSSProperties} />
+            <span className="echo-ombre" style={{ left: `${v.visiteur.ombre.x}px`, bottom: `${v.visiteur.ombre.b}px`, width: `${v.visiteur.ombre.l}px`, height: `${v.visiteur.ombre.h}px`, opacity: v.visiteur.ombre.o } as CSSProperties} />
             <span className={`echo-sens ${v.visiteur.sens}`}>
               <span className="echo-taille" style={{ transform: `scale(${v.visiteur.taille})` } as CSSProperties}>
                 <img className="echo-img" src={v.visiteur.image} alt="" style={{ filter: v.echoFilter } as CSSProperties} />
@@ -262,7 +262,7 @@ export function VueRanch({ v }: { v: any }) {
       {/* L'écho se promène sur le terrain ; tout ce qui le concerne le suit */}
       <div className="echo-pos" style={{ opacity: v.echoOp, left: `${v.ex}px`, top: `${v.ey}px`, transitionDuration: `${v.eDur}s`, transform: `scale(${v.eScale})`, zIndex: v.eZ } as CSSProperties}>
         <button className={`echo-zone ${v.echoAnim} ${v.demarche}`} style={{ "--cycle": `${v.cycle}s` } as CSSProperties} onClick={v.caresser} aria-label={v.caresserAria}>
-          <span className="echo-ombre" style={{ transform: `scaleX(${v.eTaille})` } as CSSProperties} />
+          <span className="echo-ombre" style={{ left: `${v.eOmbre.x}px`, bottom: `${v.eOmbre.b}px`, width: `${v.eOmbre.l}px`, height: `${v.eOmbre.h}px`, opacity: v.eOmbre.o } as CSSProperties} />
           <span className={`echo-sens ${v.eSens}`}>
             <span className="echo-taille" style={{ transform: `scale(${v.eTaille})` } as CSSProperties}>
               <img className="echo-img" src={v.echoImg} alt={v.echoAlt} style={{ filter: v.echoFilter } as CSSProperties} />
@@ -383,7 +383,7 @@ export function VueRanch({ v }: { v: any }) {
       </div>
       {(v.flottants || []).map((xF5: any, i5: number) => (
         <Fragment key={i5}>
-          <div className="flotte" style={{ left: `${xF5.x}px`, top: `${xF5.y}px`, color: xF5.couleur } as CSSProperties}>
+          <div className="flotte" style={{ left: `${xF5.x}px`, top: `${xF5.y}px`, color: xF5.couleur, animationDuration: `${xF5.duree}s` } as CSSProperties}>
             {xF5.texte}
           </div>
         </Fragment>

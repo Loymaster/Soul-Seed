@@ -12,19 +12,21 @@
 //   sanctuaire, atelier, boutique) ; ses PNJ jouent leurs scènes et leurs combats sur place, puis on rentre au ranch
 //   (ou, depuis la forêt du village, « Partir en exploration »).
 //   Du menu principal, « Mode Arène » : combats libres configurés de toutes pièces, sans incidence sur les parties.
-import { StrictMode, useEffect, useMemo, useState, type ReactNode } from 'react';
+import { StrictMode, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { createRoot } from 'react-dom/client';
 import donnees from '@contenu/generes/assets.json';
 import type { Catalogue } from '@/contenu/types';
 import { SCENES } from '@/contenu/scenes';
 import { analyserScene } from '@/moteur/scene/analyseur';
-import { Simulation, ageJours, apparence, creerEchoSauvage, nomsPris, heureDuJour, type EchoSauvage, type Etat } from '@/moteur/simulation';
+import { Simulation, ageJours, apparence, creerEchoSauvage, ecouterEffondrements, ecouterEvolutions, nomsPris, heureDuJour, type AnnonceEffondrement, type AnnonceEvolution, type EchoSauvage, type Etat } from '@/moteur/simulation';
 import { Arene as RA, bilanCombat, descriptionDepuisEtat, descriptionSauvage } from '@/moteur/combat';
 import { EcranCombat, type AdversaireCombat, type IssueCombat, type Registre } from './combat/EcranCombat';
 import { Arene } from './arene/Arene';
 import { SFX } from '@/moteur/sfx';
 import { SceneDialogue } from './scene/SceneDialogue';
-import { Ranch } from './ranch/Ranch';
+import { Ranch, asset } from './ranch/Ranch';
+import { FenetreEvolution } from './ranch/Evolution';
+import { VoileSommeilPartout } from './ranch/VoileSommeil';
 import { nouvellePartie } from './ranch/sauvegarde';
 import { MenuPrincipal } from './menu/MenuPrincipal';
 import { Introduction, NouveauProfil } from './menu/Introduction';
@@ -187,6 +189,21 @@ function Jeu() {
   const profil = useMemo(() => P.profilActif(), [version]); // eslint-disable-line react-hooks/exhaustive-deps
   const profils = useMemo(() => P.registre().profils, [version]); // eslint-disable-line react-hooks/exhaustive-deps
   const [ecran, setEcran] = useState<Ecran>(() => (P.profilActif() ? { nom: 'menu' } : { nom: 'intro', premier: true }));
+  // L'évolution passe avant tout, où que l'on soit : hors du ranch (village, exploration, scène, combat…), la séquence
+  // se joue par-dessus l'écran courant (FenetreEvolution : temps arrêté, musiques tues) ; au ranch, le ranch la joue.
+  const [evolutions, setEvolutions] = useState<AnnonceEvolution[]>([]);
+  const ecranCourant = useRef(ecran);
+  ecranCourant.current = ecran;
+  useEffect(() => ecouterEvolutions((a) => {
+    if (ecranCourant.current.nom === 'ranch') return;
+    setEvolutions((l) => [...l, a]);
+  }), []);
+  // De même, l'écho qui s'écroule de fatigue hors du ranch : le voile du sommeil (après une évolution en cours).
+  const [sommes, setSommes] = useState<AnnonceEffondrement[]>([]);
+  useEffect(() => ecouterEffondrements((a) => {
+    if (ecranCourant.current.nom === 'ranch') return;
+    setSommes((l) => [...l, a]);
+  }), []);
 
   if (ecran.nom === 'intro' || !profil) {
     const premier = !profil || (ecran.nom === 'intro' && ecran.premier);
@@ -226,7 +243,23 @@ function Jeu() {
   // l'écran ne s'affiche qu'une fois ses images prêtes (même clé : il reste affiché, la liste suit ses déplacements)
   const images = imagesEcran(ecran);
   const cleEcran = ecran.nom === 'combat' ? `combat-${ecran.adversaire.description.nom}` : ecran.nom;
-  const garde = (vue: ReactNode) => <Pret key={cleEcran} chemins={images.chemins} ensuite={images.ensuite}>{vue}</Pret>;
+  const evolution = evolutions[0];
+  const finEvolution = () => {
+    // la partie est enregistrée avec sa nouvelle forme (l'écran courant continue avec le même état)
+    const x = ecranCourant.current;
+    if (evolution && 'emplacement' in x && x.emplacement !== ESSAI && 'etat' in x && x.etat === evolution.etat && !evolution.etat.mort) {
+      P.sauverPartie(profil.id, x.emplacement, evolution.etat);
+      P.noterForme(profil.id, apparence(evolution.etat));
+    }
+    setEvolutions((l) => l.slice(1));
+  };
+  const garde = (vue: ReactNode) => (
+    <>
+      <Pret key={cleEcran} chemins={images.chemins} ensuite={images.ensuite}>{vue}</Pret>
+      {evolution && <FenetreEvolution key={`${evolution.etat.naissance}-${evolution.vers}`} annonce={evolution} sons={sons} asset={asset} surFin={finEvolution} />}
+      {!evolution && sommes[0] && <VoileSommeilPartout key={`${sommes[0].etat.jour}-${sommes[0].etat.minute}`} annonce={sommes[0]} sons={sons} surFin={() => setSommes((l) => l.slice(1))} />}
+    </>
+  );
 
   switch (ecran.nom) {
     case 'personnage':

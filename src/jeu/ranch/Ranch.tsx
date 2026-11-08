@@ -12,7 +12,7 @@ import {
 import { aBoutDeForces } from '@/moteur/combat';
 import type { Catalogue } from '@/contenu/types';
 import { ALLURE_COURSE, VisiteRanch, perspective, type GesteVisite } from './visiteur';
-import { Evolution, type ProprietesEvolution } from './Evolution';
+import { Evolution, textesEvolution, type ProprietesEvolution } from './Evolution';
 import { Tutoriel, type Cible } from './Tutoriel';
 import { SFX } from '@/moteur/sfx';
 import { VueRanch } from './VueRanch';
@@ -24,6 +24,8 @@ import { ciel, lanternes, lumiere } from './ciel';
 import { IC } from './icones';
 import { allureImage, profilEcho, volumePas, type Profil } from './demarche';
 import { placerDejection } from './dejections';
+import { ombreSous, piedsDe, type Ombre } from '../commun/ombre';
+import { enLAir } from '../commun/allures';
 import './allures.css';
 import { saison } from './lumiere';
 import { REP, TAMPON, TEMPERAMENTS, GLYPHE_INCONNU, cleEvenement, consequence, noteSens, parole, phraseReponse } from './evenements';
@@ -48,6 +50,10 @@ const hm = (minute: number) => `${pad(Math.floor(minute / 60) % 24)}:${pad(minut
 
 const NOM_GRAINE = { joy: 'Graine solaire', wrath: 'Graine tellurique', disgust: 'Graine caustique', sorrow: 'Graine boréale', fear: 'Graine spectrale' } as const;
 const COULEUR = { bien: '#3f7a3a', mal: '#9c3b2a', note: '#2b2118' } as const;
+/** Temps d'affichage d'un texte flottant (ms) : de quoi le lire (environ 15 caractères par seconde), entre 2,4 s et 7 s. */
+export const dureeFlottant = (texte: string) => Math.round(Math.max(2400, Math.min(7000, 1300 + texte.length * 65)));
+/** Largeur estimée d'un texte flottant (px, Reenie Beanie 25 px sur une ligne). */
+const largeurFlottant = (texte: string) => Math.round(texte.length * 9.2 + 26);
 
 type Verbe = 'echo' | 'soins' | 'jouer' | 'activites' | 'ranch';
 const VERBES: { k: Verbe; court: string; teinte: string; nom: string }[] = [
@@ -151,7 +157,7 @@ interface EtatUI {
   ex: number; ey: number; eDur: number; eSens: '' | 'gauche'; marche: boolean;
   survol: number; ouvert: Verbe | 'visiteur' | null; actif: number; tamponne: string | null;
   anim: string; bulle: number | null; bulleImg: string; coeurs: { id: number; x: number; y: number; dx: number; delai: string }[];
-  flottants: { id: number; texte: string; couleur: string; x: number; y: number }[];
+  flottants: { id: number; texte: string; couleur: string; x: number; y: number; duree: string }[];
   carnet: boolean; ferme: boolean; section: Section; astTheme: number; astPage: number; contenuCache: boolean; tourne: null | 'avant' | 'arriere'; sauve: string; carnetLeve: boolean;
   sortie: Sortie_ | null; nouvelles: number; mainVisible: boolean; main: number;
   sacOuvert: boolean; sacFerme: boolean; sacSurvol: number; sacMenu: number; sacMenuInfo: boolean; dndDe: number; dndCible: number;
@@ -310,6 +316,16 @@ export class Ranch extends Component<ProprietesRanch, EtatUI> {
 
   /** Ce que la simulation signale. */
   traiter(sorties: Sortie[]) {
+    // l'évolution passe avant tout autre événement : elle se joue d'abord, le reste attend la fin de la séquence
+    // (sauf la mort et le journal, qui ne s'affichent pas par-dessus)
+    const evo = sorties.find((x) => x.type === 'evolution');
+    if (evo || this.evo) {
+      const tout = (x: Sortie) => x.type === 'mort' || x.type === 'journal';
+      const maintenant = sorties.filter((x) => tout(x));
+      this.apresEvolution.push(...sorties.filter((x) => x !== evo && !tout(x)));
+      if (evo) this.traiterExtras(evo);
+      sorties = maintenant;
+    }
     for (const x of sorties) {
       if (this.traiterExtras(x)) continue;
       switch (x.type) {
@@ -438,11 +454,37 @@ export class Ranch extends Component<ProprietesRanch, EtatUI> {
   }
 
   // ——— Petits effets
+  /**
+   * Un texte flottant au-dessus de l'écho. Ils passent **un par un** (file d'attente) : quand deux événements tombent
+   * ensemble (un coup de brosse et le bruit de Garry…), le second attend que le premier soit lu — rien ne se chevauche,
+   * rien ne se perd. La file attend aussi la fin d'une évolution ou du voile du sommeil.
+   */
   flotter(texte: string, couleur: string = COULEUR.note, dx = -150, dy = -30) {
-    const id = ++this.n; const s = this.state;
-    const x = Math.max(16, Math.min(1280 - 320, Math.round(s.ex + dx))), y = Math.max(110, Math.round(s.ey + dy - (s.flottants.length % 3) * 34));
-    this.setState((st) => ({ flottants: st.flottants.concat({ id, texte, couleur, x, y }) }));
-    this.later(() => this.setState((st) => ({ flottants: st.flottants.filter((f) => f.id !== id) })), texte.length > 34 ? 4200 : 2600);
+    if (!texte) return;
+    // le même texte déjà en attente (deux sorties identiques) ne passe qu'une fois
+    if (this.fileFlottants.some((f) => f.texte === texte)) return;
+    this.fileFlottants.push({ texte, couleur, dx, dy });
+    if (!this.flottantEnCours) this.flotterSuivant();
+  }
+  fileFlottants: { texte: string; couleur: string; dx: number; dy: number }[] = [];
+  flottantEnCours = false;
+  flotterSuivant() {
+    if (!this.vivant) return;
+    const f = this.fileFlottants[0];
+    if (!f) { this.flottantEnCours = false; return; }
+    this.flottantEnCours = true;
+    // l'évolution passe avant tout ; pendant le sommeil, l'écran est voilé : on attend
+    if (this.evo || this.state.sommeil) { this.later(() => this.flotterSuivant(), 400); return; }
+    this.fileFlottants.shift();
+    const id = ++this.n; const ici = this.ouEstEcho();
+    const duree = dureeFlottant(f.texte);
+    const largeur = largeurFlottant(f.texte);
+    const x = Math.max(16, Math.min(1280 - 16 - largeur, Math.round(ici.x + 75 + f.dx + 150 - largeur / 2)));
+    const y = Math.max(110, Math.round(ici.y + f.dy));
+    this.setState((st) => ({ flottants: st.flottants.concat({ id, texte: f.texte, couleur: f.couleur, x, y, duree: (duree / 1000).toFixed(2) }) }));
+    this.later(() => this.setState((st) => ({ flottants: st.flottants.filter((g) => g.id !== id) })), duree);
+    // le suivant part quand celui-ci s'est effacé
+    this.later(() => this.flotterSuivant(), duree + 120);
   }
   /** Réaction de l'écho : son émotion du moment (une icône, jamais un mot) et une petite animation. */
   reagir(emotion: boolean, anim: string) {
@@ -977,7 +1019,17 @@ export class Ranch extends Component<ProprietesRanch, EtatUI> {
     son: (nom, ...a) => this.son(nom, ...a),
     asset,
     occupe: () => { const s = this.state; return !!(s.carnet || s.sacOuvert || s.evc || s.scene || s.sortie || this.evo || this.tutoActif || this.e.mort); },
+    ombre: (chemin, profil, gauche) => this.ombreDe(chemin, profil, gauche),
   });
+
+  /** Une image d'écho du catalogue (dimensions, boîte utile). */
+  imageCatalogue(chemin: string) { return this.props.catalogue?.assets.find((a) => a.chemin === chemin); }
+  /** L'ombre sous les pieds d'un écho (cadre 150 × 240 : image de 190 px, bord gauche à −2, bas à 6 px du bas du cadre). */
+  ombreDe(chemin: string, profil: Profil, gauche: boolean): Ombre {
+    const a = this.imageCatalogue(chemin);
+    const pieds = piedsDe(asset(chemin), { W: a?.l ?? 190, H: a?.h ?? 190, boite: a?.boite }, this.rafraichir);
+    return ombreSous(pieds, { hImage: 190, echelle: profil.echelle, hauteur: profil.hauteur, gauche, gaucheImage: -2, basImage: 6, enLAir: enLAir(profil.demarche) });
+  }
   evo: Omit<ProprietesEvolution, 'sons'> | null = null;
   tutoActif = false;
   /** L'apparence de l'écho au dernier affichage (l'ancienne forme, quand il évolue). */
@@ -1032,7 +1084,7 @@ export class Ranch extends Component<ProprietesRanch, EtatUI> {
         // un palier de relation franchi : après le geste qui l'a provoqué
         this.later(() => { this.flotter(x.texte, x.sens > 0 ? COULEUR.bien : COULEUR.mal); this.son(x.sens > 0 ? 'reveal' : 'darkHover'); }, 4800);
         return true;
-      case 'evolution': this.lancerEvolution(x.de, x.vers); return true;
+      case 'evolution': this.lancerEvolution(x.de, x.vers, x.avant); return true;
       default: return false;
     }
   }
@@ -1079,19 +1131,19 @@ export class Ranch extends Component<ProprietesRanch, EtatUI> {
   }
 
   /** Il évolue : la séquence prend tout l'écran, la musique se tait, le temps s'arrête. */
-  lancerEvolution(de: Stade, vers: Stade) {
+  lancerEvolution(de: Stade, vers: Stade, avantImg?: string) {
     const e = this.e; const s = this.state;
-    const avant = this.apparenceVue || apparence(e);
-    const Il = this.a('Il', 'Elle');
+    const avant = avantImg || this.apparenceVue || apparence(e);
     this.evo = {
       de: asset(avant), vers: asset(apparence(e)),
       tailleDe: profilEcho({ stade: de, taille: e.taille, poids: e.poids }).echelle, tailleVers: this.taille(),
       depart: { x: s.ex + 75, y: s.ey + 226, echelle: perspective(s.ey) },
-      surtitre: `Jour ${ageJours(e)} · ${hm(e.minute)}`,
-      titre: `${e.nom} a ${vers === 'enfant' ? 'grandi' : 'évolué'} !`,
-      texte: `${Il} a atteint le stade ${NOM_STADE[vers]}. Une nouvelle page de sa vie commence.`,
+      ...textesEvolution(e, vers),
       surFin: this.finEvolution,
     };
+    // l'évolution passe avant tout : ce qui était ouvert se ferme (fiche, poteau, voile du sommeil, carnet d'événement)
+    if (this.state.evc) this.setState({ evc: false, evcFerme: false, playing: false });
+    if (this.state.sommeil) this.setState({ sommeil: null });
     clearInterval(this.pasTimer);
     this.setState({ ouvert: null, quitter: false, carnetLeve: false, marche: false, eDur: 0 });
     this.rafraichir();
@@ -1102,7 +1154,12 @@ export class Ranch extends Component<ProprietesRanch, EtatUI> {
     this.sauver();
     this.rafraichir();
     this.later(() => { this.reagir(true, 'saute'); this.coeurs(4); }, 200);
+    // ce qui est arrivé en même temps attendait la fin de la séquence
+    const enAttente = this.apresEvolution; this.apresEvolution = [];
+    if (enAttente.length) this.later(() => { this.traiter(enAttente); this.rafraichir(); }, 900);
   };
+  /** Sorties arrivées pendant (ou avec) une évolution : traitées quand la séquence est finie. */
+  apresEvolution: Sortie[] = [];
 
   /** Les zones que Jumpy montre pendant le tutoriel (repère 1280 × 800). */
   ciblesTutoriel = (): Record<string, Cible> => {
@@ -1190,6 +1247,9 @@ export class Ranch extends Component<ProprietesRanch, EtatUI> {
     const cy = Math.round(234 - 92 * t), rx = Math.round(70 + 34 * t), ry = Math.round(22 + 10 * t);
     const ordreSac = e.inventaire;
     const sc = s.scene; const ph = s.scPhase;
+    // part opaque de l'image de l'écho (boîte utile) : la taille réelle de sa silhouette, pour ses déjections
+    const imgEcho = this.imageCatalogue(apparence(e));
+    const opaqueEcho = imgEcho?.boite && imgEcho.h ? imgEcho.boite.h / imgEcho.h : undefined;
     const sacMenu = (() => {
       const c = s.sacMenu >= 0 ? ordreSac[s.sacMenu] : null; const d = c && descriptionObjet(c.id);
       if (!c || !d || s.sacFerme) return { sacMenuVisible: false, sacMenuInfo: false };
@@ -1228,7 +1288,7 @@ export class Ranch extends Component<ProprietesRanch, EtatUI> {
       echoImg: asset(apparence(e)), echoAlt: `${nom}, écho ${NOM_STADE[e.stade]}`,
       caresserAria: e.comportement ? `${nom} a quelque chose à vous montrer` : `Caresser ${nom}`, evtAria: `${nom} a fait quelque chose : ouvrir le carnet`,
       ex: s.ex, ey: s.ey, eDur: s.eDur, eSens: s.eSens, eScale: (0.86 + (s.ey - 235) / 135 * 0.28).toFixed(3),
-      eTaille: t.toFixed(3), teteBulle2: Math.round(-74 - (t - 1) * 180), teteMain: Math.round(32 - (t - 1) * 175), eZ: 100 + s.ey,
+      eTaille: t.toFixed(3), eOmbre: this.ombreDe(apparence(e), prof, s.eSens === 'gauche'), teteBulle2: Math.round(-74 - (t - 1) * 180), teteMain: Math.round(32 - (t - 1) * 175), eZ: 100 + s.ey,
       echoAnim: s.marche ? 'marche' : s.anim, demarche: prof.classes, cycle: (prof.cycle / (s.marche ? this.course : 1)).toFixed(3),
       caresser: this.caresser, mainVisible: s.mainVisible,
       rienDuTout: false,
@@ -1244,7 +1304,7 @@ export class Ranch extends Component<ProprietesRanch, EtatUI> {
       // déjections : on nettoie là où elles sont tombées
       crottes: e.dejections.map((d) => {
         // taille proportionnelle à celle de l'écho qui l'a laissée (dejections.ts)
-        const { x, y, z, l, h, bx, by } = placerDejection(d, e);
+        const { x, y, z, l, h, bx, by } = placerDejection(d, e, (d.stade ?? e.stade) === e.stade ? opaqueEcho : undefined);
         return {
           x, y, z, l, h, bx, by, image: asset(d.nature === 'vomi' ? 'activites/ranch/vomi.png' : 'activites/ranch/dejection-detouree.webp'),
           cls: s.dejPart.includes(d.id) ? 'part' : s.dejSurvol === d.id ? 'survol' : '',

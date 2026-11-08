@@ -79,6 +79,7 @@ Variables fournies par le jeu (en lecture) : `maintenant` (heure absolue : jour 
 | `action: motiver` | Hevann motive l'écho : entraînements × 1,75 pendant 6 heures | |
 | `action: apprendre-echo` | Jumpy révèle un trait de l'écho, en mots | `{jumpy.info}` |
 | `action: heures 6` | fait passer des heures | |
+| `action: garde 4` | fait passer des heures sans que rien ne bouge chez l'écho (travail chez Jumpy : faim, fatigue, besoins, émotions, événements en l'état) | |
 | `action: drapeau garry.vaincu vrai` | pose aussitôt un drapeau (sans attendre la fin de la scène) | |
 | `action: journal …` | une ligne au journal | |
 | `action: ranch` · `action: lieu sanctuaire` · `action: lieu zone 27` | à la fin de la scène, le joueur rentre au ranch ou part ailleurs | |

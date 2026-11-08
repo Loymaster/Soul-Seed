@@ -8,6 +8,10 @@ import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react'
 import { SFX } from '@/moteur/sfx';
 import { jouerBruitageEvolution, type Bruitage } from '@/moteur/bruitage-evolution';
 import { MARGE as MARGE_MORPH, UNE_SEULE_FOIS, avancement, avancementContinu, preparerMorphing, type Morphing, type RenduMorphing } from './morphing';
+import { NOM_STADE, accord, ageJours, suspendreTemps, type AnnonceEvolution, type Etat, type Stade } from '@/moteur/simulation';
+import { profilEcho } from './demarche';
+import { Repere } from '../commun/Repere';
+import { taireMusiques } from '../commun/volumes';
 import './evolution.css';
 
 /** Le passage d'une silhouette à l'autre pendant les battements : « poussiere » (choisie : en une seule fois, 6 s,
@@ -209,6 +213,46 @@ export function Evolution(p: ProprietesEvolution) {
         </div>
       )}
       {!apres('eclat') && <div className="evo-passer">cliquer pour passer</div>}
+    </div>
+  );
+}
+
+// —————————————————————————————————————— L'évolution partout (hors du ranch)
+
+const pad2 = (n: number) => (n < 10 ? '0' : '') + n;
+
+/** La page du carnet d'une évolution (titres et texte), commune au ranch et aux autres écrans. */
+export function textesEvolution(e: Etat, vers: Stade) {
+  return {
+    surtitre: `Jour ${ageJours(e)} · ${pad2(Math.floor(e.minute / 60) % 24)}:${pad2(e.minute % 60)}`,
+    titre: `${e.nom} a ${vers === 'enfant' ? 'grandi' : 'évolué'} !`,
+    texte: `${accord(e, 'Il', 'Elle')} a atteint le stade ${NOM_STADE[vers]}. Une nouvelle page de sa vie commence.`,
+  };
+}
+
+/**
+ * La séquence d'évolution par-dessus n'importe quel écran (village, exploration, scène, combat…) : elle prend tout
+ * l'écran dans son propre repère 1280 × 800, arrête le temps de toutes les simulations et fait taire les musiques
+ * jusqu'à la fin. L'écho part du bas de l'écran, au centre (on ne sait pas où l'écran courant le montre).
+ */
+export function FenetreEvolution({ annonce, sons, asset, surFin }: { annonce: AnnonceEvolution; sons: boolean; asset: (chemin: string) => string; surFin: () => void }) {
+  const { etat: e, de, vers } = annonce;
+  useEffect(() => {
+    const reprendre = suspendreTemps();
+    const rendreMusiques = taireMusiques();
+    return () => { reprendre(); rendreMusiques(); };
+  }, []);
+  const p: ProprietesEvolution = {
+    de: asset(annonce.avant), vers: asset(annonce.apres),
+    tailleDe: profilEcho({ stade: de, taille: e.taille, poids: e.poids }).echelle,
+    tailleVers: profilEcho({ stade: vers, taille: e.taille, poids: e.poids }).echelle,
+    depart: { x: 640, y: 700, echelle: 1 },
+    ...textesEvolution(e, vers),
+    sons, surFin,
+  };
+  return (
+    <div className="evo-partout">
+      <Repere fond="transparent"><Evolution {...p} /></Repere>
     </div>
   );
 }

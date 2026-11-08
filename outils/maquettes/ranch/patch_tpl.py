@@ -1,5 +1,11 @@
 # Retouches du gabarit de la maquette pour le jeu (déjections multiples, visiteur, transitions).
 def retoucher(t, rep):
+    # les textes flottants passent un par un (file d'attente de Ranch.flotter) : chacun reste le temps d'être lu
+    t = rep(t, '<div class="flotte" style="left:{{f.x}}px;top:{{f.y}}px;color:{{f.couleur}}">',
+            '<div class="flotte" style="left:{{f.x}}px;top:{{f.y}}px;color:{{f.couleur}};animation-duration:{{f.duree}}s">')
+    # l'ombre de l'écho : calculée depuis la silhouette réelle de son image (src/jeu/commun/ombre.ts), posée sous ses pieds
+    t = rep(t, '<span class="echo-ombre" style="transform:scaleX({{eTaille}})"></span>',
+            '<span class="echo-ombre" style="left:{{eOmbre.x}}px;bottom:{{eOmbre.b}}px;width:{{eOmbre.l}}px;height:{{eOmbre.h}}px;opacity:{{eOmbre.o}}"></span>')
     t = rep(t, '<sc-if value="{{crotteVisible}}" hint-placeholder-val="{{ true }}">\n    <div class="crotte-img {{crotteCls}}" style="left:{{crotteX}}px;top:{{crotteY}}px;z-index:{{crotteZ}}"><img src="/_blob/d51ed0b456413f23fdb3dfe427014aed"',
             '<sc-for list="{{crottes}}" as="cr" hint-placeholder-count="1">\n    <div class="crotte-img {{cr.cls}}" style="left:{{cr.x}}px;top:{{cr.y}}px;width:{{cr.l}}px;height:{{cr.h}}px;z-index:{{cr.z}}"><img src="{{cr.image}}"')
     t = rep(t, '<button class="crotte" onClick="{{nettoyer}}" onMouseEnter="{{crotteSurvol}}" onMouseLeave="{{crotteQuitte}}" aria-label="Ramasser la déjection" style="left:{{crotteX}}px;top:{{crotteY}}px">\n      <span class="astuce">ramasser</span>\n    </button>\n  </sc-if>',
@@ -9,7 +15,7 @@ def retoucher(t, rep):
             '  <sc-if value="{{visiteur}}" hint-placeholder-val="{{ false }}">\n'
             '    <div class="echo-pos visiteur-pos {{visiteur.cls}}" style="left:{{visiteur.x}}px;top:{{visiteur.y}}px;transition-duration:{{visiteur.dur}}s;transform:scale({{visiteur.persp}});z-index:{{visiteur.z}}">\n'
             '      <button class="echo-zone visiteur-zone {{visiteur.anim}} {{visiteur.demarche}}" style="--cycle:{{visiteur.cycle}}s" onClick="{{visiteur.ouvrir}}" aria-label="{{visiteur.aria}}">\n'
-            '        <span class="echo-ombre" style="transform:scaleX({{visiteur.taille}})"></span>\n'
+            '        <span class="echo-ombre" style="left:{{visiteur.ombre.x}}px;bottom:{{visiteur.ombre.b}}px;width:{{visiteur.ombre.l}}px;height:{{visiteur.ombre.h}}px;opacity:{{visiteur.ombre.o}}"></span>\n'
             '        <span class="echo-sens {{visiteur.sens}}"><span class="echo-taille" style="transform:scale({{visiteur.taille}})"><img class="echo-img" src="{{visiteur.image}}" alt="" style="filter:{{echoFilter}}"></span></span>\n'
             '        <span class="visiteur-tag" style="top:{{visiteur.tete}}px"><b>{{visiteur.nom}}</b><i>{{visiteur.lien}}</i></span>\n'
             '      </button>\n'

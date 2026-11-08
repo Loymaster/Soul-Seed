@@ -4,6 +4,7 @@
 // La logique (relation, ce qu'ils font) vit dans la simulation (src/moteur/simulation/visites.ts) ; ici, la mise en scène.
 import { LIEN_RELATION, NOM_STADE, apparence, niveauRelation, type EchoSauvage, type Etat } from '@/moteur/simulation';
 import { allureImage, profilEcho, volumePas, type Profil } from './demarche';
+import type { Ombre } from '../commun/ombre';
 
 /** Sol du ranch (coin haut-gauche du cadre de l'écho, 150 × 240 ; les pieds sont à +75, +232). */
 export const SOL = { xMin: 250, xMax: 980, yMin: 235, yMax: 370 } as const;
@@ -55,6 +56,8 @@ export interface HoteVisite {
   asset: (chemin: string) => string;
   /** l'écran est-il pris (carnet, scène, sac…) : on ne met pas en scène */
   occupe: () => boolean;
+  /** l'ombre sous ses pieds, d'après la silhouette de son image (src/jeu/commun/ombre.ts) */
+  ombre: (chemin: string, profil: Profil, gauche: boolean) => Ombre;
 }
 
 /** Facteur de taille propre à chaque visiteur (comme la taille tirée à la naissance), stable d'une visite à l'autre. */
@@ -272,9 +275,10 @@ export class VisiteRanch {
     const t = prof.echelle;
     const n = niveauRelation(p.s);
     const d = p.duo;
+    const chemin = apparence({ ...p.s, evolution: null } as unknown as Etat);
     return {
       nom: p.s.nom, aria: `${p.s.nom}, écho ${NOM_STADE[p.s.stade]} de passage`,
-      image: this.h.asset(apparence({ ...p.s, evolution: null } as unknown as Etat)),
+      image: this.h.asset(chemin), ombre: this.h.ombre(chemin, prof, p.sens === 'gauche'),
       x: p.x, y: p.y, dur: p.dur, sens: p.sens, persp: perspective(p.y).toFixed(3), z: 100 + p.y,
       taille: t.toFixed(3), anim: p.marche ? 'marche' : p.anim, demarche: prof.classes, cycle: prof.cycle.toFixed(3),
       lien: LIEN_RELATION[n], cls: [ouvert ? 'choisi' : '', p.phase === 'part' ? 'part' : ''].join(' '),

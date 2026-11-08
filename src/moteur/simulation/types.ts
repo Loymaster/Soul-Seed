@@ -300,7 +300,7 @@ export type Sortie =
   | { type: 'autonomie'; texte: string }
   | { type: 'effondrement' }
   | { type: 'sommeil'; heures: number; effondrement: boolean }
-  | { type: 'evolution'; de: Stade; vers: Stade }
+  | { type: 'evolution'; de: Stade; vers: Stade; /** l'image de l'ancienne forme */ avant: string }
   | { type: 'maladie' }
   | { type: 'guerison' }
   | { type: 'blessure' }
