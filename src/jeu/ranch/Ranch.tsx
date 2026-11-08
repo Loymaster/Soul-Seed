@@ -34,6 +34,7 @@ import { PALIER_CORVEE, essaisScene, hauteurScene, sceneCorvee, sceneEntrainemen
 import { teinteEmotion } from './lueurs';
 import { FenetreTemps } from './FenetreTemps';
 import { FenetrePansement, ICONE_PANSER, detailPanser } from './FenetrePansement';
+import { TechniquesEcho } from './TechniquesEcho';
 import { VoileSommeil, type Sommeil } from './VoileSommeil';
 import { NoteRefus, type RefusEnCours } from './NoteRefus';
 import { CHIFFRES_ROMAINS, ICONE_ASTUCES, THEMES_ASTUCES, compteTheme, lignesTheme, paginer, type ContexteAstuces } from '../commun/astuces';
@@ -164,7 +165,7 @@ interface EtatUI {
   ongletFiche: OngletFiche;
   /** Fenêtre « laisser le temps passer » ouverte. */
   temps: boolean;
-  /** La réglette « panser les blessures » est ouverte. */
+  /** La réglette « appliquer les premiers soins » est ouverte. */
   pansement?: boolean;
   /** L'écho dort : l'écran s'assombrit le temps d'une berceuse. */
   sommeil: Sommeil | null;
@@ -363,11 +364,11 @@ export class Ranch extends Component<ProprietesRanch, EtatUI> {
     this.traiter(sorties); this.sauver(); this.rafraichir();
   }
 
-  /** « Panser les blessures » : le temps choisi sur la réglette (demi-heures), puis la scène des bandages. */
+  /** « Appliquer les premiers soins » : le temps choisi sur la réglette (demi-heures), puis la scène des bandages. */
   panser(demiHeures: number) {
     this.setState({ pansement: false });
     const s = this.sim;
-    this.ouvrirScene({ kind: 'panser', groupe: 'soin', image: '', titre: 'Panser les blessures' }, () => {
+    this.ouvrirScene({ kind: 'panser', groupe: 'soin', image: '', titre: 'Appliquer les premiers soins' }, () => {
       const r = s.panser(demiHeures);
       if (!r.ok) { if (r.raison) this.flotter(r.raison, COULEUR.mal); return null; }
       return [r.texte];
@@ -536,7 +537,7 @@ export class Ranch extends Component<ProprietesRanch, EtatUI> {
         { k: 'r-soins', nom: 'Soins', rubrique: true },
         { k: 'laver', nom: 'Laver', icone: IC.laver, detail: '2 h', agir: () => this.ouvrirScene({ kind: 'laver', groupe: 'soin', image: '', titre: 'Le bain' }, () => { const r = s.laver(); return r.ok ? [] : null; }) },
         { k: 'brosser', nom: 'Brosser', icone: IC.brosser, detail: '1 h', agir: () => this.ouvrirScene({ kind: 'brosser', groupe: 'soin', image: '', titre: 'Un coup de brosse' }, () => { const r = s.brosser(); return r.ok ? [r.texte] : null; }) },
-        { k: 'panser', nom: 'Panser les blessures', icone: ICONE_PANSER, sansTampon: true, ...detailPanser(e), agir: () => { this.son('bookArrive'); this.setState({ pansement: true }); } },
+        { k: 'panser', nom: 'Appliquer les premiers soins', icone: ICONE_PANSER, sansTampon: true, ...detailPanser(e), agir: () => { this.son('bookArrive'); this.setState({ pansement: true }); } },
         { k: 'pansement', nom: 'Soigner une blessure', icone: IC.trousse, off: !nb('bandage') || !e.blesse, detail: !e.blesse ? 'aucune blessure' : nb('bandage') ? 'un pansement' : 'pas de pansement', agir: () => this.utiliserObjet(index('bandage')) },
         { k: 'medicament', nom: 'Donner un médicament', icone: IC.medicament, off: !nb('medicament'), detail: nb('medicament') ? 'dans le sac' : 'aucun', agir: () => this.utiliserObjet(index('medicament')) },
         { k: 'coucher', nom: 'Le coucher', icone: IC.coucher, agir: () => this.coucher() },
@@ -864,7 +865,14 @@ export class Ranch extends Component<ProprietesRanch, EtatUI> {
     };
   }
 
-  /** La fiche de l'écho : portrait, tempérament, caractéristiques de combat (jamais de chiffre). */
+  /** Prendre ou laisser une technique pour le combat (onglet « Techniques » de la fiche). */
+  choisirTechnique(nom: string) {
+    const r = this.sim.choisirTechnique(nom);
+    if (!r.ok) { this.son('paperTick'); this.flotter(r.raison, COULEUR.mal); return; }
+    this.son(r.equipee ? 'stamp' : 'page', 0.6); this.sauver(); this.rafraichir();
+  }
+
+  /** La fiche de l'écho : portrait, tempérament, caractéristiques de combat, techniques (jamais de chiffre). */
   valsFiche() {
     const s = this.state; const e = this.e;
     const dom = temperamentDominant(e);
@@ -883,6 +891,7 @@ export class Ranch extends Component<ProprietesRanch, EtatUI> {
       ficheMot: 'Ses entraînements et ses corvées se lisent dans l’onglet « Combat ».',
       temperaments: lignesTemperament(e),
       combat: lignesCombat(e, this.recents.jour === e.jour ? this.recents.gains : {}),
+      ficheTechniques: s.ongletFiche === 'techniques' ? <TechniquesEcho etat={e} surChoisir={(n) => this.choisirTechnique(n)} surSurvol={() => this.son('paperTick', 0.4)} /> : null,
     };
   }
 
@@ -989,7 +998,7 @@ export class Ranch extends Component<ProprietesRanch, EtatUI> {
         evolution: () => { const suite: Partial<Record<Stade, Stade>> = { bebe: 'enfant', enfant: 'adolescent', adolescent: 'adulte' }; const v = suite[this.e.stade]; if (v) { sim.evoluer(v); this.traiter(this.sim.vider()); } return v; },
         tutoriel: () => { this.tutoActif = true; this.rafraichir(); },
         refus: () => { const e = this.e; const i = e.inventaire.findIndex((c) => c && aliment(c.id)); if (i < 0) return 'rien à manger'; e.satiete = this.sim.max; e.frustrationAlimentaire = 100; this.utiliserObjet(i); return i; },
-        /** Laisse l'écho avec `part` (0–1) de ses PV de combat perdus, pour essayer « Panser les blessures ». */
+        /** Laisse l'écho avec `part` (0–1) de ses PV de combat perdus, pour essayer « Appliquer les premiers soins ». */
         blesser: (part = 0.75) => { this.e.pvCombat = Math.max(0, Math.round(Math.max(1, Math.round(this.e.caracs.robustesse * 7)) * (1 - part) * 10) / 10); this.sauver(); this.rafraichir(); return this.e.pvCombat; },
         // une scène d'action seule, sans effet sur l'écho : __ranch.scene('brosser', 'soin')
         scene: (kind = 'brosser', groupe = 'soin', image = '') => { this.ouvrirScene({ kind, groupe, image: image && asset(image), titre: kind }, () => []); },
@@ -1064,7 +1073,7 @@ export class Ranch extends Component<ProprietesRanch, EtatUI> {
   etatCarnet = new EtatCarnet((nom, vol) => this.son(nom, vol));
   pagesCarnet() {
     const k = this.state.section;
-    const section: SectionCarnet | null = this.state.carnet && (k === 'quetes' || k === 'relations' || k === 'memoire') ? k : null;
+    const section: SectionCarnet | null = this.state.carnet && (k === 'journal' || k === 'quetes' || k === 'relations' || k === 'memoire') ? k : null;
     const p = pagesCarnet(section, { etat: this.e, monde: this.props.monde, vue: this.etatCarnet });
     return { carnetGauche: p.gauche, carnetDroite: p.droite };
   }
@@ -1170,10 +1179,8 @@ export class Ranch extends Component<ProprietesRanch, EtatUI> {
     const rappels = besoinsVus.slice(0, 2).map((b) => ({ texte: b.indice }));
     if (e.dejections.length) rappels.push({ texte: `ramasser derrière ${nom}` });
     if (!e.inventaire.some((c) => c && aliment(c.id))) rappels.push({ texte: 'plus rien à manger dans le sac' });
-    const journal = e.journal.map((j) => ({ heure: hm(j.minute), texte: j.texte, jour: j.jour }));
-    const parJour = new Map<number, { heure: string; texte: string }[]>();
-    journal.slice(-24).forEach((j) => { if (!parJour.has(j.jour)) parJour.set(j.jour, []); parJour.get(j.jour)!.push({ heure: j.heure, texte: j.texte }); });
-    const journalJours = [...parJour.entries()].reverse().map(([jour, lignes]) => ({ titre: jour === e.jour ? 'Aujourd’hui' : `Jour ${ageJours({ jour, naissance: e.naissance })}`, lignes: lignes.reverse() }));
+    // le journal est gardé du plus récent au plus ancien ; ses pages (tout l'historique) : src/jeu/commun/carnet
+    const journalCourt = e.journal.filter((j) => j.jour === e.jour).slice(0, 3).map((j) => ({ heure: hm(j.minute), texte: j.texte }));
     const visiteur = this.sim.visiteur;
     const ouvertVisiteur = s.ouvert === 'visiteur';
     this.apparenceVue = apparence(e);
@@ -1300,11 +1307,11 @@ export class Ranch extends Component<ProprietesRanch, EtatUI> {
       ouvrirCarnet: () => { this.son('bookArrive'); this.setState({ carnet: true, carnetLeve: false, ferme: false, section: 'sommaire', ouvert: null, quitter: false }); },
       fermerCarnet: this.fermerCarnet,
       pageTitre: sec.titre, pageSurtitre: sec.surtitre,
-      pSommaire: p('sommaire'), pJournal: p('journal'), pSac: false, pRelations: false, pCarte: false, pMemoire: false, pAstuces: p('astuces'), pOptions: p('options'),
+      pSommaire: p('sommaire'), pJournal: false, pSac: false, pRelations: false, pCarte: false, pMemoire: false, pAstuces: p('astuces'), pOptions: p('options'),
       ...(p('astuces') ? this.valsAstuces() : { astThemes: [], astuces: [] }),
       onglets: SECTIONS.map((x, i) => ({ nom: x.nom, court: x.court, icone: x.icone, delai: (1.5 + i * 0.07).toFixed(2), cls: s.section === x.k ? 'ici' : '', ouvrir: () => this.allerA(x.k) })),
       sommaire: SECTIONS.slice(1).map((x, i) => ({ num: ['I', 'II', 'III', 'IV', 'V', 'VI'][i], nom: x.nom, page: 'page' in x ? x.page : '', aBadge: x.k === 'journal' && s.nouvelles > 0, badge: s.nouvelles, ouvrir: () => this.allerA(x.k) })),
-      journal: journal.slice(-8), journalCourt: journal.slice(-3), journalJours, rappels: rappels.slice(0, 3),
+      journal: [], journalCourt, journalJours: [], rappels: rappels.slice(0, 3),
       sacNourriture: e.inventaire.flatMap((c) => { const al = c && aliment(c.id); return al && c ? [{ nom: al.nom, image: asset(al.icone), qte: c.qte, opacite: 1 }] : []; }),
       lieux: [],
       memoireDetail: `${NOM_STADE[e.stade]} · ${NOM_GRAINE[e.graine].toLowerCase()} · jour ${ageJours(e)}`,

@@ -1,14 +1,15 @@
-// Pages du carnet d'éleveur hors maquette : Quêtes, Relations (PNJ et échos sauvages) et Mémoire
-// (arbre des échos, échos de souvenir). Chaque section a une page de gauche et une page de droite ;
+// Pages du carnet d'éleveur hors maquette : Journal (tout l'historique, page à page), Quêtes, Relations (PNJ et
+// échos sauvages) et Mémoire (arbre des échos, échos de souvenir). Chaque section a une page de gauche et une page de droite ;
 // le grand carnet du ranch les pose dans sa maquette (VueRanch : `carnetGauche`, `carnetDroite`),
 // le petit carnet hors du ranch (InterfaceRanch) montre les quêtes et les relations.
 // Ce qui est partagé par les deux pages (sous-onglet, lignée, quête choisie, page) vit dans un petit magasin.
 import { useSyncExternalStore, type CSSProperties, type ReactNode } from 'react';
-import { NOM_STADE, apparence, niveauRelation, rangRelation, LIEN_RELATION, ENCRE_RELATION, type Etat } from '@/moteur/simulation';
+import { NOM_STADE, ageJours, apparence, niveauRelation, rangRelation, LIEN_RELATION, ENCRE_RELATION, type Etat } from '@/moteur/simulation';
 import { lireQuetes, lireRelationsPnj, type Monde, type QueteLue } from '@/moteur/monde';
 import { profilActif } from '../../profils';
 import { TEMPERAMENTS } from '../../ranch/evenements';
 import { FRAGMENTS, LIGNEES, MEMOIRES, arbre, compte, ligneeDe, noeuds, revelees, type IdLignee, type Noeud } from './arbre';
+import { paginerJournal, type PageJournal } from './journal';
 import './carnet.css';
 
 const A = `${import.meta.env.BASE_URL}assets/`;
@@ -22,9 +23,11 @@ export interface VueCarnet {
   lignee: IdLignee | null;
   quete: string | null;
   pagePnj: number;
+  /** Double page du journal (0 : la plus récente). */
+  pageJournal: number;
 }
 export class EtatCarnet {
-  private v: VueCarnet = { memoire: 'arbre', lignee: null, quete: null, pagePnj: 0 };
+  private v: VueCarnet = { memoire: 'arbre', lignee: null, quete: null, pagePnj: 0, pageJournal: 0 };
   private abonnes = new Set<() => void>();
   constructor(private son?: (nom: string, vol?: number) => void) {}
   lire = () => this.v;
@@ -35,11 +38,11 @@ export class EtatCarnet {
     this.abonnes.forEach((f) => f());
   }
   /** Revenir au début (carnet refermé). */
-  oublier() { this.v = { ...this.v, quete: null, pagePnj: 0 }; }
+  oublier() { this.v = { ...this.v, quete: null, pagePnj: 0, pageJournal: 0 }; }
 }
 const useVue = (s: EtatCarnet) => useSyncExternalStore(s.abonner, s.lire);
 
-export type SectionCarnet = 'quetes' | 'relations' | 'memoire';
+export type SectionCarnet = 'journal' | 'quetes' | 'relations' | 'memoire';
 export interface ProprietesPages {
   section: SectionCarnet;
   cote: 'gauche' | 'droite';
@@ -53,6 +56,7 @@ export interface ProprietesPages {
 export function PageCarnet(p: ProprietesPages) {
   const v = useVue(p.vue);
   switch (p.section) {
+    case 'journal': return p.cote === 'gauche' ? <div className="cn-g"><Journal {...p} v={v} /></div> : <Journal {...p} v={v} />;
     case 'quetes': return p.cote === 'gauche' ? <div className="cn-g"><QuetesGauche {...p} v={v} /></div> : <QuetesDroite {...p} v={v} />;
     case 'relations': return p.cote === 'gauche' ? <div className="cn-g"><RelationsGauche {...p} v={v} /></div> : <RelationsDroite {...p} />;
     case 'memoire': return p.cote === 'gauche' ? <div className="cn-g"><Memoire {...p} v={v} /></div> : <Memoire {...p} v={v} />;
@@ -60,6 +64,41 @@ export function PageCarnet(p: ProprietesPages) {
 }
 
 const Fleche = ({ d }: { d: string }) => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d={d} /></svg>;
+
+// ——— Journal : tout l'historique gardé, du plus récent au plus ancien ; on tourne les pages deux par deux.
+
+const pad = (n: number) => String(n).padStart(2, '0');
+const hm = (minute: number) => `${pad(Math.floor(minute / 60) % 24)}:${pad(minute % 60)}`;
+
+function Journal({ etat, cote, vue, v }: ProprietesPages & { v: VueCarnet }) {
+  const pages = paginerJournal(etat.journal);
+  const doubles = pages.length / 2;
+  const d = Math.min(v.pageJournal, doubles - 1);
+  const page: PageJournal = pages[d * 2 + (cote === 'gauche' ? 0 : 1)];
+  const titre = (jour: number) => (jour === etat.jour ? 'Aujourd’hui' : jour === etat.jour - 1 ? 'Hier' : `Jour ${ageJours({ jour, naissance: etat.naissance })}`);
+  const aller = (n: number) => vue.changer({ pageJournal: n }, 'page');
+  return (
+    <div className="cn cn-journal" key={d}>
+      {cote === 'gauche' && !etat.journal.length && <div className="cn-vide">Rien encore : la première page reste à écrire.</div>}
+      {page.map((b) => (
+        <div key={`${b.jour}-${b.suite}`} className="cn-jour">
+          <div className="cn-jour-titre">{titre(b.jour)}{b.suite && <em> (suite)</em>}</div>
+          {b.lignes.map((l, i) => (
+            <div key={i} className="cn-entree"><span className="cn-heure">{hm(l.minute)}</span><span>{l.texte}</span></div>
+          ))}
+        </div>
+      ))}
+      {cote === 'droite' && doubles > 1 && (
+        <div className="cn-pages">
+          <button className="ast-fleche" disabled={d === 0} onClick={() => aller(d - 1)} aria-label="Pages plus récentes"><Fleche d="M15 5l-7 7 7 7" /></button>
+          <span className="ast-folio">{d === 0 ? 'les derniers jours' : `pages ${d * 2 + 1}–${d * 2 + 2}`} · {d + 1} / {doubles}</span>
+          <button className="ast-fleche" disabled={d >= doubles - 1} onClick={() => aller(d + 1)} aria-label="Pages plus anciennes"><Fleche d="M9 5l7 7-7 7" /></button>
+        </div>
+      )}
+      {etat.journal.length > 0 && d === doubles - 1 && (cote === 'droite') === pages[d * 2 + 1].length > 0 && <div className="cn-journal-fin">le début du journal</div>}
+    </div>
+  );
+}
 
 // ——— Quêtes
 
@@ -349,6 +388,7 @@ function SouvenirsDroite({ vu }: { vu: Set<string> }) {
 
 /** Titre et surtitre de chaque section (le grand carnet les écrit en haut de la page de gauche). */
 export const TITRES_CARNET: Record<SectionCarnet, { titre: string; surtitre: string }> = {
+  journal: { titre: 'Journal du ranch', surtitre: 'Ce qui s’est passé' },
   quetes: { titre: 'Quêtes', surtitre: 'Ce qui vous attend' },
   relations: { titre: 'Relations', surtitre: 'Les gens du coin' },
   memoire: { titre: 'Mémoire des échos', surtitre: 'Ce profil' },

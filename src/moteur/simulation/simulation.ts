@@ -6,7 +6,7 @@ import type {
   ReponseComportement, ReponseCorvee, ReponseRefus, Sortie, Stade,
 } from './types';
 import {
-  AGE_EVOLUTION, AGE_MORT, CARESSES_PAR_JOUR, CLES_CARACS, CLES_TEMPERAMENT, CONSTANTE_GUERISON_MALADIE,
+  AGE_EVOLUTION, AGE_MORT, CARESSES_PAR_JOUR, JOURNAL_MAX, CLES_CARACS, CLES_TEMPERAMENT, CONSTANTE_GUERISON_MALADIE,
   DUREE_BROSSAGE_HEURES, DUREE_VISITE_HEURES, MULT_CORVEE, EMOTION_DE_TEMPERAMENT, MAX_ECHOS_SAUVAGES, MAX_PAR_STADE, MULT_ENTRAINEMENT,
   MULT_GUERISON_BLESSURE, NOM_STADE, PLAGES_RYTHME, SALETE_MAX, TRAIT_DE_TEMPERAMENT, TRAIT_D_EMOTION,
   TRAIT_D_EMOTION_EDUCATIVE,
@@ -26,7 +26,7 @@ import { INTERACTIONS } from './donnees/interactions';
 import { CORVEES, ENTRAINEMENTS } from './donnees/activites';
 import { ALIMENTS } from './donnees/aliments';
 import type { BilanCombat } from '../combat/issue';
-import { apprendreTechniques, poolTechniques } from '../combat/pools';
+import { apprendreTechniques, basculerTechnique, poolTechniques } from '../combat/pools';
 
 /** Chance qu'ils fassent quelque chose ensemble cette heure-ci : plus forte quand l'affinité l'est. */
 const chanceVisite = (e: Etat) => { const v = e.echosSauvages.find((x) => x.id === e.visiteur?.id); return v ? chanceInteractionVisite(v) : CHANCE_INTERACTION_VISITE; };
@@ -71,7 +71,7 @@ export class Simulation {
   noter(texte: string) {
     const e = this.etat;
     e.journal.unshift({ jour: e.jour, minute: e.minute, texte });
-    if (e.journal.length > 200) e.journal.length = 200;
+    if (e.journal.length > JOURNAL_MAX) e.journal.length = JOURNAL_MAX;
     this.emettre({ type: 'journal', texte });
   }
   private message(texte: string, ton: 'bien' | 'mal' | 'note' = 'note') { this.emettre({ type: 'message', texte, ton }); }
@@ -627,14 +627,14 @@ export class Simulation {
   }
 
   /**
-   * Panser les blessures (soins.ts) : `demiHeures` demi-heures, au plus la tranche de PV de combat perdus arrondie
+   * Appliquer les premiers soins (soins.ts ; « panser » dans le code) : `demiHeures` demi-heures, au plus la tranche de PV de combat perdus arrondie
    * à la dizaine supérieure ; chaque demi-heure rend 10 % des PV maximum. Un écho à bout de forces redevient apte
    * dès que ses PV remontent. Un somme pendant les soins (effondrement) rend tout et arrête les soins.
    */
   panser(demiHeures: number): Reussi<{ texte: string; demiHeures: number }> | Refus {
     const e = this.etat;
     const max = demiHeuresPansement(e);
-    if (!max) return { ok: false, raison: `${this.Nom} n’a pas de plaie à panser.` };
+    if (!max) return { ok: false, raison: `${this.Nom} n’a pas de plaie à soigner.` };
     const n = Math.max(1, Math.min(max, Math.round(demiHeures)));
     const avant = partPerdue(e);
     for (let i = 0; i < n && !e.mort; i++) {
@@ -648,7 +648,7 @@ export class Simulation {
     appliquerEmotions(e, { peur: -5, tristesse: -3, joie: 3 });
     e.manqueAffection = Math.max(0, e.manqueAffection - 10);
     e.besoinAffection = e.manqueAffection > 70;
-    this.noter(`Vous avez pansé les blessures de ${e.nom} (${dureeDemiHeures(n)}).`);
+    this.noter(`Vous avez appliqué les premiers soins à ${e.nom} (${dureeDemiHeures(n)}).`);
     let texte = plaiesFinies(avant, partPerdue(e));
     if (e.blesse) texte += ' Sa blessure, elle, demandera un vrai pansement.';
     return { ok: true, texte, demiHeures: n };
@@ -1041,6 +1041,25 @@ export class Simulation {
       this.emettre({ type: 'technique', nom: n });
     }
     return r.apprises;
+  }
+
+  /**
+   * Choisir une technique à emporter au combat, ou la laisser (fiche de l'écho, onglet « Techniques ») : trois au
+   * plus, parmi celles qu'il a apprises et qui font partie des affinités de sa forme actuelle.
+   */
+  choisirTechnique(nom: string): Reussi<{ equipee: boolean }> | Refus {
+    const e = this.etat;
+    const t = e.techniques ?? { connues: [], equipees: [], seuils: [] };
+    const r = basculerTechnique(t, nom, e.stade, poolTechniques(e));
+    if (!r.ok) {
+      const raison = r.cause === 'plein' ? `${this.Nom} n’en emporte que trois au combat : laissez-en une d’abord.`
+        : r.cause === 'affinites' ? `« ${nom} » ne fait plus partie de ses affinités : ${this.a('il', 'elle')} ne peut plus la choisir.`
+        : r.cause === 'bebe' ? `Bébé, ${this.a('il', 'elle')} ne retient aucune technique.`
+        : `${this.Nom} ne connaît pas encore cette technique.`;
+      return { ok: false, raison };
+    }
+    e.techniques = r.techniques;
+    return { ok: true, equipee: r.equipee };
   }
 
   /** Retire un exemplaire de l'objet `id` du sac (objet utilisé en combat). */

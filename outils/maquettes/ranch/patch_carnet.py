@@ -22,3 +22,17 @@ def retoucher_carnet(t, rep):
           </div>
           <!-- Marque-page -->''')
     return t
+
+
+# Fiche de l'écho : l'onglet « Techniques » est une page hors maquette (src/jeu/ranch/TechniquesEcho.tsx) que
+# Ranch.tsx pose dans l'emplacement `ficheTechniques` (null pour les autres onglets).
+def retoucher_fiche(t, rep):
+    t = rep(t, '''        </sc-for>
+        </sc-if>
+      </sc-if>
+      <sc-if value="{{ficheChoix}}"''', '''        </sc-for>
+        </sc-if>
+        {{ficheTechniques}}
+      </sc-if>
+      <sc-if value="{{ficheChoix}}"''')
+    return t

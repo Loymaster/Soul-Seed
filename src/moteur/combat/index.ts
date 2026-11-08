@@ -4,7 +4,7 @@ export { Combat, type DescriptionCombattant, type OptionsCombat, type EffetSoin,
 export { caracsEffectives, resoudreAttaque, executerTechnique } from './resolution';
 export { ajouterStatut, faireDurerStatuts } from './statuts';
 export { choisirTechnique, choisirTechniqueDistance, chanceTechnique } from './ia';
-export { codeLignee, poolTechniques, techniquesAdversaire, apprendreTechniques, techniquesEquipees, type OptionsPool } from './pools';
+export { codeLignee, poolTechniques, techniquesAdversaire, apprendreTechniques, techniquesEquipees, basculerTechnique, techniquesADecouvrir, type OptionsPool, type TechniquesEcho } from './pools';
 export { bilanCombat, type BilanCombat, type OptionsBilan } from './issue';
 export { lireSignesCombat, type SignesCombat, type PostureCombat, type AllureCombat } from './signes';
 export { TECHNIQUES, CATEGORIES_TECHNIQUE } from './donnees/techniques';
