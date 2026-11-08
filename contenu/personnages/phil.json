@@ -9,9 +9,12 @@
   "visible": 1,
   "miroirADroite": true,
   "voix": {
-    "note": 330,
-    "rythme": 1,
-    "timbre": "doux"
+    "timbre": "xylophone",
+    "note": 430,
+    "rythme": 0.8,
+    "variation": 12,
+    "gamme": "mineure",
+    "duree": 0.3
   },
   "defaut": "neutre",
   "expressions": {

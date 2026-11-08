@@ -9,9 +9,9 @@
   "visible": 1,
   "miroirADroite": true,
   "voix": {
-    "note": 330,
-    "rythme": 1,
-    "timbre": "doux"
+    "timbre": "bois",
+    "note": 532,
+    "rythme": 0.95
   },
   "defaut": "neutre",
   "expressions": {

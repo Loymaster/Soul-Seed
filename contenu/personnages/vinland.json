@@ -9,9 +9,13 @@
   "visible": 1,
   "miroirADroite": true,
   "voix": {
-    "note": 330,
-    "rythme": 1,
-    "timbre": "doux"
+    "timbre": "basson",
+    "note": 95,
+    "rythme": 1.36,
+    "variation": 12,
+    "gamme": "majeure",
+    "duree": 0.9,
+    "volume": 1.5
   },
   "defaut": "neutre",
   "expressions": {

@@ -9,9 +9,10 @@
   "visible": 1,
   "miroirADroite": true,
   "voix": {
-    "note": 330,
-    "rythme": 1,
-    "timbre": "doux"
+    "timbre": "marimba",
+    "note": 300,
+    "rythme": 1.1,
+    "variation": 6
   },
   "defaut": "neutre",
   "expressions": {

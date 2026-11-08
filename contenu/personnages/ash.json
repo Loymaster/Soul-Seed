@@ -9,9 +9,14 @@
   "visible": 1,
   "miroirADroite": true,
   "voix": {
-    "note": 330,
-    "rythme": 1,
-    "timbre": "doux"
+    "timbre": "celesta",
+    "note": 94,
+    "rythme": 0.8,
+    "variation": 8,
+    "gamme": "chromatique",
+    "duree": 1.5,
+    "cadence": "mot",
+    "volume": 1.5
   },
   "defaut": "neutre",
   "expressions": {
