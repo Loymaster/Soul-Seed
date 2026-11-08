@@ -7,14 +7,14 @@
 import { useEffect, useMemo, useReducer, useRef, useState, type CSSProperties } from 'react';
 import type { Catalogue } from '@/contenu/types';
 import { Simulation, NOM_STADE, aliment, apparence, heureDuJour, type Etat, type Sortie } from '@/moteur/simulation';
-import { avancerTravaux, boutiqueOuverte, heureAbsolue, minuteAbsolue, type Monde as MondePartie } from '@/moteur/monde';
+import { FERMETURE_BOUTIQUE, OUVERTURE_BOUTIQUE, avancerTravaux, boutiqueOuverte, heureAbsolue, minuteAbsolue, type Monde as MondePartie } from '@/moteur/monde';
 import { SFX } from '@/moteur/sfx';
 import { Repere } from '../commun/Repere';
 import { useMusiqueEnchainee } from '../commun/musique';
 import { IC } from '../ranch/icones';
 import { BoutonCarnet, BoutonSac, Calque, Encart, ICONES_LIEU, PetitCarnet, Poteau, Sacoche } from '../commun/InterfaceRanch';
 import type { Personnage, Reglages } from '../profils';
-import { LIEUX, imagesLieu, lieuxVoisins, type ContexteLieu, type Destination, type EntreeMenu, type IdLieu, type PnjLieu } from './lieux';
+import { LIEUX, destinationsPoteau, imagesLieu, lieuxVoisins, type ContexteLieu, type Destination, type EntreeMenu, type IdLieu, type PnjLieu } from './lieux';
 import type { Panneau } from './actions';
 import { ScenePnj } from './ScenePnj';
 import { Coffre, Etal, Stand, Travail, Travaux, asset, type Ton } from './panneaux';
@@ -63,6 +63,7 @@ export function Monde(props: ProprietesMonde) {
   const [combat, setCombat] = useState(false);
   const [notes, setNotes] = useState<Note[]>([]);
   const [survol, setSurvol] = useState<string | null>(null);
+  const [survolPassage, setSurvolPassage] = useState<string | null>(null);
   const [promenades, setPromenades] = useState<Record<string, Promenade>>({});
   const [accueil, setAccueil] = useState<string | null>(null);
   const [sacOuvert, setSacOuvert] = useState(false);
@@ -278,12 +279,19 @@ export function Monde(props: ProprietesMonde) {
               // la taille suit la profondeur pour ceux qui se promènent
               const echelle = p.promenade && p.promenade.piedsMax > p.promenade.piedsMin ? 0.94 + ((pieds - p.promenade.piedsMin) / (p.promenade.piedsMax - p.promenade.piedsMin)) * 0.12 : 1;
               const miroir = pr ? pr.sens < 0 : !!pose.miroir;
+              // la silhouette (boîte utile de l'image) a la hauteur voulue et les pieds sur la ligne ; les marges débordent
+              const bt = a?.boite && a.l && a.h ? a.boite : null;
+              const cadre: CSSProperties = bt && a?.l && a.h
+                ? { height: `${(a.h / bt.h) * 100}%`, left: `${(-bt.x / bt.l) * 100}%`, top: `${(-bt.y / bt.h) * 100}%` }
+                : { height: '100%', left: 0, top: 0 };
               return (
                 <button key={cle} className={`mo-sprite ${actif ? 'actif' : ''} ${p.promenade ? 'marche' : ''}`} aria-label={p.nom}
-                  style={{ left: `${x}%`, top: `${pieds}%`, height: `${pose.hauteur * echelle}%`, zIndex: Math.round(pieds) } as CSSProperties}
+                  style={{ left: `${x}%`, top: `${pieds}%`, height: `${pose.hauteur * echelle}%`, aspectRatio: bt ? `${bt.l} / ${bt.h}` : a?.l && a.h ? `${a.l} / ${a.h}` : '2 / 3', zIndex: Math.round(pieds) } as CSSProperties}
                   onMouseEnter={() => { setSurvol(cle); son('paperTick'); }} onMouseLeave={() => setSurvol(null)}
                   onClick={(ev) => { ev.stopPropagation(); cliquerPnj(p, x, pieds - pose.hauteur * echelle); }}>
-                  <img src={asset(img)} alt={p.nom} draggable={false} style={{ transform: miroir ? 'scaleX(-1)' : undefined }} />
+                  <span className="corps" style={{ transform: miroir ? 'scaleX(-1)' : undefined }}>
+                    <img src={asset(img)} alt={p.nom} draggable={false} style={cadre} />
+                  </span>
                   <span className="ombre" />
                   <span className="nom">{p.nom}</span>
                 </button>
@@ -292,15 +300,38 @@ export function Monde(props: ProprietesMonde) {
           </div>
           {nuit && lieu !== 'atelier' && lieu !== 'boutique' && <div className="mo-nuit" />}
 
+          {/* les passages : une flèche à la craie sur le bord du décor (comme en exploration), le nom au survol */}
+          {L.passages(ctx).filter((pa) => pa.fleche).map((pa) => {
+            const f = pa.fleche!;
+            return (
+              <div key={`${lieu}-${pa.vers}`} className={`mo-passage ${survolPassage === pa.vers ? 'survol' : ''} ${libre && !sacOuvert && !carnetOuvert ? '' : 'cache'}`}
+                style={{ left: `${f.x}px`, top: `${f.y}px` }}>
+                <div className="halo" />
+                <svg className="fleche" viewBox="-36 -36 72 72" style={{ transform: `rotate(${f.angle}deg)` }} aria-hidden="true">
+                  <g>
+                    <path className="ombre" d="M-17 6 L0 -9 L17 6 M-13 22 L0 10 L13 22" />
+                    <path d="M-17 6 C-11 1 -5 -4 0 -9 C5 -4 11 1 17 6" />
+                    <path d="M-13 22 C-8 18 -4 14 0 10 C4 14 8 18 13 22" />
+                  </g>
+                </svg>
+                <button aria-label={pa.libelle} onClick={(ev) => { ev.stopPropagation(); setSurvolPassage(null); aller(pa.vers); }}
+                  onMouseEnter={() => { setSurvolPassage(pa.vers); son('paperTick'); }} onMouseLeave={() => setSurvolPassage(null)} />
+                <span className={`etiq ${f.nom ?? (f.x > 900 ? 'gauche' : 'droite')}`}>{pa.libelle}</span>
+              </div>
+            );
+          })}
+
           {fermee && (
             <div className="mo-ferme">
               <div className="corde g" /><div className="corde d" />
-              <div className="etiquette leather"><span className="stitch" /><b>Fermé</b><span className="mot">revenez entre 9 h et 19 h</span></div>
+              <div className="etiquette leather"><span className="stitch" /><b>Fermé</b><span className="mot">revenez entre {OUVERTURE_BOUTIQUE} h et {FERMETURE_BOUTIQUE} h</span></div>
             </div>
           )}
+          {/* l'accueil de Jumpy : un feuillet de la feuille de dialogue, son nom tamponné à son encre */}
           {accueil && !fermee && !scene && !panneau && (
             <div className="mo-accueil" onClick={(ev) => { ev.stopPropagation(); setAccueil(null); }}>
-              <p>{accueil}</p><span className="x">×</span>
+              <span className="qui" style={{ color: catalogue.pnj.jumpy?.encre ?? '#9c3b2a' }}>Jumpy</span>
+              <p>{accueil}</p>
             </div>
           )}
 
@@ -326,7 +357,7 @@ export function Monde(props: ProprietesMonde) {
             <BoutonSac top={20} cache={!libre} ouvrir={() => { setMenu(null); setSacOuvert(true); }} />
             <BoutonCarnet top={122} cache={!libre} ouvrir={() => { setMenu(null); setCarnetOuvert(true); }} />
             <Poteau top={224} cache={!libre || sacOuvert || carnetOuvert}
-              destinations={L.passages(ctx).map((pa) => ({ nom: pa.libelle, icone: ICONES_LIEU[pa.vers === 'boutique' ? 'magasin' : pa.vers], partir: () => aller(pa.vers) }))} />
+              destinations={destinationsPoteau(L.passages(ctx)).map((pa) => ({ nom: pa.libelle, icone: ICONES_LIEU[pa.vers === 'boutique' ? 'magasin' : pa.vers], partir: () => aller(pa.vers) }))} />
             {sacOuvert && <Sacoche etat={etat} ressources={monde.ressources} surFerme={() => { setSacOuvert(false); rafraichir(); }} surUtiliser={utiliser} sauver={sauver} />}
             {carnetOuvert && <PetitCarnet etat={etat} portrait={assets.get(apparence(etat))?.url} reglages={reglages} surReglages={props.surReglages}
               sauver={sauver} surMenu={props.surMenu} surFerme={() => setCarnetOuvert(false)} monde={monde} />}

@@ -14,6 +14,9 @@ si sujet == "discuter":
       maiko: T’imagines si on avait un entrepôt ENCORE plus grand ? J’en ai le vertige rien que d’imaginer toute cette place gagnée !
   sinon:
     maiko: C’est sympa ce petit coffre ! Mais bon, je sais qu’on pourrait faire mieux…
+    // le coffre est en place (Maïko recruté) mais l'atelier, où sera l'entrepôt, n'est pas encore reconstruit
+    si non construit.atelier:
+      maiko: Il doit y avoir quelqu’un capable de reconstruire l’atelier ! Tu savais qu’on avait un entrepôt là-bas ? Ça vient de me revenir !
   fin
 
 si maiko.recrute:

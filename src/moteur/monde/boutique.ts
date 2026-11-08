@@ -5,10 +5,18 @@ import { ALIMENTS } from '../simulation/donnees/aliments';
 import { aliment, objetDivers, ranger } from '../simulation/objets';
 import type { EmplacementEtal, Monde } from './index';
 
-/** La boutique est ouverte de 9 h à 19 h. */
-export const OUVERTURE_BOUTIQUE = 9;
-export const FERMETURE_BOUTIQUE = 19;
+/** La boutique est ouverte de 8 h à 20 h. */
+export const OUVERTURE_BOUTIQUE = 8;
+export const FERMETURE_BOUTIQUE = 20;
 export const boutiqueOuverte = (heure: number) => heure >= OUVERTURE_BOUTIQUE && heure < FERMETURE_BOUTIQUE;
+
+/**
+ * Le travail à la boutique (scène « jumpy », sujet « travailler ») : il commence entre 8 h et 18 h, une fois par jour,
+ * et dure 4 heures (Jumpy veille sur l'écho pendant ce temps). La scène reprend ces nombres (tests/astuces.test.ts le vérifie).
+ */
+export const DEBUT_TRAVAIL = 8;
+export const FIN_TRAVAIL = 18;
+export const DUREE_TRAVAIL = 4;
 
 /** Objets non comestibles vendus (NON_FOOD_ITEMS hors « noShop »). */
 export const NON_COMESTIBLES = ['bandage', 'medicament'];

@@ -35,16 +35,38 @@ export interface PnjLieu {
   image: (c: ContexteLieu) => string;
   /** Calque plein cadre (aligné sur le décor) : la zone cliquable est la boîte utile de l'image. */
   calque?: boolean;
-  /** Sprite posé : centre horizontal, pieds (depuis le haut) et hauteur, en % du décor. */
+  /**
+   * Sprite posé : centre horizontal, pieds (depuis le haut) et hauteur, en % du décor. La hauteur est celle de la silhouette
+   * (la boîte utile de l'image, marges transparentes ôtées) et les pieds sont le bas de cette silhouette.
+   */
   pose?: { x: number; pieds: number; hauteur: number; miroir?: boolean };
-  /** Promenade : le PNJ va et vient entre ces bornes (pieds), sa taille suit la profondeur. */
+  /** Promenade : le PNJ va et vient entre ces bornes (pieds), sa taille (silhouette) suit la profondeur. */
   promenade?: { xMin: number; xMax: number; piedsMin: number; piedsMax: number; hauteur: number; pas: [number, number]; periode: [number, number] };
   /** Une scène jouée directement au clic (première rencontre, quête en cours) au lieu du menu. */
   premier?: (c: ContexteLieu) => { scene: string; sujet?: string } | null;
   menu: (c: ContexteLieu) => EntreeMenu[];
 }
 
-export interface Passage { libelle: string; vers: Destination; position: 'haut' | 'bas' | 'gauche' | 'droite'; icone?: string }
+/**
+ * Un passage vers un autre lieu : il figure dans le poteau « partir » (avec, toujours, « Explorer » et « Rentrer au ranch »),
+ * et, s'il a une flèche, une flèche à la craie (comme en exploration) est tracée sur le bord du décor.
+ */
+export interface Passage {
+  libelle: string;
+  vers: Destination;
+  position: 'haut' | 'bas' | 'gauche' | 'droite';
+  icone?: string;
+  /** Flèche sur le décor : position dans le repère 1280 × 800, angle (0 = vers le haut, 90 = vers la droite), côté du nom. */
+  fleche?: { x: number; y: number; angle: number; nom?: 'gauche' | 'droite' };
+}
+
+/** Le poteau « partir » : les passages du lieu, puis toujours l'exploration et le ranch (sans doublon). */
+export function destinationsPoteau(passages: Passage[]): Passage[] {
+  const l = [...passages];
+  if (!l.some((p) => p.vers === 'exploration')) l.push({ libelle: 'Explorer', vers: 'exploration', position: 'haut' });
+  if (!l.some((p) => p.vers === 'ranch')) l.push({ libelle: 'Rentrer au ranch', vers: 'ranch', position: 'bas' });
+  return l;
+}
 
 export interface Lieu {
   id: IdLieu;
@@ -89,10 +111,11 @@ export const LIEUX: Record<IdLieu, Lieu> = {
     id: 'village', nom: 'Le village', ratio: 1536 / 1024, musique: 'intro-sanctuary',
     decor: () => 'decors/village/ruines.png', decorScene: () => 'village/ruines',
     echo: { x: 37, pieds: 88, hauteur: 12 },
+    // le haut des marches mène à l'entrée du village (la forêt du village), le bord gauche au sanctuaire
     passages: () => [
-      { libelle: 'Vers la forêt', vers: 'foret', position: 'haut' },
-      { libelle: 'Vers le sanctuaire', vers: 'sanctuaire', position: 'gauche' },
-      { libelle: 'Rentrer au ranch', vers: 'ranch', position: 'bas' },
+      { libelle: 'Vers l’entrée du village', vers: 'foret', position: 'haut', fleche: { x: 640, y: 262, angle: 0 } },
+      { libelle: 'Vers le sanctuaire', vers: 'sanctuaire', position: 'gauche', fleche: { x: 70, y: 520, angle: -90 } },
+      { libelle: 'Vers la boutique', vers: 'boutique', position: 'droite' },
     ],
     pnj: [
       ash,
@@ -110,17 +133,17 @@ export const LIEUX: Record<IdLieu, Lieu> = {
       {
         id: 'lady-roger', nom: 'Lady Roger',
         visible: (c) => !standPret(c), image: () => 'pnj/lady-roger/neutre.png',
-        promenade: { xMin: 40, xMax: 60, piedsMin: 74, piedsMax: 82, hauteur: 9, pas: [1, 5], periode: [1600, 2500] },
+        promenade: { xMin: 40, xMax: 60, piedsMin: 72.7, piedsMax: 80.7, hauteur: 6.6, pas: [1, 5], periode: [1600, 2500] },
         premier: () => ({ scene: 'lady-roger', sujet: 'promenade' }),
         menu: () => [],
       },
       {
-        id: 'bourbella', nom: 'Bourbella', pose: { x: 14, pieds: 82, hauteur: 11 },
+        id: 'bourbella', nom: 'Bourbella', pose: { x: 14, pieds: 79.5, hauteur: 6.9 },
         visible: (c) => d(c.m, 'bourbella.recrutee'), image: () => 'pnj/bourbella/neutre.png',
         menu: () => [discuter('bourbella', 'discuter'), { libelle: 'Améliorer la pêche', icone: 'gouttes', scene: 'bourbella', sujet: 'peche' }],
       },
       {
-        id: 'finn', nom: 'Finn', pose: { x: 82, pieds: 91, hauteur: 8, miroir: true },
+        id: 'finn', nom: 'Finn', pose: { x: 82, pieds: 89.4, hauteur: 4.8, miroir: true },
         visible: (c) => d(c.m, 'finn.recrute'), image: () => 'pnj/finn/neutre.png',
         menu: () => [
           { libelle: 'Obtenir des informations', icone: 'tableau', scene: 'finn', sujet: 'infos' },
@@ -131,22 +154,22 @@ export const LIEUX: Record<IdLieu, Lieu> = {
       {
         id: 'glamp', nom: 'Glamp',
         visible: (c) => d(c.m, 'glamp.recrutee') && !ATELIER(c), image: () => 'pnj/glamp/neutre.png',
-        promenade: { xMin: 56, xMax: 64, piedsMin: 44, piedsMax: 44, hauteur: 4.5, pas: [0.5, 2.5], periode: [1400, 2100] },
+        promenade: { xMin: 56, xMax: 64, piedsMin: 43.1, piedsMax: 43.1, hauteur: 3.1, pas: [0.5, 2.5], periode: [1400, 2100] },
         menu: () => [discuter('glamp', 'parler')],
       },
       {
-        id: 'grimp', nom: 'Grimp', pose: { x: 52, pieds: 45, hauteur: 4.6 },
+        id: 'grimp', nom: 'Grimp', pose: { x: 52, pieds: 44.3, hauteur: 3.5 },
         visible: (c) => d(c.m, 'grimp.recrute') && !ATELIER(c), image: () => 'pnj/grimp/neutre.png',
         menu: () => [discuter('grimp')],
       },
       {
-        id: 'garry', nom: 'Garry', pose: { x: 85, pieds: 76, hauteur: 15.4, miroir: true },
+        id: 'garry', nom: 'Garry', pose: { x: 85, pieds: 75.7, hauteur: 14.9, miroir: true },
         visible: (c) => d(c.m, 'garry.vaincu'), image: () => 'pnj/garry/face.png',
         menu: () => [discuter('garry')],
       },
       {
         // Ajout de la refonte : le potager de Tourby (activité « Jardin » du ranch dans le prototype) se tient au village.
-        id: 'tourby', nom: 'Tourby', pose: { x: 24, pieds: 86, hauteur: 8 },
+        id: 'tourby', nom: 'Tourby', pose: { x: 24, pieds: 84.3, hauteur: 5.2 },
         visible: potagerPret, image: () => 'pnj/tourby/neutre.png',
         premier: (c) => (n(c.m, 'tourby.potager_jour') ? null : { scene: 'tourby', sujet: 'parler' }),
         menu: () => [
@@ -162,9 +185,10 @@ export const LIEUX: Record<IdLieu, Lieu> = {
     id: 'foret', nom: 'La forêt du village', ratio: 1536 / 1024, musique: 'intro-sanctuary',
     decor: () => 'decors/foret/entree.png', decorScene: () => 'foret/entree',
     echo: { x: 60, pieds: 87, hauteur: 13 },
+    // le chemin du fond sort du village (la Sortie du village, en exploration) ; on revient par le bas
     passages: () => [
-      { libelle: 'Partir en exploration', vers: 'exploration', position: 'haut' },
-      { libelle: 'Vers le centre du village', vers: 'village', position: 'bas' },
+      { libelle: 'Partir en exploration', vers: 'exploration', position: 'haut', fleche: { x: 640, y: 352, angle: 0 } },
+      { libelle: 'Vers le centre du village', vers: 'village', position: 'bas', fleche: { x: 640, y: 748, angle: 180 } },
     ],
     pnj: [
       {
@@ -188,13 +212,13 @@ export const LIEUX: Record<IdLieu, Lieu> = {
     id: 'sanctuaire', nom: 'Le sanctuaire', ratio: 1672 / 941, musique: 'intro-sanctuary',
     decor: () => 'decors/village/sanctuaire.png', decorScene: () => 'village/sanctuaire',
     echo: { x: 33, pieds: 90, hauteur: 13 },
+    // le village est à droite du sanctuaire (le sanctuaire est à gauche du village)
     passages: () => [
-      { libelle: 'Vers le centre du village', vers: 'village', position: 'droite' },
-      { libelle: 'Rentrer au ranch', vers: 'ranch', position: 'bas' },
+      { libelle: 'Vers le centre du village', vers: 'village', position: 'droite', fleche: { x: 1212, y: 716, angle: 90, nom: 'gauche' } },
     ],
     pnj: [
       {
-        id: 'myhra', nom: 'Myhra', pose: { x: 50, pieds: 77, hauteur: 42 },
+        id: 'myhra', nom: 'Myhra', pose: { x: 50, pieds: 76.2, hauteur: 40.3 },
         visible: () => true, image: () => 'pnj/myhra/sprite.png',
         premier: () => ({ scene: 'myhra' }),
         menu: () => [],
@@ -229,7 +253,7 @@ export const LIEUX: Record<IdLieu, Lieu> = {
         menu: () => [{ libelle: 'Demander un service', icone: 'marteau', scene: 'glamp', sujet: 'service' }, discuter('glamp', 'parler')],
       },
       {
-        id: 'grimp', nom: 'Grimp', pose: { x: 51, pieds: 79, hauteur: 17 },
+        id: 'grimp', nom: 'Grimp', pose: { x: 51, pieds: 76.3, hauteur: 13 },
         visible: (c) => d(c.m, 'grimp.recrute'), image: () => 'pnj/grimp/neutre.png',
         menu: () => [discuter('grimp')],
       },
@@ -245,10 +269,12 @@ export const LIEUX: Record<IdLieu, Lieu> = {
     id: 'boutique', nom: 'La boutique de Jumpy', ratio: 1536 / 1024, musique: 'shop',
     decor: () => 'decors/boutique/interieur.png', decorScene: () => 'boutique/interieur',
     echo: { x: 58, pieds: 92, hauteur: 16 },
-    passages: () => [{ libelle: 'Rentrer au ranch', vers: 'ranch', position: 'bas' }],
+    passages: () => [{ libelle: 'Retour au village', vers: 'village', position: 'bas' }],
     pnj: [
       {
-        id: 'jumpy', nom: 'Jumpy', pose: { x: 27, pieds: 92, hauteur: 80 },
+        // Jumpy (1,30 m) se tient devant le bout gauche du comptoir. Échelle du décor à cette profondeur : le comptoir
+        // (≈ 0,95 m) mesure ≈ 16 % du décor et le tonneau voisin (≈ 0,9 m) ≈ 20 %, soit ≈ 17 à 22 % par mètre → 1,30 m ≈ 23 %.
+        id: 'jumpy', nom: 'Jumpy', pose: { x: 36, pieds: 67, hauteur: 23 },
         visible: (c) => boutiqueOuverte(c.h), image: () => 'decors/boutique/vendeur.png',
         menu: (c) => [
           { libelle: 'Voir l’étal', icone: 'cadeau', panneau: 'boutique' },

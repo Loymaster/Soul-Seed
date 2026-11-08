@@ -18,14 +18,14 @@ si sujet == "emploi":
   jumpy [pensif]: Ah oui… c’est vrai qu’il va vous falloir de l’argent… si vous le souhaitez, vous pouvez venir travailler à ma boutique !
   jumpy [daccord]: Ne vous inquiétez pas pour {echo.nom}. Je m’occuperai {echo:de lui|d’elle} pendant ce temps-là et tâcherai de faire en sorte qu’{echo:il|elle} ne manque de rien !
   metier.assistant = vrai
-  narration: Vous pouvez désormais travailler à la boutique, de 8 h à 14 h, une fois par jour.
+  narration: Vous pouvez désormais travailler à la boutique, de 8 h à 18 h, une fois par jour.
   fin
 
 si sujet == "travailler":
   si echo.malade:
     jumpy [triste]: {echo.nom} n’a pas l’air bien… Occupe-toi {echo:de lui|d’elle} d’abord, le travail attendra !
-  sinon si heure < 8 ou heure >= 14:
-    narration: Ce travail n’est disponible que de 8 h à 14 h.
+  sinon si heure < 8 ou heure >= 18:
+    narration: Ce travail n’est disponible que de 8 h à 18 h.
   sinon si travail.jour == jour:
     narration: Vous avez déjà travaillé aujourd’hui. Revenez demain !
   sinon:
@@ -36,7 +36,7 @@ si sujet == "travailler":
       jumpy [daccord]: Beau travail ! Voilà ta paie : {travail.or} or.
     sinon:
       jumpy [pensif]: Hmm… ce n’était pas ta journée. Reviens demain, tu feras mieux !
-    action: heures 6
+    action: heures 4
   fin
 
 si sujet == "entrainement":

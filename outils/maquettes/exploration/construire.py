@@ -133,6 +133,10 @@ assert '/_blob/' not in css
 sortie = porter_css(css, PORTEE)
 # retouches propres au jeu : le cadre ne doit pas hériter des styles globaux des boutons
 sortie += '\n.' + PORTEE + ' button:focus-visible{outline:2px solid #f3d48a;outline-offset:2px}\n'
+# l'interface (page du carnet en haut à gauche, bouton de la carte, gestes de terrain) passe devant tout ce qui est
+# dans le décor : PNJ (29–31), l'écho (30), l'écho sauvage (31–32), les fourrés (40) — un grand PNJ (Morthen…) passe dessous ;
+# elle reste sous les pages, voiles et bannières (50 et plus) et sous le sac et le carnet du ranch (calque à 70)
+sortie += '.' + PORTEE + ' .carnet,.' + PORTEE + ' .cote,.' + PORTEE + ' .gestes{z-index:45}\n'
 # la carte : sans cadre, l'illustration aux bords déchirés flotte au-dessus du décor, un peu de travers
 sortie += '\n'.join('.' + PORTEE + ' ' + r for r in [
     '.carte{padding:0;background:none;box-shadow:none;transform:rotate(-.7deg);animation-name:' + PORTEE + 'CarteIn}',
