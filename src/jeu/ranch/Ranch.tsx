@@ -7,7 +7,7 @@ import {
   CORVEES, ENTRAINEMENTS, INTERACTIONS, NOM_STADE, Simulation, accord, aliment, apparence, ageJours, descriptionObjet,
   heureDuJour, lireSignes, objetDivers, texteComportement, type CategorieInteraction, type CleCarac, type Etat, type OptionInteraction, type ReponseCorvee, type ReponseRefus,
   type ReponseComportement, type Signes, type Sortie, type Stade, type EchoSauvage,
-  ENCRE_RELATION, LIEN_RELATION, niveauRelation, rangRelation,
+  ENCRE_RELATION, LIEN_RELATION, niveauRelation, rangRelation, demiHeuresPansement, etatPlaies, plaiesApres,
 } from '@/moteur/simulation';
 import { aBoutDeForces } from '@/moteur/combat';
 import type { Catalogue } from '@/contenu/types';
@@ -20,6 +20,7 @@ import { Repere } from '../commun/Repere';
 import { ciel, lanternes, lumiere } from './ciel';
 import { IC } from './icones';
 import { profilEcho, volumePas, type Profil } from './demarche';
+import { placerDejection } from './dejections';
 import { saison } from './lumiere';
 import { REP, TAMPON, TEMPERAMENTS, GLYPHE_INCONNU, cleEvenement, consequence, noteSens, parole, phraseReponse } from './evenements';
 import { ecouterVolumes, fixerVolumes, volumeMusique } from '../commun/volumes';
@@ -28,6 +29,7 @@ import { ONGLETS_FICHE, lignesCombat, lignesTemperament, progression, temperamen
 import { PALIER_CORVEE, essaisScene, sceneCorvee, sceneEntrainement, sceneInteraction, sonsScene } from './scenes';
 import { teinteEmotion } from './lueurs';
 import { FenetreTemps } from './FenetreTemps';
+import { FenetrePansement, ICONE_PANSER, detailPanser } from './FenetrePansement';
 import { VoileSommeil, type Sommeil } from './VoileSommeil';
 import { NoteRefus, type RefusEnCours } from './NoteRefus';
 import { CHIFFRES_ROMAINS, ICONE_ASTUCES, THEMES_ASTUCES, compteTheme, lignesTheme, paginer, type ContexteAstuces } from '../commun/astuces';
@@ -154,6 +156,8 @@ interface EtatUI {
   ongletFiche: OngletFiche;
   /** Fenêtre « laisser le temps passer » ouverte. */
   temps: boolean;
+  /** La réglette « panser les blessures » est ouverte. */
+  pansement?: boolean;
   /** L'écho dort : l'écran s'assombrit le temps d'une berceuse. */
   sommeil: Sommeil | null;
   /** Il vient de refuser un plat : deux mots proposés (insister, respecter son refus). */
@@ -277,8 +281,8 @@ export class Ranch extends Component<ProprietesRanch, EtatUI> {
     }, 200);
   }
 
-  occupe() { const s = this.state; return !!(s.ouvert || s.carnet || s.sacOuvert || s.quitter || s.evc || s.sortie || s.scene || s.temps || s.sommeil || s.refus || Date.now() < this.repos || this.e.mort || this.evo || this.tutoActif); }
-  enPause() { const s = this.state; return !!(s.carnet || s.sacOuvert || s.sortie || s.evc || s.scene || s.temps || s.sommeil || s.refus || this.e.mort || this.evo || this.tutoActif); }
+  occupe() { const s = this.state; return !!(s.ouvert || s.carnet || s.sacOuvert || s.quitter || s.evc || s.sortie || s.scene || s.temps || s.pansement || s.sommeil || s.refus || Date.now() < this.repos || this.e.mort || this.evo || this.tutoActif); }
+  enPause() { const s = this.state; return !!(s.carnet || s.sacOuvert || s.sortie || s.evc || s.scene || s.temps || s.pansement || s.sommeil || s.refus || this.e.mort || this.evo || this.tutoActif); }
 
   // ——— Le temps s'écoule
   tic() {
@@ -349,6 +353,18 @@ export class Ranch extends Component<ProprietesRanch, EtatUI> {
     const sorties = s.vider();
     if (!sorties.some((x) => x.type === 'sommeil' || x.type === 'mort')) this.montrerSortie({ texte: heures === 1 ? 'Une heure plus tard…' : `${heures} heures plus tard…` }, 1700);
     this.traiter(sorties); this.sauver(); this.rafraichir();
+  }
+
+  /** « Panser les blessures » : le temps choisi sur la réglette (demi-heures), puis la scène des bandages. */
+  panser(demiHeures: number) {
+    this.setState({ pansement: false });
+    const s = this.sim;
+    this.ouvrirScene({ kind: 'panser', groupe: 'soin', image: '', titre: 'Panser les blessures' }, () => {
+      const r = s.panser(demiHeures);
+      if (!r.ok) { if (r.raison) this.flotter(r.raison, COULEUR.mal); return null; }
+      return [r.texte];
+    });
+    [1300, 2300, 2900].forEach((d, i) => this.later(() => { if (this.state.scene?.kind === 'panser') this.son(i === 2 ? 'pop' : 'leather'); }, d));
   }
 
   montrerSortie(o: Sortie_, ms = 2200) {
@@ -483,6 +499,7 @@ export class Ranch extends Component<ProprietesRanch, EtatUI> {
         { k: 'r-soins', nom: 'Soins', rubrique: true },
         { k: 'laver', nom: 'Laver', icone: IC.laver, detail: '2 h', agir: () => this.ouvrirScene({ kind: 'laver', groupe: 'soin', image: '', titre: 'Le bain' }, () => { const r = s.laver(); return r.ok ? [] : null; }) },
         { k: 'brosser', nom: 'Brosser', icone: IC.brosser, detail: '1 h', agir: () => this.ouvrirScene({ kind: 'brosser', groupe: 'soin', image: '', titre: 'Un coup de brosse' }, () => { const r = s.brosser(); return r.ok ? [r.texte] : null; }) },
+        { k: 'panser', nom: 'Panser les blessures', icone: ICONE_PANSER, sansTampon: true, ...detailPanser(e), agir: () => { this.son('bookArrive'); this.setState({ pansement: true }); } },
         { k: 'pansement', nom: 'Soigner une blessure', icone: IC.trousse, off: !nb('bandage') || !e.blesse, detail: !e.blesse ? 'aucune blessure' : nb('bandage') ? 'un pansement' : 'pas de pansement', agir: () => this.utiliserObjet(index('bandage')) },
         { k: 'medicament', nom: 'Donner un médicament', icone: IC.medicament, off: !nb('medicament'), detail: nb('medicament') ? 'dans le sac' : 'aucun', agir: () => this.utiliserObjet(index('medicament')) },
         { k: 'coucher', nom: 'Le coucher', icone: IC.coucher, agir: () => this.coucher() },
@@ -601,6 +618,7 @@ export class Ranch extends Component<ProprietesRanch, EtatUI> {
     const fatigue = niveau('fatigue') >= 2 ? `${Il} paraît ${this.a('fatigué', 'fatiguée')}.` : 'Il lui reste de l’énergie.';
     if (kind === 'manger') lignes = [premier || app, faim];
     else if (kind === 'laver' || kind === 'brosser') lignes = [app, niveau('salete') >= 2 ? `${Il} est encore sale.` : `${Il} est tout${this.a('', 'e')} propre.`];
+    else if (kind === 'panser') lignes = [premier || app, `${Il} se sent déjà mieux.`];
     else if (groupe === 'entrainement') lignes = [`${Il} s’est ${this.a('donné', 'donnée')} du mal.`, fatigue];
     else if (groupe === 'corvee') lignes = [premier || app, fatigue];
     else lignes = [premier || app, niveau('fatigue') >= 2 ? `${Il} paraît ${this.a('épuisé', 'épuisée')}.` : emo > 0 ? `${Il} a le cœur léger.` : `${Il} en redemanderait bien.`];
@@ -926,6 +944,8 @@ export class Ranch extends Component<ProprietesRanch, EtatUI> {
         evolution: () => { const suite: Partial<Record<Stade, Stade>> = { bebe: 'enfant', enfant: 'adolescent', adolescent: 'adulte' }; const v = suite[this.e.stade]; if (v) { sim.evoluer(v); this.traiter(this.sim.vider()); } return v; },
         tutoriel: () => { this.tutoActif = true; this.rafraichir(); },
         refus: () => { const e = this.e; const i = e.inventaire.findIndex((c) => c && aliment(c.id)); if (i < 0) return 'rien à manger'; e.satiete = this.sim.max; e.frustrationAlimentaire = 100; this.utiliserObjet(i); return i; },
+        /** Laisse l'écho avec `part` (0–1) de ses PV de combat perdus, pour essayer « Panser les blessures ». */
+        blesser: (part = 0.75) => { this.e.pvCombat = Math.max(0, Math.round(Math.max(1, Math.round(this.e.caracs.robustesse * 7)) * (1 - part) * 10) / 10); this.sauver(); this.rafraichir(); return this.e.pvCombat; },
         corvee: (id = CORVEES[0].id) => { const c = CORVEES.find((x) => x.id === id)!; delete this.e.derniereCorvee[c.id]; this.ouvrirScene({ kind: sceneCorvee(c.id), groupe: 'corvee', image: asset(c.icone), titre: c.nom }, () => { const r = this.sim.jouerCorvee(c.id, 1); return r.ok ? { lignes: [PALIER_CORVEE[r.palier]], essais: r.essais, reponses: this.sim.reponsesCorvee() } : null; }); },
       };
     }
@@ -1063,6 +1083,9 @@ export class Ranch extends Component<ProprietesRanch, EtatUI> {
         )}
         {s.temps && <FenetreTemps minute={this.e.minute} nomEcho={this.e.nom} filtre="url(#rk7Ui)" son={(n, ...a) => this.son(n, ...a)}
           surValider={(h) => this.attendre(h)} surAnnuler={() => this.setState({ temps: false })} />}
+        {s.pansement && <FenetrePansement minute={this.e.minute} nomEcho={this.e.nom} etat={etatPlaies(this.e)} max={demiHeuresPansement(this.e)}
+          apres={(n) => plaiesApres(this.e, n)} filtre="url(#rk7Ui)" son={(n, ...a) => this.son(n, ...a)}
+          surValider={(n) => this.panser(n)} surAnnuler={() => this.setState({ pansement: false })} />}
         {s.sommeil && <VoileSommeil s={s.sommeil} />}
         {s.refus && <NoteRefus r={s.refus} surChoix={(cle) => this.repondreRefus(cle)} />}
       </Repere>
@@ -1165,9 +1188,10 @@ export class Ranch extends Component<ProprietesRanch, EtatUI> {
       evtVisible: !!e.comportement && !s.evc && !s.scene && !e.mort,
       // déjections : on nettoie là où elles sont tombées
       crottes: e.dejections.map((d) => {
-        const x = Math.round(250 + d.x * 760), y = Math.round(430 + d.y * 160);
+        // taille proportionnelle à celle de l'écho qui l'a laissée (dejections.ts)
+        const { x, y, z, l, h, bx, by } = placerDejection(d, e);
         return {
-          x, y, z: 100 + y - 200, image: asset(d.nature === 'vomi' ? 'activites/ranch/vomi.png' : 'activites/ranch/dejection-detouree.webp'),
+          x, y, z, l, h, bx, by, image: asset(d.nature === 'vomi' ? 'activites/ranch/vomi.png' : 'activites/ranch/dejection-detouree.webp'),
           cls: s.dejPart.includes(d.id) ? 'part' : s.dejSurvol === d.id ? 'survol' : '',
           survol: () => this.setState({ dejSurvol: d.id }), quitte: () => this.setState((st) => (st.dejSurvol === d.id ? { dejSurvol: null } : null)),
           nettoyer: () => {

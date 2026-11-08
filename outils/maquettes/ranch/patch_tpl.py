@@ -1,9 +1,9 @@
 # Retouches du gabarit de la maquette pour le jeu (déjections multiples, visiteur, transitions).
 def retoucher(t, rep):
     t = rep(t, '<sc-if value="{{crotteVisible}}" hint-placeholder-val="{{ true }}">\n    <div class="crotte-img {{crotteCls}}" style="left:{{crotteX}}px;top:{{crotteY}}px;z-index:{{crotteZ}}"><img src="/_blob/d51ed0b456413f23fdb3dfe427014aed"',
-            '<sc-for list="{{crottes}}" as="cr" hint-placeholder-count="1">\n    <div class="crotte-img {{cr.cls}}" style="left:{{cr.x}}px;top:{{cr.y}}px;z-index:{{cr.z}}"><img src="{{cr.image}}"')
+            '<sc-for list="{{crottes}}" as="cr" hint-placeholder-count="1">\n    <div class="crotte-img {{cr.cls}}" style="left:{{cr.x}}px;top:{{cr.y}}px;width:{{cr.l}}px;height:{{cr.h}}px;z-index:{{cr.z}}"><img src="{{cr.image}}"')
     t = rep(t, '<button class="crotte" onClick="{{nettoyer}}" onMouseEnter="{{crotteSurvol}}" onMouseLeave="{{crotteQuitte}}" aria-label="Ramasser la déjection" style="left:{{crotteX}}px;top:{{crotteY}}px">\n      <span class="astuce">ramasser</span>\n    </button>\n  </sc-if>',
-            '<button class="crotte" onClick="{{cr.nettoyer}}" onMouseEnter="{{cr.survol}}" onMouseLeave="{{cr.quitte}}" aria-label="Ramasser la déjection" style="left:{{cr.x}}px;top:{{cr.y}}px">\n      <span class="astuce">ramasser</span>\n    </button>\n  </sc-for>')
+            '<button class="crotte" onClick="{{cr.nettoyer}}" onMouseEnter="{{cr.survol}}" onMouseLeave="{{cr.quitte}}" aria-label="Ramasser la déjection" style="left:{{cr.bx}}px;top:{{cr.by}}px">\n      <span class="astuce">ramasser</span>\n    </button>\n  </sc-for>')
     # le visiteur : un écho sauvage posé comme le nôtre (cadre 150 × 240, pieds sur le sol, perspective, démarche)
     t = rep(t, "  <!-- L'écho se promène sur le terrain ; tout ce qui le concerne le suit -->",
             '  <sc-if value="{{visiteur}}" hint-placeholder-val="{{ false }}">\n'

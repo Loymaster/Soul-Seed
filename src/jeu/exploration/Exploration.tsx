@@ -9,7 +9,7 @@ import { Component, type ReactNode } from 'react';
 import type { Catalogue } from '@/contenu/types';
 import { aBoutDeForces } from '@/moteur/combat';
 import {
-  NOM_STADE, Simulation, accord, ageJours, aliment, apparence, creerEchoSauvage, descriptionObjet, lireSignes, objetDivers,
+  NOM_STADE, Simulation, accord, ageJours, aliment, apparence, creerEchoSauvage, nomsPris, descriptionObjet, lireSignes, objetDivers,
   type Etat, type Graine, type Sortie,
 } from '@/moteur/simulation';
 import { consommer, ranger as rangerObjet } from '@/moteur/simulation/objets';
@@ -632,8 +632,7 @@ export class Exploration extends Component<ProprietesExploration, EtatUI> {
   // —— un écho sauvage : tiré selon le lieu (âge, graines possibles)
   surgir(enjeu: string[]) {
     const zone = this.state.zone, z = ZONES[zone], cfg = z.echo ?? { ageMin: 1, ageMax: 3, cles: [] };
-    let sv = creerEchoSauvage(Math.random, cfg.ageMin, cfg.ageMax, cfg.cles as Graine[]);
-    for (let i = 0; i < 8 && sv.nom === this.e.nom; i++) sv = creerEchoSauvage(Math.random, cfg.ageMin, cfg.ageMax, cfg.cles as Graine[]);
+    const sv = creerEchoSauvage(Math.random, cfg.ageMin, cfg.ageMax, cfg.cles as Graine[], nomsPris(this.e));
     const ecart = sv.ageJours - ageJours(this.e);
     const fort: Fort = ecart >= 4 ? 'bien plus fort' : ecart >= 2 ? 'plus fort' : 'de taille';
     const T = temperamentTerrain(this.e), N = this.nom;

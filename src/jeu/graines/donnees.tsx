@@ -1,5 +1,6 @@
 // Les cinq Soul Seeds telles que le joueur les découvre : nom, tempérament, couleur, emblème.
-import type { Graine } from '@/moteur/simulation';
+import { nomsPris, tirerNom, type Graine } from '@/moteur/simulation';
+import { parties, profilActif } from '../profils';
 import joy from './glyphes/joy.svg?raw';
 import wrath from './glyphes/wrath.svg?raw';
 import disgust from './glyphes/disgust.svg?raw';
@@ -30,13 +31,16 @@ export function Embleme({ graine, className = '', style }: { graine: Graine; cla
   return <span className={`glyphe ${className}`} style={style} aria-hidden="true" dangerouslySetInnerHTML={{ __html: SVG[graine] }} />;
 }
 
-/** Noms proposés par le dé, selon le genre de l'écho. */
-export const NOMS_M = ['Filo', 'Brindo', 'Kesh', 'Namoro', 'Talvi', 'Orin', 'Sculo', 'Ranvik', 'Isendo', 'Volren', 'Corvin', 'Wenlo', 'Bram', 'Jorik', 'Fenro', 'Silvo'];
-export const NOMS_F = ['Fila', 'Brinda', 'Kesha', 'Namora', 'Talvia', 'Orina', 'Sculla', 'Ranvika', 'Isenda', 'Volrena', 'Corvina', 'Wenla', 'Brama', 'Jorika', 'Fenra', 'Silva'];
+/**
+ * Nom proposé par le dé, selon le genre de l'écho : tiré dans les grands pools de prénoms (moteur/simulation/noms.ts),
+ * sans redonner le nom affiché ni un nom déjà porté dans les parties du profil (échos et échos sauvages connus).
+ */
 export function proposerNom(genre: 'm' | 'f', actuel: string) {
-  const l = genre === 'f' ? NOMS_F : NOMS_M;
-  let n = actuel;
-  while (n === actuel) n = l[Math.floor(Math.random() * l.length)];
-  return n;
+  let pris: string[] = [];
+  try {
+    const p = profilActif();
+    if (p) pris = parties(p.id).flatMap((e) => nomsPris(e));
+  } catch { /* stockage indisponible : on tire sans rien éviter */ }
+  return tirerNom(genre, Math.random, [actuel, ...pris]);
 }
 export const capitaliser = (n: string) => { const t = n.trim(); return t.charAt(0).toUpperCase() + t.slice(1); };

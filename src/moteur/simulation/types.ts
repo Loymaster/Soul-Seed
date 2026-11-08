@@ -112,6 +112,8 @@ export interface Dejection {
   x: number;
   y: number;
   nature: 'crotte' | 'vomi';
+  /** Stade de l'écho quand il l'a laissée : sa taille en dépend (src/jeu/ranch/dejections.ts). */
+  stade?: Stade;
 }
 
 export interface EchoSauvage {
@@ -129,6 +131,8 @@ export interface EchoSauvage {
   affectNegatif: number;
   /** « Signe d'inspiration » après un moment passé ensemble : rapproche les personnalités (compatibilité). */
   compatBonus?: number;
+  /** Stade auquel on l'a vu la dernière fois au ranch (pour remarquer qu'il a grandi). */
+  stadeVu?: Stade;
 }
 
 /** Après un refus de nourriture. */

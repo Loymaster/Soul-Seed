@@ -189,13 +189,13 @@ export function VueRanch({ v }: { v: any }) {
       {/* La déjection : on nettoie là où elle est tombée */}
       {(v.crottes || []).map((xCr2: any, i2: number) => (
         <Fragment key={i2}>
-          <div className={`crotte-img ${xCr2.cls}`} style={{ left: `${xCr2.x}px`, top: `${xCr2.y}px`, zIndex: xCr2.z } as CSSProperties}>
+          <div className={`crotte-img ${xCr2.cls}`} style={{ left: `${xCr2.x}px`, top: `${xCr2.y}px`, width: `${xCr2.l}px`, height: `${xCr2.h}px`, zIndex: xCr2.z } as CSSProperties}>
             <img src={xCr2.image} alt="" style={{ filter: v.decorFilter, transition: "filter 1.2s ease" } as CSSProperties} />
             <svg className="crotte-lueur" width="22" height="22" viewBox="0 0 22 22" aria-hidden="true">
               <path d="M11 1l2.2 7.8L21 11l-7.8 2.2L11 21l-2.2-7.8L1 11l7.8-2.2z" fill="#fff6d6" />
             </svg>
           </div>
-          <button className="crotte" onClick={xCr2.nettoyer} onMouseEnter={xCr2.survol} onMouseLeave={xCr2.quitte} aria-label="Ramasser la déjection" style={{ left: `${xCr2.x}px`, top: `${xCr2.y}px` } as CSSProperties}>
+          <button className="crotte" onClick={xCr2.nettoyer} onMouseEnter={xCr2.survol} onMouseLeave={xCr2.quitte} aria-label="Ramasser la déjection" style={{ left: `${xCr2.bx}px`, top: `${xCr2.by}px` } as CSSProperties}>
             <span className="astuce">
               ramasser
             </span>

@@ -14,3 +14,7 @@ export { ALIMENTS } from './donnees/aliments';
 export { ENTRAINEMENTS, CORVEES } from './donnees/activites';
 export { INTERACTIONS } from './donnees/interactions';
 export { aleatoireFixe, heureDuJour, heureTotale, ageJours, accord, accorderTexte } from './outils';
+export { tirerNom, nomsPris, NOMS_ECHOS_M, NOMS_ECHOS_F } from './noms';
+export { stadeSauvage, vieillirSauvage, vieillirSauvages } from './croissance';
+export { pvMaxEcho, partPerdue, demiHeuresPansement, etatPlaies, plaiesApres, plaiesFinies, dureeDemiHeures, DEMI_HEURE_PANSEMENT } from './soins';
+export { essaisCorvee, probaCorvee, nombreEssais } from './corvees';
