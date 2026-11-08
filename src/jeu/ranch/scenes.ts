@@ -2,6 +2,13 @@
 // et les bruitages qui l'accompagnent. Les accessoires et les gestes sont dans la maquette (ranch.tpl.html, ranch.css).
 import type { Entrainement } from '@/moteur/simulation';
 
+/**
+ * Hauteur de l'écho dans la fenêtre de scène (px) selon son échelle au ranch (bébé 0,5, enfant 0,75, adolescent 1, adulte 1,15,
+ * fois la taille propre à l'individu) : 170 px pour un enfant, plus petit pour un bébé, plus grand ensuite, sans sortir du cadre.
+ * Les accessoires portés (brosse, pierre, gerbe, sueur…) se placent d'après cette hauteur (variable CSS --h).
+ */
+export const hauteurScene = (echelle: number): number => Math.round(170 * Math.min(1.2, Math.max(0.72, Math.sqrt(Math.max(0.1, echelle) / 0.75))));
+
 /** Une interaction (jeu, discussion, partage, éducation) : sa scène. */
 export function sceneInteraction(cat: string, id: string, nuit = false): string {
   switch (id) {

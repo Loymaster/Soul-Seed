@@ -13,7 +13,7 @@ import {
 } from './constantes';
 import { accord, accorderTexte, ageJours, borne, centieme, dixieme, heureDuJour, heureTotale, piocher } from './outils';
 import { appliquerEmotions, deltaAjuste } from './emotions';
-import { CHANCE_INTERACTION_VISITE, changerAffect, compatibilite, probaEntente, texteDepart, texteRetour, tirerInteractionVisite } from './visites';
+import { CHANCE_INTERACTION_VISITE, chanceInteractionVisite, changerAffect, compatibilite, probaEntente, texteDepart, texteRetour, tirerInteractionVisite } from './visites';
 import { regimeCompatible } from './alimentation';
 import { aliment, consommer, objetDivers, ranger } from './objets';
 import { creerEchoSauvage } from './creation';
@@ -27,6 +27,9 @@ import { CORVEES, ENTRAINEMENTS } from './donnees/activites';
 import { ALIMENTS } from './donnees/aliments';
 import type { BilanCombat } from '../combat/issue';
 import { apprendreTechniques, poolTechniques } from '../combat/pools';
+
+/** Chance qu'ils fassent quelque chose ensemble cette heure-ci : plus forte quand l'affinité l'est. */
+const chanceVisite = (e: Etat) => { const v = e.echosSauvages.find((x) => x.id === e.visiteur?.id); return v ? chanceInteractionVisite(v) : CHANCE_INTERACTION_VISITE; };
 
 /** Options d'une heure de simulation (paramètres de tickHour dans le prototype). */
 export interface OptionsHeure {
@@ -288,7 +291,7 @@ export class Simulation {
       e.visiteur = null;
       const t = v ? texteDepart(e, v) : 'L’écho invité est reparti.';
       this.noter(t); this.emettre({ type: 'visiteur-parti', texte: t, id });
-    } else if (e.visiteur && !o.repos && !e.mort && rng() < CHANCE_INTERACTION_VISITE) {
+    } else if (e.visiteur && !o.repos && !e.mort && rng() < chanceVisite(e)) {
       // pendant la visite, les deux échos font parfois quelque chose ensemble, d'eux-mêmes
       this.interactionSpontanee();
     }

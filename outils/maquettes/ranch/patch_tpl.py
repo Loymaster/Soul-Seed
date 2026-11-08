@@ -16,6 +16,13 @@ def retoucher(t, rep):
             '      <sc-if value="{{visiteur.poussiere}}" hint-placeholder-val="{{ false }}"><span class="visiteur-poussiere"><i></i><i></i><i></i><i></i></span></sc-if>\n'
             '      <sc-if value="{{visiteur.signe}}" hint-placeholder-val="{{ false }}"><div class="emo-flotte" style="top:{{visiteur.teteSigne}}px"><img src="{{visiteur.signe}}" alt=""></div></sc-if>\n'
             '    </div>\n'
+            # un geste à deux : « ! » au-dessus des deux têtes au clic, puis cadrage et éclat là où ils se retrouvent (visiteur.ts)
+            '    <sc-if value="{{visiteur.appel1}}" hint-placeholder-val="{{ false }}"><div class="duo-appel" style="left:{{visiteur.appel1.x}}px;top:{{visiteur.appel1.y}}px"><b>!</b></div></sc-if>\n'
+            '    <sc-if value="{{visiteur.appel2}}" hint-placeholder-val="{{ false }}"><div class="duo-appel" style="left:{{visiteur.appel2.x}}px;top:{{visiteur.appel2.y}}px"><b>!</b></div></sc-if>\n'
+            '    <sc-if value="{{visiteur.duo}}" hint-placeholder-val="{{ false }}">\n'
+            '      <div class="duo-cadrage {{visiteur.duo.cls}}" style="--x:{{visiteur.duo.x}}px;--y:{{visiteur.duo.y}}px"></div>\n'
+            '      <div class="duo-eclat {{visiteur.duo.cls}}" style="left:{{visiteur.duo.x}}px;top:{{visiteur.duo.haut}}px"><i class="duo-anneau"></i><i class="duo-rayons"></i><b>!</b></div>\n'
+            '    </sc-if>\n'
             '  </sc-if>\n'
             "  <!-- L'écho se promène sur le terrain ; tout ce qui le concerne le suit -->")
     # relations : les échos de passage (page de gauche), sinon les inconnus à rencontrer
@@ -122,6 +129,22 @@ CSS = (# astuces : mêmes encres que le carnet ; aussi utilisées par le petit c
        '.r7 .visiteur-poussiere{position:absolute;left:-60px;bottom:4px;width:110px;height:60px;pointer-events:none}'
        '.r7 .visiteur-poussiere i{position:absolute;bottom:0;width:46px;height:34px;border-radius:50%;background:radial-gradient(circle at 40% 40%,rgba(236,214,170,.95),rgba(190,160,110,.55) 60%,rgba(190,160,110,0) 72%);animation:r7Poussiere .9s ease-out infinite}'
        '.r7 .visiteur-poussiere i:nth-child(1){left:6px}.r7 .visiteur-poussiere i:nth-child(2){left:34px;animation-delay:.22s}.r7 .visiteur-poussiere i:nth-child(3){left:58px;animation-delay:.45s}.r7 .visiteur-poussiere i:nth-child(4){left:22px;animation-delay:.66s}'
+       # le geste à deux : l'appel (« ! » qui jaillit au-dessus de chaque tête), le cadrage (le ranch s'assombrit autour d'eux,
+       # sous les échos : z-index 334 < 100 + y), l'éclat (anneau, rayons, « ! ») au-dessus d'eux à leur rencontre ; « fin » : tout s'efface
+       ".r7 .duo-appel{position:absolute;z-index:905;width:0;height:0;pointer-events:none}"
+       ".r7 .duo-appel b{position:absolute;left:-17px;top:-46px;width:34px;height:42px;display:flex;align-items:center;justify-content:center;border-radius:50%;font-family:'Alegreya SC',serif;font-weight:700;font-size:30px;line-height:1;color:#9c3b2a;background:#fbf4e3;box-shadow:0 0 0 2px #3a1f0e,0 0 14px rgba(255,214,120,.95);transform-origin:50% 100%;animation:r7DuoAppel .75s cubic-bezier(.3,1.7,.5,1) both}"
+       '@keyframes r7DuoAppel{0%{transform:scale(.2) translateY(14px);opacity:0}35%{transform:scale(1.18);opacity:1}55%{transform:scale(.94)}75%{transform:none;opacity:1}100%{transform:translateY(-8px);opacity:0}}'
+       '.r7 .duo-cadrage{position:absolute;inset:0;z-index:334;pointer-events:none;background:radial-gradient(ellipse 300px 210px at var(--x) calc(var(--y) - 70px),transparent 45%,rgba(18,10,4,.5) 100%);animation:r7DuoCadre .45s ease-out both}'
+       '.r7 .duo-cadrage.fin{animation:r7DuoCadreFin .5s ease-in both}'
+       '@keyframes r7DuoCadre{from{opacity:0}to{opacity:1}}@keyframes r7DuoCadreFin{from{opacity:1}to{opacity:0}}'
+       '.r7 .duo-eclat{position:absolute;z-index:905;width:0;height:0;pointer-events:none}'
+       '.r7 .duo-eclat.fin{opacity:0;transition:opacity .4s ease}'
+       '.r7 .duo-anneau{position:absolute;left:-60px;top:-60px;width:120px;height:120px;border-radius:50%;border:5px solid rgba(255,226,140,.95);box-shadow:0 0 22px rgba(255,214,120,.95),inset 0 0 14px rgba(255,214,120,.7);animation:r7DuoAnneau .9s ease-out both}'
+       '.r7 .duo-rayons{position:absolute;left:-85px;top:-85px;width:170px;height:170px;border-radius:50%;background:repeating-conic-gradient(rgba(255,236,170,.95) 0 7deg,transparent 7deg 30deg);-webkit-mask:radial-gradient(circle,transparent 26%,#000 32%,transparent 70%);mask:radial-gradient(circle,transparent 26%,#000 32%,transparent 70%);animation:r7DuoRayons 1.1s ease-out both}'
+       ".r7 .duo-eclat b{position:absolute;left:-27px;top:-30px;width:54px;height:60px;display:flex;align-items:center;justify-content:center;border-radius:50%;font-family:'Alegreya SC',serif;font-weight:700;font-size:42px;line-height:1;color:#9c3b2a;background:#fbf4e3;box-shadow:0 0 0 2.5px #3a1f0e,0 0 22px rgba(255,214,120,1),0 6px 10px rgba(20,10,4,.35);animation:r7DuoPoint 1.5s cubic-bezier(.3,1.6,.5,1) both}"
+       '@keyframes r7DuoAnneau{from{transform:scale(.2);opacity:1}to{transform:scale(2.1);opacity:0}}'
+       '@keyframes r7DuoRayons{0%{transform:scale(.3) rotate(0);opacity:0}30%{opacity:1}100%{transform:scale(1.5) rotate(40deg);opacity:0}}'
+       '@keyframes r7DuoPoint{0%{transform:scale(.2);opacity:0}20%{transform:scale(1.25);opacity:1}35%{transform:none;opacity:1}75%{transform:translateY(-6px);opacity:1}100%{transform:translateY(-16px);opacity:0}}'
        '@keyframes r7Poussiere{0%{transform:translateY(6px) scale(.4);opacity:0}30%{opacity:1}100%{transform:translateY(-22px) scale(1.25);opacity:0}}'
        # relations : les échos de passage
        '.r7 .relation-echo{display:flex;align-items:center;gap:10px;margin-bottom:8px}'

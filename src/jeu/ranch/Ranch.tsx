@@ -11,7 +11,7 @@ import {
 } from '@/moteur/simulation';
 import { aBoutDeForces } from '@/moteur/combat';
 import type { Catalogue } from '@/contenu/types';
-import { VisiteRanch, perspective, type GesteVisite } from './visiteur';
+import { ALLURE_COURSE, VisiteRanch, perspective, type GesteVisite } from './visiteur';
 import { Evolution, type ProprietesEvolution } from './Evolution';
 import { Tutoriel, type Cible } from './Tutoriel';
 import { SFX } from '@/moteur/sfx';
@@ -27,7 +27,7 @@ import { REP, TAMPON, TEMPERAMENTS, GLYPHE_INCONNU, cleEvenement, consequence, n
 import { ecouterVolumes, fixerVolumes, volumeMusique } from '../commun/volumes';
 import { VOLUME_BRUITAGES_DEFAUT, VOLUME_MUSIQUE_DEFAUT, type Personnage, type Reglages } from '../profils';
 import { ONGLETS_FICHE, lignesCombat, lignesTemperament, progression, temperamentDominant, type OngletFiche } from './fiche';
-import { PALIER_CORVEE, essaisScene, sceneCorvee, sceneEntrainement, sceneInteraction, sonsScene } from './scenes';
+import { PALIER_CORVEE, essaisScene, hauteurScene, sceneCorvee, sceneEntrainement, sceneInteraction, sonsScene } from './scenes';
 import { teinteEmotion } from './lueurs';
 import { FenetreTemps } from './FenetreTemps';
 import { FenetrePansement, ICONE_PANSER, detailPanser } from './FenetrePansement';
@@ -130,6 +130,8 @@ interface Choix {
 }
 interface Scene {
   kind: string; groupe: string; image: string; titre: string; lignes: string[]; dx: number; dy: number; s0: string; emo: number; journal?: string;
+  /** Hauteur de l'écho dans la fenêtre (px), selon son stade ; haut de sa silhouette (px, repère de la fenêtre). */
+  h: number; tete: number;
   /** Ce qui a progressé (flèches, sans chiffre) ; essais d'une corvée. */
   gains: { nom: string; fleches: string }[]; essais: boolean[];
   /** Un mot à dire en fin de corvée (féliciter, encourager, ne rien dire) : la feuille attend la réponse. */
@@ -386,13 +388,42 @@ export class Ranch extends Component<ProprietesRanch, EtatUI> {
       d = Math.hypot(x - s.ex, y - s.ey);
     } while (d < 140 && ++essais < 8);
     const dur = d / this.profil().vitesse;
+    const id = ++this.trajet;
+    this.enRoute = { x0: s.ex, y0: s.ey, t0: Date.now(), ms: dur * 1000 };
     this.setState({ ex: Math.round(x), ey: Math.round(y), eDur: +dur.toFixed(2), eSens: x < s.ex ? 'gauche' : '', marche: true });
     this.pasDemarrer();
-    this.later(() => { clearInterval(this.pasTimer); this.setState({ marche: false }); this.later(() => this.errer(), (2600 + Math.random() * 4200) * this.signes.flanerie); }, dur * 1000);
+    this.later(() => { if (this.trajet !== id) return; clearInterval(this.pasTimer); this.setState({ marche: false }); this.later(() => this.errer(), (2600 + Math.random() * 4200) * this.signes.flanerie); }, dur * 1000);
+  }
+  /** Le trajet en cours (un trajet plus récent, une course vers le visiteur, rend caduque la fin du précédent). */
+  trajet = 0;
+  /** Départ du trajet en cours, pour savoir où l'écho se trouve en chemin (la vue glisse de là vers ex, ey). */
+  enRoute = { x0: 0, y0: 0, t0: 0, ms: 0 };
+  /** Où il est maintenant (en chemin, entre son départ et sa destination). */
+  ouEstEcho() {
+    const s = this.state, r = this.enRoute;
+    const f = s.marche && r.ms > 0 ? Math.min(1, (Date.now() - r.t0) / r.ms) : 1;
+    return { x: r.x0 + (s.ex - r.x0) * f, y: r.y0 + (s.ey - r.y0) * f };
+  }
+  /** Allure de course (visite) : les pas et la démarche s'accélèrent d'autant. */
+  course = 1;
+  /** L'écho accourt vers (x, y) — vers le visiteur — puis se tourne de son côté ; renvoie la durée de la course (ms). */
+  accourir(x: number, y: number, sens: '' | 'gauche', tenir: number): number {
+    const ici = this.ouEstEcho();
+    const d = Math.hypot(x - ici.x, y - ici.y);
+    const dur = d < 8 ? 0 : Math.max(0.35, d / (this.profil().vitesse * ALLURE_COURSE));
+    const id = ++this.trajet;
+    this.enRoute = { x0: ici.x, y0: ici.y, t0: Date.now(), ms: dur * 1000 };
+    this.repos = Math.max(this.repos, Date.now() + dur * 1000 + tenir);
+    if (!dur) { this.setState({ eSens: sens, marche: false }); return 0; }
+    this.course = ALLURE_COURSE;
+    this.setState({ ex: Math.round(x), ey: Math.round(y), eDur: +dur.toFixed(2), eSens: x < ici.x ? 'gauche' : '', marche: true, anim: '' });
+    this.pasDemarrer();
+    this.later(() => { if (this.trajet !== id) return; clearInterval(this.pasTimer); this.course = 1; this.setState({ marche: false, eSens: sens }); }, dur * 1000);
+    return dur * 1000;
   }
   pasDemarrer() {
     clearInterval(this.pasTimer);
-    const p = this.profil(); const ms = p.cycle * 1000;
+    const p = this.profil(); const ms = p.cycle * 1000 / this.course;
     const cycleSon = () => {
       if (!this.state.marche) return;
       if (p.motif) p.motif.forEach((o, i) => this.later(() => { if (this.state.marche) this.son('foulee', p, volumePas(this.state.ey), i); }, o * ms));
@@ -581,8 +612,14 @@ export class Ranch extends Component<ProprietesRanch, EtatUI> {
     const note = this.noteScene(sc.kind, sc.groupe, res.lignes, emo);
     const g = ++this.scg;
     const ech = 0.86 + (s.ey - 235) / 135 * 0.28;
+    // dans la fenêtre, l'écho garde la taille de son stade (un bébé reste petit) ; il y saute depuis sa taille au ranch (image de 190 px)
+    const h = hauteurScene(this.taille());
+    // le haut de sa silhouette (les images ont parfois du vide au-dessus) : là où se posent pierre, gerbe, gouttes de sueur…
+    const img = this.props.catalogue?.assets.find((a) => a.chemin === apparence(this.e));
+    const b = img?.boite && img.h ? img.boite : null;
+    const tete = Math.round(336 - h + (b ? (h * b.y) / img!.h! : 0));
     this.setState({
-      scene: { ...sc, titre: res.titre || note.titre || sc.titre, lignes: note.lignes, dx: Math.round(s.ex + 75 - 640), dy: Math.round(s.ey + 232 - 470), s0: ech.toFixed(3), emo, gains, essais: res.essais ?? [], reponses: res.reponses },
+      scene: { ...sc, titre: res.titre || note.titre || sc.titre, lignes: note.lignes, dx: Math.round(s.ex + 75 - 640), dy: Math.round(s.ey + 232 - 470), s0: (190 * this.taille() * ech / h).toFixed(3), h, tete, emo, gains, essais: res.essais ?? [], reponses: res.reponses },
       scPhase: 'ouvre', ouvert: null, quitter: false, carnetLeve: false,
     });
     this.sortiesScene = sorties; this.dortScene = dort;
@@ -917,7 +954,8 @@ export class Ranch extends Component<ProprietesRanch, EtatUI> {
   visite = new VisiteRanch({
     rafraichir: () => this.rafraichir(),
     plusTard: (f, ms) => this.later(f, ms),
-    echo: () => ({ x: this.state.ex, y: this.state.ey, marche: this.state.marche, taille: this.taille() }),
+    echo: () => ({ ...this.ouEstEcho(), marche: this.state.marche, taille: this.taille() }),
+    accourir: (x, y, sens, tenir) => this.accourir(x, y, sens, tenir),
     tournerEcho: (sens, ms) => {
       this.repos = Math.max(this.repos, Date.now() + ms);
       this.later(() => this.setState({ eSens: sens }), this.state.marche ? this.state.eDur * 1000 : 0);
@@ -949,6 +987,10 @@ export class Ranch extends Component<ProprietesRanch, EtatUI> {
         refus: () => { const e = this.e; const i = e.inventaire.findIndex((c) => c && aliment(c.id)); if (i < 0) return 'rien à manger'; e.satiete = this.sim.max; e.frustrationAlimentaire = 100; this.utiliserObjet(i); return i; },
         /** Laisse l'écho avec `part` (0–1) de ses PV de combat perdus, pour essayer « Panser les blessures ». */
         blesser: (part = 0.75) => { this.e.pvCombat = Math.max(0, Math.round(Math.max(1, Math.round(this.e.caracs.robustesse * 7)) * (1 - part) * 10) / 10); this.sauver(); this.rafraichir(); return this.e.pvCombat; },
+        // une scène d'action seule, sans effet sur l'écho : __ranch.scene('brosser', 'soin')
+        scene: (kind = 'brosser', groupe = 'soin', image = '') => { this.ouvrirScene({ kind, groupe, image: image && asset(image), titre: kind }, () => []); },
+        // le voile du sommeil seul (sans faire dormir l'écho)
+        sommeil: () => this.endormir(8, false),
         corvee: (id = CORVEES[0].id) => { const c = CORVEES.find((x) => x.id === id)!; delete this.e.derniereCorvee[c.id]; this.ouvrirScene({ kind: sceneCorvee(c.id), groupe: 'corvee', image: asset(c.icone), titre: c.nom }, () => { const r = this.sim.jouerCorvee(c.id, 1); return r.ok ? { lignes: [PALIER_CORVEE[r.palier]], essais: r.essais, reponses: this.sim.reponsesCorvee() } : null; }); },
       };
     }
@@ -983,15 +1025,16 @@ export class Ranch extends Component<ProprietesRanch, EtatUI> {
   }
 
   /** Les gestes avec le visiteur, proposés quand on clique sur lui. */
+  // (sans tampon : la fiche se ferme aussitôt, l'appel et la course suivent le clic sans attendre)
   choixVisiteur(): Choix[] {
     const v = this.sim.visiteur;
     const libre = this.visite.libre;
     const occupe = libre ? '1 h' : 'pas maintenant';
     const fatigue = aBoutDeForces(this.e);
     return [
-      { k: 'temps', nom: 'Passer du temps ensemble', icone: IC.partage, detail: occupe, off: !libre, agir: () => this.duoVisiteur('temps') },
-      { k: 'jouer', nom: 'Jouer ensemble', icone: IC.balle, detail: occupe, off: !libre, agir: () => this.duoVisiteur('jeu') },
-      { k: 'bagarre', nom: 'Se bagarrer', icone: IC.course, detail: occupe, off: !libre, agir: () => this.duoVisiteur('bagarre') },
+      { k: 'temps', nom: 'Passer du temps ensemble', icone: IC.partage, detail: occupe, off: !libre, agir: () => this.duoVisiteur('temps'), sansTampon: true },
+      { k: 'jouer', nom: 'Jouer ensemble', icone: IC.balle, detail: occupe, off: !libre, agir: () => this.duoVisiteur('jeu'), sansTampon: true },
+      { k: 'bagarre', nom: 'Se bagarrer', icone: IC.course, detail: occupe, off: !libre, agir: () => this.duoVisiteur('bagarre'), sansTampon: true },
       { k: 'r-combat', nom: 'Combat', rubrique: true },
       { k: 'combat', nom: v ? `Affronter ${v.nom}` : 'Affronter', icone: IC.course, off: !this.props.surCombat || !v || fatigue || !libre,
         detail: !this.props.surCombat ? 'à venir' : fatigue ? `${this.e.nom} est à bout de forces` : 'un vrai combat',
@@ -1154,7 +1197,7 @@ export class Ranch extends Component<ProprietesRanch, EtatUI> {
       ...(sc ? {
         sceneVisible: true,
         scCls: ['k-' + sc.kind, 'g-' + sc.groupe, sc.gains.length ? 'gagne' : '', ph === 'ouvre' ? 'ouvre' : '', ['saut', 'agit', 'note'].includes(ph) ? 'dedans' : '', ['agit', 'note'].includes(ph) ? 'agit' : '', ph === 'note' ? 'note' : '', ph === 'ferme' ? 'ferme agit' : ''].join(' '),
-        scDx: sc.dx, scDy: sc.dy, scS0: sc.s0, echoOp: ph === 'ouvre' ? 1 : 0, scImage: sc.image,
+        scDx: sc.dx, scDy: sc.dy, scS0: sc.s0, scH: sc.h, scTete: sc.tete, echoOp: ph === 'ouvre' ? 1 : 0, scImage: sc.image,
         scNote: ph === 'note' || ph === 'ferme', scTitre: sc.titre, scLignes: sc.lignes.map((x) => ({ t: x })), fermerScene: this.fermerScene,
         scAReponses: !!sc.reponses?.length, scSansReponse: !sc.reponses?.length,
         scReponses: (sc.reponses ?? []).map((x) => ({ texte: x.libelle, cls: x.cle === 'rien' ? 'discret' : '', choisir: (ev?: { stopPropagation?: () => void }) => { ev?.stopPropagation?.(); this.repondreScene(x.cle); } })),
@@ -1168,7 +1211,7 @@ export class Ranch extends Component<ProprietesRanch, EtatUI> {
       caresserAria: e.comportement ? `${nom} a quelque chose à vous montrer` : `Caresser ${nom}`, evtAria: `${nom} a fait quelque chose : ouvrir le carnet`,
       ex: s.ex, ey: s.ey, eDur: s.eDur, eSens: s.eSens, eScale: (0.86 + (s.ey - 235) / 135 * 0.28).toFixed(3),
       eTaille: t.toFixed(3), teteBulle2: Math.round(-74 - (t - 1) * 180), teteMain: Math.round(32 - (t - 1) * 175), eZ: 100 + s.ey,
-      echoAnim: s.marche ? 'marche' : s.anim, demarche: prof.classes, cycle: prof.cycle.toFixed(3),
+      echoAnim: s.marche ? 'marche' : s.anim, demarche: prof.classes, cycle: (prof.cycle / (s.marche ? this.course : 1)).toFixed(3),
       caresser: this.caresser, mainVisible: s.mainVisible,
       rienDuTout: false,
       orbite: `path('M${75 - rx} ${cy} a${rx} ${ry} 0 1 0 ${2 * rx} 0 a${rx} ${ry} 0 1 0 ${-2 * rx} 0')`,
