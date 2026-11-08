@@ -14,6 +14,8 @@ import { VOLUME_BRUITAGES_DEFAUT, VOLUME_MUSIQUE_DEFAUT, type Reglages } from '.
 import '../ranch/ranch.css';
 import './interface.css';
 import type { Monde } from '@/moteur/monde';
+import { EtatCarnet, ICONE_QUETES, PageCarnet, TITRES_CARNET } from './carnet/PagesCarnet';
+import { IC } from '../ranch/icones';
 import { CHIFFRES_ROMAINS, GABARIT_PETIT, ICONE_ASTUCES, THEMES_ASTUCES, compteTheme, lignesTheme, paginer } from './astuces';
 
 const asset = (chemin: string) => `${import.meta.env.BASE_URL}assets/${chemin}`;
@@ -336,8 +338,8 @@ export interface ProprietesPetitCarnet {
   surMenu?: () => void;
   /** Le carnet a fini de se refermer. */
   surFerme: () => void;
-  /** Le monde de la partie : ses drapeaux dévoilent des astuces. */
-  monde?: Pick<Monde, 'drapeaux' | 'corvees'> | null;
+  /** Le monde de la partie : ses drapeaux dévoilent des astuces, nourrissent les quêtes et les relations. */
+  monde?: (Pick<Monde, 'drapeaux' | 'corvees'> & Partial<Monde>) | null;
 }
 
 /** Deux pages : à gauche l'écho tel qu'on le perçoit (jamais de chiffre), à droite les options et la partie. */
@@ -345,6 +347,9 @@ export function PetitCarnet({ etat, portrait, reglages, surReglages, sauver, sur
   /** Les astuces s'ouvrent par-dessus les deux pages : thème et page affichés (null : l'écho et les options). */
   const [astuces, setAstuces] = useState<{ theme: number; page: number } | null>(null);
   const [tourne, setTourne] = useState(false);
+  /** Les quêtes ou les relations, par-dessus les deux pages (mêmes pages que le grand carnet du ranch). */
+  const [section, setSection] = useState<'quetes' | 'relations' | null>(null);
+  const [vueCarnet] = useState(() => new EtatCarnet((nom, vol) => son(nom, vol)));
   const [r, setR] = useState<Required<Reglages>>({ sons: reglages.sons !== false, musique: reglages.musique !== false, volumeMusique: reglages.volumeMusique ?? VOLUME_MUSIQUE_DEFAUT, volumeBruitages: reglages.volumeBruitages ?? VOLUME_BRUITAGES_DEFAUT, defauts: reglages.defauts ?? 2 });
   const [ferme, setFerme] = useState(false);
   const [sauve, setSauve] = useState('');
@@ -369,6 +374,11 @@ export function PetitCarnet({ etat, portrait, reglages, surReglages, sauver, sur
     son('page', 0.8); setTourne(true);
     plus(220, () => { setAstuces(n); setTourne(false); });
   };
+  const ouvrirSection = (k: 'quetes' | 'relations' | null) => {
+    if (tourne) return;
+    son('page', 0.8); setTourne(true);
+    plus(220, () => { setSection(k); setTourne(false); });
+  };
   const g = lireSignes(etat);
   const indices = g.besoins.filter((b) => b.urgence >= 2 || b.besoin === 'maladie' || b.besoin === 'blessure');
   const bouton: CSSProperties = { display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '10px 16px', border: 'none', borderRadius: '6px', fontFamily: "'Alegreya SC',serif", fontSize: '15px', letterSpacing: '1px', cursor: 'pointer' };
@@ -377,7 +387,24 @@ export function PetitCarnet({ etat, portrait, reglages, surReglages, sauver, sur
       <button className={`voile ${ferme ? 'part' : ''}`} onClick={fermer} aria-label="Fermer le carnet" style={{ animationDelay: ferme ? '0.1s' : '0s' }} />
       <section className={`ic-livre ${ferme ? 'ferme' : ''}`} aria-label="Carnet d'éleveur" style={{ filter: FILTRE }}>
         <div className="ic-couv"><div className="stitch" style={{ borderRadius: '14px' }} /></div>
-        {astuces ? <PagesAstuces etat={etat} monde={monde} vue={astuces} tourne={tourne} feuilleter={feuilleter} /> : (<>
+        {astuces ? <PagesAstuces etat={etat} monde={monde} vue={astuces} tourne={tourne} feuilleter={feuilleter} /> : section ? (<>
+        <div className="ic-page papier-g gauche">
+          <div className="ic-surtitre">{TITRES_CARNET[section].surtitre}</div>
+          <h2 className="ic-titre">{TITRES_CARNET[section].titre}</h2>
+          <div className={`contenu-page ${tourne ? 'cache' : ''}`} style={{ position: 'relative', height: 'calc(100% - 64px)' }}>
+            <PageCarnet section={section} cote="gauche" etat={etat} monde={monde} vue={vueCarnet} petit />
+          </div>
+          <button className="ic-lien ic-retour" onClick={() => ouvrirSection(null)}>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M15 5l-7 7 7 7" /></svg>
+            Revenir à {etat.nom || 'l’écho'}
+          </button>
+        </div>
+        <div className="ic-page papier-d droite">
+          <div className={`contenu-page ${tourne ? 'cache' : ''}`} style={{ position: 'relative', height: '100%' }}>
+            <PageCarnet section={section} cote="droite" etat={etat} monde={monde} vue={vueCarnet} petit />
+          </div>
+        </div>
+        </>) : (<>
         <div className="ic-page papier-g gauche">
           <div className="ic-surtitre">Carnet d’éleveur</div>
           <h2 className="ic-titre">{etat.nom}</h2>
@@ -395,7 +422,15 @@ export function PetitCarnet({ etat, portrait, reglages, surReglages, sauver, sur
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d={ICONE_ASTUCES} /></svg>
             Astuces d’éleveur
           </button>
-          <div className="ic-note">Le journal, les relations et la mémoire des échos se consultent au ranch.</div>
+          <button className="ic-lien" onClick={() => ouvrirSection('quetes')}>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d={ICONE_QUETES} /></svg>
+            Quêtes
+          </button>
+          <button className="ic-lien" onClick={() => ouvrirSection('relations')}>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d={IC.relations} /></svg>
+            Relations
+          </button>
+          <div className="ic-note">Le journal et la mémoire des échos se consultent au ranch.</div>
         </div>
         <div className="ic-page papier-d droite">
           <div className="ic-surtitre">Réglages</div>

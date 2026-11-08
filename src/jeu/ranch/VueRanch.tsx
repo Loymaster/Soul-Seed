@@ -1649,6 +1649,7 @@ export function VueRanch({ v }: { v: any }) {
                       </div>
                     </div>
                   </>) : null}
+                   {v.carnetDroite} 
                 </div>
               </div>
               {/* Marque-page */}
@@ -1870,6 +1871,7 @@ export function VueRanch({ v }: { v: any }) {
                         ))}
                       </div>
                     </>) : null}
+                     {v.carnetGauche} 
                   </div>
                 </div>
               </div>

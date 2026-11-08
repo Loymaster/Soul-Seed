@@ -8,6 +8,7 @@ myhra.vue = vrai
 myhra: Que veux-tu savoir ?
 choix:
   > curiosité « La prospérité du village »
+    myhra.village = vrai
     si village.dernier == "":
       myhra: Le village doit être entièrement reconstruit… c’est un peu tôt pour parler de prospérité.
     sinon:

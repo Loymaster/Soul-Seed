@@ -7,7 +7,6 @@ import {
   CORVEES, ENTRAINEMENTS, INTERACTIONS, NOM_STADE, Simulation, accord, aliment, apparence, ageJours, descriptionObjet,
   heureDuJour, lireSignes, objetDivers, texteComportement, type CategorieInteraction, type CleCarac, type Etat, type OptionInteraction, type ReponseCorvee, type ReponseRefus,
   type ReponseComportement, type Signes, type Sortie, type Stade, type EchoSauvage,
-  ENCRE_RELATION, LIEN_RELATION, niveauRelation, rangRelation,
 } from '@/moteur/simulation';
 import { aBoutDeForces } from '@/moteur/combat';
 import type { Catalogue } from '@/contenu/types';
@@ -32,6 +31,7 @@ import { VoileSommeil, type Sommeil } from './VoileSommeil';
 import { NoteRefus, type RefusEnCours } from './NoteRefus';
 import { CHIFFRES_ROMAINS, ICONE_ASTUCES, THEMES_ASTUCES, compteTheme, lignesTheme, paginer, type ContexteAstuces } from '../commun/astuces';
 import type { Monde } from '@/moteur/monde';
+import { EtatCarnet, ICONE_QUETES, pagesCarnet, type SectionCarnet } from '../commun/carnet/PagesCarnet';
 import './ranch.css';
 
 export const asset = (chemin: string) => `${import.meta.env.BASE_URL}assets/${chemin}`;
@@ -57,10 +57,11 @@ const ICONE_INTERACTION: Record<string, string> = { jeu: IC.balle, discussion: I
 const SECTIONS = [
   { k: 'sommaire', nom: 'Sommaire', court: 'Sommaire', titre: 'Sommaire', surtitre: 'Carnet d’éleveur', icone: IC.sommaire },
   { k: 'journal', nom: 'Journal du ranch', court: 'Journal', titre: 'Journal du ranch', surtitre: 'Ce qui s’est passé', icone: IC.journal, page: 2 },
-  { k: 'relations', nom: 'Relations', court: 'Relations', titre: 'Relations', surtitre: 'Les gens du coin', icone: IC.relations, page: 4 },
-  { k: 'memoire', nom: 'Mémoire des échos', court: 'Mémoire', titre: 'Mémoire des échos', surtitre: 'Ce profil', icone: IC.memoire, page: 6 },
-  { k: 'astuces', nom: 'Astuces', court: 'Astuces', titre: 'Astuces', surtitre: 'Conseils d’éleveur', icone: ICONE_ASTUCES, page: 8 },
-  { k: 'options', nom: 'Options', court: 'Options', titre: 'Options', surtitre: 'Réglages', icone: IC.options, page: 10 },
+  { k: 'quetes', nom: 'Quêtes', court: 'Quêtes', titre: 'Quêtes', surtitre: 'Ce qui vous attend', icone: ICONE_QUETES, page: 4 },
+  { k: 'relations', nom: 'Relations', court: 'Relations', titre: 'Relations', surtitre: 'Les gens du coin', icone: IC.relations, page: 6 },
+  { k: 'memoire', nom: 'Mémoire des échos', court: 'Mémoire', titre: 'Mémoire des échos', surtitre: 'Ce profil', icone: IC.memoire, page: 8 },
+  { k: 'astuces', nom: 'Astuces', court: 'Astuces', titre: 'Astuces', surtitre: 'Conseils d’éleveur', icone: ICONE_ASTUCES, page: 10 },
+  { k: 'options', nom: 'Options', court: 'Options', titre: 'Options', surtitre: 'Réglages', icone: IC.options, page: 12 },
 ] as const;
 type Section = (typeof SECTIONS)[number]['k'];
 
@@ -114,8 +115,8 @@ export interface ProprietesRanch {
   catalogue?: Catalogue;
   /** Corvées remises en état par Ash (monde de la partie) : niveau 1 à 3 ; absentes ou 0 : pas encore praticables. */
   corvees?: Partial<Record<string, number>>;
-  /** Le monde de la partie, en lecture : ses drapeaux dévoilent des astuces du carnet. */
-  monde?: Pick<Monde, 'drapeaux' | 'corvees'> | null;
+  /** Le monde de la partie, en lecture : ses drapeaux dévoilent des astuces du carnet, nourrissent les quêtes et les relations. */
+  monde?: (Pick<Monde, 'drapeaux' | 'corvees'> & Partial<Monde>) | null;
 }
 
 interface Choix {
@@ -990,22 +991,13 @@ export class Ranch extends Component<ProprietesRanch, EtatUI> {
     });
   }
 
-  /** Les échos de passage dans le carnet (relations) : la relation se lit en mots. */
-  relationsEchos() {
-    const e = this.e; const ici = e.visiteur?.id;
-    const liste = [...e.echosSauvages]
-      .sort((a, b) => Number(b.id === ici) - Number(a.id === ici) || rangRelation(niveauRelation(b)) - rangRelation(niveauRelation(a)))
-      .slice(0, 6);
-    return {
-      aDesEchosConnus: liste.length > 0, sansEchosConnus: liste.length === 0,
-      echosConnus: liste.map((x) => {
-        const n = niveauRelation(x);
-        return {
-          nom: x.nom, image: asset(apparence({ ...x, evolution: null } as unknown as Etat)), lien: LIEN_RELATION[n], encre: ENCRE_RELATION[n], cls: x.id === ici ? 'ici' : '',
-          note: x.id === ici ? 'au ranch en ce moment' : `${NOM_STADE[x.stade].toLowerCase()}, ${NOM_GRAINE[x.graine].toLowerCase()}`,
-        };
-      }),
-    };
+  /** Pages du carnet hors maquette (quêtes, relations, mémoire : src/jeu/commun/carnet), état partagé par les deux pages. */
+  etatCarnet = new EtatCarnet((nom, vol) => this.son(nom, vol));
+  pagesCarnet() {
+    const k = this.state.section;
+    const section: SectionCarnet | null = this.state.carnet && (k === 'quetes' || k === 'relations' || k === 'memoire') ? k : null;
+    const p = pagesCarnet(section, { etat: this.e, monde: this.props.monde, vue: this.etatCarnet });
+    return { carnetGauche: p.gauche, carnetDroite: p.droite };
   }
 
   /** Il évolue : la séquence prend tout l'écran, la musique se tait, le temps s'arrête. */
@@ -1178,7 +1170,7 @@ export class Ranch extends Component<ProprietesRanch, EtatUI> {
         };
       }),
       visiteur: this.visite.valeurs(() => { this.son('leather'); this.setState({ ouvert: this.state.ouvert === 'visiteur' ? null : 'visiteur', quitter: false, actif: -1 }); }, ouvertVisiteur),
-      ...this.relationsEchos(),
+      ...this.pagesCarnet(),
       // le petit carnet (onglets) et la fiche
       verbes, choix, ceintureCls: s.carnet || s.sacOuvert || s.sortie || s.evc || s.scene ? 'repli' : '',
       carnetLeve: s.carnetLeve && !s.carnet ? 'leve' : '',
@@ -1228,17 +1220,12 @@ export class Ranch extends Component<ProprietesRanch, EtatUI> {
       ouvrirCarnet: () => { this.son('bookArrive'); this.setState({ carnet: true, carnetLeve: false, ferme: false, section: 'sommaire', ouvert: null, quitter: false }); },
       fermerCarnet: this.fermerCarnet,
       pageTitre: sec.titre, pageSurtitre: sec.surtitre,
-      pSommaire: p('sommaire'), pJournal: p('journal'), pSac: false, pRelations: p('relations'), pCarte: false, pMemoire: p('memoire'), pAstuces: p('astuces'), pOptions: p('options'),
+      pSommaire: p('sommaire'), pJournal: p('journal'), pSac: false, pRelations: false, pCarte: false, pMemoire: false, pAstuces: p('astuces'), pOptions: p('options'),
       ...(p('astuces') ? this.valsAstuces() : { astThemes: [], astuces: [] }),
       onglets: SECTIONS.map((x, i) => ({ nom: x.nom, court: x.court, icone: x.icone, delai: (1.5 + i * 0.07).toFixed(2), cls: s.section === x.k ? 'ici' : '', ouvrir: () => this.allerA(x.k) })),
       sommaire: SECTIONS.slice(1).map((x, i) => ({ num: ['I', 'II', 'III', 'IV', 'V', 'VI'][i], nom: x.nom, page: 'page' in x ? x.page : '', aBadge: x.k === 'journal' && s.nouvelles > 0, badge: s.nouvelles, ouvrir: () => this.allerA(x.k) })),
       journal: journal.slice(-8), journalCourt: journal.slice(-3), journalJours, rappels: rappels.slice(0, 3),
       sacNourriture: e.inventaire.flatMap((c) => { const al = c && aliment(c.id); return al && c ? [{ nom: al.nom, image: asset(al.icone), qte: c.qte, opacite: 1 }] : []; }),
-      relations: [
-        { nom: 'Myhra', encre: '#3f6a3a', lien: 'veille sur vous deux' },
-        { nom: 'Jumpy', encre: '#9c3b2a', lien: 'un ami bruyant' },
-        { nom: 'Garry', encre: '#2f4a7a', lien: e.garryVaincu ? 'il a rejoint le village' : 'méfiance…' },
-      ],
       lieux: [],
       memoireDetail: `${NOM_STADE[e.stade]} · ${NOM_GRAINE[e.graine].toLowerCase()} · jour ${ageJours(e)}`,
       reglages: [

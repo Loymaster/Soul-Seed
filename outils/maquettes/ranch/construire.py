@@ -60,6 +60,8 @@ t = rep(t, '''<label style="display:flex;align-items:center;justify-content:spac
                     </sc-for>''')
 from patch_tpl import retoucher, CSS
 t = retoucher(t, rep)
+from patch_carnet import retoucher_carnet
+t = retoucher_carnet(t, rep)
 for b, chemin in BLOBS.items():
     t = t.replace('/_blob/' + b, '@@A@@' + chemin)
 reste = re.findall(r'/_blob/\w+', t)
