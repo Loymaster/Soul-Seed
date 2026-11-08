@@ -810,7 +810,7 @@ export class Simulation {
   }
 
   /** resolveComportement */
-  repondreComportement(reponse: ReponseComportement): Reussi<{ objetTrouve?: string; sacPlein?: boolean }> | Refus {
+  repondreComportement(reponse: ReponseComportement): Reussi<{ objetTrouve?: string; sacPlein?: boolean; idObjet?: string }> | Refus {
     const e = this.etat;
     const c = e.comportement;
     if (!c) return { ok: false, raison: '' };
@@ -851,7 +851,8 @@ export class Simulation {
     this.noter(journalComportement(this.Nom, c.coloration, type, reponse));
     if (type === 'neutre' && c.objet) {
       const nom = aliment(c.objet)?.nom ?? 'objet';
-      if (ranger(e, c.objet, 1) === 0) return { ok: true, objetTrouve: nom, sacPlein: true };
+      // sac plein : l'objet n'est pas rangé, l'écran propose de faire de la place (src/jeu/commun/reception.ts)
+      if (ranger(e, c.objet, 1) === 0) return { ok: true, objetTrouve: nom, sacPlein: true, idObjet: c.objet };
       return { ok: true, objetTrouve: nom };
     }
     return { ok: true };

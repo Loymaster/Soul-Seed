@@ -60,14 +60,15 @@ export interface RencontreExploration {
   /** Position de l'écho sauvage dans le décor. */
   x: number; y: number;
 }
-/** Retour d'un combat ; les trouvailles reprises (victoire) sont déjà rangées dans le sac, `plein` : il a fallu en laisser. */
-export interface RetourCombat { rencontre: RencontreExploration; resultat: 'victoire' | 'defaite' | 'fuite'; plein?: boolean }
+/**
+ * Retour d'un combat ; les trouvailles reprises (victoire) sont déjà rangées dans le sac, `plein` : il a fallu en laisser,
+ * `restes` : celles qui n'ont pas trouvé de place (l'exploration propose alors de faire de la place, reception.ts).
+ */
+export interface RetourCombat { rencontre: RencontreExploration; resultat: 'victoire' | 'defaite' | 'fuite'; plein?: boolean; restes?: string[] }
 
-/** Après une victoire, les trouvailles dispersées reviennent au sac. Renvoie vrai si le sac n'a pas tout pu contenir. */
-export function reprendreTrouvailles(e: Etat, r: RencontreExploration): boolean {
-  let plein = false;
-  r.enjeu.forEach((id) => { if (ranger(e, id, 1) === 0) plein = true; });
-  return plein;
+/** Après une victoire, les trouvailles dispersées reviennent au sac. Renvoie celles que le sac n'a pas pu contenir. */
+export function reprendreTrouvailles(e: Etat, r: RencontreExploration): string[] {
+  return r.enjeu.filter((id) => ranger(e, id, 1) === 0);
 }
 /** Le sac et le monde au départ de la sortie (pour la page de retour au ranch). */
 export type { BilanSortie } from '@/moteur/monde';

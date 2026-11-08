@@ -12,6 +12,7 @@ import {
 import { Simulation, aliment, descriptionObjet, type Etat } from '@/moteur/simulation';
 import { SFX } from '@/moteur/sfx';
 import { Calque, Sacoche } from '../commun/InterfaceRanch';
+import { demanderPlace } from '../commun/reception';
 
 export const asset = (chemin: string) => `${import.meta.env.BASE_URL}assets/${chemin}`;
 const son = (nom: 'paperTick' | 'pop' | 'stamp' | 'woosh' | 'refus' | 'reveal' | 'leather' | 'pencil') => { const f = (SFX as unknown as Record<string, () => void>)[nom]; if (typeof f === 'function') f.call(SFX); };
@@ -95,9 +96,15 @@ export function Etal({ e, m, rafraichir, noter, fermer }: Commun) {
   const maxQte = em ? (em.deuxPourUn ? 1 : Math.max(1, Math.min(em.stock, Math.floor(e.or / Math.max(1, em.prix)) || 1))) : 1;
   const acheterIci = () => {
     if (choisi == null) return;
-    const r = acheter(e, m, choisi, qte);
-    if (r.ok) { son('stamp'); setMot({ texte: r.texte, ton: 'bien' }); noter(r.texte, 'bien'); setQte(1); if (etal[choisi].stock <= 0) setChoisi(null); }
-    else { son('refus'); setMot({ texte: r.raison, ton: 'mal' }); }
+    const index = choisi;
+    const r = acheter(e, m, index, qte);
+    if (r.ok) { son('stamp'); setMot({ texte: r.texte, ton: 'bien' }); noter(r.texte, 'bien'); setQte(1); if (etal[index].stock <= 0) setChoisi(null); }
+    else if (r.sacPlein) {
+      // sac plein : proposer de jeter quelque chose, puis acheter (l'or n'est pris qu'une fois la place faite)
+      demanderPlace(e, etal[index].id, qte, { texte: 'Jetez une pile du sac pour lui faire de la place, ou renoncez à l’achat.', laisser: 'Renoncer' })
+        .then((ok) => { if (ok) acheterIci(); else { setMot({ texte: r.raison, ton: 'mal' }); rafraichir(); } });
+      return;
+    } else { son('refus'); setMot({ texte: r.raison, ton: 'mal' }); }
     rafraichir();
   };
   return (
@@ -186,6 +193,18 @@ export function Stand({ e, rafraichir, noter, fermer }: Commun) {
 export function Coffre({ e, m, rafraichir, fermer }: Commun) {
   const [mot, setMot] = useState<{ texte: string; ton: Ton } | null>(null);
   const occupees = m.coffre.objets.filter(Boolean).length;
+  const reprendre = (i: number) => {
+    const c = m.coffre.objets[i];
+    const r = reprendreObjet(e, m, i);
+    if (r.ok) son('pop');
+    else if (r.sacPlein && c) {
+      // sac plein : proposer de jeter une pile du sac (ou d'y renoncer : l'objet reste au coffre)
+      demanderPlace(e, c.id, c.qte, { texte: 'Jetez une pile du sac pour lui faire de la place, ou laissez-le au coffre.', laisser: 'Le laisser au coffre' })
+        .then((ok) => { if (ok) reprendre(i); else rafraichir(); });
+      return;
+    } else if (r.raison) { son('refus'); setMot({ texte: r.raison, ton: 'mal' }); }
+    rafraichir();
+  };
   const deposer = () => {
     const r = deposerRessources(m);
     const n = Object.values(r.deposees).reduce((a, b) => a + (b ?? 0), 0);
@@ -208,7 +227,7 @@ export function Coffre({ e, m, rafraichir, fermer }: Commun) {
         <div className="col">
           <div className="mo-entete-page"><span className="craie-encre">{nomCoffre(m).replace(/^L’|^Le /, '').replace(/^./, (c) => c.toUpperCase())} ({occupees}/{casesCoffre(m)})</span><span className="aide">cliquez pour reprendre</span></div>
           <div className="mo-grille coffre">
-            {m.coffre.objets.map((x, i) => <CaseObjet key={i} id={x?.id} qte={x?.qte} onClick={() => { const r = reprendreObjet(e, m, i); if (r.ok) son('pop'); else if (r.raison) { son('refus'); setMot({ texte: r.raison, ton: 'mal' }); } rafraichir(); }} />)}
+            {m.coffre.objets.map((x, i) => <CaseObjet key={i} id={x?.id} qte={x?.qte} onClick={() => reprendre(i)} />)}
           </div>
           <Ressources m={m} titre="stock" coffre />
         </div>

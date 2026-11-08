@@ -32,10 +32,10 @@ export function deposerObjet(e: Etat, m: Monde, index: number): { ok: boolean; r
 }
 
 /** Reprend la pile de la case `index` du coffre dans le sac. */
-export function reprendreObjet(e: Etat, m: Monde, index: number): { ok: boolean; raison?: string } {
+export function reprendreObjet(e: Etat, m: Monde, index: number): { ok: boolean; raison?: string; sacPlein?: boolean } {
   const c = m.coffre.objets[index];
   if (!c) return { ok: false };
-  if (!ranger(e, c.id, c.qte)) return { ok: false, raison: 'Le sac est plein.' };
+  if (!ranger(e, c.id, c.qte)) return { ok: false, sacPlein: true, raison: 'Le sac est plein.' };
   m.coffre.objets[index] = null;
   return { ok: true };
 }

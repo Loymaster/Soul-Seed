@@ -1,11 +1,12 @@
 // L'interface du ranch, reprise telle quelle hors du ranch (village, boutique, sanctuaire, atelier, exploration) :
 // l'encart horaire (planche suspendue : jour, heure, pièces), le sac en bandoulière et sa sacoche (10 emplacements,
-// déplaçables, Infos / Utiliser, ressources), le poteau indicateur « partir », et le petit carnet (sous le sac) qui
+// déplaçables, Infos / Utiliser / jeter…, ressources), le poteau indicateur « partir », et le petit carnet (sous le sac) qui
 // ouvre une version simplifiée du carnet d'éleveur (l'écho en quelques signes, les options, le retour au menu).
 // Mêmes balises et mêmes classes que la vue générée du ranch (src/jeu/ranch/VueRanch.tsx, ranch.css, portée .r7) :
 // on ne touche pas aux fichiers du ranch, on les réutilise.
 import { useEffect, useRef, useState, type CSSProperties, type DragEvent, type ReactNode } from 'react';
-import { NOM_STADE, ageJours, aliment, descriptionObjet, lireSignes, objetDivers, type Etat } from '@/moteur/simulation';
+import { NOM_STADE, ageJours, aliment, descriptionObjet, jeter, lireSignes, objetDivers, type Etat } from '@/moteur/simulation';
+import { BoutonsObjet } from './MenuObjet';
 import { SFX } from '@/moteur/sfx';
 import { lumiere } from '../ranch/ciel';
 import { saison } from '../ranch/lumiere';
@@ -284,15 +285,19 @@ export function Sacoche({ etat, ressources, surFerme, surUtiliser, sauver, ferme
             <div className="sac-menu" role="menu" style={{ left: `${Math.round(34 + 22 + (menu % 5) * 104 + 46)}px`, top: `${Math.round(30 + 26 + Math.floor(menu / 5) * 106 - 6)}px` }} onClick={(ev) => ev.stopPropagation()}>
               <div className="sm-nom">{dMenu.nom}</div>
               {info ? <div className="sm-info">{dMenu.description}</div> : null}
-              <div className="sm-boutons">
-                <button className="sm-btn" role="menuitem" onClick={() => { son('page', 0.5); setInfo((x) => !x); }} aria-pressed={info}>Infos</button>
-                <button className="sm-btn sm-ok" role="menuitem" onClick={() => {
+              <BoutonsObjet key={menu} id={cMenu.id} qte={cMenu.qte} info={info} son={(n) => son(n)}
+                surInfos={() => { son('page', 0.5); setInfo((x) => !x); }}
+                surUtiliser={() => {
                   if (!utilisable) { son('refus'); return; }
                   const index = menu;
                   setMenu(-1);
                   surUtiliser(index, fermer);
-                }}>Utiliser</button>
-              </div>
+                }}
+                surJeter={(n) => {
+                  if (!jeter(etat, menu, n)) { son('refus'); return; }
+                  son('leather'); sauver?.();
+                  setMenu(-1);
+                }} />
             </div>
           ) : null}
           <div className="sac-info sac-ressources" aria-label="Ressources">

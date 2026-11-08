@@ -12,7 +12,8 @@ import {
   NOM_STADE, Simulation, accord, ageJours, aliment, apparence, creerEchoSauvage, nomsPris, descriptionObjet, lireSignes, objetDivers,
   type Etat, type Graine, type Sortie,
 } from '@/moteur/simulation';
-import { consommer, ranger as rangerObjet } from '@/moteur/simulation/objets';
+import { consommer } from '@/moteur/simulation/objets';
+import { recevoir, recevoirTous } from '../commun/reception';
 import {
   DUREES, MAT_POOLS, TEMPERAMENTS, groupeMat, lumiere, temperamentTerrain,
   type BilanSortie, type RencontreExploration, type RetourCombat,
@@ -384,8 +385,6 @@ export class Exploration extends Component<ProprietesExploration, EtatUI> {
   nuit() { const h = this.heure(); return h >= 21 || h < 5; }
   fait(action: string) { return faitCeJour(this.monde, this.state.zone, action, this.e.jour); }
   marquer(action: string) { marquerFait(this.monde, this.state.zone, action, this.e.jour); }
-  /** Range un objet dans le sac du jeu (10 emplacements). Renvoie faux si le sac est plein. */
-  ranger(id: string, qte = 1) { return rangerObjet(this.e, id, qte) > 0; }
   aDansLeSac(id: string) { return this.e.inventaire.some((c) => c?.id === id && c.qte > 0); }
   probaRencontre(zone: number) {
     return probaRencontre(this.monde, zone, this.maintenant(), { base: BASE_RENCONTRE, nuitDehors: this.nuit() && !ZONES[zone].grotte, repousse: this.repousse() });
@@ -519,9 +518,15 @@ export class Exploration extends Component<ProprietesExploration, EtatUI> {
   }
   arreterFouille() {
     const f = this.state.fouille; if (!f || f.fini) return;
-    let plein = false; f.gains.forEach((id) => { if (!this.ranger(id, 1)) plein = true; });
-    const texte = f.gains.length ? `Vous rangez ${f.gains.length > 1 ? 'vos trouvailles' : 'votre trouvaille'} dans le sac.` + (plein ? ' Le sac déborde : il a fallu en laisser.' : '') : 'Vous repartez les mains vides.';
+    const texte = f.gains.length ? `Vous rangez ${f.gains.length > 1 ? 'vos trouvailles' : 'votre trouvaille'} dans le sac.` : 'Vous repartez les mains vides.';
     this.setState({ fouille: { ...f, fini: true, message: texte } });
+    // sac plein : la fenêtre « Le sac est plein » propose de faire de la place, trouvaille après trouvaille
+    recevoirTous(this.e, f.gains).then((laisses) => {
+      if (!this.vivant) return;
+      this.sauver();
+      const g = this.state.fouille;
+      if (laisses.length && g) this.setState({ fouille: { ...g, message: `${texte} Le sac déborde : vous avez laissé ${laisses.map((l) => nomObjet(l.id).toLowerCase()).join(', ')}.` } });
+    });
     if (f.gains.length) this.bulle(IMG.joyeux);
     this.passer(DUREES.fouiller);
   }
@@ -581,8 +586,15 @@ export class Exploration extends Component<ProprietesExploration, EtatUI> {
     // ferré à temps : 80 % de prises, + 15 points avec la gélatine de Bourbella (« Améliorer la pêche »)
     if (Math.random() < Math.min(0.98, 0.8 + bonusPeche(this.monde, this.heureAbs()))) {
       const id = alea(z.poissons.length ? z.poissons : ['poisson_vairon']);
-      const ok = this.ranger(id, 1); Sons.prise(); this.bulle(IMG.joyeux);
-      this.setState({ peche: { phase: 'prise', objet: { nom: nomObjet(id), icone: iconeObjet(id) }, texte: ok ? `${this.nom} trépigne au bord de l’eau.` : 'Le sac est plein : vous le relâchez à regret.' } });
+      Sons.prise(); this.bulle(IMG.joyeux);
+      this.setState({ peche: { phase: 'prise', objet: { nom: nomObjet(id), icone: iconeObjet(id) }, texte: `${this.nom} trépigne au bord de l’eau.` } });
+      // sac plein : on propose de jeter quelque chose pour garder la prise, sinon on la relâche
+      recevoir(this.e, id, 1).then((ok) => {
+        if (!this.vivant) return;
+        this.sauver();
+        const p2 = this.state.peche;
+        if (!ok && p2?.phase === 'prise') this.setState({ peche: { ...p2, texte: 'Pas de place dans le sac : vous le relâchez à regret.' } });
+      });
     } else { Sons.rate(); this.setState({ peche: { phase: 'echappe', texte: 'Ferré… et décroché au ras de l’eau.' } }); }
   }
   fermerPeche() { clearTimeout(this.tPeche); this.setState({ peche: null }); }
@@ -620,7 +632,14 @@ export class Exploration extends Component<ProprietesExploration, EtatUI> {
         let texte = `${this.nom} revient bredouille, des brindilles plein le pelage.`;
         if (res.type === 'objet' && res.id) {
           Sons.trouvaille(); this.bulle(IMG.fier);
-          texte = this.ranger(res.id, res.qte) ? `${this.nom} dépose sa trouvaille à vos pieds, ${this.a('tout fier', 'toute fière')}.` : `${this.nom} la dépose à vos pieds… mais le sac est plein.`;
+          texte = `${this.nom} dépose sa trouvaille à vos pieds, ${this.a('tout fier', 'toute fière')}.`;
+          // sac plein : la fenêtre propose de faire de la place pour la trouvaille
+          recevoir(this.e, res.id, res.qte ?? 1).then((ok) => {
+            if (!this.vivant) return;
+            this.sauver();
+            const en = this.state.envoi;
+            if (!ok && en?.phase === 'resultat') this.setState({ envoi: { ...en, texte: `${this.nom} la dépose à vos pieds… mais vous la laissez là : plus de place dans le sac.` } });
+          });
         } else Sons.rien();
         this.sauver();
         this.setState({ envoi: { phase: 'resultat', x: px, y: py, res, objet: res.type === 'objet' && res.id ? { nom: ((res.qte ?? 1) > 1 ? '2 × ' : '') + nomObjet(res.id), icone: iconeObjet(res.id) } : null, texte } });
@@ -679,12 +698,14 @@ export class Exploration extends Component<ProprietesExploration, EtatUI> {
     });
   }
   /** Retour de l'écran de combat : l'issue s'écrit sur la page de la rencontre. */
-  retourDeCombat({ rencontre, resultat, plein }: RetourCombat) {
+  retourDeCombat({ rencontre, resultat, plein, restes }: RetourCombat) {
     const sv = rencontre.sauvage, N = this.nom;
     const base: Rencontre = { ...rencontre, phase: 'issue', fort: 'de taille', reaction: '', issue: resultat };
     if (resultat === 'victoire') {
       Sons.prise(); this.bulle(IMG.fier, 2600);
       this.setState({ rencontre: { ...base, texte: `${sv.nom} détale dans les fourrés. ${N} se rengorge.` + (rencontre.enjeu.length ? (plein ? ' Vous ramassez ce que le sac peut contenir.' : ' Vous ramassez vos trouvailles éparpillées.') : '') } });
+      // celles qui n'ont pas trouvé de place : la fenêtre « Le sac est plein » propose d'en faire
+      if (restes?.length) recevoirTous(this.e, restes).then(() => { if (this.vivant) this.sauver(); });
     } else if (resultat === 'defaite') {
       Sons.rate(); this.bulle(this.e.blesse ? IMG.blesse : IMG.anxieux, 3000);
       this.setState({ rencontre: { ...base, texte: `${N} est à terre. ${sv.nom} renifle, puis s’en va comme ${sv.genre === 'f' ? 'elle est venue' : 'il est venu'}. ${this.Il} n’est plus en état de se battre aujourd’hui : un somme sous la tente ou au ranch lui rendra ses forces.` } });

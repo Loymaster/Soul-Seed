@@ -16,7 +16,8 @@ import { SceneDialogue } from '../scene/SceneDialogue';
 import { EcranCombat, type IssueCombat } from '../combat/EcranCombat';
 import { Repere } from '../commun/Repere';
 import * as P from '../profils';
-import { appliquerIssueCombat, jouerAction, type Panneau } from './actions';
+import { apresDon, appliquerIssueCombat, jouerAction, type Panneau } from './actions';
+import { recevoir } from '../commun/reception';
 import type { CombatPnj } from './adversaires';
 import { retenirVariables, synchroniser, variablesScene } from './variables';
 import { Coffre, Deblayer, Etal, Sac, Stand, Travail, Travaux, type Ton } from './panneaux';
@@ -110,6 +111,10 @@ export function ScenePnj(props: ProprietesScenePnj) {
         break;
       case 'panneau': setPanneau({ p: r.panneau, reprendre }); break;
       case 'sortie': sortie.current = r.vers; reprendre(); break;
+      case 'recevoir':
+        // sac plein : la fenêtre « Le sac est plein » propose de faire de la place ; la scène attend la réponse
+        recevoir(etat, r.id, r.qte).then((ok) => { const v = apresDon(ctx, r.id, r.qte, ok); vider(); props.sauver(); reprendre(v); });
+        break;
     }
   };
 
