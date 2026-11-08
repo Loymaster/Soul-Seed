@@ -5,6 +5,9 @@ titre: Jumpy
 décor: boutique/interieur
 places: jumpy D2
 
+// première rencontre à la boutique (quête « Gagner sa vie »)
+jumpy.vu = vrai
+
 si sujet == "apprendre":
   si jumpy.appris_jour == jour:
     jumpy: Je t’ai déjà dévoilé quelque chose sur {echo.nom} aujourd’hui. Reviens demain et je t’en dirai plus !

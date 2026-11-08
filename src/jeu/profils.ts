@@ -3,7 +3,7 @@
 // Chaque profil a ses propres emplacements de partie ; chaque partie a son personnage (nom, pronom, avatar),
 // et toutes les parties d'un profil partagent sa mémoire des échos.
 import type { Etat } from '@/moteur/simulation';
-import { normaliserMonde, type Monde } from '@/moteur/monde';
+import { normaliserMonde, synchroniserQuetes, type Monde } from '@/moteur/monde';
 
 export type Pronom = 'il' | 'elle' | 'iel';
 export type IdAvatar = 'garcon-1' | 'garcon-2' | 'fille-1' | 'fille-2' | 'nb-1' | 'nb-2';
@@ -188,6 +188,7 @@ export function chargerMonde(profil: string, emplacement: number): Monde {
   return normaliserMonde(lire<Monde>(cleMonde(profil, emplacement)));
 }
 export function sauverMonde(profil: string, emplacement: number, m: Monde) {
+  synchroniserQuetes(m); // le suivi des quêtes (monde.quetes) suit les drapeaux
   return ecrire(cleMonde(profil, emplacement), m);
 }
 

@@ -28,6 +28,8 @@ export interface Monde {
   structures: string[];
   /** PNJ déjà rencontrés (identifiants des fiches). */
   pnjConnus: string[];
+  /** Relation avec chaque PNJ (part cachée, jamais montrée en chiffre : voir relations.ts). */
+  relationsPnj: Record<string, number>;
   /** Coffre de Maïko, puis entrepôt : objets déposés et ressources stockées (plafonds selon le niveau d'entrepôt). */
   coffre: { objets: (CaseInventaire | null)[]; ressources: Partial<Record<Ressource, number>> };
   /** Étal du jour de la boutique de Jumpy (renouvelé à la première visite de chaque jour). */
@@ -62,7 +64,7 @@ export interface EmplacementEtal {
 
 export function creerMonde(): Monde {
   return {
-    version: 1, drapeaux: {}, quetes: {}, ressources: {}, decouvertes: [], faitAujourdhui: {}, rencontres: {}, derniereRencontre: null, structures: [], pnjConnus: [],
+    version: 1, drapeaux: {}, quetes: {}, ressources: {}, decouvertes: [], faitAujourdhui: {}, rencontres: {}, derniereRencontre: null, structures: [], pnjConnus: [], relationsPnj: {},
     coffre: { objets: Array(CASES_COFFRE[0]).fill(null), ressources: {} }, boutique: null, chantier: null, reparation: null, corvees: {}, sortie: null,
   };
 }
@@ -76,6 +78,7 @@ export function normaliserMonde(m: Partial<Monde> | null | undefined): Monde {
   while (objets.length < cases) objets.push(null);
   n.coffre = { objets, ressources: { ...(c.ressources ?? {}) } };
   n.corvees = { ...(n.corvees ?? {}) };
+  n.relationsPnj = { ...(n.relationsPnj ?? {}) };
   n.sortie = n.sortie && typeof n.sortie.zone === 'number' ? n.sortie : null;
   return n;
 }
@@ -180,3 +183,5 @@ export const habitant = (m: Monde, id: string) => !!m.drapeaux[`village.habitant
 export * from './boutique';
 export * from './coffre';
 export * from './constructions';
+export * from './quetes';
+export * from './relations';
