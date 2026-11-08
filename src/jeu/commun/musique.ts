@@ -4,6 +4,49 @@ import { ecouterVolumes, volumeMusique } from './volumes';
 
 export const cheminSon = (nom: string) => `${import.meta.env.BASE_URL}assets/sons/musiques/${nom}.mp3`;
 
+// —— Relais : une piste qui quitte l'écran peut être reprise par l'écran suivant, sans redémarrer.
+// Celui qui part la confie (`confierPiste`) : elle continue de jouer `attente` ms, puis s'éteint en fondu ;
+// un lecteur qui démarre la même piste avant la fin la reprend (`reprendrePiste`) là où elle en est.
+// Ex. : la musique de rencontre de l'exploration continue telle quelle sur l'écran de combat.
+
+/** Ce dont le relais a besoin d'une piste (un HTMLAudioElement). */
+export type AudioRelais = Pick<HTMLAudioElement, 'volume' | 'paused' | 'pause'>;
+interface Relais { audio: AudioRelais; delai: ReturnType<typeof setTimeout> | null; fondu: ReturnType<typeof setInterval> | null }
+const relais = new Map<string, Relais>();
+const arreterRelais = (r: Relais) => { if (r.delai) clearTimeout(r.delai); if (r.fondu) clearInterval(r.fondu); r.delai = r.fondu = null; };
+
+/** Confie une piste qui joue encore : elle tient `attente` ms, puis s'éteint en `sortie` ms, sauf si on la reprend avant. */
+export function confierPiste<A extends AudioRelais>(nom: string, audio: A, { attente = 0, sortie = 900 }: { attente?: number; sortie?: number } = {}) {
+  const ancien = relais.get(nom);
+  if (ancien && ancien.audio !== audio) { arreterRelais(ancien); ancien.audio.pause(); }
+  if (ancien) arreterRelais(ancien);
+  if (audio.paused) { relais.delete(nom); return; }
+  const r: Relais = { audio, delai: null, fondu: null };
+  const eteindre = () => {
+    r.delai = null;
+    const v0 = audio.volume, t0 = performance.now();
+    r.fondu = setInterval(() => {
+      const k = Math.min(1, (performance.now() - t0) / Math.max(1, sortie));
+      audio.volume = Math.max(0, v0 * (1 - k));
+      if (k >= 1) { arreterRelais(r); audio.pause(); if (relais.get(nom) === r) relais.delete(nom); }
+    }, 50);
+  };
+  if (attente > 0) r.delai = setTimeout(eteindre, attente); else eteindre();
+  relais.set(nom, r);
+}
+
+/** Reprend la piste `nom` si elle a été confiée et joue encore (son fondu de sortie s'arrête) ; sinon `null`. */
+export function reprendrePiste(nom: string): HTMLAudioElement | null {
+  const r = relais.get(nom);
+  if (!r) return null;
+  relais.delete(nom);
+  arreterRelais(r);
+  return r.audio.paused ? null : (r.audio as HTMLAudioElement);
+}
+
+/** Vrai si une piste `nom` attend d'être reprise. */
+export const pisteEnRelais = (nom: string) => !!relais.get(nom) && !relais.get(nom)!.audio.paused;
+
 export interface Piste {
   /** amène le volume vers `cible` en `ms` millisecondes */
   vers: (cible: number, ms: number) => void;
@@ -12,6 +55,8 @@ export interface Piste {
 /**
  * Joue `nom` (public/assets/sons/musiques/<nom>.mp3) tant que le composant est affiché et que `active` est vrai.
  * Le volume monte jusqu'à `volume` (multiplié par le volume de musique des options) ; à la fin, la piste s'éteint en fondu.
+ * Si l'écran précédent a confié la même piste (`confierPiste`), elle est reprise sans redémarrer ; à la fin, elle est
+ * confiée à son tour (le double montage du mode strict de React la reprend aussitôt).
  */
 export function useMusique(nom: string | null, { volume = 0.4, active = true, montee = 3000 }: { volume?: number; active?: boolean; montee?: number } = {}): Piste {
   const audio = useRef<HTMLAudioElement | null>(null);
@@ -29,27 +74,25 @@ export function useMusique(nom: string | null, { volume = 0.4, active = true, mo
   };
   useEffect(() => {
     if (!nom || !active) return;
-    const a = new Audio(cheminSon(nom));
-    a.loop = true; a.volume = 0;
+    const reprise = reprendrePiste(nom);
+    const a = reprise ?? new Audio(cheminSon(nom));
+    if (!reprise) { a.loop = true; a.volume = 0; }
     audio.current = a;
     // lecture refusée par le navigateur (aucun geste encore) : on réessaie au premier clic ou à la première touche
     const cible = () => volume * volumeMusique();
     const reessayer = () => { a.play().then(() => vers(cible(), montee)).catch(() => {}); retirer(); };
     const retirer = () => { window.removeEventListener('pointerdown', reessayer); window.removeEventListener('keydown', reessayer); };
-    a.play().catch(() => { window.addEventListener('pointerdown', reessayer); window.addEventListener('keydown', reessayer); });
-    vers(cible(), montee);
+    if (!reprise) a.play().catch(() => { window.addEventListener('pointerdown', reessayer); window.addEventListener('keydown', reessayer); });
+    vers(cible(), reprise ? 800 : montee);
     // volume changé dans les options : la piste s'y ajuste en douceur
     const desabonner = ecouterVolumes(() => vers(cible(), 300));
     return () => {
       desabonner();
       retirer();
       if (fondu.current) clearInterval(fondu.current);
-      const v0 = a.volume, t0 = performance.now();
-      const id = setInterval(() => {
-        const k = Math.min(1, (performance.now() - t0) / 900);
-        a.volume = Math.max(0, v0 * (1 - k));
-        if (k >= 1) { clearInterval(id); a.pause(); }
-      }, 50);
+      fondu.current = null;
+      // la piste s'éteint en fondu… à moins qu'un lecteur ne la reprenne aussitôt
+      if (a.paused) a.volume = 0; else confierPiste(nom, a, { sortie: 900 });
       audio.current = null;
     };
   }, [nom, active]); // eslint-disable-line react-hooks/exhaustive-deps

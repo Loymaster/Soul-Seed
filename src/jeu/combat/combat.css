@@ -263,3 +263,15 @@
 .cb.exploration .depart-titre{color:#f1e6c8;text-shadow:0 3px 0 rgba(40,28,12,.85),0 0 20px rgba(0,0,0,.6)}
 .cb.exploration .btn-depart{color:#2f2a1f;border-radius:4px;background:linear-gradient(170deg,#efe3c3,#d9c79c);box-shadow:0 0 0 2px #6f7448,0 0 0 5px #d8c9a3,0 0 0 6.5px rgba(60,46,26,.5),0 12px 22px rgba(0,0,0,.45);transform:rotate(-1deg)}
 .cb.exploration .btn-depart:hover{transform:rotate(-1deg) translateY(-4px)}
+/* plusieurs combattants d'un même côté : le premier en grand, les suivants serrés dessous (nom, allure, fil fin) */
+.cb .pl-ligne.second{display:flex;align-items:baseline;flex-wrap:wrap;column-gap:10px;margin-top:9px}
+.cb .plaque.d .pl-ligne.second{justify-content:flex-end}
+.cb .pl-ligne.second .pl-nom{font-size:16px;letter-spacing:2px}
+.cb .pl-ligne.second .pl-allure{font-size:14px;margin-top:0}
+.cb .pl-ligne.second .pl-fil{flex-basis:100%;height:4px;margin-top:4px}
+.cb .pl-ligne.ko{opacity:.55}
+.cb .pl-ligne.ko .pl-nom{text-decoration:line-through}
+.cb .plaque.boss .pl-ligne.second{justify-content:center}
+/* enchaîné sur la rencontre d'exploration : le décor est déjà là, le reste apparaît en fondu */
+.cb.enchaine .cb-scene{animation:cbEntree .6s ease-out both}
+@keyframes cbEntree{from{opacity:0;transform:scale(1.04)}}

@@ -11,8 +11,10 @@ import { useMusique } from '../commun/musique';
 import { Repere } from '../commun/Repere';
 import { SonsCombat } from './sons';
 import { allureCombat } from './allures';
+import { texteFin } from './textes';
 import './combat.css';
 import './allures.css';
+import './carnet.css';
 
 export type Registre = 'exploration' | 'sainte' | 'corrompue';
 
@@ -65,9 +67,42 @@ export interface ProprietesCombat {
   arene?: ModeArene;
   /** Le combat commence sans attendre « Commencer le combat » (après le compte à rebours de l'arène). */
   demarrageAuto?: boolean;
+  /**
+   * Le combat s'enchaîne sur la rencontre d'exploration (zoom et fondu vers ce même décor, voir `FondCombat`) :
+   * ni « Commencer le combat » ni bannières (la page de la rencontre a déjà dit « En garde ! ») ; les combattants
+   * et le carnet apparaissent en fondu sur le décor déjà là, et la musique de la rencontre continue sans redémarrer.
+   */
+  enchaine?: boolean;
 }
 
 const asset = (chemin: string) => `${import.meta.env.BASE_URL}assets/${chemin}`;
+
+/**
+ * Présentation de la vie des combattants dans le registre exploration : `carnet` (petites pages de carnet, comme la page
+ * du jour en haut à gauche de l'exploration : une ligne réglée par combattant) ou `feuille` (l'ancienne présentation :
+ * deux morceaux de carte punaisés, un seul combattant par côté). Les registres saint et corrompu gardent leurs plaques.
+ */
+export const PRESENTATION_EXPLORATION: 'carnet' | 'feuille' = 'carnet';
+/** Délai entre l'arrivée enchaînée (fondu des combattants) et le début du combat, en ms. */
+export const DELAI_ENCHAINE = 900;
+
+const FILTRES_FOND: Record<Registre, string> = {
+  corrompue: 'saturate(.35) brightness(.5) contrast(1.15) hue-rotate(-18deg)',
+  exploration: 'saturate(.9) brightness(.92) sepia(.12)',
+  sainte: 'saturate(.85) brightness(.9) hue-rotate(-6deg)',
+};
+/** Le décor du combat seul (fond, sol, voile, ambiance), tel que l'écran de combat le montre : l'exploration le pose
+ * sous son zoom de sortie, et l'écran de combat apparaît par-dessus sans que rien ne bouge. */
+export function FondCombat({ registre, terrain }: { registre: Registre; terrain: string }) {
+  return (
+    <div className={`cb ${registre}`}>
+      <div className="cb-fond" style={{ backgroundImage: `url(${asset(terrain)})`, filter: FILTRES_FOND[registre] }} />
+      <div className="cb-sol" />
+      <div className="cb-voile" />
+      <div className="cb-ambiance" />
+    </div>
+  );
+}
 const W = 1280, H = 800, Y0 = 46, Y1 = 94;
 const echelleY = (y: number) => 0.8 + ((y - Y0) / (Y1 - Y0)) * 0.5;
 const px = (c: { x: number; y: number }) => ({ x: (c.x / 100) * W, y: (c.y / 100) * H });
@@ -108,7 +143,7 @@ interface Effet { cls: string; x: number; y: number; t?: number; dx?: number; sr
 interface Etiquette { nom: string; icone: string; x: number; y: number; fin: number }
 interface Particule { x: number; y: number; t: number; d: number; dx: number; c: string; delai: number }
 
-export function EcranCombat({ echo, allie, adversaire, registre, terrain, musique = true, renforts = [], piste, surFin, arene, demarrageAuto }: ProprietesCombat) {
+export function EcranCombat({ echo, allie, adversaire, registre, terrain, musique = true, renforts = [], piste, surFin, arene, demarrageAuto, enchaine }: ProprietesCombat) {
   const CORROMPU = registre === 'corrompue', EXPLO = registre === 'exploration';
   const nom = echo?.nom ?? allie.nom;
   const a = (m: string, f: string) => accord(echo ?? allie, m, f);
@@ -125,7 +160,9 @@ export function EcranCombat({ echo, allie, adversaire, registre, terrain, musiqu
   const compagnonDe = (c: Combattant) => (c.camp === 'allies' && rangDe(c) > 0 ? compagnons[rangDe(c) - 1] ?? null : null);
   const nomsAllies = C.etat.allies.map((c) => c.nom).join(' et ');
   const [, rafraichir] = useReducer((x: number) => (x + 1) % 1e6, 0);
-  const [phase, setPhase] = useState<'attente' | 'intro' | 'combat' | 'fin'>('attente');
+  const [phase, setPhase] = useState<'attente' | 'intro' | 'combat' | 'fin'>(enchaine ? 'intro' : 'attente');
+  /** Le temps de l'apparition en fondu (combat enchaîné) : la classe se retire ensuite (la secousse anime la même scène). */
+  const [entree, setEntree] = useState(!!enchaine);
   const phaseRef = useRef(phase); phaseRef.current = phase;
   const [menu, setMenu] = useState<null | 'tech' | 'sac'>(null);
   const [banniere, setBanniere] = useState<string | null>(null);
@@ -162,23 +199,11 @@ export function EcranCombat({ echo, allie, adversaire, registre, terrain, musiqu
   };
 
   const terminer = (resultat: Resultat) => {
-    const x = C.etat.allies[0], b = { nom: nomsEnFace };
-    const pl = (un: string, plusieurs: string) => (enFace.length > 1 ? plusieurs : un);
-    const part = x.pv / x.pvMax;
-    const plA = (un: string, plusieurs: string) => (C.etat.allies.length > 1 ? plusieurs : un);
-    const f = arene ? (resultat === 'victoire'
-      ? { titre: `${nomsAllies} ${plA('l’emporte', 'l’emportent')} !`, lignes: [`${b.nom} ${pl('s’incline', 's’inclinent')} au milieu de l’arène.`, 'La lumière retombe doucement sur le terrain.'] }
-      : { titre: `${nomsAllies} ${plA('tombe', 'tombent')}…`, lignes: [`${b.nom} ${pl('reste', 'restent')} ${pl('seul maître', 'seuls maîtres')} de l’arène.`, 'Rien de ce combat ne compte pour vos parties.'] })
-      : CORROMPU ? (resultat === 'victoire'
-      ? { titre: 'La corruption reflue', lignes: [`${b.nom} ${pl('se délite', 'se délitent')} en une fumée violette.`, part > 0.4 ? `${nom} reste debout, les yeux brillants.` : `${nom} vacille, mais la lumière lui revient.`] }
-      : resultat === 'defaite'
-        ? { titre: 'Les ténèbres l’emportent', lignes: [`${b.nom} ${pl('se referme', 'se referment')} sur le silence.`, `${nom} gît, très ${a('pâle', 'pâle')}. Il faut ${a('le', 'la')} ramener au ranch au plus vite.`] }
-        : { titre: 'Vous battez en retraite', lignes: [`${nom} vous suit sans se retourner.`] })
-      : resultat === 'victoire'
-        ? { titre: `${nom} l’emporte !`, lignes: [`${b.nom} ${pl('détale', 'détalent')} dans les fourrés.`, part > 0.6 ? `${a('Il', 'Elle')} bombe le torse, à peine ${a('essoufflé', 'essoufflée')}.` : part > 0.25 ? `${a('Il', 'Elle')} souffle fort, mais ${a('il', 'elle')} a l’air ${a('fier', 'fière')}.` : `${a('Il', 'Elle')} tient à peine debout… mais ${a('il', 'elle')} a gagné.`] }
-        : resultat === 'defaite'
-          ? { titre: `${nom} s’effondre…`, lignes: [`${b.nom} ${pl('s’éloigne', 's’éloignent')} sans se retourner.`, `Il faudra ${a('le', 'la')} ramener au ranch et ${a('le', 'la')} laisser se reposer.`] }
-          : { titre: 'Vous battez en retraite', lignes: [`${nom} vous suit en jetant des regards en arrière.`, `${a('Il', 'Elle')} n’a pas l’air d’avoir tout compris.`] };
+    const x = C.etat.allies[0];
+    const f = texteFin({
+      resultat, registre, arene: !!arene, nom, enFace: nomsEnFace, nbEnFace: enFace.length, allies: nomsAllies, nbAllies: C.etat.allies.length,
+      part: x.pv / x.pvMax, a,
+    });
     plus(resultat === 'fuite' ? 300 : 1400, () => {
       if (resultat === 'victoire') SonsCombat.victoire(); else SonsCombat.defaite();
       setMenu(null); setFin(f); setPhase('fin');
@@ -257,8 +282,12 @@ export function EcranCombat({ echo, allie, adversaire, registre, terrain, musiqu
     plus(2700, () => { setBanniere(null); setPhase('combat'); });
   };
 
-  // après le compte à rebours de l'arène : pas de bouton « Commencer le combat »
-  useEffect(() => { if (demarrageAuto) lancer(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  // après le compte à rebours de l'arène : pas de bouton « Commencer le combat » ;
+  // enchaîné sur la rencontre d'exploration : les combattants apparaissent, puis le combat part de lui-même
+  useEffect(() => {
+    if (enchaine) { SonsCombat.eveiller(); plus(DELAI_ENCHAINE, () => setPhase('combat')); plus(1200, () => setEntree(false)); }
+    else if (demarrageAuto) lancer();
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const sortir = () => {
     const r = C.etat.resultat;
@@ -273,17 +302,32 @@ export function EcranCombat({ echo, allie, adversaire, registre, terrain, musiqu
   const enCombat = phase === 'combat' && !C.termine;
   const coulElan = CORROMPU ? '199,125,255' : EXPLO ? '236,178,84' : '190,228,255';
 
-  const plaque = (c: Combattant) => {
+  /** Une ligne de la plaque (ou du carnet) : nom, allure en mots, fil de vie — jamais de chiffre. */
+  const ligne = (c: Combattant) => {
     const s = lireSignesCombat(c, t);
     const v = s.vie;
     const couleur = CORROMPU
       ? (c.camp === 'allies' ? (v > 0.5 ? '#e6d2ff' : v > 0.2 ? '#c77dff' : '#ff5a8a') : (v > 0.3 ? '#b45cff' : '#ff3d6e'))
-      : EXPLO ? (v > 0.5 ? '#8fae4a' : v > 0.2 ? '#d9a441' : '#c4502e')
+      : EXPLO ? (v > 0.5 ? '#6f8a35' : v > 0.2 ? '#c08a2e' : '#a8432a')
         : (v > 0.5 ? '#dff2ff' : v > 0.2 ? '#ffd27a' : '#ffb86b');
-    return { nom: c.nom, allure: ALLURE[s.allure][c.genre === 'f' ? 1 : 0], fil: Math.round(v * 1000) / 10, couleur };
+    // la cible désignée par « Change de cible ! », quand ils sont plusieurs en face
+    const visee = c.camp !== 'allies' && enFace.length > 1 && !c.ko && x0.cibleVerrouillee === c.id;
+    return { id: c.id, nom: c.nom, allure: ALLURE[s.allure][c.genre === 'f' ? 1 : 0], fil: Math.round(v * 1000) / 10, couleur, ko: c.ko, visee };
   };
-  // à plusieurs, la plaque suit celui d'en face qui tient encore debout
-  const pa = plaque(x0), pb = plaque(C.etat.adversaires.find((c) => !c.ko) ?? C.etat.adversaires[0]);
+  /** Un camp : tous ses combattants, le premier en grand, les suivants serrés dessous. */
+  const CARNET = EXPLO && PRESENTATION_EXPLORATION === 'carnet';
+  const camp = (liste: Combattant[], cote: 'g' | 'd') => (
+    <div className={`plaque ${cote} ${cote === 'd' && CORROMPU ? 'boss' : ''} ${CARNET ? 'carnet' : ''} ${liste.length > 1 ? 'plusieurs' : ''}`}>
+      {CARNET && <><div className="pl-cuir" /><div className="pl-feuillet" />{cote === 'g' && <div className="pl-ruban" />}</>}
+      {liste.map(ligne).map((l, i) => (
+        <div key={l.id} className={`pl-ligne ${i ? 'second' : ''} ${l.ko ? 'ko' : ''} ${l.visee ? 'visee' : ''}`}>
+          <div className="pl-nom">{l.nom}</div>
+          <div className="pl-allure">{l.allure}</div>
+          <div className="pl-fil"><i style={{ width: `${l.fil}%`, background: l.couleur, '--lueur': l.couleur } as CSSProperties} /></div>
+        </div>
+      ))}
+    </div>
+  );
 
   // Objets de soin présents dans le sac de l'écho (moins ceux déjà utilisés pendant ce combat).
   const sac = (arene || !echo ? [] : Object.keys(SOINS_COMBAT)).map((id) => {
@@ -301,9 +345,9 @@ export function EcranCombat({ echo, allie, adversaire, registre, terrain, musiqu
   const nePasComprendre = `${nom} ne comprend pas encore cet ordre`;
 
   return (
-    <Repere fond="#000">
-      <div className={`cb ${registre}`} onPointerDown={() => SonsCombat.eveiller()}>
-        <div className="cb-fond" style={{ backgroundImage: `url(${asset(terrain)})`, filter: CORROMPU ? 'saturate(.35) brightness(.5) contrast(1.15) hue-rotate(-18deg)' : EXPLO ? 'saturate(.9) brightness(.92) sepia(.12)' : 'saturate(.85) brightness(.9) hue-rotate(-6deg)' }} />
+    <Repere fond={EXPLO ? '#120c08' : '#000'}>
+      <div className={`cb ${registre}${entree ? ' enchaine' : ''}`} onPointerDown={() => SonsCombat.eveiller()}>
+        <div className="cb-fond" style={{ backgroundImage: `url(${asset(terrain)})`, filter: FILTRES_FOND[registre] }} />
         <div className="cb-sol" />
         <div className="cb-voile" />
         <div className="cb-ambiance" />
@@ -373,16 +417,8 @@ export function EcranCombat({ echo, allie, adversaire, registre, terrain, musiqu
           ))}
         </div>
 
-        <div className="plaque g">
-          <div className="pl-nom">{pa.nom}</div>
-          <div className="pl-allure">{pa.allure}</div>
-          <div className="pl-fil"><i style={{ width: `${pa.fil}%`, background: pa.couleur, '--lueur': pa.couleur } as CSSProperties} /></div>
-        </div>
-        <div className={`plaque d ${CORROMPU ? 'boss' : ''}`}>
-          <div className="pl-nom">{pb.nom}</div>
-          <div className="pl-allure">{pb.allure}</div>
-          <div className="pl-fil"><i style={{ width: `${pb.fil}%`, background: pb.couleur, '--lueur': pb.couleur } as CSSProperties} /></div>
-        </div>
+        {camp(C.etat.allies, 'g')}
+        {camp(C.etat.adversaires, 'd')}
 
         {enCombat && (
           <>

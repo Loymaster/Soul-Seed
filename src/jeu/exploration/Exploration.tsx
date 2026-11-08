@@ -5,7 +5,7 @@
 // prennent du temps (fouiller 30 min, récolter 30, envoyer l'écho 20, pêcher 15 par lancer).
 // Les PNJ du lieu (pnj.ts) sont posés dans le décor ; leur scène se joue par-dessus (ScenePnj), l'horloge arrêtée.
 // La vue est générée depuis la maquette (VueExploration.tsx) ; ce fichier calcule ses valeurs et tient la logique.
-import { Component, type ReactNode } from 'react';
+import { Component, createRef, type ReactNode } from 'react';
 import type { Catalogue } from '@/contenu/types';
 import { aBoutDeForces } from '@/moteur/combat';
 import {
@@ -38,6 +38,8 @@ import { ZONE_NYXARA, boutonsDuLieu, fondDuLieu, imagesZone, nyxaraPossible, pnj
 import './exploration.css';
 
 import { estPret, precharger } from '../commun/prechargement';
+import { confierPiste } from '../commun/musique';
+import { FondCombat } from '../combat/EcranCombat';
 const asset = (chemin: string) => `${import.meta.env.BASE_URL}assets/${chemin}`;
 const IMG = {
   joyeux: asset('emotions/joyeux.png'), fier: asset('emotions/fier.png'), surpris: asset('emotions/surpris.png'), anxieux: asset('emotions/anxieux.png'),
@@ -54,6 +56,10 @@ const imageRessource = (r: Ressource) => asset(`objets/materiaux/${r}.png`);
 const MUSIQUES = { explo: 'exploration', caverne: 'glacial-zone', combat: 'combat', morthen: 'morthen' } as const;
 /** Probabilité de base d'une rencontre en arrivant dans un lieu (« normales » dans la maquette). */
 const BASE_RENCONTRE = 0.25;
+/** Passage à l'écran de combat : l'exploration zoome vers l'écho sauvage en se fondant dans le décor du combat (ms). */
+const DUREE_ZOOM_COMBAT = 800;
+/** Le temps de lire la page de la rencontre avant le zoom (ms) : « … se jaugent », ou « … vous coupe la route ! ». */
+const LECTURE_ENGAGEMENT = 900, LECTURE_COUPE = 1600;
 
 const REGIONS: Record<Region, string> = { foret: 'La forêt', lac: 'Les rives du lac', montagne: 'Les monts', caverne: 'La caverne' };
 const MOTES: Record<Region, string[]> = { foret: ['#9aa84e', '#c9a14a', '#6f7d3a', '#d8c27a'], lac: ['#a9c48a', '#e2d6a0', '#8fb070'], montagne: ['#b8ab92', '#d6ccb8', '#8f8370'], caverne: ['#e8b060', '#f3d48a', '#7a5a3a'] };
@@ -139,6 +145,8 @@ interface EtatUI {
   /** La cinématique du sentier solitaire est engagée (musique coupée, chemins masqués) ; `appel` : « Au secours ! ». */
   nyxara: boolean; appel: boolean;
   survolPnj: string | null;
+  /** Passage au combat : centre du zoom (l'écho sauvage) et décor du combat posé dessous. */
+  versCombat: { x: number; y: number; terrain: string; zoom: boolean } | null;
 }
 
 export class Exploration extends Component<ProprietesExploration, EtatUI> {
@@ -160,6 +168,8 @@ export class Exploration extends Component<ProprietesExploration, EtatUI> {
   assets: Map<string, Catalogue['assets'][number]>;
   compteurScene = 0;
   repousseVue = false;
+  /** Le cadre de l'exploration, que le zoom vers le combat anime. */
+  cadreZoom = createRef<HTMLDivElement>();
 
   constructor(p: ProprietesExploration) {
     super(p);
@@ -176,7 +186,7 @@ export class Exploration extends Component<ProprietesExploration, EtatUI> {
       sacOuvert: false, carnet: false,
       toast: null, bulle: null, marche: false, guet: false, survol: null, nouveauLieu: null,
       filo: { x: fx, y: fy, s: echelle(fy), o: 1, dir: this.regard(z, fx), cls: '', duree: 0 },
-      scene: null, combatScene: false, nyxara: false, appel: false, survolPnj: null,
+      scene: null, combatScene: false, nyxara: false, appel: false, survolPnj: null, versCombat: null,
     };
   }
 
@@ -303,7 +313,11 @@ export class Exploration extends Component<ProprietesExploration, EtatUI> {
     clearInterval(this.horloge); clearInterval(this.boucleMusique); clearTimeout(this.tPeche); clearTimeout(this.tToast); clearTimeout(this.tBulle);
     this.desabonner?.();
     if (import.meta.env.DEV) delete (window as unknown as { __explo?: unknown }).__explo;
-    if (this.pistes) Object.values(this.pistes).forEach((a) => a.pause());
+    // vers le combat : la musique de la rencontre est confiée à l'écran de combat, qui la reprend sans la redémarrer
+    if (this.pistes) (Object.entries(this.pistes) as [keyof typeof MUSIQUES, HTMLAudioElement][]).forEach(([k, a]) => {
+      if (k === 'combat' && this.state.versCombat?.zoom && !a.paused) confierPiste(MUSIQUES.combat, a, { attente: 4000, sortie: 900 });
+      else a.pause();
+    });
     this.pistes = null;
   }
 
@@ -684,6 +698,7 @@ export class Exploration extends Component<ProprietesExploration, EtatUI> {
     noterRencontre(this.monde, zone, this.maintenant());
     this.sauver();
     Sons.rencontre(); this.bulle(fort === 'bien plus fort' ? IMG.anxieux : IMG.surpris);
+    precharger(this.imagesCombat(zone, sv), { urgent: true }); // l'écran de combat, s'il le faut, n'attendra pas ses images
     const f = this.state.filo, [sx, sy] = this.placeSauvage(zone);
     this.setState({ rencontre: { phase: 'apparition', zone, sauvage: sv, enjeu, x: sx, y: sy, fort, reaction }, filo: { ...f, dir: sx >= f.x ? 1 : -1, duree: 0 } });
     this.plus(1500, () => this.setState((s) => (s.rencontre ? { rencontre: { ...s.rencontre, phase: 'choix' } } : null)));
@@ -705,15 +720,37 @@ export class Exploration extends Component<ProprietesExploration, EtatUI> {
       this.engager({ ...r, coupe: `${r.sauvage.nom} vous coupe la route !` });
     }
   }
-  /** « En garde ! » : la page annonce le combat, puis l'écran de combat prend le relais. */
+  /** Les images de l'écran de combat (comme `imagesEcran` dans main.tsx) : décor du lieu, écho sauvage, notre écho. */
+  imagesCombat(zone: number, sv: Rencontre['sauvage']) {
+    return [ZONES[zone].fond, apparence({ ...sv, evolution: null } as unknown as Etat), apparence(this.e)];
+  }
+  /**
+   * « En garde ! » : la page annonce le combat ; le temps de la lire (et que les images du combat soient prêtes),
+   * l'exploration zoome vers l'écho sauvage en se fondant dans le décor du combat, puis l'écran de combat prend le relais.
+   */
   engager(r: Rencontre) {
-    this.setState({ rencontre: { ...r, phase: 'combat' } });
-    this.plus(1700, () => {
-      if (this.e.mort) return;
+    // le décor du combat se pose tout de suite sous l'exploration (caché par elle) : le zoom n'aura qu'à s'animer
+    const terrain = ZONES[r.zone].fond, cx = r.x, cy = Math.round(r.y - 90 * echelle(r.y));
+    this.setState({ rencontre: { ...r, phase: 'combat' }, versCombat: { x: cx, y: cy, terrain, zoom: false } });
+    const images = precharger(this.imagesCombat(r.zone, r.sauvage), { urgent: true, delai: 2500 });
+    const lecture = new Promise<void>((ok) => this.plus(r.coupe ? LECTURE_COUPE : LECTURE_ENGAGEMENT, ok));
+    Promise.all([images, lecture]).then(() => {
+      if (!this.vivant || this.e.mort) return;
       this.enCombat = true;
       this.sauver();
+      this.setState((s) => ({ versCombat: s.versCombat && { ...s.versCombat, zoom: true } }));
       const { zone, sauvage, enjeu, x, y } = r;
-      this.props.surCombat(this.e, this.monde, { zone, sauvage, enjeu, x, y });
+      let fait = false;
+      const suite = () => { if (fait || !this.vivant) return; fait = true; this.props.surCombat(this.e, this.monde, { zone, sauvage, enjeu, x, y }); };
+      // l'écran de combat attend la fin réelle du zoom (une image lente à peindre ne le coupe pas en route)
+      const el = this.cadreZoom.current;
+      const anim = el?.animate?.([
+        { transform: 'scale(1)', opacity: 1 },
+        { transform: 'scale(1.25)', opacity: 0.75, offset: 0.55 },
+        { transform: 'scale(1.6)', opacity: 0 },
+      ], { duration: DUREE_ZOOM_COMBAT, easing: 'cubic-bezier(.45,0,.75,.6)', fill: 'forwards' });
+      if (anim) anim.finished.then(suite, suite);
+      this.plus(DUREE_ZOOM_COMBAT + 700, suite);
     });
   }
   /** Retour de l'écran de combat : l'issue s'écrit sur la page de la rencontre. */
@@ -727,7 +764,7 @@ export class Exploration extends Component<ProprietesExploration, EtatUI> {
       if (restes?.length) recevoirTous(this.e, restes).then(() => { if (this.vivant) this.sauver(); });
     } else if (resultat === 'defaite') {
       Sons.rate(); this.bulle(this.e.blesse ? IMG.blesse : IMG.anxieux, 3000);
-      this.setState({ rencontre: { ...base, texte: `${N} est à terre. ${sv.nom} renifle, puis s’en va comme ${sv.genre === 'f' ? 'elle est venue' : 'il est venu'}. ${this.Il} n’est plus en état de se battre aujourd’hui : un somme sous la tente ou au ranch lui rendra ses forces.` } });
+      this.setState({ rencontre: { ...base, texte: `${N} est à terre. ${sv.nom} renifle, puis s’en va comme ${sv.genre === 'f' ? 'elle est venue' : 'il est venu'}. ${N} n’est plus en état de se battre aujourd’hui : un somme sous la tente ou au ranch lui rendra ses forces.` } });
     } else {
       Sons.pas(ZONES[this.state.zone].grotte);
       this.setState({ rencontre: { ...base, texte: `Vous battez en retraite. ${sv.nom} ne vous suit pas.` + (rencontre.enjeu.length ? ' Vos trouvailles, elles, sont restées par terre.' : '') } });
@@ -835,6 +872,9 @@ export class Exploration extends Component<ProprietesExploration, EtatUI> {
     return (
       <>
         <Repere fond="#120c08">
+          {/* vers le combat : le décor du combat attend dessous, l'exploration zoome vers l'écho sauvage et s'efface */}
+          {s.versCombat && <FondCombat registre="exploration" terrain={s.versCombat.terrain} />}
+          <div ref={this.cadreZoom} style={{ position: 'absolute', inset: 0, ...(s.versCombat ? { transformOrigin: `${s.versCombat.x}px ${s.versCombat.y}px`, willChange: 'transform, opacity' } : null) }}>
           <VueExploration v={this.valeurs()} />
           <Calque minute={this.e.minute} sons={p.reglages?.sons !== false} devant={s.sacOuvert || s.carnet} nuit={false} z={70}>
             <BoutonSac top={128} cache={this.occupe()} ouvrir={() => this.ouvrirLeSac()} />
@@ -844,6 +884,7 @@ export class Exploration extends Component<ProprietesExploration, EtatUI> {
             {s.carnet && <PetitCarnet etat={this.e} portrait={this.assets.get(apparence(this.e))?.url} reglages={p.reglages ?? { sons: true, musique: true }}
               surReglages={p.surReglages} surMenu={p.surMenu} sauver={() => this.sauver()} surFerme={() => this.setState({ carnet: false })} monde={this.monde} />}
           </Calque>
+          </div>
         </Repere>
         {s.scene && (
           <ScenePnj key={s.scene.cle} id={s.scene.id} sujet={s.scene.sujet} etat={this.e} monde={this.monde} personnage={p.personnage}
