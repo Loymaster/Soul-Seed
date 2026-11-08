@@ -6,13 +6,13 @@
 // Dessinée dans le repère 1280 × 800 du ranch, par-dessus tout ; aucune logique de jeu ici.
 import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
 import { SFX } from '@/moteur/sfx';
-import { MARGE as MARGE_MORPH, avancement, preparerMorphing, type Morphing, type RenduMorphing } from './morphing';
+import { MARGE as MARGE_MORPH, UNE_SEULE_FOIS, avancement, avancementContinu, preparerMorphing, type Morphing, type RenduMorphing } from './morphing';
 import './evolution.css';
 
 /** Le passage d'une silhouette à l'autre pendant les battements : « fusion » (champs de distance), « brume »,
  *  « poussiere », ou « battement » (l'alternance d'origine). Proposition : outils/evolution/proposition-morphing.html.
  *  En développement, `localStorage['soulseed:morphing']` le remplace (pour comparer dans le jeu). */
-export const MORPHING: Morphing = 'fusion';
+export const MORPHING: Morphing = 'poussiere';
 const modeMorphing = (): Morphing => {
   if (import.meta.env.DEV) { try { const m = localStorage.getItem('soulseed:morphing'); if (m && ['fusion', 'brume', 'poussiere', 'battement'].includes(m)) return m as Morphing; } catch { /* stockage indisponible */ } }
   return MORPHING;
@@ -73,7 +73,8 @@ export function Evolution(p: ProprietesEvolution) {
   const animerMorphing = () => {
     const r = rendu.current; if (!r) return;
     const debut = performance.now(), fin = T.eclat - T.bat;
-    const pas = (now: number) => { const t = now - debut; r.dessiner(avancement(t, BATTEMENTS, fin), t); if (t < fin) boucle.current = requestAnimationFrame(pas); };
+    const continu = UNE_SEULE_FOIS.includes(modeMorphing());
+    const pas = (now: number) => { const t = now - debut; r.dessiner(continu ? avancementContinu(t, fin) : avancement(t, BATTEMENTS, fin), t); if (t < fin) boucle.current = requestAnimationFrame(pas); };
     r.dessiner(0, 0);
     boucle.current = requestAnimationFrame(pas);
   };

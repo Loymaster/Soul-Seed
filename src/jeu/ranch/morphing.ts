@@ -2,7 +2,7 @@
 // à chaque battement. Trois rendus, choisis par un mot (proposition : outils/evolution/proposition-morphing.html) :
 //   — « fusion »    : interpolation des champs de distance des deux silhouettes (un vrai morphing de forme) ;
 //   — « brume »     : fondu enchaîné troublé (turbulence et déplacement SVG, flou) ;
-//   — « poussiere » : la silhouette se défait en grains de lumière qui se recomposent ;
+//   — « poussiere » : en une seule fois, la silhouette se défait en grains de lumière qui tourbillonnent, puis se recomposent ;
 //   — « battement » : l'alternance d'origine, sans morphing (aucun rendu ici).
 // Chaque rendu dessine un avancement m (0 : ancienne forme, 1 : nouvelle) ; `avancement()` donne m au fil des battements.
 // Repère : celui des images de la séquence (une forme mesure H × taille px, pieds au bas de son image).
@@ -139,17 +139,35 @@ function brume(de: HTMLImageElement, vers: HTMLImageElement, G: Geometrie): Rend
   };
 }
 
+/**
+ * « Poussière d'étoiles », en une seule fois : l'ancienne silhouette se défait en grains de lumière, qui se rassemblent
+ * en un tourbillon (un entonnoir de lumière qui tourne sur lui-même, plus large en haut), puis le tourbillon se resserre
+ * et se recompose en la nouvelle forme. m : 0 → 0,4 vers le tourbillon, 0,4 → 0,6 il tourne, 0,6 → 1 vers la nouvelle forme.
+ */
 function poussiere(de: HTMLImageElement, vers: HTMLImageElement, G: Geometrie, echelle: number): RenduMorphing {
   const r = 0.75, l = Math.round(G.L * r), h = Math.round(G.H * r);
   const mA = masque(de, G.de, l, h, r), mB = masque(vers, G.vers, l, h, r);
-  const N = 1500, cx = G.L / 2, cy = G.base - Math.max(G.de.h, G.vers.h) * 0.45;
+  const N = 900, hMax = Math.max(G.de.h, G.vers.h);
+  const cx = G.L / 2, cy = G.base - hMax * 0.5;
   const tirer = (a: Uint8Array) => {
     const pts: { x: number; y: number }[] = []; let essais = 0;
     while (pts.length < N && essais++ < N * 80) { const i = (Math.random() * a.length) | 0; if (a[i] > 140) pts.push({ x: (i % l) / r, y: ((i / l) | 0) / r }); }
-    return pts.sort((u, v) => Math.atan2(u.y - cy, u.x - cx) - Math.atan2(v.y - cy, v.x - cx));
+    // rangés de haut en bas : chaque grain rejoint le tourbillon à peu près à sa hauteur, puis la nouvelle forme de même
+    return pts.sort((u, v) => u.y - v.y);
   };
   const pa = tirer(mA), pb = tirer(mB);
-  const grains = pa.map((q, i) => ({ a: q, b: pb[i % Math.max(1, pb.length)] ?? q, tour: (Math.random() - 0.5) * 90, phase: Math.random() * 6.28, r: 0.7 + Math.random() * 1.5, retard: Math.random() * 0.25 }));
+  // l'entonnoir : demi-hauteur, rayon en bas et en haut (px du repère)
+  const demi = hMax * 0.42, rBas = Math.max(G.de.l, G.vers.l) * 0.12, rHaut = Math.max(G.de.l, G.vers.l) * 0.42;
+  const grains = pa.map((q, i) => {
+    const k = pa.length > 1 ? i / (pa.length - 1) : 0.5;       // 0 en haut, 1 en bas
+    return {
+      a: q, b: pb[Math.floor(k * (pb.length - 1))] ?? q,
+      v: -demi + 2 * demi * k + (Math.random() - 0.5) * 14,     // hauteur dans le tourbillon
+      angle: Math.random() * Math.PI * 2, epaisseur: 0.75 + Math.random() * 0.35,
+      vitesse: 0.8 + Math.random() * 0.5, r: 0.7 + Math.random() * 1.5,
+      retard: Math.random() * 0.12, phase: Math.random() * 6.28,
+    };
+  });
   const blanche = (img: HTMLImageElement, q: Boite) => {
     const k = document.createElement('canvas'); k.width = G.L; k.height = G.H; const x = k.getContext('2d')!;
     x.drawImage(img, q.x, q.y, q.l, q.h); x.globalCompositeOperation = 'source-in'; x.fillStyle = '#fffcf0'; x.fillRect(0, 0, G.L, G.H); return k;
@@ -160,21 +178,49 @@ function poussiere(de: HTMLImageElement, vers: HTMLImageElement, G: Geometrie, e
   const c = document.createElement('canvas'); const k = borne(echelle, 1, 2);
   c.width = Math.round(G.L * k); c.height = Math.round(G.H * k);
   const g = c.getContext('2d')!; g.scale(k, k);
+  // la rotation s'accélère vers le milieu de la transformation : angle cumulé (rad) au fil de m
+  const rotation = (m: number) => 7 * m + 9 * (m - Math.sin(2 * Math.PI * m) / (2 * Math.PI)) - 4 * m * m;
   return {
     element: c, largeur: G.L, hauteur: G.H,
-    dessiner: (m, t) => {
+    dessiner: (m) => {
       g.clearRect(0, 0, G.L, G.H);
       g.globalCompositeOperation = 'source-over';
-      g.globalAlpha = 1 - lisse(borne(m / 0.38)); if (g.globalAlpha > 0.01) g.drawImage(sA, 0, 0);
-      g.globalAlpha = lisse(borne((m - 0.62) / 0.38)); if (g.globalAlpha > 0.01) g.drawImage(sB, 0, 0);
-      const vis = Math.min(1, 3.2 * Math.sin(Math.PI * m));
+      g.globalAlpha = 1 - lisse(borne(m / 0.22)); if (g.globalAlpha > 0.01) g.drawImage(sA, 0, 0);
+      g.globalAlpha = lisse(borne((m - 0.8) / 0.2)); if (g.globalAlpha > 0.01) g.drawImage(sB, 0, 0);
+      const vis = m <= 0 || m >= 1 ? 0 : Math.min(1, 6 * Math.min(m, 1 - m));
       if (vis > 0.01) {
         g.globalCompositeOperation = 'lighter'; g.globalAlpha = vis;
+        const tour = rotation(m);
         for (const q of grains) {
-          const p = lisse(borne((m - q.retard * (1 - m)) / (1 - q.retard * 0.5))), s = Math.sin(Math.PI * p);
-          const x = q.a.x + (q.b.x - q.a.x) * p + q.tour * s + Math.sin(t / 260 + q.phase) * 3 * s;
-          const y = q.a.y + (q.b.y - q.a.y) * p - 26 * s + Math.cos(t / 310 + q.phase) * 3 * s;
-          const rr = q.r * (1 + 1.4 * s) * 2.4; g.drawImage(point, x - rr, y - rr, 2 * rr, 2 * rr);
+          // position dans le tourbillon : un anneau aplati (perspective) qui tourne, plus large en haut
+          const hautBas = (q.v + demi) / (2 * demi);              // 0 en haut, 1 en bas
+          const R = (rHaut + (rBas - rHaut) * hautBas) * q.epaisseur;
+          const th = q.angle + tour * q.vitesse;
+          const vx = cx + Math.cos(th) * R, vy = cy + q.v + Math.sin(th) * R * 0.3;
+          const devant = 0.55 + 0.45 * Math.sin(th);              // les grains de devant brillent davantage
+          let x: number, y: number, eclat: number;
+          if (m < 0.4) {
+            const p = lisse(borne((m / 0.4 - q.retard) / (1 - q.retard)));
+            x = q.a.x + (vx - q.a.x) * p; y = q.a.y + (vy - q.a.y) * p; eclat = 1 + (devant - 1) * p;
+          } else if (m < 0.6) {
+            x = vx; y = vy; eclat = devant;
+          } else {
+            const p = lisse(borne(((m - 0.6) / 0.4 - q.retard) / (1 - q.retard)));
+            x = vx + (q.b.x - vx) * p; y = vy + (q.b.y - vy) * p; eclat = devant + (1 - devant) * p;
+          }
+          // dans le tourbillon, les grains sont plus fins et laissent une traînée qui montre la rotation
+          const tourbillon = Math.sin(Math.PI * borne((m - 0.15) / 0.7));
+          const rr = q.r * 2.2 * (1 - 0.35 * tourbillon) * (0.7 + 0.3 * eclat);
+          const alpha = vis * (0.3 + 0.55 * eclat) * (1 - 0.35 * tourbillon);
+          g.globalAlpha = alpha;
+          g.drawImage(point, x - rr, y - rr, 2 * rr, 2 * rr);
+          if (tourbillon > 0.05) for (let j = 1; j <= 3; j++) {
+            const tj = th - j * 0.16 * q.vitesse;
+            const tx = cx + Math.cos(tj) * R, ty = cy + q.v + Math.sin(tj) * R * 0.3;
+            const px = x + (tx - vx) * tourbillon, py = y + (ty - vy) * tourbillon, pr = rr * (1 - j * 0.2);
+            g.globalAlpha = alpha * tourbillon * (0.5 - j * 0.13);
+            g.drawImage(point, px - pr, py - pr, 2 * pr, 2 * pr);
+          }
         }
       }
       g.globalAlpha = 1; g.globalCompositeOperation = 'source-over';
@@ -200,3 +246,7 @@ export async function preparerMorphing(mode: Morphing, srcDe: string, srcVers: s
     return null;
   }
 }
+
+/** « poussiere » se joue en une seule fois (sans battements) : avancement continu, doux au début et à la fin. */
+export const UNE_SEULE_FOIS: readonly Morphing[] = ['poussiere'];
+export const avancementContinu = (t: number, fin: number) => { const x = borne(t / fin); return x < 0.5 ? 2 * x * x * (1.5 - x) : 1 - 2 * (1 - x) * (1 - x) * (0.5 + x); };
