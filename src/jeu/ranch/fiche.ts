@@ -15,17 +15,27 @@ const NOM_TRAIT: Record<CleTrait, string> = {
   optimisme: 'optimisme', impulsivite: 'impulsivité', planification: 'planification', resilience: 'résilience', prudence: 'prudence',
 };
 
-/** Paliers d'une caractéristique (toutes sont féminines : la force, l'agilité…). */
+/**
+ * Paliers d'une caractéristique (toutes sont féminines : la force, l'agilité…), calés sur les plages réelles du
+ * système du prototype : à l'éclosion, 10–50 + 100 points répartis + bonus de lignée (≈ 30 à 85, ≈ 47 en moyenne) ;
+ * chaque évolution multiplie par 1,2–1,4 ; entraînements (≈ 5 à 16 par séance selon le stade), corvées (jusqu'à
+ * ≈ 36 × 1,85) et combats s'ajoutent. Mesuré sur 20 vies simulées : trois entraînements par jour sans corvée mènent
+ * vers 220–330 au 20ᵉ jour ; toutes les corvées et un entraînement toutes les deux heures, vers 850–990 (plafond 999).
+ * Repères : bébé « frêle » ou « modeste », enfant « honnête », adolescent « solide » à « aguerrie »,
+ * adulte « remarquable » et au-delà.
+ */
 const PALIERS: [number, string][] = [
-  [45, 'frêle'], [75, 'modeste'], [120, 'honnête'], [190, 'solide'], [300, 'aguerrie'], [450, 'remarquable'], [650, 'redoutable'], [Infinity, 'légendaire'],
+  [60, 'frêle'], [110, 'modeste'], [180, 'honnête'], [280, 'solide'], [420, 'aguerrie'], [600, 'remarquable'], [800, 'redoutable'], [Infinity, 'légendaire'],
 ];
 export const CRANS = 10;
 
-/** Palier nommé et nombre de crans (sur 10) d'une valeur cachée de caractéristique (≈ 10 à 999). */
+/**
+ * Palier nommé et nombre de crans (sur 10) d'une valeur cachée de caractéristique (≈ 10 à 999).
+ * Les crans suivent la barre du prototype (valeur / 999) : un écho qui vient d'éclore n'en a qu'un.
+ */
 export function palierCarac(v: number) {
   const mot = PALIERS.find(([seuil]) => v < seuil)![1];
-  const f = Math.max(0, Math.min(1, Math.log(Math.max(10, v) / 10) / Math.log(100)));
-  return { mot, crans: Math.max(1, Math.round(f * CRANS)) };
+  return { mot, crans: Math.max(1, Math.min(CRANS, Math.round((v / 999) * CRANS))) };
 }
 
 /** Ce qui a progressé entre deux relevés : une, deux ou trois flèches selon l'ampleur, sans chiffre. */

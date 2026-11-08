@@ -3,6 +3,8 @@ import { aleatoireFixe, creerEcho, AGE_EVOLUTION, AGE_MORT, CARESSES_PAR_JOUR, D
 import { objetDivers } from '../src/moteur/simulation/objets';
 import { DUREE_REPOUSSE, OUVERTURE_BOUTIQUE, FERMETURE_BOUTIQUE, PLAFOND_RESSOURCE, DEBUT_TRAVAIL, FIN_TRAVAIL, DUREE_TRAVAIL } from '../src/moteur/monde';
 import { readFileSync } from 'node:fs';
+import { DEMI_HEURE_PANSEMENT, PART_PAR_DEMI_HEURE } from '../src/moteur/simulation/soins';
+import { OBJETS_RANGEMENT } from '../src/moteur/simulation/corvees';
 import { GABARIT_CARNET, GABARIT_PETIT, THEMES_ASTUCES, compteTheme, insecables, lignesTheme, paginer } from '../src/jeu/commun/astuces';
 
 const echo = () => creerEcho({ nom: 'Filo', genre: 'm', graine: 'joy', lignee: 'primaire', rythme: 'diurne' }, aleatoireFixe(3));
@@ -42,6 +44,12 @@ describe('astuces du carnet', () => {
     expect(tout).toContain('vit vingt jours');
     expect(DUREE_BROSSAGE_HEURES).toBe(1);
     expect(CARESSES_PAR_JOUR).toBe(10);
+    expect(DEMI_HEURE_PANSEMENT).toBe(30);
+    expect(PART_PAR_DEMI_HEURE).toBe(0.1);
+    expect(tout).toContain('une demi-heure par dixième de forces perdu');
+    expect(OBJETS_RANGEMENT).toBe(8);
+    expect(tout).toContain('toujours huit objets');
+    expect(tout).toContain('Au bout de vingt jours, comme le vôtre, ils ne reviennent plus');
     expect(DUREE_REPOUSSE).toBe(12);
     expect(PLAFOND_RESSOURCE).toBe(5);
     expect(tout).toContain(`ouvre de ${OUVERTURE_BOUTIQUE} h à ${FERMETURE_BOUTIQUE} h`);

@@ -7,7 +7,7 @@ import type {
 } from './types';
 import {
   AGE_EVOLUTION, AGE_MORT, CARESSES_PAR_JOUR, CLES_CARACS, CLES_TEMPERAMENT, CONSTANTE_GUERISON_MALADIE,
-  DUREE_BROSSAGE_HEURES, DUREE_VISITE_HEURES, ESSAIS_CORVEE, MULT_CORVEE, EMOTION_DE_TEMPERAMENT, MAX_ECHOS_SAUVAGES, MAX_PAR_STADE, MULT_ENTRAINEMENT,
+  DUREE_BROSSAGE_HEURES, DUREE_VISITE_HEURES, MULT_CORVEE, EMOTION_DE_TEMPERAMENT, MAX_ECHOS_SAUVAGES, MAX_PAR_STADE, MULT_ENTRAINEMENT,
   MULT_GUERISON_BLESSURE, NOM_STADE, PLAGES_RYTHME, SALETE_MAX, TRAIT_DE_TEMPERAMENT, TRAIT_D_EMOTION,
   TRAIT_D_EMOTION_EDUCATIVE,
 } from './constantes';
@@ -17,6 +17,10 @@ import { CHANCE_INTERACTION_VISITE, changerAffect, compatibilite, probaEntente, 
 import { regimeCompatible } from './alimentation';
 import { aliment, consommer, objetDivers, ranger } from './objets';
 import { creerEchoSauvage } from './creation';
+import { essaisCorvee } from './corvees';
+import { remarquerCroissance, texteAdieu, vieillirSauvages } from './croissance';
+import { nomsPris } from './noms';
+import { DEMI_HEURE_PANSEMENT, PART_PAR_DEMI_HEURE, demiHeuresPansement, dureeDemiHeures, partPerdue, plaiesFinies, pvMaxEcho } from './soins';
 import { determinerAdolescent, determinerAdulte } from './evolution';
 import { INTERACTIONS } from './donnees/interactions';
 import { CORVEES, ENTRAINEMENTS } from './donnees/activites';
@@ -105,7 +109,12 @@ export class Simulation {
 
   /** Avance l'horloge de `heures` heures pleines (les actions longues). */
   avancer(heures: number, opts: OptionsHeure = {}) {
-    for (let i = 0; i < heures * 60 && !this.etat.mort; i++) this.minute(opts);
+    this.avancerMinutes(heures * 60, opts);
+  }
+
+  /** Avance l'horloge de `minutes` minutes. */
+  avancerMinutes(minutes: number, opts: OptionsHeure = {}) {
+    for (let i = 0; i < minutes && !this.etat.mort; i++) this.minute(opts);
   }
 
   private rythmeRespecte(h: number) {
@@ -162,7 +171,8 @@ export class Simulation {
       const plus = Math.max(...cles.map(k => e.educationJour[k]));
       if (plus > 0) progressionTraits.push(TRAIT_D_EMOTION_EDUCATIVE[piocher(cles.filter(k => e.educationJour[k] === plus), rng)]);
       for (const k of cles) e.educationJour[k] = 0;
-      for (const s of e.echosSauvages) s.ageJours += 1;
+      // les échos sauvages connus grandissent aussi (croissance.ts) ; au bout de leur âge, ils ne reviennent plus
+      for (const s of vieillirSauvages(e)) this.noter(texteAdieu(s));
       e.caresses = { jour: e.jour, nombre: 0 };
       this.emettre({ type: 'nouveau-jour', jour: e.jour });
     }
@@ -353,11 +363,13 @@ export class Simulation {
     for (const t of progressionTraits) e.traits[t] = Math.min(100, e.traits[t] + 1);
 
     if (effondrement && !e.mort) { this.emettre({ type: 'effondrement' }); this.effondrementEnAttente = true; }
+    // tickHour : chaque heure se termine par checkTechniqueUnlocks (une corvée, par exemple, apprend ainsi sa technique).
+    if (!e.mort) this.apprendreTechniques();
   }
 
   private deposer(nature: 'crotte' | 'vomi') {
     const e = this.etat;
-    const dej = { id: this.nouvelId(), x: 0.08 + this.rng() * 0.84, y: this.rng(), nature };
+    const dej = { id: this.nouvelId(), x: 0.08 + this.rng() * 0.84, y: this.rng(), nature, stade: e.stade };
     e.dejections.push(dej);
     e.saleteRanch = Math.min(SALETE_MAX, e.saleteRanch + 1);
     this.emettre({ type: 'dejection', dejection: dej });
@@ -374,14 +386,15 @@ export class Simulation {
       e.emotions.peur = borne(e.emotions.peur + 40);
       e.emotions.surprise = borne(e.emotions.surprise + 80);
     } else if (nature === 'invite') {
-      const s = creerEchoSauvage(this.rng);
+      const s = creerEchoSauvage(this.rng, 1, 3, undefined, nomsPris(e));
+      s.stadeVu = s.stade;
       e.echosSauvages.push(s);
       e.visiteur = { id: s.id, departA: maintenant + DUREE_VISITE_HEURES };
       texte = `Vous recevez de la visite ! ${s.nom}, un écho que vous ne connaissez pas, s’aventure sur le ranch.`;
     } else {
       const s = piocher(e.echosSauvages, this.rng);
       e.visiteur = { id: s.id, departA: maintenant + DUREE_VISITE_HEURES };
-      texte = texteRetour(e, s);
+      texte = texteRetour(e, s) + remarquerCroissance(s);
     }
     this.noter(texte);
     this.emettre({ type: 'evenement', nature, texte });
@@ -427,6 +440,7 @@ export class Simulation {
     e.educationStade = { cognitif: 0, socio: 0, moteur: 0, joy: 0, fear: 0, sorrow: 0, wrath: 0, disgust: 0 };
     this.noter(`${this.Nom} a grandi ! ${this.a('Il', 'Elle')} a atteint le stade ${NOM_STADE[vers]}.`);
     this.emettre({ type: 'evolution', de, vers });
+    this.apprendreTechniques();
   }
 
   // ————————————————————————————————————————— soins
@@ -601,12 +615,40 @@ export class Simulation {
       else {
         const s = e.echosSauvages.find(x => x.id === choix.id)!;
         e.visiteur = { id: s.id, departA: heureTotale(e) + DUREE_VISITE_HEURES };
-        const texte = texteRetour(e, s, true);
+        const texte = texteRetour(e, s, true) + remarquerCroissance(s);
         this.noter(texte); this.emettre({ type: 'evenement', nature: 'visite', texte });
       }
       return { ok: true };
     }
     return { ok: false, raison: 'Cet objet ne sert à rien ici.' };
+  }
+
+  /**
+   * Panser les blessures (soins.ts) : `demiHeures` demi-heures, au plus la tranche de PV de combat perdus arrondie
+   * à la dizaine supérieure ; chaque demi-heure rend 10 % des PV maximum. Un écho à bout de forces redevient apte
+   * dès que ses PV remontent. Un somme pendant les soins (effondrement) rend tout et arrête les soins.
+   */
+  panser(demiHeures: number): Reussi<{ texte: string; demiHeures: number }> | Refus {
+    const e = this.etat;
+    const max = demiHeuresPansement(e);
+    if (!max) return { ok: false, raison: `${this.Nom} n’a pas de plaie à panser.` };
+    const n = Math.max(1, Math.min(max, Math.round(demiHeures)));
+    const avant = partPerdue(e);
+    for (let i = 0; i < n && !e.mort; i++) {
+      this.avancerMinutes(DEMI_HEURE_PANSEMENT);
+      if (e.mort || e.pvCombat == null) break;
+      const pvMax = pvMaxEcho(e.caracs);
+      const pv = Math.min(pvMax, e.pvCombat + pvMax * PART_PAR_DEMI_HEURE);
+      e.pvCombat = pv >= pvMax - 1e-6 ? null : dixieme(pv);
+    }
+    if (e.mort) return { ok: false, raison: '' };
+    appliquerEmotions(e, { peur: -5, tristesse: -3, joie: 3 });
+    e.manqueAffection = Math.max(0, e.manqueAffection - 10);
+    e.besoinAffection = e.manqueAffection > 70;
+    this.noter(`Vous avez pansé les blessures de ${e.nom} (${dureeDemiHeures(n)}).`);
+    let texte = plaiesFinies(avant, partPerdue(e));
+    if (e.blesse) texte += ' Sa blessure, elle, demandera un vrai pansement.';
+    return { ok: true, texte, demiHeures: n };
   }
 
   /** Ramasser une déjection (ou un vomi). */
@@ -823,7 +865,8 @@ export class Simulation {
     const secondaire = piocher(CLES_CARACS.filter(k => k !== t.carac), this.rng);
     // motivation d'Hevann (trainingMotivationMult) : × 1,75 pendant 6 heures
     const motive = (e.motivationJusqua ?? 0) > heureTotale(e) ? MULT_MOTIVATION : 1;
-    const mult = MULT_ENTRAINEMENT[e.stade] * (1 + (e.personnalite.conscienciosite - 3) / 10) * (0.85 + e.humeur / 333) * motive;
+    // (mood || 50) : comme le prototype, une humeur à 0 compte pour 50.
+    const mult = MULT_ENTRAINEMENT[e.stade] * (1 + (e.personnalite.conscienciosite - 3) / 10) * (0.85 + (e.humeur || 50) / 333) * motive;
     const gainP = dixieme((10 + (t.temperament ? e.temperament[t.temperament] : 0)) * mult * (0.8 + this.rng() * 0.4));
     const gainS = dixieme(3 * mult * (0.8 + this.rng() * 0.4));
     this.avancer(2);
@@ -833,6 +876,7 @@ export class Simulation {
     e.caracs[secondaire] = Math.min(999, dixieme(e.caracs[secondaire] + gainS));
     e.poids = Math.max(0.1, centieme(e.poids - 0.25));
     this.eduquer(t.processus, t.emotion);
+    this.apprendreTechniques();
     this.noter(`${this.Nom} a terminé l’entraînement : ${t.nom.toLowerCase()}.`);
     return { ok: true, principal: t.carac, secondaire };
   }
@@ -875,10 +919,7 @@ export class Simulation {
     if (!c) return { ok: false, raison: '' };
     if (e.malade) return { ok: false, raison: `${this.Nom} est ${this.a('malade', 'malade')} et ne peut pas faire de corvée.` };
     if (e.derniereCorvee[id] === e.jour) return { ok: false, raison: 'Cette corvée a déjà été faite aujourd’hui. Revenez demain !' };
-    const trait = e.traits[c.trait] ?? 0;
-    const experience = e.experienceCorvees[id] ?? 0;
-    const proba = Math.max(0.15, Math.min(0.95, 0.35 + trait / 250 + Math.min(0.5, experience * 0.02)));
-    const essais = Array.from({ length: ESSAIS_CORVEE[Math.max(0, Math.min(3, niveau))] }, () => this.rng() < proba);
+    const essais = essaisCorvee(id, e.traits[c.trait] ?? 0, e.experienceCorvees[id] ?? 0, niveau, this.rng);
     const r = this.corvee(id, essais.filter(Boolean).length, essais.length, niveau);
     return r.ok ? { ok: true, palier: r.palier, essais } : r;
   }

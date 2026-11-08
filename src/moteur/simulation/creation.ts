@@ -5,10 +5,12 @@ import type {
 import { ALIMENTS } from './donnees/aliments';
 import {
   BONUS_CARAC_LIGNEE, CATEGORIES_ALIMENTS, CHANCES_LIGNEE, CLES_CARACS, CLES_PERSONNALITE, CLES_TEMPERAMENT,
-  INTERACTIONS_PREFEREES, NOMS_SAUVAGES_F, NOMS_SAUVAGES_M, REGIMES, SAVEURS, TAILLE_SAC, TEMPERAMENT_DE_GRAINE,
+  INTERACTIONS_PREFEREES, REGIMES, SAVEURS, TAILLE_SAC, TEMPERAMENT_DE_GRAINE,
 } from './constantes';
 import { centieme, dixieme, piocher } from './outils';
 import { regimeCompatible } from './alimentation';
+import { tirerNom } from './noms';
+import { stadeSauvage } from './croissance';
 
 export const educationVide = (): Education => ({ cognitif: 0, socio: 0, moteur: 0, joy: 0, fear: 0, sorrow: 0, wrath: 0, disgust: 0 });
 
@@ -140,8 +142,11 @@ export function creerEcho(o: OptionsCreation, rng: Aleatoire = Math.random): Eta
   return e;
 }
 
-/** generateWildEcho (sans les formes rares d'exploration). */
-export function creerEchoSauvage(rng: Aleatoire, ageMin = 1, ageMax = 3, graines?: readonly Graine[]): EchoSauvage {
+/**
+ * generateWildEcho (sans les formes rares d'exploration). `pris` : noms déjà portés, à éviter (noms.ts).
+ * Stade selon l'âge (croissance.ts : comme le prototype, plus l'adulte à partir de 13 jours).
+ */
+export function creerEchoSauvage(rng: Aleatoire, ageMin = 1, ageMax = 3, graines?: readonly Graine[], pris: Iterable<string> = []): EchoSauvage {
   // graines possibles (les échos d'un lieu d'exploration) ; par défaut, toutes
   const graine = piocher(graines?.length ? graines : (['joy', 'wrath', 'disgust', 'sorrow', 'fear'] as const), rng);
   const lignee = tirerLignee(rng);
@@ -153,9 +158,9 @@ export function creerEchoSauvage(rng: Aleatoire, ageMin = 1, ageMax = 3, graines
   const genre: Genre = rng() < 0.5 ? 'm' : 'f';
   return {
     id: 'echo-' + Math.floor(rng() * 1e9).toString(36),
-    nom: piocher(genre === 'f' ? NOMS_SAUVAGES_F : NOMS_SAUVAGES_M, rng),
+    nom: tirerNom(genre, rng, pris),
     genre, graine, lignee,
-    stade: ageJours <= 2 ? 'bebe' : ageJours <= 6 ? 'enfant' : 'adolescent',
+    stade: stadeSauvage(ageJours),
     ageJours, temperament: tirerTemperament(graine, lignee, rng), personnalite: tirerPersonnalite(rng), caracs,
     affectPositif: 0, affectNegatif: 0,
   };

@@ -17,7 +17,7 @@ import donnees from '@contenu/generes/assets.json';
 import type { Catalogue } from '@/contenu/types';
 import { SCENES } from '@/contenu/scenes';
 import { analyserScene } from '@/moteur/scene/analyseur';
-import { Simulation, ageJours, apparence, creerEchoSauvage, heureDuJour, type EchoSauvage, type Etat } from '@/moteur/simulation';
+import { Simulation, ageJours, apparence, creerEchoSauvage, nomsPris, heureDuJour, type EchoSauvage, type Etat } from '@/moteur/simulation';
 import { Arene as RA, bilanCombat, descriptionDepuisEtat, descriptionSauvage } from '@/moteur/combat';
 import { EcranCombat, type AdversaireCombat, type IssueCombat, type Registre } from './combat/EcranCombat';
 import { Arene } from './arene/Arene';
@@ -91,9 +91,8 @@ function preparerCombat(etat: Etat, nature: 'exploration' | 'entrainement', sauv
     return { adversaire: { description, image: apparence({ ...sauvage, evolution: null }) } as AdversaireCombat, registre: 'exploration' as Registre, terrain: 'decors/ranch/journee.png', entrainement: true };
   }
   const age = ageJours(etat);
-  let s = creerEchoSauvage(Math.random, Math.max(1, age - 1), age + 2);
-  // jamais deux échos du même nom face à face
-  for (let i = 0; i < 8 && s.nom === etat.nom; i++) s = creerEchoSauvage(Math.random, Math.max(1, age - 1), age + 2);
+  // jamais un nom déjà porté (le sien, ceux des échos qu'il connaît)
+  const s = creerEchoSauvage(Math.random, Math.max(1, age - 1), age + 2, undefined, nomsPris(etat));
   const description = descriptionSauvage(s, Math.random, nature === 'entrainement' ? { min: 0.8, max: 0.95 } : undefined);
   const adversaire: AdversaireCombat = { description, image: apparence({ ...s, evolution: null }) };
   const terrain = `decors/exploration/${nature === 'entrainement' ? '10-champ-rochers' : TERRAINS[Math.floor(Math.random() * TERRAINS.length)]}.png`;
