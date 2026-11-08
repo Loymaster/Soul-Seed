@@ -21,6 +21,8 @@ déplace: jumpy D1
 décor: foret/entree                ← changement de décor en cours de scène
 pause: 1.5
 action: image pnj/garry/attaque-jumpy   ← image épinglée au-dessus de la scène (« action: image aucune » la retire)
+action: cinematique pnj/nyxara/attaque-1   ← image plein cadre ~2,6 s : le dialogue attend (aucun clic ne l'abrège), elle s'efface avant qu'il reprenne (scènes du monde)
+action: technique vinland G2 Lame de l’aube   ← étiquette et son d'une technique de combat au-dessus de Vinland à sa place (scènes du monde)
 
 choix: Que répondre ?
   > résolution « Rien qui te regarde. »

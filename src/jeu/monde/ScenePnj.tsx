@@ -4,16 +4,20 @@
 //
 // Elle sert au village (src/jeu/monde/Monde.tsx) et en exploration (src/jeu/exploration/Exploration.tsx, PNJ de pnj.ts) :
 // afficher <ScenePnj id="hevann-chemin" … /> et suivre `surFin({ sortie })` (voir contenu/scenes/LISEZMOI.md).
-import { useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import type { Catalogue } from '@/contenu/types';
 import { SCENES } from '@/contenu/scenes';
 import { analyserScene } from '@/moteur/scene/analyseur';
 import type { Valeur } from '@/moteur/scene/types';
-import { aBoutDeForces, descriptionDepuisEtat } from '@/moteur/combat';
+import { TECHNIQUES, aBoutDeForces, descriptionDepuisEtat } from '@/moteur/combat';
+import { cheminImage } from '@/moteur/scene/valider';
+import { PLACES, SCENE_H, placer } from '@/moteur/scene/placement';
 import { Simulation, apparence, type Etat, type Sortie } from '@/moteur/simulation';
 import type { Monde } from '@/moteur/monde';
 import { SceneDialogue } from '../scene/SceneDialogue';
 import { EcranCombat, type IssueCombat } from '../combat/EcranCombat';
+import { SonsCombat } from '../combat/sons';
+import { SFX } from '@/moteur/sfx';
 import { Repere } from '../commun/Repere';
 import * as P from '../profils';
 import { appliquerIssueCombat, jouerAction, type Panneau } from './actions';
@@ -66,6 +70,34 @@ const DECORS_DU_VILLAGE = /^(village\/|foret\/entree|atelier\/|boutique\/)/;
 
 type Attente = (variables?: Record<string, Valeur>) => void;
 
+/**
+ * Cinématiques (scène de Nyxara) : deux actions jouées ici, pendant lesquelles le dialogue attend — pas de texte,
+ * aucun clic ni touche ne les abrège — et qui s'effacent avant que le dialogue reprenne.
+ *  - `action: cinematique pnj/nyxara/attaque-1` : l'image épinglée au-dessus de la scène, DUREE_CINEMATIQUE ms ;
+ *  - `action: technique vinland G2 Lame de l’aube` : l'étiquette de technique de l'écran de combat (registre exploration,
+ *    même son que le combat) au-dessus de la tête du PNJ à sa place, DUREE_TECHNIQUE ms.
+ */
+export const DUREE_CINEMATIQUE = 2600;
+export const DUREE_TECHNIQUE = 1700;
+/** Fondu de sortie de l'image (ms), compris dans sa durée. */
+const SORTIE_CINEMATIQUE = 450;
+type Cinematique =
+  | { type: 'image'; chemin: string; sortie: boolean; cle: number }
+  | { type: 'technique'; nom: string; icone: string; x: number; y: number; cle: number };
+
+/** Lit « vinland G2 Lame de l’aube » : PNJ et place facultatifs, puis le nom de la technique (apostrophe droite, comme au combat). */
+export function lireTechnique(argument: string, pnj: Record<string, { taille: number; visible: number }>) {
+  const mots = argument.trim().split(/\s+/);
+  const qui = mots[0] && pnj[mots[0]] ? mots.shift()! : undefined;
+  const place = mots[0] && /^[GD][12]$/.test(mots[0]) ? (mots.shift() as keyof typeof PLACES) : undefined;
+  const nom = mots.join(' ').replace(/[’‘]/g, "'");
+  const x = place ? PLACES[place] : 640;
+  // au-dessus de la tête, comme au combat (18 px)
+  const f = qui ? pnj[qui] : undefined;
+  const y = f ? (() => { const p = placer(f.taille, f.visible); return SCENE_H - p.bas - p.hauteur - 18; })() : 300;
+  return { nom, x, y: Math.max(70, y), categorie: TECHNIQUES[nom]?.categorie };
+}
+
 export function ScenePnj(props: ProprietesScenePnj) {
   const { id, sujet, decor, etat, monde, personnage, catalogue } = props;
   const sim = useMemo(() => props.sim ?? new Simulation(etat), [props.sim, etat]);
@@ -80,6 +112,9 @@ export function ScenePnj(props: ProprietesScenePnj) {
   const [initiales] = useState(() => variablesScene(etat, monde, personnage, sujet));
   const [combat, setCombat] = useState<{ c: CombatPnj; reprendre: Attente } | null>(null);
   const [panneau, setPanneau] = useState<{ p: Panneau; reprendre: Attente } | null>(null);
+  const [cine, setCine] = useState<Cinematique | null>(null);
+  const minuteursCine = useRef<ReturnType<typeof setTimeout>[]>([]);
+  useEffect(() => () => minuteursCine.current.forEach(clearTimeout), []);
   const [, setVersion] = useState(0);
   const sortie = useRef<string | undefined>(undefined);
   const termine = useRef(false);
@@ -95,6 +130,7 @@ export function ScenePnj(props: ProprietesScenePnj) {
   }
 
   const surAction = (nom: string, argument: string | undefined, reprendre: Attente) => {
+    if (nom === 'cinematique' || nom === 'technique') { jouerCinematique(nom, argument ?? '', reprendre); return; }
     const r = jouerAction(nom, argument, ctx);
     vider();
     switch (r.type) {
@@ -110,6 +146,22 @@ export function ScenePnj(props: ProprietesScenePnj) {
         break;
       case 'panneau': setPanneau({ p: r.panneau, reprendre }); break;
       case 'sortie': sortie.current = r.vers; reprendre(); break;
+    }
+  };
+
+  const jouerCinematique = (nom: 'cinematique' | 'technique', argument: string, reprendre: Attente) => {
+    const plus = (f: () => void, ms: number) => minuteursCine.current.push(setTimeout(f, ms));
+    const cle = Date.now();
+    if (nom === 'cinematique') {
+      if (props.sons !== false) SFX.woosh();
+      setCine({ type: 'image', chemin: cheminImage(argument), sortie: false, cle });
+      plus(() => setCine((c) => (c?.cle === cle ? { ...c, sortie: true } as Cinematique : c)), DUREE_CINEMATIQUE - SORTIE_CINEMATIQUE);
+      plus(() => { setCine((c) => (c?.cle === cle ? null : c)); reprendre(); }, DUREE_CINEMATIQUE);
+    } else {
+      const t = lireTechnique(argument, catalogue.pnj);
+      if (props.sons !== false) SonsCombat.technique();
+      setCine({ type: 'technique', nom: t.nom, icone: `${import.meta.env.BASE_URL}assets/interface/techniques/${t.categorie ?? 'physique'}.png`, x: t.x, y: t.y, cle });
+      plus(() => { setCine((c) => (c?.cle === cle ? null : c)); reprendre(); }, DUREE_TECHNIQUE);
     }
   };
 
@@ -150,6 +202,22 @@ export function ScenePnj(props: ProprietesScenePnj) {
             setTimeout(() => props.surFin({ sortie: sortie.current }), 100);
           }} />
       </div>
+      {cine && (
+        // par-dessus la scène ; il retient aussi les clics : le dialogue attend la fin de la cinématique
+        <div className="mo-cinematique" onClick={(e) => e.stopPropagation()}><Repere fond="transparent">
+          {cine.type === 'image' && catalogue.assets.some((a) => a.chemin === cine.chemin) && (
+            <div key={cine.cle} className={`sc-photo${cine.sortie ? ' mo-cine-sort' : ''}`}>
+              <img src={catalogue.assets.find((a) => a.chemin === cine.chemin)!.url} alt="" />
+            </div>
+          )}
+          {cine.type === 'technique' && (
+            // l'étiquette de l'écran de combat, telle quelle (src/jeu/combat/combat.css, registre exploration)
+            <div className="cb exploration mo-cine-cb">
+              <div key={cine.cle} className="etiq" style={{ left: cine.x, top: cine.y }}><img src={cine.icone} alt="" /><span>{cine.nom}</span></div>
+            </div>
+          )}
+        </Repere></div>
+      )}
       {panneau && (
         <div className="mo-panneau-scene"><Repere fond="transparent" className="mo">
           {panneau.p === 'boutique' && <Etal {...commun} />}

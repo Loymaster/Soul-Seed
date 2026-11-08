@@ -447,6 +447,7 @@
 .ex12 .appel .btn{font-size:18px;padding:12px 36px 9px}
 .ex12 button:focus-visible{outline:2px solid #f3d48a;outline-offset:2px}
 .ex12 .carnet,.ex12 .cote,.ex12 .gestes{z-index:45}
+.ex12 .gestes.cache{opacity:0;pointer-events:none}
 .ex12 .carte{padding:0;background:none;box-shadow:none;transform:rotate(-.7deg);animation-name:ex12CarteIn}
 .ex12 .carte svg.plan{width:1080px;height:676px;border-radius:0;box-shadow:none;overflow:visible;filter:drop-shadow(0 4px 2px rgba(20,10,4,.45)) drop-shadow(0 22px 26px rgba(0,0,0,.5))}
 .ex12 .plan .bruni{mix-blend-mode:multiply;pointer-events:none}

@@ -179,3 +179,73 @@ describe('règles de terrain', () => {
     expect(reprendreTrouvailles(e, { ...r, enjeu: ['truffe'] })).toBe(true);
   });
 });
+
+// —— les pas d'un lieu à l'autre et l'arrivée (retours de l'autrice)
+import { DUREE_PAS, GUET_ARRIVEE, finPas, programmePas, tirerArrivee } from '../src/jeu/exploration/regles';
+import { SCENES } from '../src/contenu/scenes';
+import { analyserScene } from '../src/moteur/scene/analyseur';
+
+describe('exploration : les pas ne se chevauchent pas', () => {
+  // Exploration.aller() : pas de départ à 0, pas d'arrivée au plus tôt 0,85 s après (le décor d'arrivée attendu ensuite)
+  const DEBUT_ARRIVEE = 0.85;
+  it('le départ se tait avant que l’arrivée commence, au pire des tirages', () => {
+    for (const r of [() => 0, () => 0.999, Math.random]) {
+      for (const grotte of [false, true]) {
+        const depart = programmePas('depart', grotte, undefined, r), arrivee = programmePas('arrivee', grotte, undefined, () => 0);
+        expect(finPas(depart)).toBeLessThan(DEBUT_ARRIVEE + Math.min(...arrivee.map((p) => p.t)));
+      }
+    }
+  });
+  it('moins de pas, qui s’espacent et s’éteignent au départ, commencent tard et doucement à l’arrivée', () => {
+    const d = programmePas('depart', false, undefined, () => 0), a = programmePas('arrivee', false, undefined, () => 0);
+    expect(d.length).toBeLessThan(6); expect(a.length).toBeLessThan(6);
+    for (let i = 1; i < d.length; i++) { expect(d[i].vol).toBeLessThan(d[i - 1].vol); expect(d[i].t - d[i - 1].t).toBeGreaterThanOrEqual(d[1].t - d[0].t); }
+    for (let i = 1; i < a.length; i++) expect(a[i].vol).toBeGreaterThan(a[i - 1].vol);
+    expect(a[0].t).toBeGreaterThanOrEqual(0.4);
+    // l'arrivée finit avant que l'écho soit en place (0,26 s + 1,15 s de marche)
+    expect(finPas(programmePas('arrivee', false, undefined, () => 0.999))).toBeLessThan(1.41);
+    // pas superposés à l'intérieur d'une série : jamais
+    for (const s of [d, a]) for (let i = 1; i < s.length; i++) expect(s[i].t - s[i - 1].t).toBeGreaterThan(DUREE_PAS);
+  });
+});
+
+describe('exploration : l’arrivée se tranche avant les gestes', () => {
+  const base = { nyxara: false, pnj: false, echo: true, proba: 1, nouveau: true, grotte: true };
+  it('cinématique et PNJ d’abord, puis l’écho sauvage, puis une simple réaction', () => {
+    expect(tirerArrivee({ ...base, nyxara: true })).toBe('nyxara');
+    expect(tirerArrivee({ ...base, pnj: true })).toBe('pnj');
+    expect(tirerArrivee(base, () => 0.5)).toBe('rencontre');
+    expect(tirerArrivee({ ...base, proba: 0 }, () => 0.1)).toBe('surpris');
+    expect(tirerArrivee({ ...base, proba: 0, nouveau: false }, () => 0.1)).toBe('anxieux');
+    expect(tirerArrivee({ ...base, echo: false, nouveau: false, grotte: false })).toBe('rien');
+    expect(GUET_ARRIVEE).toBeGreaterThan(0);
+  });
+});
+
+describe('scène de Nyxara : cinématiques', () => {
+  const s = SCENES.find((x) => x.id === 'nyxara')!;
+  const actions: { nom: string; argument?: string }[] = [];
+  const parcourir = (n: unknown) => {
+    if (Array.isArray(n)) { n.forEach(parcourir); return; }
+    if (!n || typeof n !== 'object') return;
+    const o = n as Record<string, unknown>;
+    if (o.type === 'action') actions.push({ nom: String(o.nom), argument: o.argument as string | undefined });
+    Object.values(o).forEach((v) => v && typeof v === 'object' && parcourir(v));
+  };
+  parcourir(analyserScene(s.source, s.id).scene);
+  it('ses cinq images sont des cinématiques (le dialogue attend), plus aucune image épinglée', () => {
+    expect(actions.filter((a) => a.nom === 'image')).toEqual([]);
+    const imgs = actions.filter((a) => a.nom === 'cinematique').map((a) => a.argument);
+    expect(imgs).toEqual([1, 2, 3, 4, 5].map((i) => `pnj/nyxara/attaque-${i}`));
+    for (const i of imgs) expect(fs.existsSync(path.join(ASSETS, `${i}.png`))).toBe(true);
+  });
+  it('« Lame de l’aube » est annoncée comme une technique de combat', async () => {
+    const { lireTechnique } = await import('../src/jeu/monde/ScenePnj');
+    const t = actions.find((a) => a.nom === 'technique');
+    expect(t).toBeTruthy();
+    const l = lireTechnique(t!.argument!, { vinland: { taille: 1.9, visible: 1 } });
+    expect(l.nom).toBe("Lame de l'aube");
+    expect(l.categorie).toBe('lumineux');
+    expect(l.x).toBe(420);
+  });
+});

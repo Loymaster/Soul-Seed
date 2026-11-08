@@ -221,3 +221,9 @@
 .mo-bouton.ok,.mo-qte button,.mo-bouton{transition:transform .15s,filter .2s}
 .mo-bouton.ok:hover:not(:disabled){filter:brightness(1.08) drop-shadow(0 0 8px rgba(160,220,140,.45))}
 .mo-pied,.mo-ligne,.mo-ressources .r,.mo-dispo .r{background:rgba(255,250,238,.55)}
+/* cinématique d'une scène (Nyxara) : image ou étiquette de technique par-dessus le dialogue, qui attend dessous */
+.mo-cinematique{position:fixed;inset:0;z-index:22;cursor:default}
+.mo-cinematique .repere-cadre{position:absolute}
+.mo-cinematique .sc-photo.mo-cine-sort{animation:mo-cine-sort .45s ease both}
+@keyframes mo-cine-sort{from{opacity:1;transform:rotate(-2.5deg)}to{opacity:0;transform:translateY(-14px) rotate(-4deg)}}
+.mo-cinematique .mo-cine-cb{position:absolute;inset:0;width:auto;height:auto;background:transparent;pointer-events:none}

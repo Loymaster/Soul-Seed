@@ -1,36 +1,34 @@
 // Exploration, lieu 32 « Sentier solitaire » (8 h – 20 h, une seule fois, en y arrivant) : « Au secours ! Aidez-moi ! » → « Aller voir ».
 // Nyxara s'en prend à Finn, Vinland s'interpose ; Finn rejoint le village. Aucun combat.
 // La scène a sa propre musique : l'écran qui la joue coupe la sienne pendant ce temps.
+// Les images sont des cinématiques (action: cinematique …, jouées par src/jeu/monde/ScenePnj.tsx) : le dialogue attend
+// pendant qu'elles s'affichent, sans clic pour les abréger, et elles s'effacent avant qu'il reprenne.
+// « Lame de l'aube » s'annonce avec l'étiquette et le son d'une technique de combat (action: technique …).
 titre: Nyxara, sur le sentier solitaire
 décor: exploration/32-sentier-solitaire
 musique: aucune
 
-action: image pnj/nyxara/attaque-1
-pause: 2.5
+action: cinematique pnj/nyxara/attaque-1
 entre: finn G2
 entre: nyxara D2
 finn: Laisse-moi tranquille ! Je ne veux rien avoir à faire avec toi !
 nyxara: Je ne te laisse pas le choix ! Arrête de résister.
-action: image pnj/nyxara/attaque-2
 musique: nyxara-battle
-pause: 2
+action: cinematique pnj/nyxara/attaque-2
 sort: finn
 entre: vinland G2
 nyxara: Qu’est-ce que…
 vinland: Toujours à essayer de t’en prendre à plus faible que toi !
 nyxara: Rrrr… Vinland… Occupe-toi de ce qui te regarde !
-action: image pnj/nyxara/attaque-3
-pause: 2
+action: cinematique pnj/nyxara/attaque-3
 vinland: Tu as intérêt à partir sur-le-champ. Tu ne fais pas le poids.
 nyxara: Tu as tort de me sous-estimer ! Je vais t’apprendre un peu…
 vinland: Très bien… Puisque c’est ainsi !
-action: image pnj/nyxara/attaque-4
-narration: « Lame de l’aube ! »
+action: technique vinland G2 Lame de l’aube
+action: cinematique pnj/nyxara/attaque-4
 nyxara: Argh… Tu ne perds rien pour attendre…
 sort: nyxara
-action: image pnj/nyxara/attaque-5
-pause: 2
-action: image aucune
+action: cinematique pnj/nyxara/attaque-5
 entre: finn G2
 finn: Merci ! J’ai cru qu’elle allait m’enlever… C’est pas la première fois qu’elle essaie…
 vinland: Ne t’en fais pas ce n’est rien… Et tu n’es pas non plus sa première cible… Ce qui m’interroge sur ses motivations…
