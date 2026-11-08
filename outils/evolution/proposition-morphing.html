@@ -104,8 +104,8 @@ h1{font-weight:normal;font-style:italic;text-align:center;font-size:clamp(28px,4
       <div class="scene"></div>
       <div class="titre"><span class="lettre">C</span><span class="nom">Poussière d'étoiles</span></div>
       <div class="curseur"><span>de</span><input type="range" min="0" max="1000" value="0" aria-label="Avancement de la transformation (Poussière d'étoiles)"><span>vers</span></div>
-      <p class="desc">En une seule fois, sur 6 secondes : la silhouette se défait en grains de lumière, qui forment face à nous un essaim de poussière tournoyant — chaque grain sur sa propre orbite, qui respire et erre un peu —, puis l'essaim se recompose en la nouvelle forme. En fond, la silhouette se déforme lentement d'une forme à l'autre (la fusion, ralentie).</p>
-      <ul class="pour"><li>Spectaculaire, très « magie sainte »</li><li>Combine les deux : la forme qui se déforme en fond, l'essaim qui tournoie devant</li></ul>
+      <p class="desc">En une seule fois, sur 6 secondes : la silhouette se déforme lentement d'une forme à l'autre (la fusion, ralentie), et une nuée de grains de lumière la suit en s'agitant vivement dans tous les sens, plus fort au cœur de la transformation, avant de se reposer sur la nouvelle forme.</p>
+      <ul class="pour"><li>Spectaculaire, très « magie sainte »</li><li>Combine les deux : la forme qui se déforme en fond, la nuée qui s'agite en la suivant</li></ul>
       <ul class="contre"><li>Joue toujours en une seule fois (le réglage « Rythme » ne la change pas) ; plus de calcul à chaque image</li></ul>
       <div class="actions"><button class="lien rejouer">rejouer</button><span class="tampon">dans le jeu</span></div>
     </section>
@@ -253,18 +253,16 @@ const VARIANTES = {
       return pts.sort((u, v) => u.y - v.y);
     };
     const pa = tirer(mA), pb = tirer(mB);
-    // le tourbillon nous fait face : un essaim de poussière qui tournoie lentement, chaque grain sur sa propre orbite
-    // (rayon, sens d'ellipse, respiration et petites errances à lui), sans bras ni axe : un nuage vivant
-    const RMAX = Math.min(W * 0.4, hMax * 0.5);
+    // l'essaim suit la fusion : chaque grain est accroché à un point de l'ancienne forme et à un point de la nouvelle
+    // (même hauteur relative), glisse de l'un à l'autre au rythme de la silhouette qui se déforme en fond, et s'agite
+    // vivement autour de sa place, dans tous les sens (deux oscillations rapides par axe, à fréquences et phases propres)
     const grains = pa.map((q, i) => {
       const k = pa.length > 1 ? i / (pa.length - 1) : 0.5;
+      const f = () => 3.5 + Math.random() * 5.5, ph = () => Math.random() * 6.28;
       return { a: q, b: pb[Math.floor(k * (pb.length - 1))] || q,
-        rayon: RMAX * (0.12 + 0.88 * Math.pow(Math.random(), 0.75)),
-        aplat: 0.72 + Math.random() * 0.28, incline: (Math.random() - 0.5) * 0.9,
-        angle: Math.random() * Math.PI * 2,
-        omega: (0.55 + Math.random() * 0.6) * (Math.random() < 0.88 ? 1 : -0.6),   // rad/s : lent ; quelques grains à contre-courant
-        souffle: Math.random() * 6.28, errance: Math.random() * 6.28, ferr: 0.6 + Math.random() * 0.8,
-        r: 0.7 + Math.random() * 1.5, retard: Math.random() * 0.15 };
+        ampl: 18 + Math.random() * 26 + (Math.random() < 0.15 ? 34 : 0),     // quelques grains s'écartent davantage
+        fx1: f(), fx2: f() * 1.7, fy1: f(), fy2: f() * 1.6, px1: ph(), px2: ph(), py1: ph(), py2: ph(),
+        souffle: ph(), r: 0.7 + Math.random() * 1.5, retard: Math.random() * 0.18 };
     });
     const blanche = (img, h) => { const k = document.createElement('canvas'); k.width = W; k.height = H; const x = k.getContext('2d'); const q = placer(img, h, 1); x.drawImage(img, q.x, q.y, q.l, q.h); x.globalCompositeOperation = 'source-in'; x.fillStyle = '#fffcf0'; x.fillRect(0, 0, W, H); return k; };
     const sA = blanche(de, hDe), sB = blanche(vers, hVers);
@@ -273,36 +271,32 @@ const VARIANTES = {
     return (m, t) => {
       fond(m);
       // la silhouette de fond s'efface un peu quand l'essaim est le plus dense, puis revient pleine pour la fin
-      canFond.style.setProperty('--voile', (1 - 0.55 * Math.sin(Math.PI * borne((m - 0.1) / 0.8))).toFixed(3));
+      canFond.style.setProperty('--voile', (1 - 0.5 * Math.sin(Math.PI * borne((m - 0.1) / 0.8))).toFixed(3));
       g.clearRect(0, 0, W, H);
       g.globalCompositeOperation = 'source-over';
       const vis = m <= 0 || m >= 1 ? 0 : Math.min(1, 7 * Math.min(m, 1 - m));
       if (vis > 0.01) {
         g.globalCompositeOperation = 'lighter';
-        const s = (t || 0) / 1000;                                   // secondes : la vitesse ne dépend pas de la durée
-        const essaim = Math.sin(Math.PI * borne((m - 0.12) / 0.76));   // force du tournoiement
+        const s = (t || 0) / 1000;
+        const agite = Math.sin(Math.PI * borne((m - 0.06) / 0.88));    // l'agitation culmine au milieu de la fusion
+        const pos = (q, sec) => {
+          // la place du grain sur la silhouette qui se déforme (même avancement que la fusion, un peu décalé par grain)
+          const k = lisse(borne((m - q.retard * (1 - m)) / (1 - q.retard * 0.6)));
+          const bx = q.a.x + (q.b.x - q.a.x) * k, by = q.a.y + (q.b.y - q.a.y) * k;
+          const A = q.ampl * agite;
+          return [bx + A * (Math.sin(sec * q.fx1 + q.px1) + 0.5 * Math.sin(sec * q.fx2 + q.px2)) / 1.5,
+                  by + A * (Math.cos(sec * q.fy1 + q.py1) + 0.5 * Math.sin(sec * q.fy2 + q.py2)) / 1.5];
+        };
         for (const q of grains) {
-          const th = q.angle + q.omega * s;
-          const R = q.rayon * (1 + 0.1 * Math.sin(s * 1.1 + q.souffle)) * (1 - 0.12 * essaim);
-          // orbite légèrement elliptique et inclinée, propre à chaque grain
-          const ex = Math.cos(th) * R, ey = Math.sin(th) * R * q.aplat;
-          const ci = Math.cos(q.incline), si = Math.sin(q.incline);
-          let vx = cx + ex * ci - ey * si, vy = cy + ex * si + ey * ci;
-          vx += 7 * Math.sin(s * q.ferr + q.errance); vy += 6 * Math.cos(s * q.ferr * 0.8 + q.errance);
-          const lueur = 1 - 0.4 * (q.rayon / RMAX);
-          let x, y, eclat;
-          if (m < 0.3) { const k = lisse(borne((m / 0.3 - q.retard) / (1 - q.retard))); x = q.a.x + (vx - q.a.x) * k; y = q.a.y + (vy - q.a.y) * k; eclat = 1 + (lueur - 1) * k; }
-          else if (m < 0.7) { x = vx; y = vy; eclat = lueur; }
-          else { const k = lisse(borne(((m - 0.7) / 0.3 - q.retard) / (1 - q.retard))); x = vx + (q.b.x - vx) * k; y = vy + (q.b.y - vy) * k; eclat = lueur + (1 - lueur) * k; }
-          const scintille = 0.75 + 0.25 * Math.sin(s * 3.1 + q.souffle * 2);
-          const rr = q.r * 2.1 * (1 - 0.25 * essaim) * (0.7 + 0.3 * eclat);
-          const alpha = vis * (0.3 + 0.55 * eclat) * (1 - 0.25 * essaim) * scintille;
+          const [x, y] = pos(q, s);
+          const scintille = 0.7 + 0.3 * Math.sin(s * 6 + q.souffle * 2);
+          const rr = q.r * 2.5;
+          const alpha = vis * 0.9 * scintille;
           g.globalAlpha = alpha; g.drawImage(point, x - rr, y - rr, 2 * rr, 2 * rr);
-          // une traînée à peine marquée, dans le sens du mouvement
-          if (essaim > 0.1) {
-            const tj = th - q.omega * 0.18, ex2 = Math.cos(tj) * R, ey2 = Math.sin(tj) * R * q.aplat;
-            const px = x + ((cx + ex2 * ci - ey2 * si) - (cx + ex * ci - ey * si)) * essaim, py = y + ((cy + ex2 * si + ey2 * ci) - (cy + ex * si + ey * ci)) * essaim;
-            g.globalAlpha = alpha * essaim * 0.3; g.drawImage(point, px - rr * 0.8, py - rr * 0.8, rr * 1.6, rr * 1.6);
+          // traînée dans le sens du mouvement (position une fraction de seconde plus tôt)
+          if (agite > 0.1) {
+            const [x2, y2] = pos(q, s - 0.045);
+            g.globalAlpha = alpha * agite * 0.35; g.drawImage(point, x2 - rr * 0.8, y2 - rr * 0.8, rr * 1.6, rr * 1.6);
           }
         }
       }
