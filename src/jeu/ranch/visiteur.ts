@@ -3,7 +3,7 @@
 // (src/jeu/ranch/demarche.ts : taille selon le stade, perspective selon la profondeur, pieds sur le sol).
 // La logique (relation, ce qu'ils font) vit dans la simulation (src/moteur/simulation/visites.ts) ; ici, la mise en scène.
 import { LIEN_RELATION, NOM_STADE, apparence, niveauRelation, type EchoSauvage, type Etat } from '@/moteur/simulation';
-import { profilEcho, volumePas, type Profil } from './demarche';
+import { allureImage, profilEcho, volumePas, type Profil } from './demarche';
 
 /** Sol du ranch (coin haut-gauche du cadre de l'écho, 150 × 240 ; les pieds sont à +75, +232). */
 export const SOL = { xMin: 250, xMax: 980, yMin: 235, yMax: 370 } as const;
@@ -69,7 +69,7 @@ export class VisiteRanch {
   hoteOccupe() { return this.h.occupe(); }
 
   profil(s: EchoSauvage): Profil {
-    return profilEcho({ stade: s.stade, taille: facteurTaille(s.id), poids: { bebe: 6, enfant: 14, adolescent: 22, adulte: 30 }[s.stade] }, 'bipede');
+    return profilEcho({ stade: s.stade, taille: facteurTaille(s.id), poids: { bebe: 6, enfant: 14, adolescent: 22, adulte: 30 }[s.stade] }, allureImage(apparence({ ...s, evolution: null } as unknown as Etat)));
   }
 
   /** Le visiteur est déjà là au chargement : il est posé sur le sol, sans entrée. */
@@ -217,7 +217,7 @@ export class VisiteRanch {
       nom: p.s.nom, aria: `${p.s.nom}, écho ${NOM_STADE[p.s.stade]} de passage`,
       image: this.h.asset(apparence({ ...p.s, evolution: null } as unknown as Etat)),
       x: p.x, y: p.y, dur: p.dur, sens: p.sens, persp: perspective(p.y).toFixed(3), z: 100 + p.y,
-      taille: t.toFixed(3), anim: p.marche ? 'marche' : p.anim, demarche: prof.demarche, cycle: prof.cycle.toFixed(3),
+      taille: t.toFixed(3), anim: p.marche ? 'marche' : p.anim, demarche: prof.classes, cycle: prof.cycle.toFixed(3),
       lien: LIEN_RELATION[n], cls: [ouvert ? 'choisi' : '', p.phase === 'part' ? 'part' : ''].join(' '),
       tete: Math.round(232 - 190 * t - 34), teteSigne: Math.round(-30 - (t - 1) * 180),
       signe: p.signe, poussiere: p.poussiere,

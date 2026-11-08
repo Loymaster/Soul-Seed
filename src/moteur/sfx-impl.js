@@ -148,6 +148,10 @@ export const SFX = {
   // Foulée : le son d'un appui, calculé d'après la taille, le poids et la façon de se déplacer.
   //   petit et léger → choc bref et aigu ; grand et lourd → choc grave, plus long, avec une basse qui résonne
   foulee(p, v, patte) { const c = this.get(); if (!c) return; const t = c.currentTime; v = v || 1;
+    if (p.demarche === 'vole') { // coup d'ailes : un souffle feutré qui retombe, plus grave pour un grand écho
+      const grandeur = Math.sqrt(Math.max(0.2, p.taille) / 0.9);
+      this.noise(t, 0.16 * grandeur, { f: 700 / grandeur, fTo: 380 / grandeur, q: 0.8, gain: 0.03 * v, attack: 0.03 });
+      return; }
     const lourdeur = Math.pow(Math.max(1, p.poids) / 20, 0.35);          // 1 pour un écho de 20 kg
     const grandeur = Math.sqrt(Math.max(0.2, p.taille) / 0.9);           // 1 pour 90 cm
     const f = Math.max(90, Math.min(900, 470 / grandeur / Math.pow(lourdeur, 0.8))) * (patte % 2 ? 1.07 : 1);
@@ -158,7 +162,9 @@ export const SFX = {
     this.noise(t + 0.006, 0.06, { f: 2400 + Math.random() * 900, q: 1.4, gain: 0.009 * v / Math.sqrt(lourdeur), attack: 0.003, grain: 0.003 }); },
   // déplacement sans appui : souffle (flottant) ou frottement (rampant)
   glisse(p, v, duree) { const c = this.get(); if (!c) return; const t = c.currentTime; v = v || 1;
-    if (p.demarche === 'flottant') {
+    if (p.demarche === 'nage') { // ondulation : un remous doux, comme une nageoire dans l'eau
+      this.noise(t, duree, { type: 'lowpass', f: 420, fTo: 620, q: 1.6, gain: 0.03 * v, attack: duree * 0.45, grain: 0.012 });
+    } else if (p.demarche === 'flottant') {
       this.noise(t, duree, { f: 520, fTo: 880, q: 0.9, gain: 0.022 * v, attack: duree * 0.4 });
       this.tone(1180 + Math.random() * 300, t + duree * 0.3, 0.6, { gain: 0.004 * v, attack: 0.05, send: this.bright, sendGain: 0.4 });
     } else {

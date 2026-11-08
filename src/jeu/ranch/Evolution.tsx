@@ -1,11 +1,22 @@
 // La séquence d'évolution au ranch (magie sainte, dans l'identité du jeu : cuir, carnet, lueurs).
 // Le ranch s'assombrit, l'écho s'élève au centre, la lumière converge sur lui, il devient silhouette blanche,
-// l'ancienne et la nouvelle forme battent de plus en plus vite, un éclat, puis la nouvelle forme se révèle
-// et une page du carnet nomme le changement. Clic pendant la séquence : on passe directement à la révélation.
+// l'ancienne et la nouvelle forme battent de plus en plus vite — à chaque battement, la silhouette se fond de l'une
+// dans l'autre (morphing.ts, réglage MORPHING) —, un éclat, puis la nouvelle forme se révèle et une page du carnet
+// nomme le changement. Clic pendant la séquence : on passe directement à la révélation.
 // Dessinée dans le repère 1280 × 800 du ranch, par-dessus tout ; aucune logique de jeu ici.
 import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
 import { SFX } from '@/moteur/sfx';
+import { MARGE as MARGE_MORPH, avancement, preparerMorphing, type Morphing, type RenduMorphing } from './morphing';
 import './evolution.css';
+
+/** Le passage d'une silhouette à l'autre pendant les battements : « fusion » (champs de distance), « brume »,
+ *  « poussiere », ou « battement » (l'alternance d'origine). Proposition : outils/evolution/proposition-morphing.html.
+ *  En développement, `localStorage['soulseed:morphing']` le remplace (pour comparer dans le jeu). */
+export const MORPHING: Morphing = 'fusion';
+const modeMorphing = (): Morphing => {
+  if (import.meta.env.DEV) { try { const m = localStorage.getItem('soulseed:morphing'); if (m && ['fusion', 'brume', 'poussiere', 'battement'].includes(m)) return m as Morphing; } catch { /* stockage indisponible */ } }
+  return MORPHING;
+};
 
 export interface ProprietesEvolution {
   /** images de l'ancienne et de la nouvelle forme */
@@ -40,6 +51,11 @@ export function Evolution(p: ProprietesEvolution) {
   const minuteurs = useRef<number[]>([]);
   const fini = useRef(false);
   const bouton = useRef<HTMLButtonElement>(null);
+  // le morphing : préparé dès le début (pendant la montée de lumière), dessiné pendant les battements
+  const hote = useRef<HTMLDivElement>(null);
+  const rendu = useRef<RenduMorphing | null>(null);
+  const [morph, setMorph] = useState<{ largeur: number; hauteur: number } | null>(null);
+  const boucle = useRef(0);
   const son = (f: () => void) => { if (p.sons) { try { f(); } catch { /* pas de son */ } } };
 
   // les grains de lumière qui convergent, et les étincelles qui retombent ensuite (tirés une fois)
@@ -52,7 +68,15 @@ export function Evolution(p: ProprietesEvolution) {
   })), []);
 
   const plusTard = (f: () => void, ms: number) => { minuteurs.current.push(window.setTimeout(f, ms)); };
-  const toutArreter = () => { minuteurs.current.forEach(clearTimeout); minuteurs.current = []; };
+  const toutArreter = () => { minuteurs.current.forEach(clearTimeout); minuteurs.current = []; cancelAnimationFrame(boucle.current); };
+  /** les battements : la silhouette passe d'une forme à l'autre à chaque battement (morphing.ts) */
+  const animerMorphing = () => {
+    const r = rendu.current; if (!r) return;
+    const debut = performance.now(), fin = T.eclat - T.bat;
+    const pas = (now: number) => { const t = now - debut; r.dessiner(avancement(t, BATTEMENTS, fin), t); if (t < fin) boucle.current = requestAnimationFrame(pas); };
+    r.dessiner(0, 0);
+    boucle.current = requestAnimationFrame(pas);
+  };
 
   const reveler = (sansEclat = false) => {
     toutArreter();
@@ -64,16 +88,29 @@ export function Evolution(p: ProprietesEvolution) {
   };
 
   useEffect(() => {
+    let vivant = true;
+    const mode = modeMorphing();
+    plusTard(() => {
+      void preparerMorphing(mode, p.de, p.vers, H * p.tailleDe, H * p.tailleVers, LOUPE).then((r) => {
+        if (!vivant || !r || !hote.current) return;
+        rendu.current = r;
+        r.element.style.width = '100%'; r.element.style.height = '100%'; r.element.style.display = 'block';
+        hote.current.appendChild(r.element);
+        r.dessiner(0, 0);
+        setMorph({ largeur: r.largeur, hauteur: r.hauteur });
+      });
+    }, 250);
     son(() => SFX.woosh());
     plusTard(() => setPhase('eleve'), T.eleve);
     plusTard(() => { setPhase('lumiere'); son(() => SFX.evoMontee((T.eclat - T.lumiere) / 1000)); }, T.lumiere);
     plusTard(() => setPhase('blanc'), T.blanc);
     plusTard(() => {
       setPhase('bat');
+      animerMorphing();
       BATTEMENTS.forEach((t, i) => plusTard(() => { setMontre(i % 2 ? 'de' : 'vers'); son(() => SFX.evoBattement(i)); }, t));
     }, T.bat);
     plusTard(() => reveler(), T.eclat);
-    return toutArreter;
+    return () => { vivant = false; toutArreter(); };
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // la page apparaît : le bouton prend le focus (Entrée pour continuer), sans faire défiler le repère
@@ -97,11 +134,13 @@ export function Evolution(p: ProprietesEvolution) {
   const cy = apres('page') && phase !== 'sort' ? 452 : CENTRE.y;
   const loupe = apres('page') ? LOUPE * 0.86 : LOUPE;
   const blanc = apres('blanc') && !apres('revele');
+  // pendant les battements, le morphing (s'il est prêt) remplace les deux images
+  const morphVisible = !!morph && phase === 'bat';
   // l'écho : de sa place au ranch (pieds en `depart`) jusqu'au centre, agrandi
   const forme = (qui: 'de' | 'vers'): CSSProperties => {
     const t = qui === 'de' ? p.tailleDe : p.tailleVers;
     const ech = auCentre ? loupe : p.depart.echelle;
-    const visible = phase === 'sombre' || phase === 'sort' ? qui === (phase === 'sort' ? 'vers' : 'de') : montre === qui;
+    const visible = morphVisible ? false : phase === 'sombre' || phase === 'sort' ? qui === (phase === 'sort' ? 'vers' : 'de') : montre === qui;
     return {
       height: Math.round(H * t), opacity: visible ? 1 : 0,
       filter: blanc ? 'brightness(0) invert(1) drop-shadow(0 0 18px rgba(255,248,220,.95)) drop-shadow(0 0 42px rgba(255,226,150,.8))' : apres('revele') ? 'drop-shadow(0 0 22px rgba(255,236,170,.75))' : 'none',
@@ -124,6 +163,10 @@ export function Evolution(p: ProprietesEvolution) {
       <div className="evo-echo" style={pos}>
         <img className="evo-forme" src={p.de} alt="" style={forme('de')} />
         <img className="evo-forme" src={p.vers} alt="" style={forme('vers')} />
+        <div ref={hote} className={`evo-morph ${morphVisible ? 'visible' : ''}`} aria-hidden style={morph ? {
+          width: morph.largeur, height: morph.hauteur, transformOrigin: `${morph.largeur / 2}px ${morph.hauteur - MARGE_MORPH}px`,
+          transform: `translate(${-morph.largeur / 2}px, ${MARGE_MORPH - morph.hauteur}px) scale(${loupe})`,
+        } : undefined} />
       </div>
       <div className="evo-etincelles" style={{ left: CENTRE.x }}>
         {etincelles.map((e) => (

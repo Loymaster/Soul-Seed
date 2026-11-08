@@ -10,7 +10,9 @@ import { accord, apparence, descriptionObjet, type Etat } from '@/moteur/simulat
 import { useMusique } from '../commun/musique';
 import { Repere } from '../commun/Repere';
 import { SonsCombat } from './sons';
+import { allureCombat } from './allures';
 import './combat.css';
+import './allures.css';
 
 export type Registre = 'exploration' | 'sainte' | 'corrompue';
 
@@ -317,11 +319,14 @@ export function EcranCombat({ echo, allie, adversaire, registre, terrain, musiqu
             if (c.touche - t > 350) classes.push('touche');
             const elan = Math.round(c.jauge * 360);
             const garde = c.paradeJusqua > t || c.ordre?.type === 'protege';
-            const image = c.camp === 'allies'
-              ? asset(compagnonDe(c)?.image ?? arene?.imageAllie ?? (echo ? cheminEcho(echo) : 'echos/ame.png'))
-              : asset(adversaireDe(c).image);
+            const chemin = c.camp === 'allies'
+              ? compagnonDe(c)?.image ?? arene?.imageAllie ?? (echo ? cheminEcho(echo) : 'echos/ame.png')
+              : adversaireDe(c).image;
+            const image = asset(chemin);
+            // l'allure de la forme (allures.ts) : façon de marcher, de frapper, de tomber ; les volants restent en l'air
+            const al = allureCombat(chemin, h);
             return (
-              <div key={c.id} className={`ec ${c.camp !== 'allies' && CORROMPU ? 'boss' : ''}`} style={{ left: Math.round(p.x), top: Math.round(p.y), zIndex: Math.round(c.y * 10) }}>
+              <div key={c.id} className={`ec ${c.camp !== 'allies' && CORROMPU ? 'boss' : ''} ${al.classes}`} style={{ left: Math.round(p.x), top: Math.round(p.y), zIndex: Math.round(c.y * 10), '--alt': `${al.altitude}px`, '--cyc': `${al.cycle}s` } as CSSProperties}>
                 <div className="ec-ombre" style={{ width: Math.round(160 * k), height: Math.round(38 * k) }} />
                 {!c.ko && c.camp === 'allies' && (
                   <div className="ec-elan" style={{ width: Math.round(176 * k), height: Math.round(48 * k), background: `conic-gradient(rgba(${coulElan},.95) ${elan}deg, rgba(${coulElan},.12) 0)` }} />
