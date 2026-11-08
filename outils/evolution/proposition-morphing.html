@@ -42,6 +42,7 @@ h1{font-weight:normal;font-style:italic;text-align:center;font-size:clamp(28px,4
 .forme.lueur{filter:drop-shadow(0 0 14px rgba(255,236,170,.75))}
 .morph{filter:drop-shadow(0 0 10px rgba(255,248,220,.95)) drop-shadow(0 0 26px rgba(255,226,150,.8));opacity:0}
 .scene.bat .morph{opacity:1}
+.scene.bat .morph.fond-fusion{opacity:var(--voile,1)}
 .eclat{background:radial-gradient(circle at 50% 50%,#fffdf4 0%,#fff6dc 40%,#ffe9b8 100%);opacity:0;pointer-events:none}
 .scene.eclat .eclat{opacity:1;transition:opacity .12s}
 .scene.revele .eclat{opacity:0;transition:opacity 1.4s ease}
@@ -103,8 +104,8 @@ h1{font-weight:normal;font-style:italic;text-align:center;font-size:clamp(28px,4
       <div class="scene"></div>
       <div class="titre"><span class="lettre">C</span><span class="nom">Poussière d'étoiles</span></div>
       <div class="curseur"><span>de</span><input type="range" min="0" max="1000" value="0" aria-label="Avancement de la transformation (Poussière d'étoiles)"><span>vers</span></div>
-      <p class="desc">En une seule fois, sur 8 secondes : la silhouette se défait en grains de lumière, qui forment face à nous un essaim de poussière tournoyant lentement — chaque grain sur sa propre orbite, qui respire et erre un peu —, puis l'essaim se recompose en la nouvelle forme.</p>
-      <ul class="pour"><li>Spectaculaire, très « magie sainte »</li><li>Le tourbillon donne l'impression d'une vraie transformation</li></ul>
+      <p class="desc">En une seule fois, sur 6 secondes : la silhouette se défait en grains de lumière, qui forment face à nous un essaim de poussière tournoyant — chaque grain sur sa propre orbite, qui respire et erre un peu —, puis l'essaim se recompose en la nouvelle forme. En fond, la silhouette se déforme lentement d'une forme à l'autre (la fusion, ralentie).</p>
+      <ul class="pour"><li>Spectaculaire, très « magie sainte »</li><li>Combine les deux : la forme qui se déforme en fond, l'essaim qui tournoie devant</li></ul>
       <ul class="contre"><li>Joue toujours en une seule fois (le réglage « Rythme » ne la change pas) ; plus de calcul à chaque image</li></ul>
       <div class="actions"><button class="lien rejouer">rejouer</button><span class="tampon">dans le jeu</span></div>
     </section>
@@ -234,6 +235,10 @@ const VARIANTES = {
   // sur lui-même (un entonnoir de lumière plus large en haut), puis se recomposent en la nouvelle forme
   //   m : 0 → 0,4 vers le tourbillon, 0,4 → 0,6 il tourne, 0,6 → 1 vers la nouvelle forme (comme dans le jeu, morphing.ts)
   poussiere(scene, de, vers, p) {
+    // en fond, la fusion lente : la silhouette se déforme doucement d'une forme à l'autre sous l'essaim
+    const fond = VARIANTES.fusion(scene, de, vers, p);
+    const canFond = scene.lastElementChild; canFond.style.opacity = '';
+    canFond.classList.add('fond-fusion');
     const c = document.createElement('canvas'); c.classList.add('morph');
     const dpr = Math.min(2, window.devicePixelRatio || 1); c.width = W * dpr; c.height = H * dpr;
     const g = c.getContext('2d'); g.scale(dpr, dpr);
@@ -257,7 +262,7 @@ const VARIANTES = {
         rayon: RMAX * (0.12 + 0.88 * Math.pow(Math.random(), 0.75)),
         aplat: 0.72 + Math.random() * 0.28, incline: (Math.random() - 0.5) * 0.9,
         angle: Math.random() * Math.PI * 2,
-        omega: (0.35 + Math.random() * 0.45) * (Math.random() < 0.88 ? 1 : -0.6),   // rad/s : lent ; quelques grains à contre-courant
+        omega: (0.55 + Math.random() * 0.6) * (Math.random() < 0.88 ? 1 : -0.6),   // rad/s : lent ; quelques grains à contre-courant
         souffle: Math.random() * 6.28, errance: Math.random() * 6.28, ferr: 0.6 + Math.random() * 0.8,
         r: 0.7 + Math.random() * 1.5, retard: Math.random() * 0.15 };
     });
@@ -266,10 +271,11 @@ const VARIANTES = {
     const point = document.createElement('canvas'); point.width = point.height = 16; { const x = point.getContext('2d'); const r = x.createRadialGradient(8, 8, 0, 8, 8, 8); r.addColorStop(0, 'rgba(255,253,240,1)'); r.addColorStop(0.35, 'rgba(255,236,170,.75)'); r.addColorStop(1, 'rgba(255,220,140,0)'); x.fillStyle = r; x.fillRect(0, 0, 16, 16); }
     scene.appendChild(c);
     return (m, t) => {
+      fond(m);
+      // la silhouette de fond s'efface un peu quand l'essaim est le plus dense, puis revient pleine pour la fin
+      canFond.style.setProperty('--voile', (1 - 0.55 * Math.sin(Math.PI * borne((m - 0.1) / 0.8))).toFixed(3));
       g.clearRect(0, 0, W, H);
       g.globalCompositeOperation = 'source-over';
-      g.globalAlpha = 1 - lisse(borne(m / 0.18)); if (g.globalAlpha > 0.01) g.drawImage(sA, 0, 0);
-      g.globalAlpha = lisse(borne((m - 0.84) / 0.16)); if (g.globalAlpha > 0.01) g.drawImage(sB, 0, 0);
       const vis = m <= 0 || m >= 1 ? 0 : Math.min(1, 7 * Math.min(m, 1 - m));
       if (vis > 0.01) {
         g.globalCompositeOperation = 'lighter';
@@ -324,8 +330,8 @@ class Scene {
     this.dessiner = VARIANTES[this.variante](this.el, de, vers, p);
     this.el.insertAdjacentHTML('beforeend', '<div class="eclat"></div><div class="indication">cliquer pour rejouer</div>');
   }
-  /** la poussière d'étoiles dure 8 s, les autres 3,3 s (battements du jeu) */
-  duree() { return this.variante === 'poussiere' ? 8000 : T.duree; }
+  /** la poussière d'étoiles dure 6 s, les autres 3,3 s (battements du jeu) */
+  duree() { return this.variante === 'poussiere' ? 6000 : T.duree; }
   phase(nom) { this.el.className = 'scene ' + nom; }
   formes(de, vers, blanc, lueur) {
     this.de.style.opacity = de ? 1 : 0; this.vers.style.opacity = vers ? 1 : 0;
