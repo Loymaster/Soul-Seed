@@ -1,0 +1,96 @@
+/* Allures en combat (classes `al al-<démarche> al-<carrure> al-p<n>` posées sur .ec par allures.ts ; --alt : élévation
+   des volants, --cyc : cycle de déplacement). Les postures du moteur (p-marche, p-elan, p-frappe, p-esquive, p-ko…)
+   prennent la façon de bouger de chaque forme. Le vol stationnaire passe par la propriété `translate` de .ec-corps,
+   qui ne touche pas aux `transform` des postures. */
+
+.cb .ec.al{--bond:1;--roule:1;--penche:0deg}
+.cb .ec.al-leger{--bond:1.25;--roule:.8}
+.cb .ec.al-lourd{--bond:.6;--roule:1.5}
+.cb .ec.al-p2{--penche:2deg}.cb .ec.al-p3{--penche:3deg}.cb .ec.al-p4{--penche:4deg}.cb .ec.al-p5{--penche:5deg}
+.cb .ec.al-p6{--penche:6deg}.cb .ec.al-p7{--penche:7deg}.cb .ec.al-p8{--penche:8deg}
+
+/* —— en l'air : élévation, ombre réduite, vol stationnaire ; au KO, il tombe */
+.cb .ec.al .ec-corps,.cb .ec.al .ec-garde{bottom:var(--alt,0px);transition:bottom .5s ease}
+.cb .ec.al .orbite{margin-top:calc(-1 * var(--alt,0px))}
+.cb .ec.al .ec-corps.p-ko{bottom:0;animation:none;transition:bottom .55s cubic-bezier(.55,0,1,.55)}
+.cb .ec.al-flottant .ec-ombre,.cb .ec.al-vole .ec-ombre,.cb .ec.al-nage .ec-ombre{opacity:.6;scale:.72}
+.cb .ec.al-flottant .ec-corps{animation:cbAlPlane 3s ease-in-out infinite}
+.cb .ec.al-vole .ec-corps{animation:cbAlBat calc(var(--cyc) * 1.3) ease-in-out infinite}
+.cb .ec.al-vole .ec-ombre{animation:cbAlOmbre calc(var(--cyc) * 1.3) ease-in-out infinite}
+.cb .ec.al-nage .ec-corps{animation:cbAlOndule 2.6s ease-in-out infinite}
+@keyframes cbAlPlane{0%,100%{translate:0 0}50%{translate:0 -12px}}
+@keyframes cbAlBat{0%,100%{translate:0 0;scale:1 1;animation-timing-function:cubic-bezier(.3,0,.2,1)}35%{translate:0 -13px;scale:1.03 .97;animation-timing-function:cubic-bezier(.5,0,.7,1)}}
+@keyframes cbAlOmbre{0%,100%{scale:.72}35%{scale:.6;opacity:.45}}
+@keyframes cbAlOndule{0%,100%{translate:0 0;rotate:-1.5deg}50%{translate:0 -9px;rotate:1.5deg}}
+
+/* —— se déplacer (marche, et l'élan vers la cible, plus vif) */
+.cb .ec.al .p-elan .ec-respire{animation-duration:calc(var(--cyc) * .8)!important}
+.cb .ec.al-bipede .p-marche .ec-respire,.cb .ec.al-bipede .p-elan .ec-respire{animation:cbAlPas var(--cyc) linear infinite}
+@keyframes cbAlPas{
+  0%,100%{transform:translateY(0) rotate(calc(var(--dir) * (var(--penche) - 2deg * var(--roule))));animation-timing-function:ease-out}
+  25%{transform:translateY(calc(-7px * var(--bond))) rotate(calc(var(--dir) * var(--penche)));animation-timing-function:ease-in}
+  50%{transform:translateY(0) rotate(calc(var(--dir) * (var(--penche) + 2deg * var(--roule))));animation-timing-function:ease-out}
+  75%{transform:translateY(calc(-7px * var(--bond))) rotate(calc(var(--dir) * var(--penche)));animation-timing-function:ease-in}
+}
+.cb .ec.al-quadrupede .p-marche .ec-respire,.cb .ec.al-quadrupede .p-elan .ec-respire{animation:cbAlTrot var(--cyc) linear infinite}
+@keyframes cbAlTrot{
+  0%,100%{transform:translateY(0) rotate(calc(var(--dir) * -1.5deg * var(--roule))) scale(1.02,.98);animation-timing-function:ease-out}
+  25%{transform:translateY(calc(-5px * var(--bond))) rotate(0) scale(.99,1.01);animation-timing-function:ease-in}
+  50%{transform:translateY(0) rotate(calc(var(--dir) * 1.5deg * var(--roule))) scale(1.02,.98);animation-timing-function:ease-out}
+  75%{transform:translateY(calc(-5px * var(--bond))) rotate(0) scale(.99,1.01);animation-timing-function:ease-in}
+}
+.cb .ec.al-sautillant .p-marche .ec-respire,.cb .ec.al-sautillant .p-elan .ec-respire{animation:cbAlBond var(--cyc) linear infinite}
+@keyframes cbAlBond{
+  0%,100%{transform:translateY(0) scale(1.08,.9);animation-timing-function:ease-out}
+  14%{transform:translateY(-4px) scale(.94,1.07);animation-timing-function:cubic-bezier(.2,.6,.4,1)}
+  50%{transform:translateY(calc(-30px * var(--bond))) rotate(calc(var(--dir) * 4deg));animation-timing-function:cubic-bezier(.6,0,.8,.4)}
+  86%{transform:translateY(-3px) scale(.97,1.04);animation-timing-function:ease-in}
+}
+.cb .ec.al-rampant .p-marche .ec-respire,.cb .ec.al-rampant .p-elan .ec-respire{animation:cbAlRampe var(--cyc) ease-in-out infinite}
+@keyframes cbAlRampe{
+  0%,100%{transform:scale(1,1) skewX(0)}
+  35%{transform:scale(calc(1 + .1 * var(--roule)),calc(1 - .09 * var(--roule))) skewX(calc(var(--dir) * -7deg))}
+  70%{transform:scale(.96,1.05) skewX(calc(var(--dir) * 3deg))}
+}
+.cb .ec.al-flottant .p-marche .ec-respire,.cb .ec.al-flottant .p-elan .ec-respire{animation:cbAlDerive var(--cyc) ease-in-out infinite}
+@keyframes cbAlDerive{
+  0%,100%{transform:translateY(0) rotate(calc(var(--dir) * var(--penche))) skewX(calc(var(--dir) * -3deg))}
+  50%{transform:translateY(-8px) rotate(calc(var(--dir) * (var(--penche) + 2deg))) skewX(calc(var(--dir) * -6deg))}
+}
+.cb .ec.al-vole .p-marche .ec-respire,.cb .ec.al-vole .p-elan .ec-respire{animation:cbAlVol var(--cyc) linear infinite}
+@keyframes cbAlVol{
+  0%,100%{transform:translateY(0) rotate(calc(var(--dir) * var(--penche))) scale(1,1);animation-timing-function:cubic-bezier(.3,0,.2,1)}
+  35%{transform:translateY(-14px) rotate(calc(var(--dir) * (var(--penche) - 2deg))) scale(1.03,.96);animation-timing-function:cubic-bezier(.5,0,.7,1)}
+}
+.cb .ec.al-nage .p-marche .ec-respire,.cb .ec.al-nage .p-elan .ec-respire{animation:cbAlNage var(--cyc) ease-in-out infinite}
+@keyframes cbAlNage{
+  0%,100%{transform:translateY(0) rotate(calc(var(--dir) * (var(--penche) - 3deg * var(--roule)))) skewX(calc(var(--dir) * 5deg))}
+  50%{transform:translateY(-8px) rotate(calc(var(--dir) * (var(--penche) + 3deg * var(--roule)))) skewX(calc(var(--dir) * -5deg))}
+}
+.cb .ec.al-immobile .p-marche .ec-respire,.cb .ec.al-immobile .p-elan .ec-respire{animation:cbEcRespire 2.4s ease-in-out infinite}
+
+/* —— l'élan (se ramasser avant le coup) */
+.cb .ec.al-quadrupede .p-elan .ec-pose{transform:translateX(calc(var(--dir) * -12px)) scale(1.03,.9)}
+.cb .ec.al-sautillant .p-elan .ec-pose{transform:translateX(calc(var(--dir) * -6px)) scale(1.12,.84)}
+.cb .ec.al-rampant .p-elan .ec-pose{transform:translateX(calc(var(--dir) * -8px)) scale(.9,1.1)}
+.cb .ec.al-flottant .p-elan .ec-pose,.cb .ec.al-vole .p-elan .ec-pose,.cb .ec.al-nage .p-elan .ec-pose{transform:translateX(calc(var(--dir) * -12px)) translateY(-14px) rotate(calc(var(--dir) * -6deg))}
+
+/* —— le coup */
+.cb .ec.al-bipede.al-lourd .p-frappe .ec-pose{transform:translateX(calc(var(--dir) * 22px)) translateY(4px) rotate(calc(var(--dir) * 11deg)) scale(1.06,.96)}
+.cb .ec.al-quadrupede .p-frappe .ec-pose{transform:translateX(calc(var(--dir) * 36px)) translateY(-10px) rotate(calc(var(--dir) * -7deg)) scaleX(1.08)}
+.cb .ec.al-sautillant .p-frappe .ec-pose{transform:translateX(calc(var(--dir) * 26px)) translateY(-26px) rotate(calc(var(--dir) * 16deg))}
+.cb .ec.al-rampant .p-frappe .ec-pose{transform:translateX(calc(var(--dir) * 24px)) scale(1.22,.84) skewX(calc(var(--dir) * -10deg))}
+.cb .ec.al-flottant .p-frappe .ec-pose{transform:translateX(calc(var(--dir) * 32px)) skewX(calc(var(--dir) * -14deg)) scale(1.05)}
+.cb .ec.al-vole .p-frappe .ec-pose{transform:translateX(calc(var(--dir) * 40px)) translateY(calc(var(--alt,0px) * .8)) rotate(calc(var(--dir) * 16deg))}
+.cb .ec.al-nage .p-frappe .ec-pose{transform:translateX(calc(var(--dir) * 36px)) rotate(calc(var(--dir) * 10deg)) skewX(calc(var(--dir) * -9deg))}
+
+/* —— l'esquive : les volants montent, les sauteurs bondissent de côté */
+.cb .ec.al-flottant .p-esquive .ec-pose,.cb .ec.al-vole .p-esquive .ec-pose,.cb .ec.al-nage .p-esquive .ec-pose{transform:translateX(calc(var(--sens) * 22px)) translateY(-36px);filter:opacity(.75)}
+.cb .ec.al-sautillant .p-esquive .ec-pose{transform:translateX(calc(var(--sens) * 36px)) translateY(-24px) rotate(calc(var(--sens) * 12deg));filter:opacity(.8)}
+.cb .ec.al-rampant .p-esquive .ec-pose{transform:translateX(calc(var(--sens) * 30px)) scale(1.15,.75);filter:opacity(.8)}
+
+/* —— à terre : les gelées s'étalent, les spectres s'affaissent */
+.cb .ec.al-rampant .p-ko .ec-pose{transform:scale(1.18,.38);filter:grayscale(.7) brightness(.7)}
+.cb .ec.al-flottant .p-ko .ec-pose,.cb .ec.al-nage .p-ko .ec-pose{transform:rotate(calc(var(--dir) * -70deg)) translateY(10px) scale(.92);filter:grayscale(.7) brightness(.7) opacity(.75)}
+
+@media (prefers-reduced-motion: reduce){ .cb .ec.al .ec-corps{animation:none} }

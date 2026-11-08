@@ -19,8 +19,9 @@ import { VueRanch } from './VueRanch';
 import { Repere } from '../commun/Repere';
 import { ciel, lanternes, lumiere } from './ciel';
 import { IC } from './icones';
-import { profilEcho, volumePas, type Profil } from './demarche';
+import { allureImage, profilEcho, volumePas, type Profil } from './demarche';
 import { placerDejection } from './dejections';
+import './allures.css';
 import { saison } from './lumiere';
 import { REP, TAMPON, TEMPERAMENTS, GLYPHE_INCONNU, cleEvenement, consequence, noteSens, parole, phraseReponse } from './evenements';
 import { ecouterVolumes, fixerVolumes, volumeMusique } from '../commun/volumes';
@@ -209,7 +210,7 @@ export class Ranch extends Component<ProprietesRanch, EtatUI> {
 
   get e() { return this.sim.etat; }
   get signes(): Signes { return lireSignes(this.e); }
-  profil(): Profil { return profilEcho(this.e, 'bipede', this.signes.allure); }
+  profil(): Profil { return profilEcho(this.e, allureImage(apparence(this.e)), this.signes.allure); }
   taille() { return this.profil().echelle; }
   rafraichir = () => this.setState((s) => ({ t: s.t + 1 }));
   later(f: () => void, ms: number) { this.timers.push(window.setTimeout(() => { if (this.vivant) f(); }, ms)); }
@@ -1167,7 +1168,7 @@ export class Ranch extends Component<ProprietesRanch, EtatUI> {
       caresserAria: e.comportement ? `${nom} a quelque chose à vous montrer` : `Caresser ${nom}`, evtAria: `${nom} a fait quelque chose : ouvrir le carnet`,
       ex: s.ex, ey: s.ey, eDur: s.eDur, eSens: s.eSens, eScale: (0.86 + (s.ey - 235) / 135 * 0.28).toFixed(3),
       eTaille: t.toFixed(3), teteBulle2: Math.round(-74 - (t - 1) * 180), teteMain: Math.round(32 - (t - 1) * 175), eZ: 100 + s.ey,
-      echoAnim: s.marche ? 'marche' : s.anim, demarche: prof.demarche, cycle: prof.cycle.toFixed(3),
+      echoAnim: s.marche ? 'marche' : s.anim, demarche: prof.classes, cycle: prof.cycle.toFixed(3),
       caresser: this.caresser, mainVisible: s.mainVisible,
       rienDuTout: false,
       orbite: `path('M${75 - rx} ${cy} a${rx} ${ry} 0 1 0 ${2 * rx} 0 a${rx} ${ry} 0 1 0 ${-2 * rx} 0')`,

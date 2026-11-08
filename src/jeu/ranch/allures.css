@@ -1,0 +1,105 @@
+/* Allures de l'écho au ranch (et de l'écho de passage) : src/jeu/commun/allures.ts donne les classes
+   `al al-<démarche> al-<carrure> al-h<n> al-p<n>` posées sur .echo-zone (à côté de l'animation en cours).
+   La marche anime .echo-img (les animations « marche » et les autres — saute, mange… — sont exclusives) ;
+   le vol stationnaire anime .echo-sens par la propriété `translate`, qui ne touche ni au retournement
+   (`transform` de .echo-sens.gauche) ni aux animations de l'image. Fichier écrit à la main, à côté de la vue générée. */
+
+.r7 .echo-zone.al{--bond:1;--roule:1;--penche:0deg}
+.r7 .echo-zone.al-leger{--bond:1.25;--roule:.8}
+.r7 .echo-zone.al-lourd{--bond:.55;--roule:1.5}
+.r7 .echo-zone.al-p1{--penche:1deg}
+.r7 .echo-zone.al-p2{--penche:2deg}
+.r7 .echo-zone.al-p3{--penche:3deg}
+.r7 .echo-zone.al-p4{--penche:4deg}
+.r7 .echo-zone.al-p5{--penche:5deg}
+.r7 .echo-zone.al-p6{--penche:6deg}
+.r7 .echo-zone.al-p7{--penche:7deg}
+.r7 .echo-zone.al-p8{--penche:8deg}
+.r7 .echo-zone.al-p9{--penche:9deg}
+.r7 .echo-zone.al-p10{--penche:10deg}
+
+/* —— au sol : la marche */
+.r7 .echo-zone.al-bipede.marche .echo-img{animation:alBipede var(--cycle) linear infinite}
+@keyframes alBipede{
+  0%,100%{transform:translateY(0) rotate(calc(var(--penche) - 2deg * var(--roule))) scale(1.02,.98);animation-timing-function:ease-out}
+  25%{transform:translateY(calc(-6px * var(--bond))) rotate(var(--penche)) scale(1);animation-timing-function:ease-in}
+  50%{transform:translateY(0) rotate(calc(var(--penche) + 2deg * var(--roule))) scale(1.02,.98);animation-timing-function:ease-out}
+  75%{transform:translateY(calc(-6px * var(--bond))) rotate(var(--penche)) scale(1);animation-timing-function:ease-in}
+}
+.r7 .echo-zone.al-quadrupede.marche .echo-img{animation:alTrot var(--cycle) linear infinite}
+@keyframes alTrot{
+  0%,100%{transform:translateY(0) rotate(calc(-1.2deg * var(--roule))) scale(1.015,.985);animation-timing-function:ease-out}
+  25%{transform:translateY(calc(-4px * var(--bond))) rotate(0) scale(.995,1.01);animation-timing-function:ease-in}
+  50%{transform:translateY(0) rotate(calc(1.2deg * var(--roule))) scale(1.015,.985);animation-timing-function:ease-out}
+  75%{transform:translateY(calc(-4px * var(--bond))) rotate(0) scale(.995,1.01);animation-timing-function:ease-in}
+}
+.r7 .echo-zone.al-sautillant.marche .echo-img{animation:alBond var(--cycle) linear infinite}
+@keyframes alBond{
+  0%,100%{transform:translateY(0) scale(1.08,.9);animation-timing-function:ease-out}
+  14%{transform:translateY(-4px) scale(.94,1.07);animation-timing-function:cubic-bezier(.2,.6,.4,1)}
+  50%{transform:translateY(calc(-26px * var(--bond))) rotate(calc(var(--penche) + 3deg)) scale(1);animation-timing-function:cubic-bezier(.6,0,.8,.4)}
+  86%{transform:translateY(-3px) scale(.97,1.04);animation-timing-function:ease-in}
+}
+.r7 .echo-zone.al-rampant.marche .echo-img{animation:alRampe var(--cycle) ease-in-out infinite}
+@keyframes alRampe{
+  0%,100%{transform:scale(1,1) skewX(0)}
+  35%{transform:scale(calc(1 + .09 * var(--roule)),calc(1 - .08 * var(--roule))) skewX(-6deg)}
+  70%{transform:scale(.96,1.05) skewX(3deg)}
+}
+
+/* —— en l'air : élévation, ombre réduite, vol stationnaire */
+.r7 .echo-zone.al-h1 .echo-sens{bottom:12px}.r7 .echo-zone.al-h1 ~ *{margin-top:-6px}
+.r7 .echo-zone.al-h2 .echo-sens{bottom:18px}.r7 .echo-zone.al-h2 ~ *{margin-top:-12px}
+.r7 .echo-zone.al-h3 .echo-sens{bottom:24px}.r7 .echo-zone.al-h3 ~ *{margin-top:-18px}
+.r7 .echo-zone.al-h4 .echo-sens{bottom:30px}.r7 .echo-zone.al-h4 ~ *{margin-top:-24px}
+.r7 .echo-zone.al-h5 .echo-sens{bottom:36px}.r7 .echo-zone.al-h5 ~ *{margin-top:-30px}
+.r7 .echo-zone.al-h6 .echo-sens{bottom:42px}.r7 .echo-zone.al-h6 ~ *{margin-top:-36px}
+.r7 .echo-zone.al-h7 .echo-sens{bottom:48px}.r7 .echo-zone.al-h7 ~ *{margin-top:-42px}
+.r7 .echo-zone.al-h8 .echo-sens{bottom:54px}.r7 .echo-zone.al-h8 ~ *{margin-top:-48px}
+.r7 .echo-zone.al-h9 .echo-sens{bottom:60px}.r7 .echo-zone.al-h9 ~ *{margin-top:-54px}
+.r7 .echo-zone.al-h10 .echo-sens{bottom:66px}.r7 .echo-zone.al-h10 ~ *{margin-top:-60px}
+.r7 .echo-zone.al-h11 .echo-sens{bottom:72px}.r7 .echo-zone.al-h11 ~ *{margin-top:-66px}
+.r7 .echo-zone.al-h12 .echo-sens{bottom:78px}.r7 .echo-zone.al-h12 ~ *{margin-top:-72px}
+.r7 .echo-zone.al-h13 .echo-sens{bottom:84px}.r7 .echo-zone.al-h13 ~ *{margin-top:-78px}
+.r7 .echo-zone.al-h14 .echo-sens{bottom:90px}.r7 .echo-zone.al-h14 ~ *{margin-top:-84px}
+.r7 .echo-zone.al-h15 .echo-sens{bottom:96px}.r7 .echo-zone.al-h15 ~ *{margin-top:-90px}
+.r7 .echo-zone.al-h16 .echo-sens{bottom:102px}.r7 .echo-zone.al-h16 ~ *{margin-top:-96px}
+.r7 .echo-zone.al-flottant .echo-ombre,.r7 .echo-zone.al-vole .echo-ombre,.r7 .echo-zone.al-nage .echo-ombre{opacity:.75;scale:.72 .8}
+.r7 .echo-zone.al-flottant:not(.marche) .echo-sens{animation:alPlane 3.4s ease-in-out infinite}
+.r7 .echo-zone.al-flottant:not(.marche) .echo-ombre{animation:alOmbrePlane 3.4s ease-in-out infinite}
+@keyframes alPlane{0%,100%{translate:0 0}50%{translate:0 -10px}}
+@keyframes alOmbrePlane{0%,100%{scale:.72 .8;opacity:.55}50%{scale:.6 .7;opacity:.4}}
+.r7 .echo-zone.al-flottant.marche .echo-img{animation:alDerive var(--cycle) ease-in-out infinite}
+@keyframes alDerive{
+  0%,100%{transform:translateY(0) rotate(var(--penche)) skewX(-2deg)}
+  50%{transform:translateY(-8px) rotate(calc(var(--penche) + 1.5deg)) skewX(-5deg)}
+}
+
+.r7 .echo-zone.al-vole:not(.marche) .echo-sens{animation:alBat calc(var(--cycle) * 1.35) ease-in-out infinite}
+.r7 .echo-zone.al-vole .echo-ombre{animation:alOmbreBat calc(var(--cycle) * 1.35) ease-in-out infinite}
+.r7 .echo-zone.al-vole.marche .echo-ombre{animation-duration:var(--cycle)}
+@keyframes alBat{
+  0%,100%{translate:0 0;scale:1 1;animation-timing-function:cubic-bezier(.3,0,.2,1)}
+  35%{translate:0 -11px;scale:1.03 .97;animation-timing-function:cubic-bezier(.5,0,.7,1)}
+}
+@keyframes alOmbreBat{0%,100%{scale:.72 .8}35%{scale:.62 .72;opacity:.42}}
+.r7 .echo-zone.al-vole.marche .echo-img{animation:alVol var(--cycle) linear infinite}
+@keyframes alVol{
+  0%,100%{transform:translateY(0) rotate(var(--penche)) scale(1,1);animation-timing-function:cubic-bezier(.3,0,.2,1)}
+  35%{transform:translateY(-12px) rotate(calc(var(--penche) - 2deg)) scale(1.03,.96);animation-timing-function:cubic-bezier(.5,0,.7,1)}
+}
+
+.r7 .echo-zone.al-nage:not(.marche) .echo-sens{animation:alOndule 2.8s ease-in-out infinite}
+@keyframes alOndule{0%,100%{translate:0 0;rotate:-1.5deg}50%{translate:0 -7px;rotate:1.5deg}}
+.r7 .echo-zone.al-nage.marche .echo-img{animation:alNage var(--cycle) ease-in-out infinite}
+@keyframes alNage{
+  0%,100%{transform:translateY(0) rotate(calc(var(--penche) - 3deg * var(--roule))) skewX(4deg)}
+  50%{transform:translateY(-7px) rotate(calc(var(--penche) + 3deg * var(--roule))) skewX(-4deg)}
+}
+
+/* —— immobile : seulement la respiration */
+.r7 .echo-zone.al-immobile.marche .echo-img{animation:r7Breathe 2.8s ease-in-out infinite}
+
+@media (prefers-reduced-motion: reduce){
+  .r7 .echo-zone.al .echo-sens{animation:none!important}
+}

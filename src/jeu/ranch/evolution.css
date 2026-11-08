@@ -92,3 +92,9 @@
 .evo.ph-sort .evo-page { animation: evo-page-sort .6s ease both; }
 @keyframes evo-page-sort { to { transform: translateY(260px); opacity: 0; } }
 .evo.ph-sort .evo-halo, .evo.ph-sort .evo-rayons { opacity: 0; transition: opacity .8s ease; }
+
+/* le morphing (morphing.ts) : la silhouette blanche qui se fond d'une forme à l'autre pendant les battements,
+   à la place des deux images ; même lueur que les silhouettes */
+.evo-morph { position: absolute; left: 0; top: 0; pointer-events: none; opacity: 0;
+  filter: drop-shadow(0 0 18px rgba(255,248,220,.95)) drop-shadow(0 0 42px rgba(255,226,150,.8)); }
+.evo-morph.visible { opacity: 1; }
