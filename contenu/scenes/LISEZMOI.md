@@ -105,3 +105,17 @@ Chemins soumis à un drapeau (`zones.ts`) : 16 → 17 attend `hevann.vaincu`, 28
 | Nyxara, Vinland, Finn | lieu 32, 8 h – 20 h, en y arrivant depuis le 31 (« Au secours ! » → « Aller voir ») | `nyxara` | `non nyxara.vue` |
 
 Pêche : tant que `maintenant < peche.bonus_jusqua` (Bourbella), la prise d'un poisson bien ferré gagne 15 points (80 → 95 %) et le poisson garde l'appât un peu plus longtemps. Un écho bébé ou enfant passe par le trou de Grimp. Repousse (objet du sac, « Utiliser » en exploration) : drapeau `repousse.jusqua` (heure absolue, 12 heures).
+
+## La voix des personnages (champ `voix` des fiches)
+
+Pendant qu'une réplique s'écrit, chaque PNJ « parle » avec un petit instrument synthétisé. La voix se choisit dans sa fiche `contenu/personnages/<id>.json` (ou dans l'atelier, onglet **Personnages**) :
+
+```json
+"voix": { "timbre": "kalimba", "note": 523, "rythme": 1, "cadence": "syllabe", "variation": 9, "duree": 1, "volume": 1, "gamme": "penta" }
+```
+
+- `timbre` : la voix, parmi la bibliothèque (`src/moteur/voix/moteur-voix.js`, `VOIX`) — clochettes et lames (`boite-a-musique`, `celesta`, `cloche-verre`, `carillon`, `xylophone`, `marimba`, `kalimba`, `bois`), cordes pincées (`harpe`, `pizzicato`, `guitare`, `banjo`), vents (`flute-douce`, `ocarina`, `sifflet`, `clarinette`, `basson`, `kazoo`), voix et créatures (`blabla-grave`, `blabla-aigu`, `chuchotement`, `grognement`, `ronron`, `gazouillis`, `bulles`), synthés (`retro-8bits`, `theremine`, `orgue`), timbres d'origine (`doux`, `vif`, `grave`, `narration`, `boise`, `souffle`) et `mystere` (l'homme mystérieux). Inconnu ou absent : `doux`.
+- `note` : hauteur de base en Hz ; `rythme` : pauses entre les lettres (> 1 : plus lent). Toujours présents.
+- Facultatifs (sinon, les réglages de la voix choisie) : `variation` (étendue des hauteurs en demi-tons, 0 = une seule note), `gamme` (`penta`, `majeure`, `mineure`, `chromatique`, `libre`), `duree` (durée des notes, ×), `cadence` (`lettre`, `syllabe` ou `mot` : quand une note sonne), `volume` (×, 0 à 2).
+- Un même mot sonne toujours pareil ; la fin d'une question monte. Les voix « bla-bla » et le chuchotement prennent la couleur des voyelles du texte.
+- **Page d'essai** : `outils/voix/essai-voix.html` (un seul fichier, ouvrable sans le jeu ; dans l'atelier, lien « essayer toutes les voix ») — toutes les voix, leurs réglages, une phrase modifiable écrite lettre à lettre, les PNJ et leur voix actuelle, et le réglage prêt à copier dans la fiche. Elle embarque le moteur du jeu : après une modification du moteur ou des fiches, `npm run voix` la régénère (le test `tests/voix.test.ts` le rappelle).

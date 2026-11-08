@@ -11,7 +11,8 @@
     "verifier": "node outils/assets/catalogue.mjs --strict && tsx outils/scenes/verifier.ts && tsc --noEmit",
     "test": "vitest run",
     "atelier": "vite --open /atelier.html",
-    "scenes": "tsx outils/scenes/verifier.ts"
+    "scenes": "tsx outils/scenes/verifier.ts",
+    "voix": "node outils/voix/construire.mjs"
   },
   "dependencies": {
     "@codemirror/autocomplete": "^6.20.4",

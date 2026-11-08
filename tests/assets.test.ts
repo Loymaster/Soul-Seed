@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { destination, normaliserNom } from '../outils/assets/regles.mjs';
 // @ts-expect-error — modules JS de l'outillage
 import { decrireForme } from '../outils/assets/catalogue.mjs';
-import { placer, rogner, LIGNE_PIEDS, HAUTEUR_MIN } from '../src/moteur/scene/placement';
+import { placer, rogner, tailleAffichee, LIGNE_PIEDS, HAUTEUR_MIN } from '../src/moteur/scene/placement';
 
 const PNJ = { jumpy: { nom: 'Jumpy', prefixes: ['jumpy'] }, myhra: { nom: 'Myhra', prefixes: ['myhra', 'myrha', 'gardienne'] }, 'lady-roger': { nom: 'Lady Roger', prefixes: ['lady-roger'] } };
 
@@ -49,11 +49,20 @@ describe('placement en scène', () => {
     expect(jumpy.hauteur).toBe(Math.round(1.3 * 245 * 0.86));
     expect(jumpy.bas).toBeGreaterThan(LIGNE_PIEDS);
   });
-  it('rehausse un personnage trop petit pour que sa tête atteigne le seuil', () => {
+  it('grossit un personnage trop petit, puis le rehausse pour que sa tête atteigne le seuil', () => {
     const roger = placer(0.75, 1);
-    expect(roger.hauteur).toBe(Math.round(0.75 * 245));
+    expect(roger.hauteur).toBe(Math.round(tailleAffichee(0.75) * 245));
+    expect(roger.hauteur).toBeGreaterThan(Math.round(0.95 * 245)); // grossie : plus d'un mètre affiché, pas 75 cm
     expect(roger.bas + roger.hauteur).toBe(Math.round(LIGNE_PIEDS + HAUTEUR_MIN * 245));
     expect(placer(1.3, 1).bas).toBe(LIGNE_PIEDS);
+    expect(placer(1.3, 1).hauteur).toBe(Math.round(1.3 * 245)); // au-delà du seuil : taille réelle
+  });
+  it('garde l’ordre des tailles et une taille affichée d’au moins 0,9 m', () => {
+    const tailles = [0.6, 0.62, 0.7, 0.75, 0.85, 1, 1.19, 1.2, 1.3, 1.9];
+    const affichees = tailles.map(tailleAffichee);
+    for (let i = 1; i < affichees.length; i++) expect(affichees[i]).toBeGreaterThan(affichees[i - 1]);
+    expect(tailleAffichee(0.6)).toBeGreaterThanOrEqual(0.9);
+    expect(tailleAffichee(HAUTEUR_MIN)).toBe(HAUTEUR_MIN);
   });
   it('rogne une image à sa boîte utile', () => {
     const r = rogner({ l: 1000, h: 2000, boite: { x: 100, y: 200, l: 500, h: 1000 } }, 500);
