@@ -6,6 +6,7 @@
 // Dessinée dans le repère 1280 × 800 du ranch, par-dessus tout ; aucune logique de jeu ici.
 import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
 import { SFX } from '@/moteur/sfx';
+import { jouerBruitageEvolution, type Bruitage } from '@/moteur/bruitage-evolution';
 import { MARGE as MARGE_MORPH, UNE_SEULE_FOIS, avancement, avancementContinu, preparerMorphing, type Morphing, type RenduMorphing } from './morphing';
 import './evolution.css';
 
@@ -59,6 +60,8 @@ export function Evolution(p: ProprietesEvolution) {
   const rendu = useRef<RenduMorphing | null>(null);
   const [morph, setMorph] = useState<{ largeur: number; hauteur: number } | null>(null);
   const boucle = useRef(0);
+  // le bruitage « Accord des pigments » (poussière d'étoiles) : programmé au blanchiment, coupé si l'on passe
+  const bruitage = useRef<Bruitage | null>(null);
   const son = (f: () => void) => { if (p.sons) { try { f(); } catch { /* pas de son */ } } };
 
   // les grains de lumière qui convergent, et les étincelles qui retombent ensuite (tirés une fois)
@@ -82,12 +85,15 @@ export function Evolution(p: ProprietesEvolution) {
     boucle.current = requestAnimationFrame(pas);
   };
 
-  const reveler = (sansEclat = false) => {
+  const reveler = (passe = false) => {
     toutArreter();
     setMontre('vers');
-    if (!sansEclat) son(() => SFX.evoEclat());
+    // l'accord des pigments sonne lui-même l'éclat et la révélation ; si l'on passe la séquence, on le coupe
+    const pigments = !!bruitage.current && !passe;
+    if (passe && bruitage.current) { bruitage.current.arreter(); bruitage.current = null; }
+    if (!pigments) son(() => SFX.evoEclat());
     setPhase('eclat');
-    plusTard(() => { setPhase('revele'); son(() => SFX.evoRevelation()); }, T.revele - T.eclat);
+    plusTard(() => { setPhase('revele'); if (!pigments) son(() => SFX.evoRevelation()); }, T.revele - T.eclat);
     plusTard(() => { setPhase('page'); son(() => SFX.page(0.9)); plusTard(() => son(() => SFX.pencil()), 500); }, T.page - T.eclat);
   };
 
@@ -108,22 +114,29 @@ export function Evolution(p: ProprietesEvolution) {
     }, 250);
     son(() => SFX.woosh());
     plusTard(() => setPhase('eleve'), T.eleve);
-    plusTard(() => { setPhase('lumiere'); son(() => SFX.evoMontee((T.eclat + dec - T.lumiere) / 1000)); }, T.lumiere);
-    plusTard(() => setPhase('blanc'), T.blanc);
+    // en une seule fois, la montée de lumière laisse la place à l'accord des pigments dès le blanchiment
+    plusTard(() => { setPhase('lumiere'); son(() => SFX.evoMontee(((dec ? T.blanc + 600 : T.eclat) - T.lumiere) / 1000)); }, T.lumiere);
+    plusTard(() => {
+      setPhase('blanc');
+      const nuee = rendu.current?.nuee;
+      if (dec && nuee && p.sons) {
+        try { bruitage.current = jouerBruitageEvolution(nuee, p.de, p.vers, 0, (T.bat - T.blanc) / 1000, DUREE_UNE_FOIS / 1000); } catch { bruitage.current = null; }
+      }
+    }, T.blanc);
     plusTard(() => {
       setPhase('bat');
       animerMorphing();
-      BATTEMENTS.forEach((t, i) => plusTard(() => { setMontre(i % 2 ? 'de' : 'vers'); son(() => SFX.evoBattement(i)); }, t * etire));
+      BATTEMENTS.forEach((t, i) => plusTard(() => { setMontre(i % 2 ? 'de' : 'vers'); if (!bruitage.current) son(() => SFX.evoBattement(i)); }, t * etire));
     }, T.bat);
     plusTard(() => reveler(), T.eclat + dec);
-    return () => { vivant = false; toutArreter(); };
+    return () => { vivant = false; toutArreter(); bruitage.current?.arreter(); };
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // la page apparaît : le bouton prend le focus (Entrée pour continuer), sans faire défiler le repère
   useEffect(() => { if (phase === 'page') bouton.current?.focus({ preventScroll: true }); }, [phase]);
 
   const passer = () => {
-    if (['sombre', 'eleve', 'lumiere', 'blanc', 'bat'].includes(phase)) reveler();
+    if (['sombre', 'eleve', 'lumiere', 'blanc', 'bat'].includes(phase)) reveler(true);
   };
   const continuer = () => {
     if (fini.current) return;

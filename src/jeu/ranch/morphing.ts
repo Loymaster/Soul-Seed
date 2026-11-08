@@ -7,6 +7,8 @@
 // Chaque rendu dessine un avancement m (0 : ancienne forme, 1 : nouvelle) ; `avancement()` donne m au fil des battements.
 // Repère : celui des images de la séquence (une forme mesure H × taille px, pieds au bas de son image).
 
+import type { GrainSonore } from '@/moteur/bruitage-evolution';
+
 export type Morphing = 'fusion' | 'brume' | 'poussiere' | 'battement';
 
 export interface RenduMorphing {
@@ -16,6 +18,8 @@ export interface RenduMorphing {
   largeur: number;
   hauteur: number;
   dessiner: (m: number, t: number) => void;
+  /** « poussiere » : les grains (couleurs et retard), pour le bruitage (moteur/bruitage-evolution.ts) */
+  nuee?: GrainSonore[];
 }
 
 const lisse = (p: number) => p * p * (3 - 2 * p);
@@ -189,7 +193,7 @@ function poussiere(de: HTMLImageElement, vers: HTMLImageElement, G: Geometrie, e
   const g = c.getContext('2d')!; g.scale(k, k);
   const TOUR = 6.2832;
   return {
-    element: c, largeur: G.L, hauteur: G.H,
+    element: c, largeur: G.L, hauteur: G.H, nuee: grains,
     dessiner: (m, t) => {
       g.clearRect(0, 0, G.L, G.H);
       g.globalCompositeOperation = 'source-over';
