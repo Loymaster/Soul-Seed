@@ -72,7 +72,7 @@ export const THEMES_ASTUCES: ThemeAstuces[] = [
       { texte: 'Quand il a « quelque chose à vous montrer », il attend votre réaction quelques heures, puis passe à autre chose.' },
       { texte: 'Dans le carnet d’événement, féliciter une bêtise l’encourage à recommencer ; gronder une réussite décourage sa volonté de bien faire.' },
       { texte: 'Ne rien dire le rend plus autonome. Un écho autonome se débrouille parfois seul : il trouve à manger, fait une sieste, se lave ou se calme sans vous.' },
-      { texte: 'Quand il vous offre une trouvaille, elle rejoint votre sac quoi que vous répondiez, s’il reste de la place ; un merci resserre votre lien, une critique l’abîme.' },
+      { texte: 'Quand il vous offre une trouvaille, elle rejoint votre sac quoi que vous répondiez (s’il est plein, vous choisissez quoi jeter pour la garder) ; un merci resserre votre lien, une critique l’abîme.' },
       { texte: 'Ses élans spontanés naissent de ses traits : plus un trait est marqué, plus il s’exprime. L’onglet Tempérament de sa fiche aide à deviner ce qu’il va faire.' },
     ],
   },
@@ -115,6 +115,7 @@ export const THEMES_ASTUCES: ThemeAstuces[] = [
     astuces: [
       { texte: 'Récolter (une demi-heure) ne dérange aucun écho : bois, fibres et résine en forêt et au bord de l’eau, pierre un peu partout, ferraille dans la montagne et les cavernes, cristaux seulement près du crystal en fusion.' },
       { texte: 'Le sac ne porte pas plus de cinq unités de chaque matériau : au-delà, ce que vous récoltez reste par terre.' },
+      { texte: 'Le sac a dix emplacements, un par sorte d’objet, et chaque pile grossit sans limite. Plein, il vous demande quoi jeter pour garder une nouvelle trouvaille ; les objets de quête, eux, ne se jettent pas.' },
       { texte: 'Fouiller ouvre cinq cachettes : arrêtez-vous quand vous voulez pour garder vos trouvailles. Un écho caché peut jaillir et les disperser — gagnez le combat pour les récupérer.' },
       { texte: 'Fouiller, récolter, envoyer l’écho : chaque lieu ne s’y prête qu’une fois par jour. Mieux vaut pousser plus loin que tourner en rond.' },
       { texte: 'Envoyé fouiner (vingt minutes), un écho curieux rapporte plus souvent, et des choses plus rares ; un fonceur revient plus souvent… avec un écho sauvage aux trousses. Blessé, malade ou à bout de forces, il refuse de s’éloigner.' },

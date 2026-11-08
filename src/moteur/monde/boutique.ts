@@ -2,7 +2,7 @@
 // de Lady Roger (confirmLadyRogerSell). Sans affichage : l'étal vit dans le monde, l'or et le sac dans l'état de l'écho.
 import type { Aleatoire, Etat } from '../simulation/types';
 import { ALIMENTS } from '../simulation/donnees/aliments';
-import { aliment, objetDivers, ranger } from '../simulation/objets';
+import { aDeLaPlace, aliment, objetDivers, ranger } from '../simulation/objets';
 import type { EmplacementEtal, Monde } from './index';
 
 /** La boutique est ouverte de 8 h à 20 h. */
@@ -70,9 +70,9 @@ export function etalDuJour(m: Monde, jour: number, rng: Aleatoire = Math.random)
 }
 
 /** Peut-on ranger cet objet dans le sac (une pile existe déjà, ou une case est libre) ? */
-export const placePourObjet = (e: Etat, id: string) => e.inventaire.some((c) => c?.id === id) || e.inventaire.some((c) => !c);
+export const placePourObjet = aDeLaPlace;
 
-export type ResultatAchat = { ok: true; recus: number; cout: number; texte: string } | { ok: false; raison: string };
+export type ResultatAchat = { ok: true; recus: number; cout: number; texte: string } | { ok: false; raison: string; sacPlein?: true };
 
 /** Achète `qte` exemplaires de l'emplacement `index` de l'étal (un seul pour « deux pour le prix d'un »). */
 export function acheter(e: Etat, m: Monde, index: number, qte = 1): ResultatAchat {
@@ -82,7 +82,7 @@ export function acheter(e: Etat, m: Monde, index: number, qte = 1): ResultatAcha
   const n = em.deuxPourUn ? 1 : Math.max(1, Math.min(Math.floor(qte), em.stock));
   const cout = em.prix * n;
   if (e.or < cout) return { ok: false, raison: 'Pas assez d’or pour cet achat.' };
-  if (!placePourObjet(e, em.id)) return { ok: false, raison: `Le sac est plein ! Vous n’avez pas pu ranger : ${nomObjet(em.id)}.` };
+  if (!placePourObjet(e, em.id)) return { ok: false, sacPlein: true, raison: `Le sac est plein ! Vous n’avez pas pu ranger : ${nomObjet(em.id)}.` };
   const recus = em.deuxPourUn ? 2 : n;
   ranger(e, em.id, recus);
   e.or -= cout;

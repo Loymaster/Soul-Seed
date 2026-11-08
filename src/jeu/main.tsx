@@ -31,6 +31,7 @@ import { ChoixGraine } from './graines/ChoixGraine';
 import { DernierSouffle } from './mort/DernierSouffle';
 import { EntreDeuxMondes } from './intro/EntreDeuxMondes';
 import { ID_SCENE_SANCTUAIRE, Sanctuaire } from './intro/Sanctuaire';
+import { FenetreSacPlein } from './commun/FenetreSacPlein';
 import { Exploration, bilanDepart, reprendreTrouvailles, type BilanSortie, type RencontreExploration, type RetourCombat } from './exploration/Exploration';
 import { DEPART, ZONES } from './exploration/zones';
 import { creerMonde, heureAbsolue, poser, vrai, type Monde } from '@/moteur/monde';
@@ -320,13 +321,13 @@ function Jeu() {
           surFin={(issue) => {
             appliquerCombat(etat, issue, adversaire, entrainement);
             // exploration : une victoire rend les trouvailles dispersées
-            const plein = exploration && issue.resultat === 'victoire' && !etat.mort ? reprendreTrouvailles(etat, exploration.rencontre) : false;
+            const restes = exploration && issue.resultat === 'victoire' && !etat.mort ? reprendreTrouvailles(etat, exploration.rencontre) : [];
             if (emplacement !== ESSAI) { P.sauverPartie(profil.id, emplacement, etat); P.noterForme(profil.id, apparence(etat)); }
             if (exploration && emplacement !== ESSAI) P.sauverMonde(profil.id, emplacement, exploration.monde);
             if (etat.mort) setEcran({ nom: 'mort', emplacement, etat });
             else if (exploration) {
               const { rencontre, ...sortie } = exploration;
-              setEcran({ nom: 'exploration', emplacement, etat, ...sortie, retourCombat: { rencontre, resultat: issue.resultat, plein } });
+              setEcran({ nom: 'exploration', emplacement, etat, ...sortie, retourCombat: { rencontre, resultat: issue.resultat, plein: restes.length > 0, restes } });
             } else setEcran({ nom: 'ranch', emplacement, etat });
           }} />
       );
@@ -391,5 +392,6 @@ function Jeu() {
 createRoot(document.getElementById('racine')!).render(
   <StrictMode>
     <Racine />
+    <FenetreSacPlein />
   </StrictMode>
 );

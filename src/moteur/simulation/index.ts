@@ -7,7 +7,7 @@ export { etatEmotionnel, ETATS_EMOTIONNELS, type EtatEmotionnel } from './emotio
 export { apparence, determinerAdolescent, determinerAdulte } from './evolution';
 export { texteComportement } from './comportements';
 export { niveauRelation, rangRelation, compatibilite, LIEN_RELATION, ENCRE_RELATION, type NiveauRelation, type NatureInteractionVisite } from './visites';
-export { aliment, objetDivers, descriptionObjet, OBJETS_DIVERS, TOUS_ALIMENTS, type ObjetDivers } from './objets';
+export { aliment, objetDivers, descriptionObjet, OBJETS_DIVERS, TOUS_ALIMENTS, aDeLaPlace, sacPlein, jetable, jeter, jeterPuisRanger, type ObjetDivers } from './objets';
 export { POISSONS, CURIOSITES, PETITES_BETES } from './donnees/exploration';
 export { regimeCompatible } from './alimentation';
 export { ALIMENTS } from './donnees/aliments';

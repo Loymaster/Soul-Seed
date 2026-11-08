@@ -16,6 +16,9 @@ import { Evolution, type ProprietesEvolution } from './Evolution';
 import { Tutoriel, type Cible } from './Tutoriel';
 import { SFX } from '@/moteur/sfx';
 import { VueRanch } from './VueRanch';
+import { BoutonsObjet } from '../commun/MenuObjet';
+import { recevoir } from '../commun/reception';
+import { jeter } from '@/moteur/simulation/objets';
 import { Repere } from '../commun/Repere';
 import { ciel, lanternes, lumiere } from './ciel';
 import { IC } from './icones';
@@ -774,7 +777,8 @@ export class Ranch extends Component<ProprietesRanch, EtatUI> {
     // la simulation applique la réponse tout de suite (objet rangé, émotions, éducation, journal)
     const r = this.sim.repondreComportement(k);
     this.traiter(this.sim.vider()); this.sauver();
-    if (r.ok && r.objetTrouve && r.sacPlein) ev.consequence += ` Le sac est plein : impossible de garder ${r.objetTrouve.toLowerCase()}.`;
+    // sac plein : on propose de faire de la place pour la trouvaille de l'écho (fenêtre « Le sac est plein »)
+    if (r.ok && r.idObjet && r.sacPlein) recevoir(this.e, r.idObjet).then((ok) => { if (!ok) this.sim.noter(`Le sac était plein : vous avez laissé ${r.objetTrouve!.toLowerCase()}.`); this.traiter(this.sim.vider()); this.sauver(); });
     this.setState({ phase: 'stamped', chosen: i, active: i });
     this.later(() => this.son('stamp'), 210);
     this.later(() => { if (this.evg !== g) return; this.setState({ phase: 'turning' }); this.son('page', 1); this.son('woosh'); }, 1000);
@@ -1185,12 +1189,19 @@ export class Ranch extends Component<ProprietesRanch, EtatUI> {
       const col = s.sacMenu % 5, lig = Math.floor(s.sacMenu / 5);
       const index = s.sacMenu;
       const utilisable = !!aliment(c.id) || !!objetDivers(c.id)?.usage;
-      return {
+      const menu = {
         sacMenuVisible: true, sacMenuInfo: !!s.sacMenuInfo, sacMenuNom: d.nom, sacMenuTexte: d.description,
         sacMenuX: Math.round(34 + 22 + col * 104 + 46), sacMenuY: Math.round(30 + 26 + lig * 106 - 6),
         sacInfos: () => { this.son('page', 0.5); this.setState((st) => ({ sacMenuInfo: !st.sacMenuInfo })); },
         sacUtiliser: () => { if (!utilisable) { this.son('refus'); return; } this.setState({ sacMenu: -1 }); this.fermerSac(); this.later(() => this.utiliserObjet(index), 1100); },
       };
+      const boutons = { ...menu,
+        sacMenuBoutons: (
+          <BoutonsObjet key={index} id={c.id} qte={c.qte} info={!!s.sacMenuInfo} son={(n) => this.son(n)} surInfos={menu.sacInfos} surUtiliser={menu.sacUtiliser}
+            surJeter={(n) => { if (!jeter(e, index, n)) { this.son('refus'); return; } this.son('leather'); this.sauver(); this.setState({ sacMenu: -1, sacMenuInfo: false }); }} />
+        ),
+      };
+      return boutons;
     })();
     return {
       ...ciel(h), nuagesFiltre: 'url(#rk7Decor)', lanternes: lanternes(h),

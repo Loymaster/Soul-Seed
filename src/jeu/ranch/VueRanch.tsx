@@ -1369,14 +1369,7 @@ export function VueRanch({ v }: { v: any }) {
                     {v.sacMenuTexte}
                   </div>
                 </>) : null}
-                <div className="sm-boutons">
-                  <button className="sm-btn" role="menuitem" onClick={v.sacInfos} aria-pressed={v.sacMenuInfo}>
-                    Infos
-                  </button>
-                  <button className="sm-btn sm-ok" role="menuitem" onClick={v.sacUtiliser}>
-                    Utiliser
-                  </button>
-                </div>
+                 {v.sacMenuBoutons} 
               </div>
             </>) : null}
             {/* ressources rapportées d'exploration */}

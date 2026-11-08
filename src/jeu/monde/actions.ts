@@ -19,7 +19,9 @@ export type DemandeAction =
   | { type: 'combat'; combat: CombatPnj }
   | { type: 'panneau'; panneau: Panneau }
   /** à la fin de la scène, aller ailleurs : « ranch », un lieu du village, « zone 27 »… */
-  | { type: 'sortie'; vers: string };
+  | { type: 'sortie'; vers: string }
+  /** « donner » avec le sac plein : l'écran demande au joueur s'il fait de la place (reception.ts), puis `apresDon`. */
+  | { type: 'recevoir'; id: string; qte: number };
 
 export interface ContexteAction {
   etat: Etat;
@@ -55,8 +57,8 @@ export function jouerAction(nom: string, argument: string | undefined, ctx: Cont
       if (!id || !nomObjet(id)) return { type: 'suite', variables: { 'action.ok': false } };
       const q = Math.max(1, Math.round(nombre(args[1])));
       const ok = ranger(e, id, q) > 0;
-      if (ok) sim.noter(`Vous recevez : ${nomObjet(id)}${q > 1 ? ` × ${q}` : ''}.`);
-      return { type: 'suite', variables: { 'action.ok': ok, 'action.objet': nomObjet(id), ['sac.' + id]: compter(e, id), 'sac.plein': !e.inventaire.some((c) => !c) } };
+      if (!ok) return { type: 'recevoir', id, qte: q };
+      return { type: 'suite', variables: apresDon(ctx, id, q, true) };
     }
     case 'retirer': {
       const cible = args[0] ?? '';
@@ -121,6 +123,11 @@ export function jouerAction(nom: string, argument: string | undefined, ctx: Cont
   }
 }
 
+/** Après « donner » : le journal et les variables rendues à la scène (`action.ok` faux : l'objet a été laissé). */
+export function apresDon({ etat: e, sim }: ContexteAction, id: string, q: number, ok: boolean): Record<string, Valeur> {
+  if (ok) sim.noter(`Vous recevez : ${nomObjet(id)}${q > 1 ? ` × ${q}` : ''}.`);
+  return { 'action.ok': ok, 'action.objet': nomObjet(id), ['sac.' + id]: compter(e, id), 'sac.plein': !e.inventaire.some((c) => !c) };
+}
 const compter = (e: Etat, id: string) => e.inventaire.reduce((n, c) => n + (c?.id === id ? c.qte : 0), 0);
 
 /**

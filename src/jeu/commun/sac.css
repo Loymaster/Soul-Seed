@@ -1,0 +1,43 @@
+/* Le sac : « jeter… » dans le menu d'un objet (MenuObjet.tsx, portée .r7) et la fenêtre « Le sac est plein »
+   (FenetreSacPlein.tsx, hors portée : ses propres classes .fsp-…). Cuir cousu, page de carnet, encre rouge. */
+.r7 .sm-jeter{display:block;margin:7px auto 0;padding:0 6px;border:none;background:none;cursor:pointer;font-family:'Reenie Beanie',cursive;font-size:21px;line-height:1;color:#9c3b2a;transition:transform .15s,color .15s}
+.r7 .sm-jeter:hover{color:#7a2516;transform:translateY(-1px) rotate(-2deg)}
+.r7 .sm-quete{margin-top:7px;text-align:center;font-family:'Reenie Beanie',cursive;font-size:19px;line-height:1;white-space:nowrap;color:#9a8668}
+.r7 .sm-jeter-conf{animation:fspFondu .18s ease both}
+.r7 .sm-jeter-q{margin-top:6px;text-align:center;white-space:nowrap;font-family:'Reenie Beanie',cursive;font-size:23px;line-height:1;color:#9c3b2a}
+.r7 .sm-jeter-conf .sm-btn{padding:0 4px;white-space:nowrap}
+.r7 .sm-rouge{color:#fbf3e2;background:#9c3b2a;text-shadow:0 1px 0 rgba(0,0,0,.4)}
+
+/* —— la fenêtre « Le sac est plein » */
+.fsp-hote{position:fixed;inset:0;z-index:10000}
+.fsp-hote .repere-cadre{background:transparent!important}
+.fsp-voile{position:absolute;inset:0;background:radial-gradient(ellipse at 50% 45%,rgba(20,10,4,.45),rgba(10,5,2,.78));animation:fspFondu .3s ease both}
+.fsp-livre{position:absolute;left:50%;top:50%;width:640px;transform:translate(-50%,-50%);animation:fspEntre .42s cubic-bezier(.3,1.3,.5,1) both;font-family:'Alegreya',Georgia,serif;color:#2b2118}
+.fsp-couv{position:absolute;inset:-16px;border-radius:20px;background:#6e3f22;box-shadow:inset 0 0 0 2px #3a1f0e,inset 0 0 0 8px #6e3f22,inset 0 0 30px rgba(30,14,4,.5),0 8px 0 #4a2814,0 26px 50px rgba(10,6,2,.6)}
+.fsp-couv::after{content:"";position:absolute;inset:8px;border-radius:14px;border:2px dashed rgba(240,214,170,.45);pointer-events:none}
+.fsp-page{position:relative;padding:26px 34px 24px;border-radius:6px;background:repeating-linear-gradient(180deg,transparent 0 31px,rgba(80,110,150,.16) 31px 32px),linear-gradient(180deg,#f7eedb,#ecdcbc);box-shadow:inset 0 0 26px rgba(120,80,40,.18)}
+.fsp-surtitre{font-family:'Alegreya SC',serif;font-weight:700;font-size:13px;letter-spacing:2.5px;color:#9a7b55}
+.fsp-titre{margin:2px 0 12px;font-family:'Alegreya SC',serif;font-weight:700;font-size:30px;line-height:1.05;color:#2b2118}
+.fsp-recu{display:flex;align-items:center;gap:18px;margin-bottom:12px}
+.fsp-recu .fsp-case{flex:none;width:92px;height:92px;cursor:default;transform:rotate(-3deg);box-shadow:inset 0 0 0 2px #e6b85a,0 0 0 3px rgba(230,184,90,.55),0 4px 0 #1a0d05;animation:fspFlotte 2.6s ease-in-out infinite}
+.fsp-recu .fsp-nom{font-family:'Alegreya SC',serif;font-weight:700;font-size:21px;color:#2b2118}
+.fsp-craie{font-family:'Reenie Beanie',cursive;font-size:25px;line-height:1;color:#6b4f33}
+.fsp-texte{margin-top:4px;font-size:17px;line-height:1.3;font-style:italic;color:#5a4330}
+.fsp-poche{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px 12px;padding:18px 20px 16px;border-radius:14px;background:radial-gradient(ellipse at 50% 0%,#3a2010,#26140a 75%);box-shadow:inset 0 10px 24px rgba(0,0,0,.6),0 0 0 2px #3a1f0e}
+.fsp-case{position:relative;height:80px;border:none;border-radius:12px;padding:0;cursor:pointer;background:radial-gradient(circle at 50% 40%,#fbf4e3,#e7d6b2);box-shadow:inset 0 0 0 1.5px #3a1f0e,inset 0 0 0 5px rgba(255,255,255,.35),0 4px 0 #1a0d05;display:flex;align-items:center;justify-content:center;transition:transform .25s cubic-bezier(.3,1.4,.5,1),filter .25s,opacity .25s}
+.fsp-case img{max-width:52px;max-height:52px}
+.fsp-case .fsp-qte{position:absolute;right:-6px;bottom:-6px;min-width:24px;height:24px;padding:0 5px;box-sizing:border-box;border-radius:12px;background:#6e3f22;color:#fbf3e2;font-family:'Alegreya SC',serif;font-weight:700;font-size:13px;line-height:24px;text-align:center;box-shadow:0 0 0 1.5px #3a1f0e}
+.fsp-poche .fsp-case:not(:disabled):hover{transform:translateY(-4px) scale(1.04);filter:drop-shadow(0 0 10px rgba(255,214,140,.55))}
+.fsp-case:disabled{cursor:not-allowed;opacity:.5}
+.fsp-case.choisi{transform:translateY(-3px) rotate(2deg);box-shadow:inset 0 0 0 2.5px #9c3b2a,0 0 0 3px rgba(156,59,42,.55),0 7px 0 #1a0d05}
+.fsp-case.choisi::after{content:"";position:absolute;inset:14px;background:linear-gradient(45deg,transparent 46%,rgba(156,59,42,.85) 46% 54%,transparent 54%),linear-gradient(-45deg,transparent 46%,rgba(156,59,42,.85) 46% 54%,transparent 54%);pointer-events:none;animation:fspFondu .2s ease both}
+.fsp-choix{min-height:30px;margin:12px 2px 0;font-family:'Reenie Beanie',cursive;font-size:25px;line-height:1.15;color:#9c3b2a}
+.fsp-choix.vide{color:#9a8668}
+.fsp-boutons{display:flex;justify-content:flex-end;gap:12px;margin-top:8px}
+.fsp-btn{min-width:150px;height:40px;padding:0 18px;border:none;border-radius:7px;cursor:pointer;font-family:'Alegreya SC',serif;font-weight:700;font-size:15px;letter-spacing:.5px;color:#3a1f0e;background:#e4d2ad;box-shadow:inset 0 0 0 1.5px #3a1f0e,0 3px 0 #3a1f0e;transition:transform .15s,filter .15s,opacity .2s}
+.fsp-btn:not(:disabled):hover{filter:brightness(1.06);transform:translateY(-1px)}
+.fsp-btn:disabled{opacity:.45;cursor:default}
+.fsp-btn.rouge{color:#fbf3e2;background:#9c3b2a;text-shadow:0 1px 0 rgba(0,0,0,.4)}
+@keyframes fspFondu{from{opacity:0}to{opacity:1}}
+@keyframes fspEntre{from{opacity:0;transform:translate(-50%,-46%) scale(.9) rotate(-1.5deg)}to{opacity:1;transform:translate(-50%,-50%)}}
+@keyframes fspFlotte{0%,100%{transform:rotate(-3deg) translateY(0)}50%{transform:rotate(-1deg) translateY(-4px)}}

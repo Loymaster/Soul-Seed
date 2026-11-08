@@ -172,11 +172,11 @@ describe('règles de terrain', () => {
     expect(b.inventaire).toEqual({ pomme: 2 });
     expect(b.decouvertes).toEqual([1]);
     const r = { zone: 1, sauvage: creerEchoSauvage(aleatoireFixe(2)), enjeu: ['mures', 'curio_galet_poli'], x: 0, y: 0 };
-    expect(reprendreTrouvailles(e, r)).toBe(false);
+    expect(reprendreTrouvailles(e, r)).toEqual([]);
     expect(e.inventaire.filter(Boolean).map((c) => c!.id)).toEqual(['pomme', 'mures', 'curio_galet_poli']);
-    // sac plein : il faut en laisser
+    // sac plein : celles qui n'ont pas de place sont rendues (l'écran propose de faire de la place)
     for (let i = 0; i < 10; i++) if (!e.inventaire[i]) e.inventaire[i] = { id: `x${i}`, qte: 1 };
-    expect(reprendreTrouvailles(e, { ...r, enjeu: ['truffe'] })).toBe(true);
+    expect(reprendreTrouvailles(e, { ...r, enjeu: ['truffe'] })).toEqual(['truffe']);
   });
 });
 

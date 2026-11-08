@@ -76,3 +76,35 @@ export function ranger(e: Etat, id: string, qte = 1): number {
 }
 
 export const trouverObjet = (e: Etat, id: string) => e.inventaire.findIndex(c => c?.id === id);
+
+// —— Place dans le sac : 10 emplacements (TAILLE_SAC), une pile par emplacement, piles sans limite.
+// Un objet trouve sa place s'il a déjà sa pile, ou s'il reste un emplacement libre.
+
+/** Peut-on ranger cet objet (sa pile existe déjà, ou un emplacement est libre) ? */
+export const aDeLaPlace = (e: Etat, id: string) => e.inventaire.some(c => c?.id === id) || e.inventaire.some(c => !c);
+/** Plus aucun emplacement libre (un objet déjà en pile peut encore s'y ajouter). */
+export const sacPlein = (e: Etat) => !e.inventaire.some(c => !c);
+/** Les objets de quête ne se jettent pas (le marteau d'Ash…). */
+export const jetable = (id: string) => objetDivers(id)?.nature !== 'quete';
+
+/**
+ * Jette des objets de la case `index` : `qte` exemplaires (par défaut toute la pile, ce qui libère l'emplacement).
+ * Renvoie le nombre jeté (0 : case vide ou objet de quête).
+ */
+export function jeter(e: Etat, index: number, qte = Infinity): number {
+  const c = e.inventaire[index];
+  if (!c || !jetable(c.id)) return 0;
+  const n = Math.max(1, Math.min(c.qte, Math.floor(qte)));
+  e.inventaire[index] = c.qte > n ? { ...c, qte: c.qte - n } : null;
+  return n;
+}
+
+/**
+ * Sac plein : jette toute la pile de la case `index` pour faire de la place, puis range l'objet reçu.
+ * Refusé (rien ne change) si la case est vide, si son objet ne se jette pas, ou si l'objet avait déjà sa place.
+ */
+export function jeterPuisRanger(e: Etat, index: number, id: string, qte = 1): boolean {
+  if (aDeLaPlace(e, id)) return ranger(e, id, qte) > 0;
+  if (!jeter(e, index)) return false;
+  return ranger(e, id, qte) > 0;
+}

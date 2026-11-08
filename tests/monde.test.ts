@@ -10,7 +10,7 @@ import {
 import { Simulation, aleatoireFixe, creerEcho, heureTotale, objetDivers, type Etat } from '../src/moteur/simulation';
 import { analyserScene, ACTIONS } from '../src/moteur/scene/analyseur';
 import { LecteurScene } from '../src/moteur/scene/lecteur';
-import { anecdotes, appliquerIssueCombat, jouerAction, reconfort } from '../src/jeu/monde/actions';
+import { anecdotes, apresDon, appliquerIssueCombat, jouerAction, reconfort } from '../src/jeu/monde/actions';
 import { COMBATS_PNJ } from '../src/jeu/monde/adversaires';
 import { retenirVariables, variablesScene } from '../src/jeu/monde/variables';
 import { TECHNIQUES } from '../src/moteur/combat';
@@ -215,10 +215,11 @@ describe('actions des scènes', () => {
     expect(jouerAction('lieu', 'zone 27', ctx)).toEqual({ type: 'sortie', vers: 'zone 27' });
   });
 
-  it('un sac plein refuse le cadeau', () => {
+  it('un sac plein : le cadeau attend que le joueur fasse de la place (ou le laisse)', () => {
     const ctx = partie();
     ctx.e.inventaire = ctx.e.inventaire.map(() => ({ id: 'pomme', qte: 1 }));
-    expect(jouerAction('donner', 'canne_peche', ctx)).toMatchObject({ variables: { 'action.ok': false } });
+    expect(jouerAction('donner', 'canne_peche 2', ctx)).toEqual({ type: 'recevoir', id: 'canne_peche', qte: 2 });
+    expect(apresDon(ctx, 'canne_peche', 2, false)).toMatchObject({ 'action.ok': false, 'sac.plein': true });
   });
 
   it('Hevann motive l’écho : l’entraînement porte davantage pendant 6 heures', () => {

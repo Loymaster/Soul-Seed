@@ -66,7 +66,7 @@ Variables fournies par le jeu (en lecture) : `maintenant` (heure absolue : jour 
 
 | Action | Effet | Ensuite |
 |---|---|---|
-| `action: donner canne_peche` · `action: donner nodule_nutritif 2` | range l'objet dans le sac | `{action.ok}` (faux : sac plein) |
+| `action: donner canne_peche` · `action: donner nodule_nutritif 2` | range l'objet dans le sac ; s'il est plein, le joueur choisit quoi jeter pour lui faire de la place, ou le laisse (la scène attend sa réponse) | `{action.ok}` (faux : objet laissé, sac plein) |
 | `action: retirer poisson_anguille` · `action: retirer aliment` | retire l'objet (« aliment » : le premier aliment du sac) | `{action.ok}`, `{action.objet}` (son nom) |
 | `action: or 10` · `action: or -5` | donne ou reprend de l'or | `{or}` |
 | `action: ressource bois 3` | ressource portée (plafond 5) | |
