@@ -90,7 +90,7 @@ h1{font-weight:normal;font-style:italic;text-align:center;font-size:clamp(28px,4
       <ul class="contre"><li>On voit les deux formes superposées à mi-chemin</li></ul>
       <div class="actions"><button class="lien rejouer">rejouer</button><span class="tampon">dans le jeu</span></div>
     </section>
-    <section class="carte choisie" data-variante="fusion">
+    <section class="carte" data-variante="fusion">
       <div class="scene"></div>
       <div class="titre"><span class="lettre">B</span><span class="nom">Fusion</span></div>
       <div class="curseur"><span>de</span><input type="range" min="0" max="1000" value="0" aria-label="Avancement de la transformation (Fusion)"><span>vers</span></div>
@@ -99,17 +99,17 @@ h1{font-weight:normal;font-style:italic;text-align:center;font-size:clamp(28px,4
       <ul class="contre"><li>Un court calcul au début de la séquence (pendant la montée de lumière)</li></ul>
       <div class="actions"><button class="lien rejouer">rejouer</button><span class="tampon">dans le jeu</span></div>
     </section>
-    <section class="carte" data-variante="poussiere">
+    <section class="carte choisie" data-variante="poussiere">
       <div class="scene"></div>
       <div class="titre"><span class="lettre">C</span><span class="nom">Poussière d'étoiles</span></div>
       <div class="curseur"><span>de</span><input type="range" min="0" max="1000" value="0" aria-label="Avancement de la transformation (Poussière d'étoiles)"><span>vers</span></div>
-      <p class="desc">La silhouette se défait en grains de lumière qui tourbillonnent, puis se recomposent en la nouvelle forme.</p>
-      <ul class="pour"><li>Spectaculaire, très « magie sainte »</li><li>Rappelle les grains qui convergent juste avant</li></ul>
-      <ul class="contre"><li>Aux battements rapides, la forme se lit moins ; plus de calcul à chaque image</li></ul>
+      <p class="desc">En une seule fois : la silhouette se défait en grains de lumière, qui forment un tourbillon tournant sur lui-même (plus large en haut, chaque grain laissant une petite traînée), puis l'entonnoir se resserre et se recompose en la nouvelle forme.</p>
+      <ul class="pour"><li>Spectaculaire, très « magie sainte »</li><li>Le tourbillon donne l'impression d'une vraie transformation</li></ul>
+      <ul class="contre"><li>Joue toujours en une seule fois (le réglage « Rythme » ne la change pas) ; plus de calcul à chaque image</li></ul>
       <div class="actions"><button class="lien rejouer">rejouer</button><span class="tampon">dans le jeu</span></div>
     </section>
   </div>
-  <p class="note">Recommandation : <b>B · Fusion</b>, intégrée au jeu (réglage <code>MORPHING</code> dans <code>Evolution.tsx</code> : « fusion », « brume », « poussiere » ou « battement » pour revenir à l'alternance d'origine). Les trois variantes y sont branchées : changer d'avis ne demande qu'un mot.</p>
+  <p class="note">Retenue : <b>C · Poussière d'étoiles, en une seule fois, avec le tourbillon</b> — c'est elle qui est dans le jeu (réglage <code>MORPHING</code> dans <code>Evolution.tsx</code>). Les deux autres restent branchées : changer d'avis ne demande qu'un mot.</p>
 </div>
 
 <script>
@@ -130,6 +130,7 @@ const borne = (x, a = 0, b = 1) => Math.max(a, Math.min(b, x));
 /** Avancement m (0 : ancienne forme, 1 : nouvelle) au temps t (ms depuis le début des battements). */
 function avancement(t, rythme) {
   if (rythme === 'lent') return lisse(borne(t / T.duree));
+  if (rythme === 'continu') { const x = borne(t / T.duree); return x < 0.5 ? 2 * x * x * (1.5 - x) : 1 - 2 * (1 - x) * (1 - x) * (0.5 + x); }
   let v = 0;
   for (let k = 0; k < BATTEMENTS.length && BATTEMENTS[k] <= t; k++) {
     const suivant = BATTEMENTS[k + 1] ?? T.duree;
@@ -229,40 +230,66 @@ const VARIANTES = {
     };
   },
 
-  // C · grains de lumière : chaque grain part d'un point de l'ancienne forme et rejoint un point de la nouvelle
+  // C · poussière d'étoiles, en une seule fois : la silhouette se défait en grains, qui forment un tourbillon tournant
+  // sur lui-même (un entonnoir de lumière plus large en haut), puis se recomposent en la nouvelle forme
+  //   m : 0 → 0,4 vers le tourbillon, 0,4 → 0,6 il tourne, 0,6 → 1 vers la nouvelle forme (comme dans le jeu, morphing.ts)
   poussiere(scene, de, vers, p) {
     const c = document.createElement('canvas'); c.classList.add('morph');
     const dpr = Math.min(2, window.devicePixelRatio || 1); c.width = W * dpr; c.height = H * dpr;
     const g = c.getContext('2d'); g.scale(dpr, dpr);
-    const mA = masque(de, HMAX * p.tDe / p.tMax), mB = masque(vers, HMAX * p.tVers / p.tMax);
-    const N = 1500;
+    const hDe = HMAX * p.tDe / p.tMax, hVers = HMAX * p.tVers / p.tMax;
+    const mA = masque(de, hDe), mB = masque(vers, hVers);
+    const N = 900, hMax = Math.max(hDe, hVers);
+    const lDe = placer(de, hDe, 1).l, lVers = placer(vers, hVers, 1).l;
+    const cx = W / 2, cy = BASE - hMax * 0.5;
     const tirer = (m) => {
       const pts = []; let essais = 0;
-      while (pts.length < N && essais++ < N * 60) { const i = (Math.random() * m.a.length) | 0; if (m.a[i] > 140) pts.push({ x: (i % m.w) / R, y: ((i / m.w) | 0) / R }); }
-      const cx = W / 2, cy = BASE - 150;
-      return pts.sort((u, v) => Math.atan2(u.y - cy, u.x - cx) - Math.atan2(v.y - cy, v.x - cx));
+      while (pts.length < N && essais++ < N * 80) { const i = (Math.random() * m.a.length) | 0; if (m.a[i] > 140) pts.push({ x: (i % m.w) / R, y: ((i / m.w) | 0) / R }); }
+      return pts.sort((u, v) => u.y - v.y);
     };
-    const a = tirer(mA), b = tirer(mB);
-    const grains = a.map((q, i) => ({ a: q, b: b[i % b.length], tour: (Math.random() - 0.5) * 90, phase: Math.random() * 6.28, r: 0.7 + Math.random() * 1.5, retard: Math.random() * 0.25 }));
-    // les silhouettes pleines, pré-rendues en blanc
-    const blanche = (img, t) => { const k = document.createElement('canvas'); k.width = W; k.height = H; const x = k.getContext('2d'); const q = placer(img, HMAX * t / p.tMax, 1); x.drawImage(img, q.x, q.y, q.l, q.h); x.globalCompositeOperation = 'source-in'; x.fillStyle = '#fffcf0'; x.fillRect(0, 0, W, H); return k; };
-    const sA = blanche(de, p.tDe), sB = blanche(vers, p.tVers);
+    const pa = tirer(mA), pb = tirer(mB);
+    const demi = hMax * 0.42, rBas = Math.max(lDe, lVers) * 0.12, rHaut = Math.max(lDe, lVers) * 0.42;
+    const grains = pa.map((q, i) => {
+      const k = pa.length > 1 ? i / (pa.length - 1) : 0.5;
+      return { a: q, b: pb[Math.floor(k * (pb.length - 1))] || q, v: -demi + 2 * demi * k + (Math.random() - 0.5) * 14,
+        angle: Math.random() * Math.PI * 2, epaisseur: 0.75 + Math.random() * 0.35, vitesse: 0.8 + Math.random() * 0.5,
+        r: 0.7 + Math.random() * 1.5, retard: Math.random() * 0.12 };
+    });
+    const blanche = (img, h) => { const k = document.createElement('canvas'); k.width = W; k.height = H; const x = k.getContext('2d'); const q = placer(img, h, 1); x.drawImage(img, q.x, q.y, q.l, q.h); x.globalCompositeOperation = 'source-in'; x.fillStyle = '#fffcf0'; x.fillRect(0, 0, W, H); return k; };
+    const sA = blanche(de, hDe), sB = blanche(vers, hVers);
     const point = document.createElement('canvas'); point.width = point.height = 16; { const x = point.getContext('2d'); const r = x.createRadialGradient(8, 8, 0, 8, 8, 8); r.addColorStop(0, 'rgba(255,253,240,1)'); r.addColorStop(0.35, 'rgba(255,236,170,.75)'); r.addColorStop(1, 'rgba(255,220,140,0)'); x.fillStyle = r; x.fillRect(0, 0, 16, 16); }
+    const rotation = (m) => 7 * m + 9 * (m - Math.sin(2 * Math.PI * m) / (2 * Math.PI)) - 4 * m * m;
     scene.appendChild(c);
-    return (m, t) => {
+    return (m) => {
       g.clearRect(0, 0, W, H);
       g.globalCompositeOperation = 'source-over';
-      g.globalAlpha = 1 - lisse(borne(m / 0.38)); if (g.globalAlpha > 0.01) g.drawImage(sA, 0, 0);
-      g.globalAlpha = lisse(borne((m - 0.62) / 0.38)); if (g.globalAlpha > 0.01) g.drawImage(sB, 0, 0);
-      const vis = Math.min(1, 3.2 * Math.sin(Math.PI * m));
-      if (vis <= 0.01) { g.globalAlpha = 1; return; }
-      g.globalCompositeOperation = 'lighter'; g.globalAlpha = vis;
-      for (const q of grains) {
-        const k = lisse(borne((m - q.retard * (1 - m)) / (1 - q.retard * 0.5)));
-        const s = Math.sin(Math.PI * k);
-        const x = q.a.x + (q.b.x - q.a.x) * k + q.tour * s + Math.sin(t / 260 + q.phase) * 3 * s;
-        const y = q.a.y + (q.b.y - q.a.y) * k - 26 * s + Math.cos(t / 310 + q.phase) * 3 * s;
-        const r = q.r * (1 + 1.4 * s) * 2.4; g.drawImage(point, x - r, y - r, 2 * r, 2 * r);
+      g.globalAlpha = 1 - lisse(borne(m / 0.22)); if (g.globalAlpha > 0.01) g.drawImage(sA, 0, 0);
+      g.globalAlpha = lisse(borne((m - 0.8) / 0.2)); if (g.globalAlpha > 0.01) g.drawImage(sB, 0, 0);
+      const vis = m <= 0 || m >= 1 ? 0 : Math.min(1, 6 * Math.min(m, 1 - m));
+      if (vis > 0.01) {
+        g.globalCompositeOperation = 'lighter';
+        const tour = rotation(m);
+        for (const q of grains) {
+          const hb = (q.v + demi) / (2 * demi);
+          const Rr = (rHaut + (rBas - rHaut) * hb) * q.epaisseur;
+          const th = q.angle + tour * q.vitesse;
+          const vx = cx + Math.cos(th) * Rr, vy = cy + q.v + Math.sin(th) * Rr * 0.3;
+          const devant = 0.55 + 0.45 * Math.sin(th);
+          let x, y, eclat;
+          if (m < 0.4) { const k = lisse(borne((m / 0.4 - q.retard) / (1 - q.retard))); x = q.a.x + (vx - q.a.x) * k; y = q.a.y + (vy - q.a.y) * k; eclat = 1 + (devant - 1) * k; }
+          else if (m < 0.6) { x = vx; y = vy; eclat = devant; }
+          else { const k = lisse(borne(((m - 0.6) / 0.4 - q.retard) / (1 - q.retard))); x = vx + (q.b.x - vx) * k; y = vy + (q.b.y - vy) * k; eclat = devant + (1 - devant) * k; }
+          const tourbillon = Math.sin(Math.PI * borne((m - 0.15) / 0.7));
+          const rr = q.r * 2.2 * (1 - 0.35 * tourbillon) * (0.7 + 0.3 * eclat);
+          const alpha = vis * (0.3 + 0.55 * eclat) * (1 - 0.35 * tourbillon);
+          g.globalAlpha = alpha; g.drawImage(point, x - rr, y - rr, 2 * rr, 2 * rr);
+          if (tourbillon > 0.05) for (let j = 1; j <= 3; j++) {
+            const tj = th - j * 0.16 * q.vitesse;
+            const tx = cx + Math.cos(tj) * Rr, ty = cy + q.v + Math.sin(tj) * Rr * 0.3;
+            const px = x + (tx - vx) * tourbillon, py = y + (ty - vy) * tourbillon, pr = rr * (1 - j * 0.2);
+            g.globalAlpha = alpha * tourbillon * (0.5 - j * 0.13); g.drawImage(point, px - pr, py - pr, 2 * pr, 2 * pr);
+          }
+        }
       }
       g.globalAlpha = 1; g.globalCompositeOperation = 'source-over';
     };
@@ -303,7 +330,7 @@ class Scene {
       else if (t < T.bat) { this.formes(true, false, true, false); }
       else if (t < T.bat + T.duree) {
         if (!this.el.classList.contains('bat')) { this.phase('bat'); this.formes(false, false, true, false); }
-        const m = avancement(t - T.bat, etat.rythme); this.dessiner(m, t); this.curseur.value = Math.round(m * 1000);
+        const m = avancement(t - T.bat, this.variante === 'poussiere' ? 'continu' : etat.rythme); this.dessiner(m, t); this.curseur.value = Math.round(m * 1000);
       } else {
         this.phase('eclat'); this.formes(false, true, false, true); this.curseur.value = 1000;
         this.minuteur = setTimeout(() => this.phase('revele'), 140);
