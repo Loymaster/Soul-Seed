@@ -137,6 +137,9 @@ sortie += '\n.' + PORTEE + ' button:focus-visible{outline:2px solid #f3d48a;outl
 # dans le décor : PNJ (29–31), l'écho (30), l'écho sauvage (31–32), les fourrés (40) — un grand PNJ (Morthen…) passe dessous ;
 # elle reste sous les pages, voiles et bannières (50 et plus) et sous le sac et le carnet du ranch (calque à 70)
 sortie += '.' + PORTEE + ' .carnet,.' + PORTEE + ' .cote,.' + PORTEE + ' .gestes{z-index:45}\n'
+# les gestes de terrain s'effacent quand l'écho est occupé (marche, guet à l'arrivée, rencontre, activité, scène…) :
+# on ne les voit qu'une fois l'arrivée tranchée, jamais au moment où un écho sauvage surgit
+sortie += '.' + PORTEE + ' .gestes.cache{opacity:0;pointer-events:none}\n'
 # la carte : sans cadre, l'illustration aux bords déchirés flotte au-dessus du décor, un peu de travers
 sortie += '\n'.join('.' + PORTEE + ' ' + r for r in [
     '.carte{padding:0;background:none;box-shadow:none;transform:rotate(-.7deg);animation-name:' + PORTEE + 'CarteIn}',

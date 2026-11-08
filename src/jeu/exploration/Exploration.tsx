@@ -14,7 +14,7 @@ import {
 } from '@/moteur/simulation';
 import { consommer, ranger as rangerObjet } from '@/moteur/simulation/objets';
 import {
-  DUREES, MAT_POOLS, TEMPERAMENTS, groupeMat, lumiere, temperamentTerrain,
+  DUREES, GUET_ARRIVEE, MAT_POOLS, TEMPERAMENTS, groupeMat, lumiere, temperamentTerrain, tirerArrivee,
   type BilanSortie, type RencontreExploration, type RetourCombat,
 } from './regles';
 import {
@@ -30,7 +30,7 @@ import { profilEcho } from '../ranch/demarche';
 import type { Personnage, Reglages } from '../profils';
 import { ScenePnj } from '../monde/ScenePnj';
 import { VueExploration } from './VueExploration';
-import { SonsExplo as Sons } from './sons';
+import { SonsExplo as Sons, journalPas } from './sons';
 export { bilanDepart, reprendreTrouvailles, type BilanSortie, type RencontreExploration, type RetourCombat } from './regles';
 import { DEPART, ZONES, type Chemin, type Region } from './zones';
 import { ZONE_NYXARA, boutonsDuLieu, fondDuLieu, imagesZone, nyxaraPossible, pnjDuLieu, type BoutonExploration, type ContexteExploration, type PnjExploration } from './pnj';
@@ -128,6 +128,8 @@ interface EtatUI {
   sacOuvert: boolean; carnet: boolean;
   toast: { texte: string; id: number } | null; bulle: { src: string; id: number } | null;
   marche: boolean; survol: number | 'retour' | 'village' | null; nouveauLieu: number | null;
+  /** L'écho vient d'arriver : on attend de savoir si un écho sauvage surgit avant de montrer les gestes. */
+  guet: boolean;
   filo: Pos;
   /** La scène d'un PNJ jouée par-dessus (cle : la rejouer de zéro). */
   scene: { id: string; sujet?: string; cle: number } | null;
@@ -171,7 +173,7 @@ export class Exploration extends Component<ProprietesExploration, EtatUI> {
       t: 0, zone: z, ancien: null, sens: 'avant', historique: p.historique ?? [], sommeil: false,
       fouille: null, peche: null, envoi: null, rencontre: null, recolte: null, tente: null, carte: false, fin: null,
       sacOuvert: false, carnet: false,
-      toast: null, bulle: null, marche: false, survol: null, nouveauLieu: null,
+      toast: null, bulle: null, marche: false, guet: false, survol: null, nouveauLieu: null,
       filo: { x: fx, y: fy, s: echelle(fy), o: 1, dir: this.regard(z, fx), cls: '', duree: 0 },
       scene: null, combatScene: false, nyxara: false, appel: false, survolPnj: null,
     };
@@ -292,7 +294,7 @@ export class Exploration extends Component<ProprietesExploration, EtatUI> {
     this.sauver();
     if (this.props.retourCombat) this.retourDeCombat(this.props.retourCombat);
     // essais (développement) : __explo.surgir() fait surgir un écho sauvage, __explo.jouer('morthen') joue une scène de PNJ
-    if (import.meta.env.DEV) (window as unknown as { __explo?: unknown }).__explo = { surgir: () => this.surgir([]), jouer: (id: string, sujet?: string) => this.ouvrirScene(id, sujet), monde: this.monde, etat: this.e };
+    if (import.meta.env.DEV) (window as unknown as { __explo?: unknown }).__explo = { surgir: () => this.surgir([]), pas: journalPas, jouer: (id: string, sujet?: string) => this.ouvrirScene(id, sujet), monde: this.monde, etat: this.e };
   }
   componentWillUnmount() {
     this.vivant = false;
@@ -379,7 +381,7 @@ export class Exploration extends Component<ProprietesExploration, EtatUI> {
 
   dire(texte: string, ms = 2600) { this.setState({ toast: { texte, id: Math.random() } }); clearTimeout(this.tToast); this.tToast = window.setTimeout(() => { if (this.vivant) this.setState({ toast: null }); }, ms); }
   bulle(src: string, ms = 2200) { this.setState({ bulle: { src, id: Math.random() } }); clearTimeout(this.tBulle); this.tBulle = window.setTimeout(() => { if (this.vivant) this.setState({ bulle: null }); }, ms); }
-  occupe() { const s = this.state; return !!(s.marche || s.fouille || s.peche || s.envoi || s.rencontre || s.recolte || s.tente || s.fin || s.carte || s.sacOuvert || s.carnet || s.scene || s.nyxara || this.e.mort); }
+  occupe() { const s = this.state; return !!(s.marche || s.guet || s.fouille || s.peche || s.envoi || s.rencontre || s.recolte || s.tente || s.fin || s.carte || s.sacOuvert || s.carnet || s.scene || s.nyxara || this.e.mort); }
   heure() { return Math.floor(this.e.minute / 60) % 24; }
   nuit() { const h = this.heure(); return h >= 21 || h < 5; }
   fait(action: string) { return faitCeJour(this.monde, this.state.zone, action, this.e.jour); }
@@ -399,7 +401,7 @@ export class Exploration extends Component<ProprietesExploration, EtatUI> {
     const ch = this.chemins(depuis).find((c) => c.vers === vers);
     // 1) l'écho s'éloigne : vers le passage (en avant) ou vers vous (en arrière)
     const sortie = retour || !ch ? { x: s.filo.x, y: 900, s: 1.25, o: 0 } : { x: ch.pos[0], y: ch.pos[1] + 40, s: echelle(ch.pos[1] + 40) * 0.85, o: 0 };
-    Sons.pas(ZONES[depuis].grotte, 5);
+    Sons.pasDepart(ZONES[depuis].grotte);
     this.setState({ marche: true, survol: null, filo: { ...sortie, dir: sortie.x >= s.filo.x ? 1 : -1, cls: 'marche', duree: 1000 } });
     // le décor d'arrivée (et ses PNJ) doit être prêt avant de changer : déjà préchargé d'ordinaire (lieux voisins),
     // sinon on le demande en priorité et on l'attend, au plus 3 s, l'écho déjà sorti du cadre
@@ -418,22 +420,34 @@ export class Exploration extends Component<ProprietesExploration, EtatUI> {
       });
       this.props.surLieu?.(vers, historique);
       this.sauver({ zone: vers, historique });
-      Sons.pas(z.grotte, 5);
+      Sons.pasArrivee(z.grotte);
       // 3) l'écho vient prendre sa place
       this.plus(260, () => this.setState({ filo: { x: fx, y: fy, s: echelle(fy), o: 1, dir: fx < 640 ? 1 : -1, cls: 'marche', duree: 1150 } }));
       this.plus(1450, () => {
-        this.setState({ marche: false, ancien: null, filo: { ...this.state.filo, dir: this.regard(vers, fx), cls: '', duree: 0 } });
-        // le sentier solitaire : un cri, au premier passage en journée
-        if (vers === ZONE_NYXARA && !retour && nyxaraPossible(this.ctx())) {
-          this.setState({ nyxara: true });
+        // l'arrivée se tranche d'abord (cinématique, PNJ, écho sauvage) : les gestes restent cachés jusque-là (guet),
+        // pour qu'aucune fouille ne commence au moment où un combat se lance
+        const arrivee = tirerArrivee({
+          nyxara: vers === ZONE_NYXARA && !retour && nyxaraPossible(this.ctx()),
+          // pas d'écho sauvage qui surgisse au milieu d'une rencontre avec un PNJ
+          pnj: this.pnjIci(vers).length > 0,
+          echo: !!z.echo, proba: this.probaRencontre(vers), nouveau: !!nouveau, grotte: !!z.grotte,
+        });
+        const enPlace = { ancien: null, filo: { ...this.state.filo, dir: this.regard(vers, fx), cls: '', duree: 0 } };
+        if (arrivee === 'nyxara') {
+          // le sentier solitaire : un cri, au premier passage en journée
+          this.setState({ ...enPlace, marche: false, nyxara: true });
           this.plus(2000, () => { Sons.rencontre(); this.bulle(IMG.surpris, 2000); this.setState({ appel: true }); });
           return;
         }
-        // pas d'écho sauvage qui surgisse au milieu d'une rencontre avec un PNJ
-        if (this.pnjIci(vers).length) return;
-        if (z.echo && Math.random() < this.probaRencontre(vers)) this.plus(300, () => this.surgir([]));
-        else if (nouveau && Math.random() < 0.45) this.plus(200, () => this.bulle(IMG.surpris, 1600));
-        else if (z.grotte && Math.random() < 0.2) this.plus(200, () => this.bulle(IMG.anxieux));
+        if (arrivee === 'pnj') { this.setState({ ...enPlace, marche: false }); return; }
+        this.setState({ ...enPlace, marche: false, guet: true });
+        this.plus(GUET_ARRIVEE, () => {
+          // l'écho sauvage surgit dans le même rendu que la fin du guet : aucun geste ne paraît entre les deux
+          if (arrivee === 'rencontre') this.surgir([]);
+          else if (arrivee === 'surpris') this.bulle(IMG.surpris, 1600);
+          else if (arrivee === 'anxieux') this.bulle(IMG.anxieux);
+          this.setState({ guet: false });
+        });
       });
       this.prechargerVoisins(vers);
     };
@@ -510,7 +524,7 @@ export class Exploration extends Component<ProprietesExploration, EtatUI> {
       Sons.rencontre();
       this.setState({ fouille: { ...f, cartes, fini: true, perdu: true, message: 'Deux yeux s’allument dans l’ombre… Un écho sauvage jaillit et disperse vos trouvailles !' } });
       const enjeu = f.gains.slice();
-      this.plus(1900, () => { this.setState({ fouille: null }); this.passer(DUREES.fouiller); if (!this.e.mort) this.surgir(enjeu); });
+      this.plus(1900, () => { this.setState({ fouille: null }); this.passer(DUREES.fouiller); if (!this.e.mort) this.surgir(enjeu, 'fouille'); });
       return;
     }
     if (c.type === 'objet' && c.objet) { Sons.trouvaille(); this.setState({ fouille: { ...f, cartes, gains: [...f.gains, c.objet], message: `${c.lieu} : ${nomObjet(c.objet).toLowerCase()} !` } }); }
@@ -616,7 +630,7 @@ export class Exploration extends Component<ProprietesExploration, EtatUI> {
       this.plus(res.type === 'echo' ? 700 : 1250, () => {
         this.setState({ filo: { ...this.state.filo, dir: this.regard(this.state.zone, fx), cls: '', duree: 0 } });
         if (this.e.mort) { this.setState({ envoi: null }); return; }
-        if (res.type === 'echo') { this.setState({ envoi: null }); this.surgir([]); return; }
+        if (res.type === 'echo') { this.setState({ envoi: null }); this.surgir([], 'envoi'); return; }
         let texte = `${this.nom} revient bredouille, des brindilles plein le pelage.`;
         if (res.type === 'objet' && res.id) {
           Sons.trouvaille(); this.bulle(IMG.fier);
@@ -630,7 +644,12 @@ export class Exploration extends Component<ProprietesExploration, EtatUI> {
   fermerEnvoi() { this.setState({ envoi: null }); }
 
   // —— un écho sauvage : tiré selon le lieu (âge, graines possibles)
-  surgir(enjeu: string[]) {
+  /** `apres` : l'activité qui débusque l'écho (elle se referme dans le même rendu, elle ne compte donc pas). */
+  surgir(enjeu: string[], apres?: 'fouille' | 'envoi') {
+    // jamais deux rencontres à la fois, ni par-dessus une scène, une fouille ou une autre activité en cours
+    const st = this.state;
+    if (st.rencontre || st.scene || st.nyxara || st.recolte || st.peche || st.tente || st.fin || st.marche || st.carte || this.enCombat
+      || (st.fouille && apres !== 'fouille') || (st.envoi && apres !== 'envoi')) return;
     const zone = this.state.zone, z = ZONES[zone], cfg = z.echo ?? { ageMin: 1, ageMax: 3, cles: [] };
     const sv = creerEchoSauvage(Math.random, cfg.ageMin, cfg.ageMax, cfg.cles as Graine[], nomsPris(this.e));
     const ecart = sv.ageJours - ageJours(this.e);

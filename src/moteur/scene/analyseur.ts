@@ -73,6 +73,8 @@ export const ACTIONS: Record<string, string> = {
   journal: 'écrit une ligne dans le journal (« action: journal Garry a rejoint le village. »)',
   ranch: 'à la fin de la scène, le joueur rentre au ranch',
   lieu: 'à la fin de la scène, le joueur va ailleurs (« action: lieu sanctuaire », « action: lieu zone 27 »)',
+  cinematique: 'une image plein cadre quelques secondes ; le dialogue attend, sans clic pour l’abréger, et elle s’efface avant qu’il reprenne (« action: cinematique pnj/nyxara/attaque-1 »)',
+  technique: 'l’étiquette et le son d’une technique de combat au-dessus d’un PNJ (« action: technique vinland G2 Lame de l’aube »)',
 };
 
 /** Identifiant canonique : minuscules, sans accents, tirets (comme les fichiers). */

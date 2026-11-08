@@ -2,6 +2,7 @@
 // Ils suivent le volume des bruitages des options et le réglage « Bruitages ».
 import { SFX } from '@/moteur/sfx';
 import { ecouterVolumes, volumeBruitages } from '../commun/volumes';
+import { DUREE_PAS, programmePas } from './regles';
 
 let ctx: AudioContext | null = null;
 let maitre: GainNode | null = null;
@@ -33,6 +34,39 @@ function bruit(duree: number, freq: number, q: number, vol: number, retard = 0, 
   s.connect(f); f.connect(g); g.connect(maitre); s.start(t0);
 }
 
+// —— les pas : une seule série à la fois ; une nouvelle série fait taire ce qui reste de la précédente
+let serie: { src: AudioBufferSourceNode; g: GainNode; t0: number }[] = [];
+let numeroSerie = 0;
+/** Journal des pas programmés (instants en secondes de l'horloge audio), lu par les essais (__explo.pas). */
+export const journalPas: { serie: number; mode: string; t: number; fin: number; vol: number; coupe?: boolean }[] = [];
+function couperSerie(c: AudioContext) {
+  const now = c.currentTime;
+  for (const n of serie) {
+    if (n.t0 > now) { try { n.src.stop(); } catch { /* déjà arrêté */ } }
+    else { n.g.gain.cancelScheduledValues(now); n.g.gain.setValueAtTime(n.g.gain.value, now); n.g.gain.linearRampToValueAtTime(0, now + 0.03); }
+  }
+  journalPas.forEach((x) => { if (x.serie === numeroSerie && x.t > now) x.coupe = true; });
+  serie = [];
+}
+function pas(mode: 'depart' | 'arrivee' | 'simple', grotte: boolean, n?: number) {
+  const c = a(); if (!c || !maitre) return;
+  couperSerie(c);
+  numeroSerie++;
+  const t0 = c.currentTime;
+  for (const p of programmePas(mode, grotte, n)) {
+    const t = t0 + p.t;
+    const k = Math.floor(c.sampleRate * DUREE_PAS), buf = c.createBuffer(1, k, c.sampleRate), d = buf.getChannelData(0);
+    for (let i = 0; i < k; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / k, 2);
+    const src = c.createBufferSource(); src.buffer = buf;
+    const f = c.createBiquadFilter(); f.type = 'bandpass'; f.frequency.value = p.freq; f.Q.value = 1.4;
+    const g = c.createGain(); g.gain.value = p.vol;
+    src.connect(f); f.connect(g); g.connect(maitre); src.start(t);
+    serie.push({ src, g, t0: t });
+    journalPas.push({ serie: numeroSerie, mode, t: +t.toFixed(3), fin: +(t + DUREE_PAS).toFixed(3), vol: p.vol });
+  }
+  if (journalPas.length > 80) journalPas.splice(0, journalPas.length - 80);
+}
+
 function ton(type: OscillatorType, de: number, vers: number, duree: number, vol: number, retard = 0) {
   const c = a(); if (!c || !maitre) return;
   const t0 = c.currentTime + retard;
@@ -44,7 +78,12 @@ function ton(type: OscillatorType, de: number, vers: number, duree: number, vol:
 
 export const SonsExplo = {
   eveiller() { a(); },
-  pas(grotte: boolean, n = 6) { for (let i = 0; i < n; i++) bruit(0.09, grotte ? 520 : 900 + Math.random() * 300, 1.4, 0.14, i * 0.26 + Math.random() * 0.04); },
+  /** Pas réguliers (fuite, retour au ranch). */
+  pas(grotte: boolean, n = 6) { pas('simple', grotte, n); },
+  /** On quitte un lieu : les pas s'espacent et s'éteignent. */
+  pasDepart(grotte: boolean) { pas('depart', grotte); },
+  /** On entre dans un lieu : les pas commencent tard et doucement (jamais en même temps que ceux du départ). */
+  pasArrivee(grotte: boolean) { pas('arrivee', grotte); },
   froissement() { for (let i = 0; i < 5; i++) bruit(0.22, 2600 + Math.random() * 1400, 0.8, 0.09, i * 0.18 + Math.random() * 0.1, 1600); },
   coups() { for (let i = 0; i < 4; i++) { bruit(0.06, 700, 1.5, 0.3, i * 0.35); ton('sine', 160, 90, 0.12, 0.08, i * 0.35); } },
   trouvaille() { [784, 988, 1175].forEach((f, i) => ton('triangle', f, f, 0.28, 0.07, i * 0.07)); },

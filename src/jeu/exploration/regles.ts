@@ -78,3 +78,46 @@ export function bilanDepart(e: Etat, m: Monde): BilanSortie {
   return { inventaire, ressources: { ...m.ressources }, decouvertes: [...m.decouvertes] };
 }
 
+
+// —— les pas d'un lieu à l'autre : deux séries qui ne se chevauchent jamais
+/** Un pas programmé : instant (s, depuis le début de la série), volume, hauteur du filtre (Hz). */
+export interface Pas { t: number; vol: number; freq: number }
+/** Durée d'un pas (s) : le bruit filtré s'éteint en 90 ms. */
+export const DUREE_PAS = 0.09;
+/**
+ * Les pas d'une marche : `depart` (on quitte le lieu : ils s'espacent et s'éteignent), `arrivee` (on entre :
+ * ils commencent tard, doucement, puis s'affirment), `simple` (pas réguliers : fuite, retour au ranch).
+ * Départ et arrivée sont réglés sur la marche d'Exploration.aller() : le départ a donné son dernier pas avant 0,8 s,
+ * l'arrivée (lancée au plus tôt 0,85 s après, quand le dernier pas du départ a déjà sonné) ne commence que 0,4 s plus tard, et finit avant que l'écho soit en place.
+ */
+export const PAS = {
+  depart: { t: [0, 0.22, 0.47, 0.76], vol: [0.14, 0.11, 0.07, 0.035] },
+  arrivee: { t: [0.4, 0.66, 0.9, 1.12], vol: [0.035, 0.07, 0.11, 0.13] },
+} as const;
+export function programmePas(mode: 'depart' | 'arrivee' | 'simple', grotte: boolean, n = 6, rng: () => number = Math.random): Pas[] {
+  const freq = () => (grotte ? 520 : 900 + rng() * 300);
+  if (mode === 'simple') return Array.from({ length: n }, (_, i) => ({ t: i * 0.26 + rng() * 0.04, vol: 0.14, freq: freq() }));
+  const p = PAS[mode];
+  // un léger flottement, sans jamais déborder du créneau de la série
+  return p.t.map((t, i) => ({ t: t + rng() * 0.03, vol: p.vol[i], freq: freq() }));
+}
+/** Fin (s) de la dernière note d'une série. */
+export const finPas = (pas: Pas[]) => (pas.length ? Math.max(...pas.map((x) => x.t)) + DUREE_PAS : 0);
+
+// —— l'arrivée dans un lieu : ce qui se passe est tiré d'abord, les gestes ne paraissent qu'ensuite
+export type Arrivee = 'nyxara' | 'pnj' | 'rencontre' | 'surpris' | 'anxieux' | 'rien';
+/**
+ * Ce qui attend l'écho en arrivant : la cinématique du sentier solitaire, un PNJ (aucun écho sauvage ne surgit
+ * au milieu), un écho sauvage (probabilité du lieu), sinon une simple réaction. Tant que ce n'est pas tranché,
+ * Exploration ne montre ni gestes ni passages.
+ */
+export function tirerArrivee(o: { nyxara: boolean; pnj: boolean; echo: boolean; proba: number; nouveau: boolean; grotte: boolean }, rng: () => number = Math.random): Arrivee {
+  if (o.nyxara) return 'nyxara';
+  if (o.pnj) return 'pnj';
+  if (o.echo && rng() < o.proba) return 'rencontre';
+  if (o.nouveau && rng() < 0.45) return 'surpris';
+  if (o.grotte && rng() < 0.2) return 'anxieux';
+  return 'rien';
+}
+/** Le temps de guetter, après la marche, avant que les gestes ne reparaissent (ms) ; un écho sauvage surgit à ce moment. */
+export const GUET_ARRIVEE = 300;

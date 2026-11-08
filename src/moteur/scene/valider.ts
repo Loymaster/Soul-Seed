@@ -159,7 +159,7 @@ export function validerScene(scene: Scene, ctx: ContexteScene): Probleme[] {
           break;
         case 'decor': verifierDecor(n.decor, n.ligne); break;
         case 'action':
-          if (n.nom === 'image') {
+          if (n.nom === 'image' || n.nom === 'cinematique') {
             if (!n.argument) pb.push({ niveau: 'erreur', ligne: n.ligne, message: 'Image manquante : « action: image pnj/garry/attaque-jumpy » (ou « aucune » pour la retirer).' });
             else if (ctx.images && !/^(aucune|rien)$/i.test(n.argument) && !ctx.images.includes(cheminImage(n.argument)))
               pb.push({ niveau: 'erreur', ligne: n.ligne, message: `Image introuvable « ${n.argument} ».` });
