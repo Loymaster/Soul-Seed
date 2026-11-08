@@ -9,8 +9,8 @@ import { SFX } from '@/moteur/sfx';
 import { MARGE as MARGE_MORPH, UNE_SEULE_FOIS, avancement, avancementContinu, preparerMorphing, type Morphing, type RenduMorphing } from './morphing';
 import './evolution.css';
 
-/** Le passage d'une silhouette à l'autre pendant les battements : « fusion » (champs de distance), « brume »,
- *  « poussiere », ou « battement » (l'alternance d'origine). Proposition : outils/evolution/proposition-morphing.html.
+/** Le passage d'une silhouette à l'autre pendant les battements : « poussiere » (choisie : en une seule fois, 6 s,
+ *  fusion lente en fond et nuée de grains colorés), « fusion » (champs de distance), « brume », ou « battement » (l'alternance d'origine). Proposition : outils/evolution/proposition-morphing.html.
  *  En développement, `localStorage['soulseed:morphing']` le remplace (pour comparer dans le jeu). */
 export const MORPHING: Morphing = 'poussiere';
 const modeMorphing = (): Morphing => {
@@ -39,6 +39,9 @@ export interface ProprietesEvolution {
 type Phase = 'sombre' | 'eleve' | 'lumiere' | 'blanc' | 'bat' | 'eclat' | 'revele' | 'page' | 'sort';
 /** Instants des phases (ms). */
 const T = { eleve: 700, lumiere: 1900, blanc: 4300, bat: 5300, eclat: 8600, revele: 8800, page: 10600 } as const;
+/** « poussiere » se joue en une seule fois sur 6 s (la proposition validée) : la suite de la séquence est décalée d'autant. */
+const DUREE_UNE_FOIS = 6000;
+const decalage = (mode: Morphing) => (UNE_SEULE_FOIS.includes(mode) ? T.bat + DUREE_UNE_FOIS - T.eclat : 0);
 /** Battements de la silhouette, de plus en plus rapprochés (ms après le début des battements). */
 const BATTEMENTS = (() => { const r: number[] = []; let t = 0, d = 520; while (t < T.eclat - T.bat - 120) { r.push(t); t += d; d = Math.max(70, d * 0.8); } return r; })();
 const CENTRE = { x: 640, y: 520 };
@@ -72,8 +75,8 @@ export function Evolution(p: ProprietesEvolution) {
   /** les battements : la silhouette passe d'une forme à l'autre à chaque battement (morphing.ts) */
   const animerMorphing = () => {
     const r = rendu.current; if (!r) return;
-    const debut = performance.now(), fin = T.eclat - T.bat;
-    const continu = UNE_SEULE_FOIS.includes(modeMorphing());
+    const mode = modeMorphing(), continu = UNE_SEULE_FOIS.includes(mode);
+    const debut = performance.now(), fin = T.eclat - T.bat + decalage(mode);
     const pas = (now: number) => { const t = now - debut; r.dessiner(continu ? avancementContinu(t, fin) : avancement(t, BATTEMENTS, fin), t); if (t < fin) boucle.current = requestAnimationFrame(pas); };
     r.dessiner(0, 0);
     boucle.current = requestAnimationFrame(pas);
@@ -90,7 +93,9 @@ export function Evolution(p: ProprietesEvolution) {
 
   useEffect(() => {
     let vivant = true;
-    const mode = modeMorphing();
+    const mode = modeMorphing(), dec = decalage(mode);
+    // en une seule fois, les battements sonores s'étirent sur toute la transformation
+    const etire = (T.eclat - T.bat + dec) / (T.eclat - T.bat);
     plusTard(() => {
       void preparerMorphing(mode, p.de, p.vers, H * p.tailleDe, H * p.tailleVers, LOUPE).then((r) => {
         if (!vivant || !r || !hote.current) return;
@@ -103,14 +108,14 @@ export function Evolution(p: ProprietesEvolution) {
     }, 250);
     son(() => SFX.woosh());
     plusTard(() => setPhase('eleve'), T.eleve);
-    plusTard(() => { setPhase('lumiere'); son(() => SFX.evoMontee((T.eclat - T.lumiere) / 1000)); }, T.lumiere);
+    plusTard(() => { setPhase('lumiere'); son(() => SFX.evoMontee((T.eclat + dec - T.lumiere) / 1000)); }, T.lumiere);
     plusTard(() => setPhase('blanc'), T.blanc);
     plusTard(() => {
       setPhase('bat');
       animerMorphing();
-      BATTEMENTS.forEach((t, i) => plusTard(() => { setMontre(i % 2 ? 'de' : 'vers'); son(() => SFX.evoBattement(i)); }, t));
+      BATTEMENTS.forEach((t, i) => plusTard(() => { setMontre(i % 2 ? 'de' : 'vers'); son(() => SFX.evoBattement(i)); }, t * etire));
     }, T.bat);
-    plusTard(() => reveler(), T.eclat);
+    plusTard(() => reveler(), T.eclat + dec);
     return () => { vivant = false; toutArreter(); };
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
