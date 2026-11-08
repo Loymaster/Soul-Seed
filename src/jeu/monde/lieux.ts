@@ -5,7 +5,7 @@ import { boutiqueOuverte, construit, type Monde } from '@/moteur/monde';
 import type { Etat } from '@/moteur/simulation';
 import type { Panneau } from './actions';
 
-export type IdLieu = 'village' | 'foret' | 'sanctuaire' | 'atelier' | 'boutique';
+export type IdLieu = 'village' | 'foret' | 'sanctuaire' | 'atelier' | 'boutique' | 'potager';
 export type Destination = IdLieu | 'ranch' | 'exploration';
 
 export interface ContexteLieu {
@@ -111,10 +111,12 @@ export const LIEUX: Record<IdLieu, Lieu> = {
     id: 'village', nom: 'Le village', ratio: 1536 / 1024, musique: 'intro-sanctuary',
     decor: () => 'decors/village/ruines.png', decorScene: () => 'village/ruines',
     echo: { x: 37, pieds: 88, hauteur: 12 },
-    // le haut des marches mène à l'entrée du village (la forêt du village), le bord gauche au sanctuaire
-    passages: () => [
+    // le haut des marches mène à l'entrée du village (la forêt du village), les marches du bas au sanctuaire ;
+    // le potager de Tourby, une fois prêt, est sur la droite (son chemin part vers la gauche, vers le village)
+    passages: (c) => [
       { libelle: 'Vers l’entrée du village', vers: 'foret', position: 'haut', fleche: { x: 640, y: 262, angle: 0 } },
-      { libelle: 'Vers le sanctuaire', vers: 'sanctuaire', position: 'gauche', fleche: { x: 70, y: 520, angle: -90 } },
+      { libelle: 'Vers le sanctuaire', vers: 'sanctuaire', position: 'bas', fleche: { x: 640, y: 748, angle: 180 } },
+      ...(potagerPret(c) ? [{ libelle: 'Vers le potager', vers: 'potager', position: 'droite', fleche: { x: 1206, y: 560, angle: 90, nom: 'gauche' } } satisfies Passage] : []),
       { libelle: 'Vers la boutique', vers: 'boutique', position: 'droite' },
     ],
     pnj: [
@@ -167,10 +169,24 @@ export const LIEUX: Record<IdLieu, Lieu> = {
         visible: (c) => d(c.m, 'garry.vaincu'), image: () => 'pnj/garry/face.png',
         menu: () => [discuter('garry')],
       },
+    ],
+  },
+
+  potager: {
+    // Le potager de Tourby (l'écran « Jardin » du prototype, décor potager-vide) : il apparaît au village quand Tourby l'a remis
+    // en état, 12 heures après son arrivée (`potagerPret`) ; Tourby s'y tient, plus au centre du village.
+    id: 'potager', nom: 'Le potager', ratio: 1629 / 965, musique: 'intro-sanctuary',
+    decor: () => 'decors/village/potager.png', decorScene: () => 'village/potager',
+    echo: { x: 50, pieds: 90, hauteur: 13 },
+    // le chemin de gauche ramène au village
+    passages: () => [
+      { libelle: 'Vers le centre du village', vers: 'village', position: 'gauche', fleche: { x: 74, y: 600, angle: -90 } },
+    ],
+    pnj: [
       {
-        // Ajout de la refonte : le potager de Tourby (activité « Jardin » du ranch dans le prototype) se tient au village.
-        id: 'tourby', nom: 'Tourby', pose: { x: 24, pieds: 84.3, hauteur: 5.2 },
-        visible: potagerPret, image: () => 'pnj/tourby/neutre.png',
+        // Tourby (0,75 m) devant la clôture, sur le chemin : les piquets du premier plan (≈ 0,9 m) font ≈ 17 % du décor.
+        id: 'tourby', nom: 'Tourby', pose: { x: 30, pieds: 88, hauteur: 15 },
+        visible: () => true, image: () => 'pnj/tourby/neutre.png',
         premier: (c) => (n(c.m, 'tourby.potager_jour') ? null : { scene: 'tourby', sujet: 'parler' }),
         menu: () => [
           { libelle: 'Récolte journalière', icone: 'gerbe', scene: 'tourby', sujet: 'recolte' },
@@ -212,9 +228,9 @@ export const LIEUX: Record<IdLieu, Lieu> = {
     id: 'sanctuaire', nom: 'Le sanctuaire', ratio: 1672 / 941, musique: 'intro-sanctuary',
     decor: () => 'decors/village/sanctuaire.png', decorScene: () => 'village/sanctuaire',
     echo: { x: 33, pieds: 90, hauteur: 13 },
-    // le village est à droite du sanctuaire (le sanctuaire est à gauche du village)
+    // on descend du village au sanctuaire (flèche du bas du village) : on y remonte par le bas, le chemin par où l'on est venu
     passages: () => [
-      { libelle: 'Vers le centre du village', vers: 'village', position: 'droite', fleche: { x: 1212, y: 716, angle: 90, nom: 'gauche' } },
+      { libelle: 'Vers le centre du village', vers: 'village', position: 'bas', fleche: { x: 640, y: 748, angle: 180 } },
     ],
     pnj: [
       {
@@ -272,9 +288,9 @@ export const LIEUX: Record<IdLieu, Lieu> = {
     passages: () => [{ libelle: 'Retour au village', vers: 'village', position: 'bas' }],
     pnj: [
       {
-        // Jumpy (1,30 m) se tient devant le bout gauche du comptoir. Échelle du décor à cette profondeur : le comptoir
-        // (≈ 0,95 m) mesure ≈ 16 % du décor et le tonneau voisin (≈ 0,9 m) ≈ 20 %, soit ≈ 17 à 22 % par mètre → 1,30 m ≈ 23 %.
-        id: 'jumpy', nom: 'Jumpy', pose: { x: 36, pieds: 67, hauteur: 23 },
+        // Jumpy (1,30 m) se tient devant le bout gauche du comptoir, descendu sur le plancher (plus près de nous, donc plus grand
+        // qu'à la hauteur du comptoir : retour de l'autrice, « descends Jumpy et fais-le un peu plus grand »).
+        id: 'jumpy', nom: 'Jumpy', pose: { x: 36, pieds: 76, hauteur: 29 },
         visible: (c) => boutiqueOuverte(c.h), image: () => 'decors/boutique/vendeur.png',
         menu: (c) => [
           { libelle: 'Voir l’étal', icone: 'cadeau', panneau: 'boutique' },

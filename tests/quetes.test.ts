@@ -40,6 +40,7 @@ describe('quêtes du carnet', () => {
     m.decouvertes.push(17); poser(m, 'garry.vaincu');
     for (const [id, stade] of [['garry', 'adulte'], ['hevann', 'adulte'], ['ash', 'adulte'], ['maiko', 'adulte'], ['tourby', 'adulte'], ['finn', 'adulte'], ['bourbella', 'adulte'], ['glamp', 'adulte'], ['grimp', 'adulte'], ['lady-roger', 'adulte'], ['karla', 'adulte'], ['morthen', 'adulte']] as const) recruter(m, id, id, stade);
     m.structures.push('atelier', 'centre_communautaire', 'nettoyage_final');
+    poser(m, 'morthen.vu'); poser(m, 'morthen.revu');
     const l = lireQuetes(m);
     expect(l.enCours).toEqual([]);
     expect(ids(l.terminees).sort()).toEqual(QUETES.map((q) => q.id).sort());
@@ -63,6 +64,41 @@ describe('quêtes du carnet', () => {
     expect(synchroniserQuetes(m)).toEqual({ nouvelles: [], finies: [] });
   });
 
+  it('le marteau d’Ash : parler à Ash fait avancer « Rebâtir le village »', () => {
+    const m = creerMonde();
+    poser(m, 'myhra.village');
+    const rebatir = () => lireQuetes(m).enCours.find((q) => q.id === 'rebatir')!;
+    expect(rebatir().etapes.map((e) => e.id)).toEqual(['batisseur']);
+    poser(m, 'ash.vu');
+    expect(rebatir().etapes.map((e) => [e.id, e.faite])).toEqual([['batisseur', true], ['cabane', false]]);
+    poser(m, 'philhibert.vus');
+    expect(rebatir().etapes.at(-1)!.id).toBe('marteau');
+    poser(m, 'philhibert.vaincus');
+    expect(rebatir().etapes.at(-1)!.id).toBe('rendre');
+    poser(m, 'ash.recrute');
+    expect(rebatir().etapes.at(-1)!.id).toBe('atelier');
+  });
+
+  it('le marteau d’Ash : voir Phil et Hibert, ou inspecter la cabane, avant d’avoir parlé à Ash fait aussi avancer la quête', () => {
+    for (const cle of ['philhibert.vus', 'cabane.inspectee']) {
+      const m = creerMonde();
+      poser(m, 'myhra.village');
+      poser(m, cle);
+      const q = lireQuetes(m).enCours.find((x) => x.id === 'rebatir')!;
+      expect(q.etapes.map((e) => [e.id, e.faite])).toEqual([['batisseur', true], ['cabane', true], ['marteau', false]]);
+    }
+  });
+
+  it('« Qui est cet étrange écho ? » s’ouvre à la première rencontre avec Morthen', () => {
+    const m = creerMonde();
+    expect(ids(lireQuetes(m).enCours)).not.toContain('morthen');
+    poser(m, 'morthen.vu');
+    expect(synchroniserQuetes(m).nouvelles).toContain('morthen');
+    const q = lireQuetes(m).enCours.find((x) => x.id === 'morthen')!;
+    expect(q.titre).toBe('Qui est cet étrange écho ?');
+    expect(q.etapes.map((e) => [e.id, e.faite])).toEqual([['croise', true], ['revoir', false]]);
+  });
+
   it('les drapeaux attendus sont bien posés par les scènes', () => {
     const scene = (id: string) => readFileSync(`contenu/scenes/${id}.scene`, 'utf8');
     expect(scene('myhra')).toMatch(/myhra\.vue = vrai/);
@@ -71,6 +107,12 @@ describe('quêtes du carnet', () => {
     expect(scene('jumpy')).toMatch(/metier\.assistant = vrai/);
     expect(scene('jumpy')).toMatch(/travail\.jour = jour/);
     expect(scene('garry-foret')).toMatch(/garry\.vaincu = vrai/);
+    expect(scene('ash-montagne')).toMatch(/ash\.vu = vrai/);
+    expect(scene('ash-montagne')).toMatch(/ash\.recrute = vrai/);
+    expect(scene('phil-hibert')).toMatch(/philhibert\.vus = vrai/);
+    expect(scene('phil-hibert')).toMatch(/cabane\.inspectee = vrai/);
+    expect(scene('phil-hibert')).toMatch(/philhibert\.vaincus = vrai/);
+    expect(scene('morthen')).toMatch(/morthen\.vu = vrai/);
   });
 });
 

@@ -1,7 +1,7 @@
-// Tourby et son potager, au village (12 heures après son arrivée). {sujet} : « parler » (la première fois),
+// Tourby et son potager (lieu « potager » du monde, ouvert depuis le village 12 heures après son arrivée). {sujet} : « parler » (la première fois),
 // « recolte » (récolte journalière : deux nodules nutritifs, à partir du lendemain), « nodules », « amenager ».
 titre: Le potager de Tourby
-décor: village/ruines
+décor: village/potager
 places: tourby D2
 
 si sujet == "recolte":

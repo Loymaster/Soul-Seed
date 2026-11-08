@@ -224,7 +224,7 @@ const heuresRestantes = (finA: number, e: Etat) => Math.max(1, Math.ceil((finA -
 const LIBELLE_ETAT: Record<string, string> = { construit: 'Construit', 'en-cours': 'En cours…', occupe: 'Occupé', prerequis: 'Prérequis', inconnu: '???', disponible: 'Construire' };
 
 export function Travaux({ e, m, rafraichir, noter, fermer }: Commun) {
-  const [onglet, setOnglet] = useState<'village' | 'ranch'>('ranch');
+  const [onglet, setOnglet] = useState<'village' | 'ranch'>('village');
   const [mot, setMot] = useState<{ texte: string; ton: Ton } | null>(null);
   const resultat = (r: { ok: true; texte: string } | { ok: false; raison: string }) => {
     if (r.ok) { son('stamp'); setMot({ texte: r.texte, ton: 'bien' }); noter(r.texte, 'bien'); }

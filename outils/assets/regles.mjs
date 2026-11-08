@@ -127,7 +127,7 @@ const EXPLICITES = {
   'foin-botte.png': 'activites/corvees/foin-botte.png',
   'poule-course.png': 'activites/corvees/poule-course.png',
   'seau-eau.png': 'activites/corvees/seau-eau.png',
-  'potager-vide.png': 'activites/ranch/potager-vide.png',
+  'potager-vide.png': 'decors/village/potager.png',
   'poop.png': 'activites/ranch/dejection.png',
   'vomi.png': 'activites/ranch/vomi.png',
   'phil-hibert-cabane.png': 'pnj/phil/hibert-cabane.png'

@@ -1,9 +1,11 @@
-// Exploration, lieu 6 « Dans la cabane ». {sujet} : « nuit » (22 h – 7 h, après avoir parlé à Ash, tant qu'ils ne sont pas battus),
-// « inspecter » (le bouton « Inspecter la cabane », 8 h – 22 h), « marteau » (le marteau resté au sol, sac plein).
+// Exploration, lieu 6 « Dans la cabane ». {sujet} : « nuit » (22 h – 7 h, tant qu'ils ne sont pas battus, même avant d'avoir
+// parlé à Ash ; pose `philhibert.vus`), « inspecter » (le bouton « Inspecter la cabane », 8 h – 22 h ; pose `cabane.inspectee`),
+// « marteau » (le marteau resté au sol, sac plein). Les deux premiers font avancer la quête « Rebâtir le village » (le marteau d'Ash).
 titre: Phil et Hibert
 décor: exploration/06-dans-cabane
 
 si sujet == "inspecter":
+  cabane.inspectee = vrai
   narration: Vous remarquez qu’il y a eu de l’agitation dans cette cabane. Sûrement une présence nocturne.
   fin
 si sujet == "marteau":
@@ -17,6 +19,7 @@ si sujet == "marteau":
 
 entre: phil G2
 entre: hibert D2
+philhibert.vus = vrai
 phil: Héhéhé ! T’aurais vu sa tête à l’autre cornu !
 hibert: Hihihi ! Il avait l’air furieux ! « Mon marteau ! Mon marteau ! »
 phil: Tu l’imites trop bien… « Mon marteau ! Mon marteau ! »

@@ -52,7 +52,7 @@ export const QUETES: DefinitionQuete[] = [
     resume: 'Myhra veille sur le sanctuaire. Elle saura vous dire ce que le village est devenu, et ce qu’on peut faire pour lui.',
     majeure: true,
     etapes: [
-      { id: 'voir', texte: 'Rendre visite à Myhra au sanctuaire', piste: 'le sanctuaire est à l’ouest du village', faite: (m) => d(m, 'myhra.vue') },
+      { id: 'voir', texte: 'Rendre visite à Myhra au sanctuaire', piste: 'les marches au bas du village y descendent', faite: (m) => d(m, 'myhra.vue') },
       { id: 'village', texte: 'Lui demander des nouvelles du village', piste: 'la prospérité du village', faite: (m) => d(m, 'myhra.village') },
     ],
   },
@@ -96,10 +96,27 @@ export const QUETES: DefinitionQuete[] = [
     majeure: true,
     visible: (m) => d(m, 'myhra.village'),
     etapes: [
-      { id: 'batisseur', texte: 'Trouver quelqu’un qui sache construire', piste: 'quelqu’un pousse des jurons près de la caverne', faite: (m) => d(m, 'ash.recrute') },
+      // Ash : lui parler (`ash.vu`) fait avancer la quête, mais aussi, par l'autre bout, voir Phil et Hibert dans la cabane la nuit
+      // (`philhibert.vus`) ou constater de jour qu'on s'y agite la nuit (`cabane.inspectee`).
+      { id: 'batisseur', texte: 'Trouver quelqu’un qui sache construire', piste: 'quelqu’un pousse des jurons près de la caverne', faite: (m) => d(m, 'ash.vu') },
+      { id: 'cabane', texte: 'Trouver où est passé le marteau d’Ash', piste: 'on s’agite la nuit dans une cabane, pas loin du village', faite: (m) => d(m, 'philhibert.vus') || d(m, 'cabane.inspectee') },
+      { id: 'marteau', texte: 'Reprendre le marteau à Phil et Hibert', piste: 'la nuit, dans la cabane ; ils ne le rendront pas sans se battre', faite: (m) => d(m, 'philhibert.vaincus') },
+      { id: 'rendre', texte: 'Rapporter son marteau à Ash', piste: 'près de la caverne, en journée', faite: (m) => d(m, 'ash.recrute') },
       { id: 'atelier', texte: 'Construire l’atelier', piste: 'Ash a besoin de bois, de pierre, de fibres et de résine', faite: (m) => bati(m, 'atelier') },
       { id: 'centre', texte: 'Relever le centre communautaire', faite: (m) => bati(m, 'centre_communautaire') },
       { id: 'fin', texte: 'Achever le nettoyage final', piste: 'quand tous les bâtiments seront debout', faite: (m) => bati(m, 'nettoyage_final') },
+    ],
+  },
+  {
+    // Morthen ne paraît qu'une fois (passage vers la forêt, à partir du jour 4, de 8 h à 16 h) et promet qu'on se reverra :
+    // la quête s'ouvre à cette première rencontre (`morthen.vu`) ; `morthen.revu` sera posé par la scène des retrouvailles, à écrire.
+    id: 'morthen',
+    titre: 'Qui est cet étrange écho ?',
+    resume: 'Un écho au regard sombre vous attendait sur le passage vers la forêt. Il semblait vous connaître… et vous trouver bien décevant.',
+    visible: (m) => d(m, 'morthen.vu'),
+    etapes: [
+      { id: 'croise', texte: 'Croiser l’étrange écho du passage vers la forêt', faite: (m) => d(m, 'morthen.vu') },
+      { id: 'revoir', texte: 'Le revoir, comme il l’a promis', piste: '« On se reverra plus tard. »', faite: (m) => d(m, 'morthen.revu') },
     ],
   },
 ];

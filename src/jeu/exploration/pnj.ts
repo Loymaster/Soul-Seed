@@ -64,7 +64,7 @@ export const PNJ_EXPLORATION: PnjExploration[] = [
   },
   {
     id: 'phil-hibert', nom: 'Phil et Hibert', zone: 6, calque: 'pnj/phil/hibert-cabane.png', scene: 'phil-hibert', sujet: 'nuit', combat: true,
-    visible: (c) => d(c.m, 'ash.vu') && !d(c.m, 'philhibert.vaincus') && (c.h >= 22 || c.h < 7),
+    visible: (c) => !d(c.m, 'philhibert.vaincus') && (c.h >= 22 || c.h < 7),
     echo: [975, 700],
   },
   {
@@ -100,7 +100,7 @@ export const BOUTONS_EXPLORATION: BoutonExploration[] = [
   },
   {
     id: 'cabane', zone: 6, libelle: 'Inspecter la cabane', scene: 'phil-hibert', sujet: 'inspecter', x: 640, y: 380,
-    visible: (c) => d(c.m, 'ash.vu') && !d(c.m, 'philhibert.vaincus') && c.h >= 8 && c.h < 22,
+    visible: (c) => !d(c.m, 'philhibert.vaincus') && c.h >= 8 && c.h < 22,
   },
   {
     id: 'marteau', zone: 6, libelle: 'Récupérer le marteau', scene: 'phil-hibert', sujet: 'marteau', x: 430, y: 690,

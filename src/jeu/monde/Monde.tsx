@@ -357,7 +357,7 @@ export function Monde(props: ProprietesMonde) {
             <BoutonSac top={20} cache={!libre} ouvrir={() => { setMenu(null); setSacOuvert(true); }} />
             <BoutonCarnet top={122} cache={!libre} ouvrir={() => { setMenu(null); setCarnetOuvert(true); }} />
             <Poteau top={224} cache={!libre || sacOuvert || carnetOuvert}
-              destinations={destinationsPoteau(L.passages(ctx)).map((pa) => ({ nom: pa.libelle, icone: ICONES_LIEU[pa.vers === 'boutique' ? 'magasin' : pa.vers], partir: () => aller(pa.vers) }))} />
+              destinations={destinationsPoteau(L.passages(ctx)).map((pa) => ({ nom: pa.libelle, icone: ICONES_LIEU[pa.vers === 'boutique' ? 'magasin' : pa.vers === 'potager' ? 'foret' : pa.vers], partir: () => aller(pa.vers) }))} />
             {sacOuvert && <Sacoche etat={etat} ressources={monde.ressources} surFerme={() => { setSacOuvert(false); rafraichir(); }} surUtiliser={utiliser} sauver={sauver} />}
             {carnetOuvert && <PetitCarnet etat={etat} portrait={assets.get(apparence(etat))?.url} reglages={reglages} surReglages={props.surReglages}
               sauver={sauver} surMenu={props.surMenu} surFerme={() => setCarnetOuvert(false)} monde={monde} />}

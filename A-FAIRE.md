@@ -89,7 +89,7 @@ Moteur prêt dans `src/moteur/combat/` (règles du prototype, temps réel, déte
 - [ ] Décider : le plafond de 5 par ressource portée (prototype) oblige à passer par le coffre de Maïko avant l'atelier ; le garder ?
 - [ ] Décider : le stade de Lady Roger (bébé : +1 prospérité ; le prototype hésitait avec adulte).
 - [ ] Prospérité : avec tous les habitants (Grimp compris) elle plafonne à 16 ; Myhra n'a que des phrases au-delà de 15. Paliers à revoir.
-- [ ] Potager de Tourby : installé au village (le prototype passait par l'activité « Jardin » du ranch) ; « Nodules nutritifs ? » et « Aménager le potager » à écrire.
+- [ ] Potager de Tourby : un lieu du monde (`potager`, décor `decors/village/potager.png` = l'écran « Jardin » du prototype), ouvert depuis le village (flèche de droite) quand il est prêt ; Tourby s'y tient. « Nodules nutritifs ? » et « Aménager le potager » à écrire ; un décor du potager cultivé (selon ses aménagements) serait à peindre.
 - [ ] Événement « bruit de Garry » : il cesse dès que `garry.vaincu` (synchronisé dans l'état de l'écho au retour au ranch).
 - [ ] Visuels : Grimp au village et dans l'atelier n'a pas de calque dessiné (sprite posé) ; Jumpy n'a pas d'expression « en pied » neutre (la fiche utilise un portrait en buste par défaut).
 

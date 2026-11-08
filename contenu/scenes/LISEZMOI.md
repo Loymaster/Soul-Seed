@@ -91,7 +91,7 @@ Chemins soumis à un drapeau (`zones.ts`) : 16 → 17 attend `hevann.vaincu`, 28
 |---|---|---|---|
 | Morthen | lieu 2, jour ≥ 4, 8 h – 16 h | `morthen` | `non morthen.vu` |
 | Bourbella | lieu 5, 4 h – 14 h | `bourbella-cabane` | `non bourbella.recrutee` |
-| Phil et Hibert | lieu 6, 22 h – 7 h | `phil-hibert` (sujet « nuit ») | `ash.vu et non philhibert.vaincus` |
+| Phil et Hibert | lieu 6, 22 h – 7 h | `phil-hibert` (sujet « nuit ») | `non philhibert.vaincus` (même avant d’avoir parlé à Ash) |
 | — | lieu 6, 8 h – 22 h : bouton « Inspecter la cabane » | `phil-hibert` (sujet « inspecter ») | idem |
 | — | lieu 6 : bouton « Récupérer le marteau » | `phil-hibert` (sujet « marteau ») | `ash.marteau_au_sol` |
 | Tourby | lieu 7, à partir de 16 h | `tourby-riviere` | `non tourby.recrute` |
