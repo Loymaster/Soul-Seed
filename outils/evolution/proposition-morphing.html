@@ -103,7 +103,7 @@ h1{font-weight:normal;font-style:italic;text-align:center;font-size:clamp(28px,4
       <div class="scene"></div>
       <div class="titre"><span class="lettre">C</span><span class="nom">Poussière d'étoiles</span></div>
       <div class="curseur"><span>de</span><input type="range" min="0" max="1000" value="0" aria-label="Avancement de la transformation (Poussière d'étoiles)"><span>vers</span></div>
-      <p class="desc">En une seule fois : la silhouette se défait en grains de lumière, qui forment un tourbillon qui nous fait face — une spirale à trois bras dont le cœur tourne plus vite, chaque grain laissant une petite traînée —, puis la spirale se recompose en la nouvelle forme.</p>
+      <p class="desc">En une seule fois, sur 8 secondes : la silhouette se défait en grains de lumière, qui forment face à nous un essaim de poussière tournoyant lentement — chaque grain sur sa propre orbite, qui respire et erre un peu —, puis l'essaim se recompose en la nouvelle forme.</p>
       <ul class="pour"><li>Spectaculaire, très « magie sainte »</li><li>Le tourbillon donne l'impression d'une vraie transformation</li></ul>
       <ul class="contre"><li>Joue toujours en une seule fois (le réglage « Rythme » ne la change pas) ; plus de calcul à chaque image</li></ul>
       <div class="actions"><button class="lien rejouer">rejouer</button><span class="tampon">dans le jeu</span></div>
@@ -128,9 +128,9 @@ const BATTEMENTS = (() => { const r = []; let t = 0, d = 520; while (t < T.duree
 const lisse = (p) => p * p * (3 - 2 * p);
 const borne = (x, a = 0, b = 1) => Math.max(a, Math.min(b, x));
 /** Avancement m (0 : ancienne forme, 1 : nouvelle) au temps t (ms depuis le début des battements). */
-function avancement(t, rythme) {
+function avancement(t, rythme, duree = T.duree) {
   if (rythme === 'lent') return lisse(borne(t / T.duree));
-  if (rythme === 'continu') { const x = borne(t / T.duree); return x < 0.5 ? 2 * x * x * (1.5 - x) : 1 - 2 * (1 - x) * (1 - x) * (0.5 + x); }
+  if (rythme === 'continu') { const x = borne(t / duree); return x < 0.5 ? 2 * x * x * (1.5 - x) : 1 - 2 * (1 - x) * (1 - x) * (0.5 + x); }
   let v = 0;
   for (let k = 0; k < BATTEMENTS.length && BATTEMENTS[k] <= t; k++) {
     const suivant = BATTEMENTS[k + 1] ?? T.duree;
@@ -248,52 +248,55 @@ const VARIANTES = {
       return pts.sort((u, v) => u.y - v.y);
     };
     const pa = tirer(mA), pb = tirer(mB);
-    // le tourbillon nous fait face : une spirale dans le plan de l'écran, à trois bras enroulés, dont le cœur tourne plus vite
-    const RMAX = Math.min(W * 0.42, hMax * 0.55), BRAS = 3;
+    // le tourbillon nous fait face : un essaim de poussière qui tournoie lentement, chaque grain sur sa propre orbite
+    // (rayon, sens d'ellipse, respiration et petites errances à lui), sans bras ni axe : un nuage vivant
+    const RMAX = Math.min(W * 0.4, hMax * 0.5);
     const grains = pa.map((q, i) => {
       const k = pa.length > 1 ? i / (pa.length - 1) : 0.5;
-      const u = Math.random(), rayon = RMAX * (0.08 + 0.92 * Math.sqrt(u));
-      const bras = (i % BRAS) * (2 * Math.PI / BRAS);
-      const enroule = 2.6 * Math.log(1 + rayon / 18);              // l'enroulement des bras
-      return { a: q, b: pb[Math.floor(k * (pb.length - 1))] || q, rayon,
-        angle: bras + enroule + (Math.random() - 0.5) * 0.55,
-        vitesse: 0.55 + 1.6 / (0.35 + rayon / RMAX),                  // le centre tourne plus vite
-        r: 0.7 + Math.random() * 1.5, retard: Math.random() * 0.12 };
+      return { a: q, b: pb[Math.floor(k * (pb.length - 1))] || q,
+        rayon: RMAX * (0.12 + 0.88 * Math.pow(Math.random(), 0.75)),
+        aplat: 0.72 + Math.random() * 0.28, incline: (Math.random() - 0.5) * 0.9,
+        angle: Math.random() * Math.PI * 2,
+        omega: (0.35 + Math.random() * 0.45) * (Math.random() < 0.88 ? 1 : -0.6),   // rad/s : lent ; quelques grains à contre-courant
+        souffle: Math.random() * 6.28, errance: Math.random() * 6.28, ferr: 0.6 + Math.random() * 0.8,
+        r: 0.7 + Math.random() * 1.5, retard: Math.random() * 0.15 };
     });
     const blanche = (img, h) => { const k = document.createElement('canvas'); k.width = W; k.height = H; const x = k.getContext('2d'); const q = placer(img, h, 1); x.drawImage(img, q.x, q.y, q.l, q.h); x.globalCompositeOperation = 'source-in'; x.fillStyle = '#fffcf0'; x.fillRect(0, 0, W, H); return k; };
     const sA = blanche(de, hDe), sB = blanche(vers, hVers);
     const point = document.createElement('canvas'); point.width = point.height = 16; { const x = point.getContext('2d'); const r = x.createRadialGradient(8, 8, 0, 8, 8, 8); r.addColorStop(0, 'rgba(255,253,240,1)'); r.addColorStop(0.35, 'rgba(255,236,170,.75)'); r.addColorStop(1, 'rgba(255,220,140,0)'); x.fillStyle = r; x.fillRect(0, 0, 16, 16); }
-    const rotation = (m) => 7 * m + 9 * (m - Math.sin(2 * Math.PI * m) / (2 * Math.PI)) - 4 * m * m;
     scene.appendChild(c);
-    return (m) => {
+    return (m, t) => {
       g.clearRect(0, 0, W, H);
       g.globalCompositeOperation = 'source-over';
-      g.globalAlpha = 1 - lisse(borne(m / 0.22)); if (g.globalAlpha > 0.01) g.drawImage(sA, 0, 0);
-      g.globalAlpha = lisse(borne((m - 0.8) / 0.2)); if (g.globalAlpha > 0.01) g.drawImage(sB, 0, 0);
-      const vis = m <= 0 || m >= 1 ? 0 : Math.min(1, 6 * Math.min(m, 1 - m));
+      g.globalAlpha = 1 - lisse(borne(m / 0.18)); if (g.globalAlpha > 0.01) g.drawImage(sA, 0, 0);
+      g.globalAlpha = lisse(borne((m - 0.84) / 0.16)); if (g.globalAlpha > 0.01) g.drawImage(sB, 0, 0);
+      const vis = m <= 0 || m >= 1 ? 0 : Math.min(1, 7 * Math.min(m, 1 - m));
       if (vis > 0.01) {
         g.globalCompositeOperation = 'lighter';
-        const tour = rotation(m);
+        const s = (t || 0) / 1000;                                   // secondes : la vitesse ne dépend pas de la durée
+        const essaim = Math.sin(Math.PI * borne((m - 0.12) / 0.76));   // force du tournoiement
         for (const q of grains) {
-          // la spirale se resserre un peu pendant qu'elle tourne (aspiration vers le cœur)
-          const serre = 1 - 0.18 * Math.sin(Math.PI * borne((m - 0.3) / 0.4));
-          const Rr = q.rayon * serre;
-          const th = q.angle + tour * q.vitesse;
-          const vx = cx + Math.cos(th) * Rr, vy = cy + Math.sin(th) * Rr;
-          const devant = 1 - 0.55 * (q.rayon / RMAX);                     // le cœur brille, les bords s'estompent
+          const th = q.angle + q.omega * s;
+          const R = q.rayon * (1 + 0.1 * Math.sin(s * 1.1 + q.souffle)) * (1 - 0.12 * essaim);
+          // orbite légèrement elliptique et inclinée, propre à chaque grain
+          const ex = Math.cos(th) * R, ey = Math.sin(th) * R * q.aplat;
+          const ci = Math.cos(q.incline), si = Math.sin(q.incline);
+          let vx = cx + ex * ci - ey * si, vy = cy + ex * si + ey * ci;
+          vx += 7 * Math.sin(s * q.ferr + q.errance); vy += 6 * Math.cos(s * q.ferr * 0.8 + q.errance);
+          const lueur = 1 - 0.4 * (q.rayon / RMAX);
           let x, y, eclat;
-          if (m < 0.4) { const k = lisse(borne((m / 0.4 - q.retard) / (1 - q.retard))); x = q.a.x + (vx - q.a.x) * k; y = q.a.y + (vy - q.a.y) * k; eclat = 1 + (devant - 1) * k; }
-          else if (m < 0.6) { x = vx; y = vy; eclat = devant; }
-          else { const k = lisse(borne(((m - 0.6) / 0.4 - q.retard) / (1 - q.retard))); x = vx + (q.b.x - vx) * k; y = vy + (q.b.y - vy) * k; eclat = devant + (1 - devant) * k; }
-          const tourbillon = Math.sin(Math.PI * borne((m - 0.15) / 0.7));
-          const rr = q.r * 2.2 * (1 - 0.35 * tourbillon) * (0.7 + 0.3 * eclat);
-          const alpha = vis * (0.3 + 0.55 * eclat) * (1 - 0.35 * tourbillon);
+          if (m < 0.3) { const k = lisse(borne((m / 0.3 - q.retard) / (1 - q.retard))); x = q.a.x + (vx - q.a.x) * k; y = q.a.y + (vy - q.a.y) * k; eclat = 1 + (lueur - 1) * k; }
+          else if (m < 0.7) { x = vx; y = vy; eclat = lueur; }
+          else { const k = lisse(borne(((m - 0.7) / 0.3 - q.retard) / (1 - q.retard))); x = vx + (q.b.x - vx) * k; y = vy + (q.b.y - vy) * k; eclat = lueur + (1 - lueur) * k; }
+          const scintille = 0.75 + 0.25 * Math.sin(s * 3.1 + q.souffle * 2);
+          const rr = q.r * 2.1 * (1 - 0.25 * essaim) * (0.7 + 0.3 * eclat);
+          const alpha = vis * (0.3 + 0.55 * eclat) * (1 - 0.25 * essaim) * scintille;
           g.globalAlpha = alpha; g.drawImage(point, x - rr, y - rr, 2 * rr, 2 * rr);
-          if (tourbillon > 0.05) for (let j = 1; j <= 3; j++) {
-            const tj = th - j * 0.09 * q.vitesse;
-            const tx = cx + Math.cos(tj) * Rr, ty = cy + Math.sin(tj) * Rr;
-            const px = x + (tx - vx) * tourbillon, py = y + (ty - vy) * tourbillon, pr = rr * (1 - j * 0.2);
-            g.globalAlpha = alpha * tourbillon * (0.5 - j * 0.13); g.drawImage(point, px - pr, py - pr, 2 * pr, 2 * pr);
+          // une traînée à peine marquée, dans le sens du mouvement
+          if (essaim > 0.1) {
+            const tj = th - q.omega * 0.18, ex2 = Math.cos(tj) * R, ey2 = Math.sin(tj) * R * q.aplat;
+            const px = x + ((cx + ex2 * ci - ey2 * si) - (cx + ex * ci - ey * si)) * essaim, py = y + ((cy + ex2 * si + ey2 * ci) - (cy + ex * si + ey * ci)) * essaim;
+            g.globalAlpha = alpha * essaim * 0.3; g.drawImage(point, px - rr * 0.8, py - rr * 0.8, rr * 1.6, rr * 1.6);
           }
         }
       }
@@ -321,6 +324,8 @@ class Scene {
     this.dessiner = VARIANTES[this.variante](this.el, de, vers, p);
     this.el.insertAdjacentHTML('beforeend', '<div class="eclat"></div><div class="indication">cliquer pour rejouer</div>');
   }
+  /** la poussière d'étoiles dure 8 s, les autres 3,3 s (battements du jeu) */
+  duree() { return this.variante === 'poussiere' ? 8000 : T.duree; }
   phase(nom) { this.el.className = 'scene ' + nom; }
   formes(de, vers, blanc, lueur) {
     this.de.style.opacity = de ? 1 : 0; this.vers.style.opacity = vers ? 1 : 0;
@@ -334,9 +339,9 @@ class Scene {
       const t = now - debut;
       if (t < T.blanc) { /* en couleur */ }
       else if (t < T.bat) { this.formes(true, false, true, false); }
-      else if (t < T.bat + T.duree) {
+      else if (t < T.bat + this.duree()) {
         if (!this.el.classList.contains('bat')) { this.phase('bat'); this.formes(false, false, true, false); }
-        const m = avancement(t - T.bat, this.variante === 'poussiere' ? 'continu' : etat.rythme); this.dessiner(m, t); this.curseur.value = Math.round(m * 1000);
+        const m = avancement(t - T.bat, this.variante === 'poussiere' ? 'continu' : etat.rythme, this.duree()); this.dessiner(m, t - T.bat); this.curseur.value = Math.round(m * 1000);
       } else {
         this.phase('eclat'); this.formes(false, true, false, true); this.curseur.value = 1000;
         this.minuteur = setTimeout(() => this.phase('revele'), 140);
@@ -348,7 +353,7 @@ class Scene {
   }
   figer(m) {
     cancelAnimationFrame(this.raf); clearTimeout(this.minuteur);
-    this.phase('bat'); this.formes(false, false, true, false); this.dessiner(m, performance.now());
+    this.phase('bat'); this.formes(false, false, true, false); this.dessiner(m, m * this.duree());
   }
 }
 
