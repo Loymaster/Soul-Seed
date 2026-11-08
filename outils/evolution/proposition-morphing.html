@@ -104,7 +104,7 @@ h1{font-weight:normal;font-style:italic;text-align:center;font-size:clamp(28px,4
       <div class="scene"></div>
       <div class="titre"><span class="lettre">C</span><span class="nom">Poussière d'étoiles</span></div>
       <div class="curseur"><span>de</span><input type="range" min="0" max="1000" value="0" aria-label="Avancement de la transformation (Poussière d'étoiles)"><span>vers</span></div>
-      <p class="desc">En une seule fois, sur 6 secondes : la silhouette se déforme lentement d'une forme à l'autre (la fusion, ralentie), et une nuée de grains de lumière la suit en s'agitant vivement dans tous les sens, plus fort au cœur de la transformation, avant de se reposer sur la nouvelle forme.</p>
+      <p class="desc">En une seule fois, sur 6 secondes : la silhouette se déforme lentement d'une forme à l'autre (la fusion, ralentie), et une nuée de grains la suit en s'agitant vivement dans tous les sens ; chaque grain a d'abord la couleur de l'ancienne forme, puis prend peu à peu celle de la nouvelle, avant de se reposer sur elle.</p>
       <ul class="pour"><li>Spectaculaire, très « magie sainte »</li><li>Combine les deux : la forme qui se déforme en fond, la nuée qui s'agite en la suivant</li></ul>
       <ul class="contre"><li>Joue toujours en une seule fois (le réglage « Rythme » ne la change pas) ; plus de calcul à chaque image</li></ul>
       <div class="actions"><button class="lien rejouer">rejouer</button><span class="tampon">dans le jeu</span></div>
@@ -253,6 +253,15 @@ const VARIANTES = {
       return pts.sort((u, v) => u.y - v.y);
     };
     const pa = tirer(mA), pb = tirer(mB);
+    // couleurs des deux formes, lues dans les images posées à leur place (un peu éclaircies : ce sont des grains de lumière)
+    const pixels = (img, h) => { const k = document.createElement('canvas'); k.width = W; k.height = H; const x = k.getContext('2d', { willReadFrequently: true }); const q = placer(img, h, 1); x.drawImage(img, q.x, q.y, q.l, q.h); return x.getImageData(0, 0, W, H).data; };
+    const pxA = pixels(de, hDe), pxB = pixels(vers, hVers);
+    const couleur = (px, pt) => {
+      const xi = Math.max(0, Math.min(W - 1, Math.round(pt.x))), yi = Math.max(0, Math.min(H - 1, Math.round(pt.y))), i = (yi * W + xi) * 4;
+      // les traits sombres (yeux, contours) ne donnent pas de grains noirs : on relève les plus sombres
+      const lum = 0.3 * px[i] + 0.59 * px[i + 1] + 0.11 * px[i + 2], e = lum < 90 ? 0.55 : 0.2;
+      return [px[i] + (255 - px[i]) * e, px[i + 1] + (255 - px[i + 1]) * e, px[i + 2] + (255 - px[i + 2]) * e];
+    };
     // l'essaim suit la fusion : chaque grain est accroché à un point de l'ancienne forme et à un point de la nouvelle
     // (même hauteur relative), glisse de l'un à l'autre au rythme de la silhouette qui se déforme en fond, et s'agite
     // vivement autour de sa place, dans tous les sens (deux oscillations rapides par axe, à fréquences et phases propres)
@@ -262,7 +271,8 @@ const VARIANTES = {
       return { a: q, b: pb[Math.floor(k * (pb.length - 1))] || q,
         ampl: 18 + Math.random() * 26 + (Math.random() < 0.15 ? 34 : 0),     // quelques grains s'écartent davantage
         fx1: f(), fx2: f() * 1.7, fy1: f(), fy2: f() * 1.6, px1: ph(), px2: ph(), py1: ph(), py2: ph(),
-        souffle: ph(), r: 0.7 + Math.random() * 1.5, retard: Math.random() * 0.18 };
+        souffle: ph(), r: 0.7 + Math.random() * 1.5, retard: Math.random() * 0.18,
+        cA: couleur(pxA, q), cB: couleur(pxB, pb[Math.floor(k * (pb.length - 1))] || q) };
     });
     const blanche = (img, h) => { const k = document.createElement('canvas'); k.width = W; k.height = H; const x = k.getContext('2d'); const q = placer(img, h, 1); x.drawImage(img, q.x, q.y, q.l, q.h); x.globalCompositeOperation = 'source-in'; x.fillStyle = '#fffcf0'; x.fillRect(0, 0, W, H); return k; };
     const sA = blanche(de, hDe), sB = blanche(vers, hVers);
@@ -276,12 +286,13 @@ const VARIANTES = {
       g.globalCompositeOperation = 'source-over';
       const vis = m <= 0 || m >= 1 ? 0 : Math.min(1, 7 * Math.min(m, 1 - m));
       if (vis > 0.01) {
-        g.globalCompositeOperation = 'lighter';
+        g.globalCompositeOperation = 'source-over';
         const s = (t || 0) / 1000;
         const agite = Math.sin(Math.PI * borne((m - 0.06) / 0.88));    // l'agitation culmine au milieu de la fusion
+        const avance = (q) => lisse(borne((m - q.retard * (1 - m)) / (1 - q.retard * 0.6)));
         const pos = (q, sec) => {
           // la place du grain sur la silhouette qui se déforme (même avancement que la fusion, un peu décalé par grain)
-          const k = lisse(borne((m - q.retard * (1 - m)) / (1 - q.retard * 0.6)));
+          const k = avance(q);
           const bx = q.a.x + (q.b.x - q.a.x) * k, by = q.a.y + (q.b.y - q.a.y) * k;
           const A = q.ampl * agite;
           return [bx + A * (Math.sin(sec * q.fx1 + q.px1) + 0.5 * Math.sin(sec * q.fx2 + q.px2)) / 1.5,
@@ -290,13 +301,17 @@ const VARIANTES = {
         for (const q of grains) {
           const [x, y] = pos(q, s);
           const scintille = 0.7 + 0.3 * Math.sin(s * 6 + q.souffle * 2);
-          const rr = q.r * 2.5;
-          const alpha = vis * 0.9 * scintille;
-          g.globalAlpha = alpha; g.drawImage(point, x - rr, y - rr, 2 * rr, 2 * rr);
+          const rr = q.r * 1.9;
+          const alpha = vis * 0.95 * scintille;
+          // la couleur passe de celle de l'ancienne forme à celle de la nouvelle, au rythme du grain
+          const k = avance(q), c = q.cA.map((v, j) => Math.round(v + (q.cB[j] - v) * k));
+          g.fillStyle = `rgb(${c[0]},${c[1]},${c[2]})`;
+          g.globalAlpha = alpha; g.beginPath(); g.arc(x, y, rr, 0, 6.2832); g.fill();
+          g.globalAlpha = alpha * 0.25; g.beginPath(); g.arc(x, y, rr * 1.9, 0, 6.2832); g.fill();
           // traînée dans le sens du mouvement (position une fraction de seconde plus tôt)
           if (agite > 0.1) {
             const [x2, y2] = pos(q, s - 0.045);
-            g.globalAlpha = alpha * agite * 0.35; g.drawImage(point, x2 - rr * 0.8, y2 - rr * 0.8, rr * 1.6, rr * 1.6);
+            g.globalAlpha = alpha * agite * 0.35; g.beginPath(); g.arc(x2, y2, rr * 0.8, 0, 6.2832); g.fill();
           }
         }
       }
