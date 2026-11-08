@@ -1,0 +1,47 @@
+/* Registre exploration : la vie des combattants sur de petites pages de carnet, dans l'esprit de la page du jour
+   en haut à gauche de l'exploration (dos de cuir surpiqué, papier réglé, marge rouge, ruban, écriture à la main).
+   Une ligne réglée par combattant : nom, allure en mots, et un trait d'encre pour la vie (jamais de chiffre).
+   Variante active quand PRESENTATION_EXPLORATION vaut « carnet » (EcranCombat.tsx) ; « feuille » rétablit les morceaux de carte. */
+.cb.exploration .plaque.carnet{top:18px;width:372px;padding:8px 50px 12px 78px;background:none;clip-path:none;border:none;border-radius:0;box-shadow:none;
+  transform:rotate(-1.6deg);transform-origin:30px 20px;filter:drop-shadow(0 12px 16px rgba(0,0,0,.45));animation:cbCarnetIn .7s cubic-bezier(.3,1.3,.5,1) both;text-align:left}
+.cb.exploration .plaque.carnet::before{content:"de notre côté";position:relative;display:block;inset:auto;border:none;opacity:1;height:24px;
+  font-family:'Reenie Beanie',cursive;font-size:21px;line-height:24px;color:#6b6258;pointer-events:none}
+.cb.exploration .plaque.carnet.d::before{content:"en face"}
+.cb.exploration .plaque.carnet::after{display:none}
+.cb.exploration .plaque.carnet.g{left:22px}
+.cb.exploration .plaque.carnet.d{right:22px;left:auto;padding:8px 78px 12px 50px;transform:rotate(1.4deg);transform-origin:calc(100% - 30px) 20px}
+@keyframes cbCarnetIn{from{opacity:0;translate:0 -30px;rotate:-5deg}}
+/* le dos de cuir, la page réglée, le ruban (comme .ex12 .carnet) */
+.cb .plaque.carnet .pl-cuir{position:absolute;left:0;top:-4px;bottom:-4px;width:40px;border-radius:7px 3px 3px 7px;z-index:-1;
+  background:repeating-linear-gradient(177deg,rgba(255,220,170,.04) 0 3px,transparent 3px 7px),linear-gradient(90deg,#5a321a,#7d4a28 60%,#6e3f22);box-shadow:inset 0 0 0 2px #3a1f0e}
+.cb .plaque.carnet .pl-cuir::before{content:"";position:absolute;inset:5px;border:1.5px dashed rgba(240,214,170,.55);border-radius:4px}
+.cb .plaque.carnet .pl-feuillet{position:absolute;left:34px;right:0;top:0;bottom:0;z-index:-1;border-radius:2px 6px 6px 2px;
+  background:linear-gradient(transparent 32.5px,rgba(80,110,150,.2) 32.5px,rgba(80,110,150,.2) 34px,transparent 34px) 0 32px/100% 34px no-repeat,
+    linear-gradient(transparent 32.5px,rgba(80,110,150,.2) 32.5px,rgba(80,110,150,.2) 34px,transparent 34px) 0 66px/100% 34px repeat-y,
+    linear-gradient(90deg,transparent 30px,rgba(170,60,40,.3) 30px,rgba(170,60,40,.3) 31.5px,transparent 31.5px),linear-gradient(170deg,#f4ead2,#e8d8b4)}
+.cb .plaque.carnet .pl-feuillet::after{content:"";position:absolute;right:0;top:0;bottom:0;width:18px;background:linear-gradient(90deg,transparent,rgba(120,90,50,.18));border-radius:0 6px 6px 0}
+.cb .plaque.carnet .pl-ruban{position:absolute;right:22px;top:-2px;bottom:-22px;width:14px;z-index:-1;background:linear-gradient(90deg,#8e2a1e,#b23a28 50%,#8e2a1e);clip-path:polygon(0 0,100% 0,100% 100%,50% calc(100% - 10px),0 100%);box-shadow:0 2px 3px rgba(0,0,0,.3)}
+/* en face : la page en miroir, dos de cuir à droite */
+.cb .plaque.carnet.d .pl-cuir{left:auto;right:0;border-radius:3px 7px 7px 3px}
+.cb .plaque.carnet.d .pl-feuillet{left:0;right:34px;border-radius:6px 2px 2px 6px;
+  background:linear-gradient(transparent 32.5px,rgba(80,110,150,.2) 32.5px,rgba(80,110,150,.2) 34px,transparent 34px) 0 32px/100% 34px no-repeat,
+    linear-gradient(transparent 32.5px,rgba(80,110,150,.2) 32.5px,rgba(80,110,150,.2) 34px,transparent 34px) 0 66px/100% 34px repeat-y,
+    linear-gradient(270deg,transparent 30px,rgba(170,60,40,.3) 30px,rgba(170,60,40,.3) 31.5px,transparent 31.5px),linear-gradient(190deg,#f4ead2,#e8d8b4)}
+.cb .plaque.carnet.d .pl-feuillet::after{right:auto;left:0;background:linear-gradient(270deg,transparent,rgba(120,90,50,.18));border-radius:6px 0 0 6px}
+/* une ligne réglée par combattant */
+.cb .plaque.carnet .pl-ligne{position:relative;display:flex;align-items:baseline;gap:10px;height:34px;box-sizing:border-box;padding-top:1px}
+.cb.exploration .plaque.carnet .pl-nom{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding:0;
+  font-family:'Reenie Beanie',cursive;font-weight:400;font-size:31px;line-height:30px;letter-spacing:0;color:#3a2412;text-shadow:none}
+.cb.exploration .plaque.carnet .pl-allure{flex:none;padding:0;margin:0;font-family:'Reenie Beanie',cursive;font-size:22px;line-height:30px;color:#6b6258}
+/* la vie : un trait d'encre posé sur la réglure */
+.cb.exploration .plaque.carnet .pl-fil{position:absolute;left:0;right:0;bottom:1px;height:5px;margin:0;border-radius:0;background:none;box-shadow:none;
+  border-bottom:1.5px dotted rgba(60,46,26,.28)}
+.cb.exploration .plaque.carnet .pl-fil i{left:0;right:auto;top:0;bottom:0;border-radius:3px 1px 4px 2px;opacity:.82;mix-blend-mode:multiply;box-shadow:none;
+  background-image:repeating-linear-gradient(100deg,rgba(255,255,255,.22) 0 2px,transparent 2px 6px)!important;transition:width .5s cubic-bezier(.3,.8,.4,1)}
+.cb.exploration .plaque.carnet.d .pl-fil i{left:0;right:auto}
+/* à terre : le nom barré d'un trait d'encre */
+.cb .plaque.carnet .pl-ligne.ko .pl-nom{color:#7a6a58;text-decoration:line-through;text-decoration-color:rgba(60,30,20,.75);text-decoration-thickness:2px}
+.cb .plaque.carnet .pl-ligne.ko .pl-allure{color:#9c3b2a}
+/* la cible de notre écho, entourée dans la marge */
+.cb .plaque.carnet .pl-ligne.visee::before{content:"";position:absolute;left:-30px;top:9px;width:13px;height:11px;border:2px solid rgba(156,59,42,.85);border-radius:50% 45% 55% 50%;transform:rotate(-12deg)}
+.cb .plaque.carnet.d .pl-ligne.visee::before{left:auto;right:-30px}

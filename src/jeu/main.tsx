@@ -4,9 +4,10 @@
 //   sans l'introduction : création du personnage → choix de la Soul Seed → ranch.
 //   Au ranch, quand l'écho s'éteint : le dernier souffle → choix de la Soul Seed (après la disparition) → ranch.
 //   Du ranch, le poteau « partir » → Explorer : l'exploration (départ à la Sortie du village) ; une rencontre ouvre
-//   l'écran de combat, qui ramène au même lieu ; à la Sortie du village, une flèche ramène au ranch, l'autre à la forêt
-//   du village. Les PNJ d'exploration jouent leur scène sur place. Une sortie en cours est notée dans le monde :
-//   recharger la page (ou « Continuer ») y ramène, au même lieu.
+//   l'écran de combat (zoom et fondu vers le décor du combat, musique de rencontre continue), qui ramène au même
+//   lieu ; à la Sortie du village, une flèche ramène au ranch, l'autre à la forêt du village. Les PNJ d'exploration
+//   jouent leur scène sur place. Une sortie en cours est notée dans le monde : recharger la page (ou « Continuer »)
+//   y ramène, au même lieu.
 //   Du ranch encore, « Le village » et « Le magasin » ouvrent l'écran du monde (src/jeu/monde : village, forêt,
 //   sanctuaire, atelier, boutique) ; ses PNJ jouent leurs scènes et leurs combats sur place, puis on rentre au ranch
 //   (ou, depuis la forêt du village, « Partir en exploration »).
@@ -317,6 +318,8 @@ function Jeu() {
       return garde(
         <EcranCombat key={`combat-${etat.naissance}-${adversaire.description.nom}`} echo={etat} allie={descriptionDepuisEtat(etat)} adversaire={adversaire}
           registre={registre} terrain={terrain} musique={musique}
+          // une rencontre d'exploration : l'écran s'enchaîne sur le zoom de l'exploration, la musique continue
+          enchaine={!!exploration}
           surFin={(issue) => {
             appliquerCombat(etat, issue, adversaire, entrainement);
             // exploration : une victoire rend les trouvailles dispersées
