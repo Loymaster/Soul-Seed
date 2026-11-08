@@ -109,6 +109,10 @@ export function jouerAction(nom: string, argument: string | undefined, ctx: Cont
     case 'heures':
       sim.avancer(Math.max(0, Math.round(nombre(args[0]))));
       return { type: 'suite' };
+    case 'garde':
+      // le travail chez Jumpy : les heures passent, mais les besoins de l'écho restent en l'état (Simulation.garder)
+      sim.garder(Math.max(0, Math.round(nombre(args[0]))));
+      return { type: 'suite' };
     case 'journal':
       if (argument?.trim()) sim.noter(argument.trim());
       return { type: 'suite' };

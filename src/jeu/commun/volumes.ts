@@ -12,8 +12,20 @@ const ecouteurs = new Set<() => void>();
  */
 export const ATTENUATION_MUSIQUE = 0.5;
 
-/** Volume effectif des musiques (0–1) : atténuation native × réglage du joueur. */
-export const volumeMusique = () => ATTENUATION_MUSIQUE * etat.musique;
+/** Volume effectif des musiques (0–1) : atténuation native × réglage du joueur (0 pendant une séquence qui les fait taire). */
+export const volumeMusique = () => (silences > 0 ? 0 : ATTENUATION_MUSIQUE * etat.musique);
+
+let silences = 0;
+/**
+ * Fait taire toutes les musiques (fondu court, elles continuent sans bruit) le temps d'une séquence plein écran
+ * — l'évolution jouée hors du ranch ; renvoie de quoi les rendre (une seule fois).
+ */
+export function taireMusiques(): () => void {
+  silences++;
+  ecouteurs.forEach((f) => f());
+  let fait = false;
+  return () => { if (fait) return; fait = true; silences = Math.max(0, silences - 1); ecouteurs.forEach((f) => f()); };
+}
 /** Réglage du joueur seul (la jauge des options), sans l'atténuation native. */
 export const reglageMusique = () => etat.musique;
 export const volumeBruitages = () => etat.bruitages;

@@ -59,7 +59,7 @@ describe('astuces du carnet', () => {
     const jumpy = readFileSync(new URL('../contenu/scenes/jumpy.scene', import.meta.url), 'utf8');
     expect(jumpy).toContain(`si heure < ${DEBUT_TRAVAIL} ou heure >= ${FIN_TRAVAIL}:`);
     expect(jumpy).toContain(`de ${DEBUT_TRAVAIL} h à ${FIN_TRAVAIL} h`);
-    expect(jumpy).toContain(`action: heures ${DUREE_TRAVAIL}`);
+    expect(jumpy).toContain(`action: garde ${DUREE_TRAVAIL}`);
     for (const [id, nom] of [['medicament', 'Un médicament'], ['bandage', 'Un pansement'], ['repousse', 'Une repousse'], ['tente', 'La tente'], ['canne_peche', 'canne à pêche'], ['appat_echo', 'appât à écho']] as const) {
       expect(tout).toContain(`${nom} (${objetDivers(id)!.prix} or`);
     }

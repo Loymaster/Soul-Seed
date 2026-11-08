@@ -327,3 +327,73 @@ describe('données reprises', () => {
     }
   });
 });
+
+describe('heures gardées (travail chez Jumpy)', () => {
+  it('fait passer le temps sans que rien ne bouge chez l’écho', () => {
+    const s = nouvelle(5, { minute: 9 * 60 + 30, digestion: true, besoin: 90, probaEvenement: 100, chanceComportement: 100 });
+    const avant = structuredClone(s.etat);
+    s.garder(4);
+    const e = s.etat;
+    expect(e.jour).toBe(avant.jour);
+    expect(e.minute).toBe(13 * 60 + 30);
+    for (const k of ['satiete', 'proprete', 'energie', 'humeur', 'manqueAffection', 'anxiete', 'besoin', 'sante', 'poids', 'risqueMaladie'] as const) expect(e[k]).toBe(avant[k]);
+    expect(e.emotions).toEqual(avant.emotions);
+    expect(e.dejections).toEqual(avant.dejections);
+    expect(e.visiteur).toEqual(avant.visiteur);
+    expect(s.vider().filter((x) => x.type !== 'journal')).toEqual([]);
+  });
+  it('les règles reprennent à l’heure pleine suivante', () => {
+    const s = nouvelle(5, { minute: 9 * 60 });
+    s.garder(4);
+    const sat = s.etat.satiete;
+    s.avancer(1);
+    expect(s.etat.satiete).toBeLessThan(sat);
+  });
+  it('tient à jour le changement de jour', () => {
+    const s = nouvelle(5, { minute: 22 * 60, caresses: { jour: 0, nombre: 3 } });
+    const jour = s.etat.jour;
+    s.garder(4);
+    expect(s.etat.jour).toBe(jour + 1);
+    expect(s.etat.minute).toBe(2 * 60);
+    expect(s.etat.caresses.nombre).toBe(0);
+  });
+});
+
+describe('annonces à tout le jeu (évolution, écroulement, temps suspendu)', () => {
+  it('une évolution est annoncée avec l’ancienne et la nouvelle image', async () => {
+    const { ecouterEvolutions } = await import('../src/moteur/simulation');
+    const s = nouvelle(2);
+    s.etat.jour = s.etat.naissance + 1; s.etat.minute = 17 * 60 + 59;
+    const vues: { avant: string; apres: string; vers: string }[] = [];
+    const fin = ecouterEvolutions((a) => vues.push(a));
+    s.minute();
+    fin();
+    expect(vues).toHaveLength(1);
+    expect(vues[0].vers).toBe('enfant');
+    expect(vues[0].avant).toContain('bebe/');
+    expect(vues[0].apres).toContain('enfant/');
+    expect(s.vider().find((x) => x.type === 'evolution')).toMatchObject({ avant: vues[0].avant });
+  });
+  it('un écroulement de fatigue est annoncé', async () => {
+    const { ecouterEffondrements } = await import('../src/moteur/simulation');
+    const s = nouvelle(2, { energie: 1, minute: 10 * 60 + 59 });
+    const vus: number[] = [];
+    const fin = ecouterEffondrements((a) => vus.push(a.heures));
+    s.minute();
+    fin();
+    expect(vus.length).toBe(1);
+    expect(vus[0]).toBeGreaterThan(0);
+  });
+  it('le temps suspendu n’avance plus, sauf une action déjà commencée', async () => {
+    const { suspendreTemps } = await import('../src/moteur/simulation');
+    const s = nouvelle(2, { minute: 600 });
+    const reprendre = suspendreTemps();
+    s.minute();
+    expect(s.etat.minute).toBe(600);
+    s.avancer(1);
+    expect(s.etat.minute).toBe(660);
+    reprendre();
+    s.minute();
+    expect(s.etat.minute).toBe(661);
+  });
+});

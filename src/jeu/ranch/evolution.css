@@ -98,3 +98,9 @@
 .evo-morph { position: absolute; left: 0; top: 0; pointer-events: none; opacity: 0;
   filter: drop-shadow(0 0 18px rgba(255,248,220,.95)) drop-shadow(0 0 42px rgba(255,226,150,.8)); }
 .evo-morph.visible { opacity: 1; }
+
+/* l'évolution hors du ranch (FenetreEvolution) : par-dessus tout l'écran courant */
+.evo-partout { position: fixed; inset: 0; z-index: 10000; }
+.evo-partout .repere-cadre { z-index: 10000; }
+/* hors du ranch, l'écran du dessous montre déjà la nouvelle forme : le voile le cache presque entièrement */
+.evo-partout .evo-voile { background: radial-gradient(ellipse 46% 52% at 50% 52%, rgba(34,22,12,.9) 0%, rgba(12,8,5,.97) 62%, rgba(6,4,3,.99) 100%); }

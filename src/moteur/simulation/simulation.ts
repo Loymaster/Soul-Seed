@@ -21,7 +21,8 @@ import { essaisCorvee } from './corvees';
 import { remarquerCroissance, texteAdieu, vieillirSauvages } from './croissance';
 import { nomsPris } from './noms';
 import { DEMI_HEURE_PANSEMENT, PART_PAR_DEMI_HEURE, demiHeuresPansement, dureeDemiHeures, partPerdue, plaiesFinies, pvMaxEcho } from './soins';
-import { determinerAdolescent, determinerAdulte } from './evolution';
+import { apparence, determinerAdolescent, determinerAdulte } from './evolution';
+import { annoncerEffondrement, annoncerEvolution, tempsSuspendu } from './annonces';
 import { INTERACTIONS } from './donnees/interactions';
 import { CORVEES, ENTRAINEMENTS } from './donnees/activites';
 import { ALIMENTS } from './donnees/aliments';
@@ -97,10 +98,15 @@ export class Simulation {
 
   // ————————————————————————————————————————— temps
 
-  /** Fait passer une minute de jeu. À chaque heure pleine, les règles horaires s'appliquent. */
+  /**
+   * Fait passer une minute de jeu. À chaque heure pleine, les règles horaires s'appliquent.
+   * Rien ne passe tant qu'une séquence plein écran a suspendu le temps (annonces.ts : l'évolution), sauf pendant
+   * une action déjà commencée (avancer) : elle va jusqu'au bout.
+   */
   minute(opts: OptionsHeure = {}) {
     const e = this.etat;
     if (e.mort) return;
+    if (tempsSuspendu() && !this.dansAction) return;
     e.minute += 1;
     let nouveauJour = false;
     if (e.minute >= 1440) { e.minute -= 1440; e.jour += 1; nouveauJour = true; }
@@ -117,7 +123,47 @@ export class Simulation {
 
   /** Avance l'horloge de `minutes` minutes. */
   avancerMinutes(minutes: number, opts: OptionsHeure = {}) {
-    for (let i = 0; i < minutes && !this.etat.mort; i++) this.minute(opts);
+    const avant = this.dansAction;
+    this.dansAction = true;
+    try { for (let i = 0; i < minutes && !this.etat.mort; i++) this.minute(opts); } finally { this.dansAction = avant; }
+  }
+  /** Une action longue est en cours (avancer) : l'horloge suspendue ne l'interrompt pas. */
+  private dansAction = false;
+
+  /**
+   * Heures gardées (le travail chez Jumpy : « Jumpy veille sur l'écho ») : l'horloge tourne, mais rien ne bouge chez
+   * l'écho — ni faim, ni fatigue, ni propreté, ni besoins, ni émotions, ni événements (closeJobWork du prototype :
+   * « heures gelées »). Seul un changement de jour est tenu à jour (compteurs du jour, échos sauvages qui grandissent).
+   * Les règles reprennent à l'heure pleine suivante (une évolution due pendant ce temps survient alors).
+   */
+  garder(heures: number) {
+    const e = this.etat;
+    if (e.mort) return;
+    for (let i = 0; i < Math.max(0, Math.round(heures * 60)); i++) {
+      e.minute += 1;
+      if (e.minute >= 1440) {
+        e.minute -= 1440; e.jour += 1;
+        for (const t of this.changerDeJour()) e.traits[t] = Math.min(100, e.traits[t] + 1);
+      }
+    }
+  }
+
+  /** Au changement de jour : attachement, traits renforcés par la journée, compteurs remis à zéro. Renvoie les traits qui progressent. */
+  private changerDeJour(): (keyof Etat['traits'])[] {
+    const e = this.etat;
+    const progressionTraits: (keyof Etat['traits'])[] = [];
+    e.attachement = Math.min(100, e.attachement + 1);
+    for (const k of EMOTIONS_FOND) if (e.sommeJourEmotions[k] > 1200) progressionTraits.push(TRAIT_D_EMOTION[k]);
+    for (const k of EMOTIONS_FOND) e.sommeJourEmotions[k] = 0;
+    const cles = Object.keys(e.educationJour) as (keyof Etat['educationJour'])[];
+    const plus = Math.max(...cles.map(k => e.educationJour[k]));
+    if (plus > 0) progressionTraits.push(TRAIT_D_EMOTION_EDUCATIVE[piocher(cles.filter(k => e.educationJour[k] === plus), this.rng)]);
+    for (const k of cles) e.educationJour[k] = 0;
+    // les échos sauvages connus grandissent aussi (croissance.ts) ; au bout de leur âge, ils ne reviennent plus
+    for (const s of vieillirSauvages(e)) this.noter(texteAdieu(s));
+    e.caresses = { jour: e.jour, nombre: 0 };
+    this.emettre({ type: 'nouveau-jour', jour: e.jour });
+    return progressionTraits;
   }
 
   private rythmeRespecte(h: number) {
@@ -165,20 +211,7 @@ export class Simulation {
 
     // Cumul quotidien des émotions ; au changement de jour, une émotion dominante (> 1200) renforce son trait.
     for (const k of EMOTIONS_FOND) e.sommeJourEmotions[k] += e.emotions[k];
-    const progressionTraits: (keyof Etat['traits'])[] = [];
-    if (nouveauJour) {
-      e.attachement = Math.min(100, e.attachement + 1);
-      for (const k of EMOTIONS_FOND) if (e.sommeJourEmotions[k] > 1200) progressionTraits.push(TRAIT_D_EMOTION[k]);
-      for (const k of EMOTIONS_FOND) e.sommeJourEmotions[k] = 0;
-      const cles = Object.keys(e.educationJour) as (keyof Etat['educationJour'])[];
-      const plus = Math.max(...cles.map(k => e.educationJour[k]));
-      if (plus > 0) progressionTraits.push(TRAIT_D_EMOTION_EDUCATIVE[piocher(cles.filter(k => e.educationJour[k] === plus), rng)]);
-      for (const k of cles) e.educationJour[k] = 0;
-      // les échos sauvages connus grandissent aussi (croissance.ts) ; au bout de leur âge, ils ne reviennent plus
-      for (const s of vieillirSauvages(e)) this.noter(texteAdieu(s));
-      e.caresses = { jour: e.jour, nombre: 0 };
-      this.emettre({ type: 'nouveau-jour', jour: e.jour });
-    }
+    const progressionTraits: (keyof Etat['traits'])[] = nouveauJour ? this.changerDeJour() : [];
 
     if (e.anxiete > 90) e.risqueMaladie = Math.min(100, e.risqueMaladie + (e.anxiete - 50) * 0.04);
 
@@ -430,6 +463,7 @@ export class Simulation {
   private evoluer(vers: Stade) {
     const e = this.etat;
     const de = e.stade;
+    const avant = apparence(e);
     if (vers === 'adolescent') e.evolution = determinerAdolescent(e);
     if (vers === 'adulte') e.evolution = determinerAdulte(e) ?? e.evolution;
     e.stade = vers;
@@ -442,8 +476,10 @@ export class Simulation {
     });
     e.educationStade = { cognitif: 0, socio: 0, moteur: 0, joy: 0, fear: 0, sorrow: 0, wrath: 0, disgust: 0 };
     this.noter(`${this.Nom} a grandi ! ${this.a('Il', 'Elle')} a atteint le stade ${NOM_STADE[vers]}.`);
-    this.emettre({ type: 'evolution', de, vers });
+    this.emettre({ type: 'evolution', de, vers, avant });
     this.apprendreTechniques();
+    // tout le jeu l'apprend, quel que soit l'écran (src/jeu/main.tsx joue la séquence hors du ranch)
+    annoncerEvolution({ etat: e, de, vers, avant, apres: apparence(e) });
   }
 
   // ————————————————————————————————————————— soins
@@ -575,6 +611,8 @@ export class Simulation {
       : `${this.Nom} a dormi ${heures} ${mot}.`);
     if (!effondrement) appliquerEmotions(e, { joie: 10, colere: -10, tristesse: -10, degout: -10, peur: -10 });
     this.emettre({ type: 'sommeil', heures, effondrement });
+    // écroulé de fatigue : tout le jeu l'apprend (hors du ranch, src/jeu/main.tsx montre le voile du sommeil)
+    if (effondrement) annoncerEffondrement({ etat: e, heures });
     return heures;
   }
 

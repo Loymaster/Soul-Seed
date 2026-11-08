@@ -70,6 +70,7 @@ export const ACTIONS: Record<string, string> = {
   motiver: 'Hevann motive l’écho : entraînements plus efficaces pendant 6 heures',
   'apprendre-echo': 'Jumpy révèle un trait de l’écho, en mots ; {jumpy.info}',
   heures: 'fait passer des heures (« action: heures 6 »)',
+  garde: 'fait passer des heures sans que rien ne bouge chez l’écho : le travail chez Jumpy (« action: garde 4 »)',
   journal: 'écrit une ligne dans le journal (« action: journal Garry a rejoint le village. »)',
   ranch: 'à la fin de la scène, le joueur rentre au ranch',
   lieu: 'à la fin de la scène, le joueur va ailleurs (« action: lieu sanctuaire », « action: lieu zone 27 »)',

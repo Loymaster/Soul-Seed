@@ -152,7 +152,7 @@ export const THEMES_ASTUCES: ThemeAstuces[] = [
     astuces: [
       { texte: 'La boutique de Jumpy ouvre de 8 h à 20 h. Son étal change chaque jour — guettez le « deux pour le prix d’un » ; la tente et la canne à pêche sont toujours en rayon.' },
       { texte: '« En apprendre plus » sur votre écho auprès de Jumpy : un secret par jour — son régime, sa saveur favorite, son plat préféré ou détesté, son rythme, sa santé…' },
-      { texte: 'Besoin d’or ? Jumpy vous embauche à la boutique, entre 8 h et 18 h, une fois par jour : quatre heures pendant lesquelles il veille sur votre écho — pas s’il est malade.' },
+      { texte: 'Besoin d’or ? Jumpy vous embauche à la boutique, entre 8 h et 18 h, une fois par jour : quatre heures pendant lesquelles il veille sur votre écho : ni faim, ni fatigue, ni besoins ne bougent d’ici votre retour — pas s’il est malade.' },
       { texte: 'Tant que Garry rôde, des bruits étranges effraient votre écho au ranch ; une fois Garry vaincu, le calme revient.' },
       { texte: 'Le coffre de Maïko garde vos objets, et les matériaux que vous y déposez : Ash y puise directement pour ses travaux.', quand: drapeau('maiko.recrute'), piste: 'un petit écho affamé, en forêt' },
       { texte: 'Ash mène un chantier à la fois, et en même temps une réparation au ranch. La première remise en état rend une corvée praticable ; deux améliorations la rendent plus profitable.', quand: drapeau('ash.recrute'), piste: 'vers la montagne, en journée' },
