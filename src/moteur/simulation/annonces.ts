@@ -23,6 +23,11 @@ export function ecouterEvolutions(f: (a: AnnonceEvolution) => void): () => void 
   return () => { auditeurs.delete(f); };
 }
 
+/** La séquence d'une évolution a été vue jusqu'au bout : elle n'est plus due. */
+export function evolutionVue(etat: Etat, vers: Stade) {
+  if (etat.evolutionAMontrer?.vers === vers) etat.evolutionAMontrer = null;
+}
+
 export function annoncerEvolution(a: AnnonceEvolution) {
   for (const f of [...auditeurs]) { try { f(a); } catch { /* un auditeur en défaut n'arrête pas la simulation */ } }
 }

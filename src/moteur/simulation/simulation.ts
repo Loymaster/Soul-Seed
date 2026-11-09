@@ -476,6 +476,8 @@ export class Simulation {
     });
     e.educationStade = { cognitif: 0, socio: 0, moteur: 0, joy: 0, fear: 0, sorrow: 0, wrath: 0, disgust: 0 };
     this.noter(`${this.Nom} a grandi ! ${this.a('Il', 'Elle')} a atteint le stade ${NOM_STADE[vers]}.`);
+    // tant que la séquence n'a pas été vue jusqu'au bout, elle reste due (rejouée au rechargement, voir Etat.evolutionAMontrer)
+    e.evolutionAMontrer = { de, vers, avant };
     this.emettre({ type: 'evolution', de, vers, avant });
     this.apprendreTechniques();
     // tout le jeu l'apprend, quel que soit l'écran (src/jeu/main.tsx joue la séquence hors du ranch)

@@ -172,6 +172,9 @@ export interface EntreeJournal {
 /** État complet d'une partie au ranch. Sérialisable tel quel (sauvegarde JSON). */
 export interface Etat {
   version: 1;
+  /** Une évolution pas encore montrée au joueur (séquence pas jouée jusqu'au bout) : gardée dans la sauvegarde,
+   *  rejouée au prochain écran si la page a été rechargée ou l'écran quitté avant la fin. Effacée à la fin de la séquence. */
+  evolutionAMontrer?: { de: Stade; vers: Stade; avant: string } | null;
   nom: string;
   genre: Genre;
   graine: Graine;

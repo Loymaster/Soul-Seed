@@ -18,4 +18,4 @@ export { tirerNom, nomsPris, NOMS_ECHOS_M, NOMS_ECHOS_F } from './noms';
 export { stadeSauvage, vieillirSauvage, vieillirSauvages } from './croissance';
 export { pvMaxEcho, partPerdue, demiHeuresPansement, etatPlaies, plaiesApres, plaiesFinies, dureeDemiHeures, DEMI_HEURE_PANSEMENT } from './soins';
 export { essaisCorvee, probaCorvee, nombreEssais } from './corvees';
-export { ecouterEvolutions, annoncerEvolution, ecouterEffondrements, annoncerEffondrement, suspendreTemps, tempsSuspendu, type AnnonceEvolution, type AnnonceEffondrement } from './annonces';
+export { ecouterEvolutions, annoncerEvolution, evolutionVue, ecouterEffondrements, annoncerEffondrement, suspendreTemps, tempsSuspendu, type AnnonceEvolution, type AnnonceEffondrement } from './annonces';

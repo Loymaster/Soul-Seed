@@ -18,7 +18,7 @@ import donnees from '@contenu/generes/assets.json';
 import type { Catalogue } from '@/contenu/types';
 import { SCENES } from '@/contenu/scenes';
 import { analyserScene } from '@/moteur/scene/analyseur';
-import { Simulation, ageJours, apparence, creerEchoSauvage, ecouterEffondrements, ecouterEvolutions, nomsPris, heureDuJour, type AnnonceEffondrement, type AnnonceEvolution, type EchoSauvage, type Etat } from '@/moteur/simulation';
+import { Simulation, ageJours, apparence, creerEchoSauvage, ecouterEffondrements, ecouterEvolutions, evolutionVue, nomsPris, heureDuJour, type AnnonceEffondrement, type AnnonceEvolution, type EchoSauvage, type Etat } from '@/moteur/simulation';
 import { Arene as RA, bilanCombat, descriptionDepuisEtat, descriptionSauvage } from '@/moteur/combat';
 import { EcranCombat, type AdversaireCombat, type IssueCombat, type Registre } from './combat/EcranCombat';
 import { Arene } from './arene/Arene';
@@ -227,7 +227,12 @@ function Jeu() {
     if (etat.mort) { setEcran({ nom: 'graines', emplacement, personnage: P.chargerPersonnage(profil, emplacement), contexte: 'apres' }); return; }
     // une sortie d'exploration interrompue (page rechargée, jeu fermé) : on reprend là où l'on était
     const monde = chargerMonde(emplacement);
-    if (monde.sortie && ZONES[monde.sortie.zone]) { setEcran({ nom: 'exploration', emplacement, etat, monde, ...monde.sortie }); return; }
+    if (monde.sortie && ZONES[monde.sortie.zone]) {
+      // une évolution restée due (page rechargée avant la fin de la séquence) se joue par-dessus l'exploration
+      const due = etat.evolutionAMontrer;
+      if (due && etat.stade === due.vers) setEvolutions((l) => [...l, { etat, de: due.de, vers: due.vers, avant: due.avant, apres: apparence(etat) }]);
+      setEcran({ nom: 'exploration', emplacement, etat, monde, ...monde.sortie }); return;
+    }
     setEcran({ nom: 'ranch', emplacement, etat });
   };
   /** Un nouvel écho entre au ranch : la partie (et son personnage) est enregistrée dans l'emplacement. */
@@ -247,6 +252,7 @@ function Jeu() {
   const finEvolution = () => {
     // la partie est enregistrée avec sa nouvelle forme (l'écran courant continue avec le même état)
     const x = ecranCourant.current;
+    if (evolution) evolutionVue(evolution.etat, evolution.vers);
     if (evolution && 'emplacement' in x && x.emplacement !== ESSAI && 'etat' in x && x.etat === evolution.etat && !evolution.etat.mort) {
       P.sauverPartie(profil.id, x.emplacement, evolution.etat);
       P.noterForme(profil.id, apparence(evolution.etat));

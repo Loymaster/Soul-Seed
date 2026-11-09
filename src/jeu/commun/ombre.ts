@@ -17,7 +17,7 @@ export interface Pieds {
   /** centre et largeur de ce qui touche le sol (fractions de W) */
   cx: number;
   l: number;
-  /** centre et largeur du corps entier (fractions de W) : l'ombre d'un écho en l'air */
+  /** centre de gravité et largeur de la masse du corps (fractions de W) : l'ombre d'un écho en l'air */
   cxCorps: number;
   lCorps: number;
   /** vrai : mesuré sur les pixels ; faux : repli d'après la boîte utile */
@@ -64,8 +64,14 @@ export function mesurerAlpha(alpha: ArrayLike<number>, l: number, h: number, W =
     if (y > bas - bande) sol[x]++;
   }
   const [s0, s1] = etendue(sol, 0.02, 0.02);
-  const [c0, c1] = etendue(corps, 0.08, 0.08);
-  return { W, H, bas: (bas + 1) / h, cx: (s0 + s1) / 2 / l, l: (s1 - s0) / l, cxCorps: (c0 + c1) / 2 / l, lCorps: (c1 - c0) / l, mesure: true };
+  // en l'air, l'ombre est celle de la masse du corps, vue d'au-dessus : son centre de gravité (une aile ou une queue
+  // d'un seul côté ne la décale presque pas) et la largeur où se tient l'essentiel de la matière (sans bouts d'ailes,
+  // queue fine ni antennes, qui ne portent qu'une ombre ténue)
+  let somme = 0, moment = 0;
+  for (let x = 0; x < l; x++) { somme += corps[x]; moment += corps[x] * (x + 0.5); }
+  const [c0, c1] = etendue(corps, 0.15, 0.15);
+  const cxCorps = somme ? moment / somme / l : (c0 + c1) / 2 / l;
+  return { W, H, bas: (bas + 1) / h, cx: (s0 + s1) / 2 / l, l: (s1 - s0) / l, cxCorps, lCorps: (c1 - c0) / l, mesure: true };
 }
 
 const memoire = new Map<string, Pieds>();
@@ -131,7 +137,7 @@ export interface PoseOmbre {
   /** bord gauche de la boîte de l'image et bas de l'image au-dessus du bas du cadre (px), avant mise à l'échelle */
   gaucheImage?: number;
   basImage?: number;
-  /** en l'air : l'ombre suit le corps entier plutôt que ce qui pend sous lui */
+  /** en l'air : l'ombre suit la masse du corps (centre de gravité, largeur de l'essentiel) plutôt que ce qui pend sous lui */
   enLAir?: boolean;
 }
 
@@ -147,7 +153,7 @@ export function ombreSous(p: Pieds, o: PoseOmbre): Ombre {
   const lImg = p.W * k;
   const g = o.gaucheImage ?? 0, b0 = o.basImage ?? 0;
   const cx = o.enLAir ? p.cxCorps : p.cx;
-  const larg = o.enLAir ? p.lCorps * 0.62 : p.l;
+  const larg = o.enLAir ? p.lCorps * 0.9 : p.l;
   // l'image est mise à l'échelle depuis le milieu de son bas (transform-origin 50 % 100 %) ; retournée, elle se lit en miroir
   const dx = (cx - 0.5) * lImg * o.echelle * (o.gauche ? -1 : 1);
   const centre = g + lImg / 2 + dx;
@@ -155,5 +161,5 @@ export function ombreSous(p: Pieds, o: PoseOmbre): Ombre {
   const a = o.enLAir ? attenuation(o.hauteur ?? 0, o.echelle) : 1;
   const l = Math.max(14 * o.echelle, larg * lImg * o.echelle * 1.12 + 8 * o.echelle) * (0.55 + 0.45 * a);
   const h = Math.max(5, Math.min(l * 0.24, 22 * o.echelle + 4));
-  return { x: Math.round(centre - l / 2), b: Math.round(sol - h / 2), l: Math.round(l), h: Math.round(h), o: +(0.4 + 0.6 * a).toFixed(2) };
+  return { x: Math.round(centre - l / 2), b: Math.round(sol - h / 2), l: Math.round(l), h: Math.round(h), o: +(0.55 + 0.45 * a).toFixed(2) };
 }

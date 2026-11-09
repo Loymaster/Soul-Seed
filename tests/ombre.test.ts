@@ -35,6 +35,15 @@ describe('ombre depuis la silhouette', () => {
     expect(haut.o).toBeLessThan(sol.o);
     expect(Math.abs(haut.b + haut.h / 2 - (sol.b + sol.h / 2))).toBeLessThanOrEqual(1);
   });
+  it('en l’air, suit la masse du corps et non une aile ou une queue fine d’un côté', () => {
+    // corps 30–70, plus une longue queue fine (2 px de haut) qui part à droite jusqu'au bord
+    const { a, l, h } = image([[40, 60]]);
+    for (let y = 40; y < 42; y++) for (let x = 70; x < 100; x++) a[y * l + x] = 255;
+    const p = mesurerAlpha(a, l, h);
+    expect(p.cxCorps).toBeGreaterThan(0.48);
+    expect(p.cxCorps).toBeLessThan(0.56);
+    expect(p.lCorps).toBeLessThan(0.45);
+  });
   it('suit la taille de l’écho', () => {
     const p = piedsRepli(100, 100, { x: 20, y: 0, l: 60, h: 100 });
     expect(ombreSous(p, { hImage: 190, echelle: 0.5 }).l).toBeLessThan(ombreSous(p, { hImage: 190, echelle: 1.1 }).l);

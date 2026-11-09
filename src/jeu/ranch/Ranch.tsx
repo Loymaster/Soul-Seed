@@ -4,7 +4,7 @@
 // La vue est générée depuis la maquette (VueRanch.tsx) ; ce fichier calcule ses valeurs et tient la logique.
 import { Component, type ReactNode } from 'react';
 import {
-  CORVEES, ENTRAINEMENTS, INTERACTIONS, NOM_STADE, Simulation, accord, aliment, apparence, ageJours, descriptionObjet,
+  CORVEES, ENTRAINEMENTS, INTERACTIONS, NOM_STADE, Simulation, accord, aliment, apparence, ageJours, descriptionObjet, evolutionVue,
   heureDuJour, lireSignes, objetDivers, texteComportement, type CategorieInteraction, type CleCarac, type Etat, type OptionInteraction, type ReponseCorvee, type ReponseRefus,
   type ReponseComportement, type Signes, type Sortie, type Stade, type EchoSauvage,
   demiHeuresPansement, etatPlaies, plaiesApres,
@@ -245,6 +245,8 @@ export class Ranch extends Component<ProprietesRanch, EtatUI> {
     this.lancerMusique();
     this.desabonner = ecouterVolumes(() => undefined);
     this.monterExtras();
+    // une évolution restée due passe avant tout (après le tutoriel éventuel, qui s'ouvre plus tard)
+    this.later(() => this.rejouerEvolutionDue(), 900);
   }
   componentWillUnmount() {
     this.vivant = false;
@@ -1133,6 +1135,7 @@ export class Ranch extends Component<ProprietesRanch, EtatUI> {
   /** Il évolue : la séquence prend tout l'écran, la musique se tait, le temps s'arrête. */
   lancerEvolution(de: Stade, vers: Stade, avantImg?: string) {
     const e = this.e; const s = this.state;
+    this.evoVers = vers;
     const avant = avantImg || this.apparenceVue || apparence(e);
     this.evo = {
       de: asset(avant), vers: asset(apparence(e)),
@@ -1150,6 +1153,8 @@ export class Ranch extends Component<ProprietesRanch, EtatUI> {
   }
   finEvolution = () => {
     this.evo = null;
+    if (this.evoVers) evolutionVue(this.e, this.evoVers);
+    this.evoVers = null;
     this.apparenceVue = apparence(this.e);
     this.sauver();
     this.rafraichir();
@@ -1158,6 +1163,14 @@ export class Ranch extends Component<ProprietesRanch, EtatUI> {
     const enAttente = this.apresEvolution; this.apresEvolution = [];
     if (enAttente.length) this.later(() => { this.traiter(enAttente); this.rafraichir(); }, 900);
   };
+  evoVers: Stade | null = null;
+  /** Une évolution due mais pas encore vue (page rechargée pendant une scène, écran quitté…) : on la joue à l'arrivée. */
+  rejouerEvolutionDue() {
+    const a = this.e.evolutionAMontrer;
+    if (!a || this.evo || this.e.mort) return;
+    if (this.e.stade !== a.vers) { this.e.evolutionAMontrer = null; return; }
+    this.lancerEvolution(a.de, a.vers, a.avant);
+  }
   /** Sorties arrivées pendant (ou avec) une évolution : traitées quand la séquence est finie. */
   apresEvolution: Sortie[] = [];
 
